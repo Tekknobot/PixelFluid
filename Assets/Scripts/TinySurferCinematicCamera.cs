@@ -122,13 +122,20 @@ namespace PixelOcean
             if (clampToCurrentSimulation && surfer.CurrentWave != null)
                 desiredPosition = ClampInsideSimulation(desiredPosition);
 
-            transform.position = Vector3.SmoothDamp(
+            Vector3 smoothedPosition = Vector3.SmoothDamp(
                 transform.position,
                 desiredPosition,
                 ref followVelocity,
                 followSmoothTime,
                 maximumFollowSpeed,
                 deltaTime);
+
+            // SmoothDamp can briefly overshoot the legal viewport area when the
+            // target changes layers. Clamp the actual camera position as well as
+            // the target so the star field can never appear beneath the water.
+            transform.position = clampToCurrentSimulation && surfer.CurrentWave != null
+                ? ClampInsideSimulation(smoothedPosition)
+                : smoothedPosition;
 
             if (controlledCamera.orthographic)
             {
@@ -186,8 +193,43 @@ namespace PixelOcean
 
         private Vector3 ClampInsideSimulation(Vector3 desired)
         {
+            // Clamp against the complete stack, not only the surfer's current row.
+            // The lower viewport edge is pinned to the visible particle field of
+            // the lowest active simulation, ignoring tank and seabed geometry.
+            PixelWaterGPU[] simulations = FindObjectsByType<PixelWaterGPU>(
+                FindObjectsInactive.Exclude,
+                FindObjectsSortMode.None);
+
             Vector2 min = surfer.CurrentWave.TankMinimum;
             Vector2 max = surfer.CurrentWave.TankMaximum;
+            float lowestVisibleWaveBottom = surfer.CurrentWave.VisibleWaveBottom;
+
+            bool foundSimulation = false;
+            for (int i = 0; i < simulations.Length; i++)
+            {
+                PixelWaterGPU simulation = simulations[i];
+                if (simulation == null || !simulation.isActiveAndEnabled)
+                    continue;
+
+                Vector2 simulationMin = simulation.TankMinimum;
+                Vector2 simulationMax = simulation.TankMaximum;
+
+                if (!foundSimulation)
+                {
+                    min = simulationMin;
+                    max = simulationMax;
+                    lowestVisibleWaveBottom = simulation.VisibleWaveBottom;
+                    foundSimulation = true;
+                }
+                else
+                {
+                    min = Vector2.Min(min, simulationMin);
+                    max = Vector2.Max(max, simulationMax);
+                    lowestVisibleWaveBottom = Mathf.Min(
+                        lowestVisibleWaveBottom,
+                        simulation.VisibleWaveBottom);
+                }
+            }
 
             float halfHeight;
             float halfWidth;
@@ -205,9 +247,25 @@ namespace PixelOcean
                 halfWidth = halfHeight * controlledCamera.aspect;
             }
 
-            float minX = min.x + halfWidth + clampInset;
-            float maxX = max.x - halfWidth - clampInset;
-            float minY = min.y + halfHeight + clampInset;
+            float leftCameraInset = 2.0f;
+            float rightCameraInset = 2.0f;
+
+            float minX =
+                min.x +
+                halfWidth +
+                clampInset +
+                leftCameraInset;
+
+            float maxX =
+                max.x -
+                halfWidth -
+                clampInset -
+                rightCameraInset;
+
+            // Pin the viewport to the actual bottom row of particles. Do not
+            // use TankMinimum or horizontalSeabedHeight here: both can sit below
+            // the rendered water and reveal a strip of the star background.
+            float minY = lowestVisibleWaveBottom + halfHeight + 0.16f;
             float maxY = max.y - halfHeight - clampInset;
 
             desired.x = minX <= maxX
@@ -216,7 +274,7 @@ namespace PixelOcean
 
             desired.y = minY <= maxY
                 ? Mathf.Clamp(desired.y, minY, maxY)
-                : (min.y + max.y) * 0.5f;
+                : minY;
 
             return desired;
         }

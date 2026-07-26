@@ -529,7 +529,7 @@ Transform:
   m_GameObject: {fileID: 2902514104324249087}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: -1.07, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -569,19 +569,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PixelOcean.PixelWaterGPU
   simulationShader: {fileID: 7200000, guid: b8833bdeddba55b43baac6a4a940ba50, type: 3}
   renderingMaterial: {fileID: 2100000, guid: 8127f4053393d6f4a87ebd1fa6543df0, type: 2}
-  columns: 110
-  rows: 72
+  columns: 150
+  rows: 150
   particleSpacing: 0.052
   spawnOrigin: {x: -4.1, y: -2.2}
-  tankMinimum: {x: -6.5, y: -2.5}
-  tankMaximum: {x: 6.5, y: 2.5}
+  tankMinimum: {x: -7, y: -2.5}
+  tankMaximum: {x: 7, y: 2.5}
   particleRadius: 0.022
   interactionRadius: 0.075
   pressureStrength: 38
   viscosity: 1.4
   gravity: {x: 0, y: -9.81}
   boundaryBounce: 0.08
-  maximumSpeed: 22
+  maximumSpeed: 11
   substeps: 3
   simulationRate: 120
   waveEmitterEnabled: 1
@@ -627,7 +627,7 @@ MonoBehaviour:
   startupPreswarmDelta: 0.008333
   runtimeLayerPosition: {x: 0, y: 0}
   runtimeLayerRenderDepth: 0
-  runtimeLayerWaveDelay: 0
+  runtimeLayerWaveDelay: 3
   cascadeMode: 0
   cascadeEchoCount: 3
   cascadeDelay: 0.18
@@ -651,9 +651,12 @@ MonoBehaviour:
   shoreStart: 0.62
   shallowZoneWidth: 0.3
   beachHeight: 0.64
-  horizontalSeabedEnabled: 0
+  singlePlayerModeEnabled: 0
+  singlePlayerScrollSpeed: 1.56
+  singlePlayerBoostMultiplier: 2
+  horizontalSeabedEnabled: 1
   horizontalSeabedHeight: -2.05
-  beachCurve: 0.82
+  beachCurve: 0.35
   shoreFriction: 0.32
   shallowWaterColor: {r: 0.3, g: 0.94, b: 0.84, a: 0.98}
   sandColor: {r: 0.88, g: 0.76, b: 0.5, a: 1}
@@ -663,7 +666,7 @@ MonoBehaviour:
   mainWaterColor: {r: 0.02, g: 0.5, b: 0.58, a: 0.97}
   surfaceWaterColor: {r: 0.16, g: 0.82, b: 0.8, a: 0.99}
   foamColor: {r: 0.95, g: 0.99, b: 1, a: 1}
-  surfaceBand: 0.38
+  surfaceBand: 0
   colourBrightness: 1
   foamSpeedThreshold: 4.5
   foamGeneration: 2.2
@@ -704,5 +707,5 @@ SceneRoots:
   - {fileID: 519420032}
   - {fileID: 619394802}
   - {fileID: 570324850}
-  - {fileID: 4423188565574514314}
   - {fileID: 1424985332}
+  - {fileID: 4423188565574514314}

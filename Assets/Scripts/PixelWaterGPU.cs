@@ -165,10 +165,10 @@ namespace PixelOcean
         [SerializeField, Range(0.35f, 0.85f)] private float shoreStart = 0.62f;
         [SerializeField, Range(0.08f, 0.5f)] private float shallowZoneWidth = 0.30f;
         [SerializeField, Range(0.12f, 0.80f)] private float beachHeight = 0.64f;
-        [Header("Single Player Infinite Mode")]
-        [Tooltip("When enabled, runtime spawning is limited to one keyboard-controlled surfer and the wave rows scroll endlessly beneath the rider.")]
+        [Header("Single Player Sandbox Mode")]
+        [Tooltip("When enabled, runtime spawning is limited to one keyboard-controlled surfer inside the existing wave sandbox.")]
         [SerializeField] private bool singlePlayerModeEnabled = false;
-        [Tooltip("Horizontal speed used by the player-controlled endless world scroll.")]
+        [Tooltip("Horizontal movement speed of the player-controlled surfer inside the sandbox.")]
         [SerializeField, Range(0.25f, 8f)] private float singlePlayerScrollSpeed = 2.4f;
         [Tooltip("Extra speed multiplier while Left Shift is held.")]
         [SerializeField, Range(1f, 4f)] private float singlePlayerBoostMultiplier = 1.75f;
@@ -1211,6 +1211,12 @@ namespace PixelOcean
 
         public Vector2 TankMinimum => tankMinimum;
         public Vector2 TankMaximum => tankMaximum;
+
+        // Bottom edge of the actual particle field. Camera framing should use
+        // this rather than TankMinimum or the seabed height, since both may
+        // extend below the visible water and expose the background.
+        public float VisibleWaveBottom =>
+            spawnOrigin.y - Mathf.Max(particleRadius, renderedParticleSize * 0.5f);
         public SurfWaveType ActiveSurfWaveType => surfWaveType;
 
         public float GetSeabedHeightAtWorldX(float worldX)

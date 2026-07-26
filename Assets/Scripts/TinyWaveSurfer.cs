@@ -51,8 +51,9 @@ namespace PixelOcean
         [SerializeField] private bool playerControlled;
         [SerializeField, Min(0.25f)] private float playerScrollSpeed = 2.4f;
         [SerializeField, Range(1f, 4f)] private float playerBoostMultiplier = 1.75f;
-        [SerializeField, Range(0.05f, 0.4f)] private float endlessLoopPadding = 0.16f;
-        [SerializeField] private bool lockPlayerToScreenX = true;
+        [Tooltip("World-space padding that keeps the surfer clear of the camera's left and right screen edges.")]
+        [SerializeField, Range(0f, 1f)] private float playerCameraEdgePadding = 0.12f;
+        [SerializeField] private bool lockPlayerToScreenX = false;
         [SerializeField] private float playerScreenX = 0f;
 
         [Header("8x8 Pixel Look")]
@@ -144,15 +145,15 @@ namespace PixelOcean
             cycleContinuously = false;
             jumpToRandomWaveLayer = false;
             direction = 1f;
+            // Sandbox mode moves the surfer through the existing simulation.
+            // The wave rows remain fixed and are never wrapped or shifted.
+            lockPlayerToScreenX = false;
             RefreshWaveList();
             PickWave(Mathf.Clamp(startingWaveIndex, 0, Mathf.Max(0, simulations.Count - 1)), true);
-            if (lockPlayerToScreenX)
-            {
-                localRideX = playerScreenX;
-                Vector3 p = transform.position;
-                p.x = playerScreenX;
-                transform.position = p;
-            }
+            localRideX = ClampPlayerXToSandbox(localRideX);
+            Vector3 p = transform.position;
+            p.x = localRideX;
+            transform.position = p;
         }
 
         private void Update()
@@ -226,20 +227,17 @@ namespace PixelOcean
             ReadPlayerInput(out float horizontal, out bool jumpHeld,
                 out bool layerUpHeld, out bool layerDownHeld, out bool boostHeld);
 
-            if (Mathf.Abs(horizontal) > 0.01f)
+            if (Mathf.Abs(horizontal) > 0.01f && state == RiderState.Riding)
             {
                 direction = Mathf.Sign(horizontal);
                 float speed = playerScrollSpeed * (boostHeld ? playerBoostMultiplier : 1f);
-                float worldDelta = -horizontal * speed * dt;
-
-                foreach (PixelWaterGPU wave in simulations)
-                {
-                    if (wave != null && wave.isActiveAndEnabled)
-                        wave.ShiftCompleteSimulation(new Vector2(worldDelta, 0f));
-                }
-
-                KeepEndlessRowsAroundPlayer();
+                localRideX += horizontal * speed * dt;
             }
+
+            // This is a finite sandbox: the simulations stay in place and the
+            // surfer is confined to the overlap between the current wave and
+            // the visible camera viewport.
+            localRideX = ClampPlayerXToSandbox(localRideX);
 
             if (jumpHeld && !previousJumpHeld && state == RiderState.Riding)
                 BeginTurnTrick();
@@ -264,8 +262,7 @@ namespace PixelOcean
                 UpdateTurnTrick();
             else
             {
-                if (lockPlayerToScreenX)
-                    localRideX = playerScreenX;
+                localRideX = ClampPlayerXToSandbox(localRideX);
                 FollowSurface(dt);
             }
         }
@@ -287,30 +284,53 @@ namespace PixelOcean
             renderDepth = currentWave.transform.position.z - 0.02f;
             switchStart = transform.position;
             switchTarget = GetStartingPosition(currentWave);
-            switchTarget.x = lockPlayerToScreenX ? playerScreenX : switchTarget.x;
+            switchTarget.x = ClampPlayerXToSandbox(localRideX);
             switchTarget.z = renderDepth;
         }
 
-        private void KeepEndlessRowsAroundPlayer()
+        private float ClampPlayerXToSandbox(float desiredX)
         {
-            if (currentWave == null) return;
-            Vector2 min = currentWave.TankMinimum;
-            Vector2 max = currentWave.TankMaximum;
-            float width = Mathf.Max(0.1f, max.x - min.x);
-            float padding = width * endlessLoopPadding;
-            float correction = 0f;
+            if (currentWave == null)
+                return desiredX;
 
-            if (playerScreenX < min.x + padding)
-                correction = width * (1f - endlessLoopPadding * 2f);
-            else if (playerScreenX > max.x - padding)
-                correction = -width * (1f - endlessLoopPadding * 2f);
+            Vector2 waveMin = currentWave.TankMinimum;
+            Vector2 waveMax = currentWave.TankMaximum;
+            float waveWidth = Mathf.Max(0.01f, waveMax.x - waveMin.x);
+            float wavePadding = waveWidth * edgePadding;
+            float minimumX = waveMin.x + wavePadding;
+            float maximumX = waveMax.x - wavePadding;
 
-            if (Mathf.Abs(correction) <= 0.001f) return;
-            foreach (PixelWaterGPU wave in simulations)
+            Camera camera = Camera.main;
+            if (camera == null)
+                camera = FindFirstObjectByType<Camera>();
+
+            if (camera != null)
             {
-                if (wave != null && wave.isActiveAndEnabled)
-                    wave.ShiftCompleteSimulation(new Vector2(correction, 0f));
+                float halfWidth;
+                if (camera.orthographic)
+                {
+                    halfWidth = camera.orthographicSize * camera.aspect;
+                }
+                else
+                {
+                    float distance = Mathf.Abs(camera.transform.position.z - transform.position.z);
+                    halfWidth = Mathf.Tan(camera.fieldOfView * 0.5f * Mathf.Deg2Rad)
+                        * distance * camera.aspect;
+                }
+
+                float cameraLeft = camera.transform.position.x - halfWidth
+                    + playerCameraEdgePadding;
+                float cameraRight = camera.transform.position.x + halfWidth
+                    - playerCameraEdgePadding;
+
+                minimumX = Mathf.Max(minimumX, cameraLeft);
+                maximumX = Mathf.Min(maximumX, cameraRight);
             }
+
+            if (minimumX > maximumX)
+                return (minimumX + maximumX) * 0.5f;
+
+            return Mathf.Clamp(desiredX, minimumX, maximumX);
         }
 
         private static void ReadPlayerInput(out float horizontal, out bool jump,
@@ -383,9 +403,8 @@ namespace PixelOcean
             Vector3 target = new(localRideX, surfaceY + surfaceOffset, renderDepth);
 
             // In single-player mode the rider must remain planted on the active
-            // wave. Horizontal controls scroll the simulations; they must not add
-            // airborne motion. Tricks and layer switches use their own states and
-            // are the only actions allowed to lift the surfer off the surface.
+            // wave while moving through the finite sandbox. Tricks and layer
+            // switches are the only actions allowed to lift the surfer.
             if (playerControlled && state == RiderState.Riding)
                 transform.position = target;
             else
