@@ -1,6 +1,7 @@
 #pragma kernel ClearGrid
 #pragma kernel BuildGrid
 #pragma kernel Simulate
+#pragma kernel ShiftParticles
 
 struct Particle
 {
@@ -35,18 +36,119 @@ float _FoamTurbulence;
 float _FoamBottomSuppression;
 float _FoamSurfaceDensity;
 float _SimulationTime;
+float2 _ShiftOffset;
 int _WaveEnabled;
 float _WaveEmitterWidth;
 float _WaveHorizontalForce;
 float _WaveVerticalForce;
 float _WaveFrequency;
 float _WaveVerticalVariation;
+float _WavePulseSharpness;
+int _LayeredWaveEnabled;
+int _WaveLayerCount;
+float _WaveLayerPhaseOffset;
+float _DeepSurgeForce;
+float _BodyPushForce;
+float _CrestLiftForce;
+float _CrestLayerThickness;
+float _LayerCompression;
+float _LayerForwardStacking;
+float _LipThrowBoost;
+float _BigWaveScale;
+int _CascadeEnabled;
+int _CascadeEchoCount;
+float _CascadeDelay;
+float _CascadeBackOffset;
+float _CascadeVerticalOffset;
+float _CascadeAmplitudeFalloff;
+float _CascadeSpeedFalloff;
+float _CascadeCurlRetention;
+float _CascadeVolumeForce;
+float _CascadeStackLift;
+float _CascadeBandThickness;
+float _CascadeBlend;
+
+int _SurfWaveType;
+float _BreakPoint;
+float _BreakZoneWidth;
+float _ShoalingStrength;
+float _CurlForwardStrength;
+float _CurlDownStrength;
+float _CurlRotationStrength;
+float _CurlRadius;
+float _CrestSurfaceBand;
+float _ShoreStart;
+float _ShallowZoneWidth;
+float _BeachHeight;
+float _BeachCurve;
+int _HorizontalSeabedEnabled;
+float _HorizontalSeabedHeight;
+float _ShoreFriction;
+
+int _BoardEnabled;
+float2 _BoardCenter;
+float2 _BoardRight;
+float2 _BoardUp;
+float2 _BoardHalfExtents;
+float2 _BoardVelocity;
+float _BoardAngularVelocity;
+float _BoardParticlePadding;
+float _BoardParticlePush;
+float _BoardVelocityTransfer;
+float _BoardParticleDrain;
+float _BoardSurfaceGrip;
+float _BoardParticleRadiusScale;
+
+
+float GetSeabedHeight(float x)
+{
+    if (_HorizontalSeabedEnabled != 0)
+        return _HorizontalSeabedHeight;
+
+    float width = max(_TankMax.x - _TankMin.x, 0.001);
+    float height = max(_TankMax.y - _TankMin.y, 0.001);
+    float horizontal01 = saturate((x - _TankMin.x) / width);
+    float deepFloor = _TankMin.y + height * 0.055;
+    float targetHeight = height * clamp(_BeachHeight, 0.12, 0.80);
+
+    if (_SurfWaveType >= 2)
+    {
+        float rampStart = saturate(_BreakPoint - (_SurfWaveType == 3 ? 0.12 : 0.17));
+        float rampEnd = saturate(_BreakPoint + (_SurfWaveType == 3 ? 0.055 : 0.085));
+        float reefRamp = smoothstep(rampStart, rampEnd, horizontal01);
+        reefRamp = pow(reefRamp, _SurfWaveType == 3 ? 0.72 : 0.88);
+        float shelfRise = smoothstep(rampEnd, 1.0, horizontal01);
+        return deepFloor + targetHeight * (reefRamp * 0.82 + shelfRise * 0.18);
+    }
+
+    float beachStart = saturate(_ShoreStart - _ShallowZoneWidth);
+    float ramp = saturate((horizontal01 - beachStart) / max(1.0 - beachStart, 0.001));
+    ramp = ramp * ramp * (3.0 - 2.0 * ramp);
+    float curve = _SurfWaveType == 0 ? max(1.15, _BeachCurve) : max(0.65, _BeachCurve);
+    ramp = pow(ramp, curve);
+    return deepFloor + ramp * targetHeight;
+}
 
 int GetCellIndex(float2 position)
 {
     int2 cell = (int2)floor((position - _TankMin) / _CellSize);
     cell = clamp(cell, int2(0, 0), _GridSize - 1);
     return cell.y * _GridSize.x + cell.x;
+}
+
+
+
+[numthreads(128, 1, 1)]
+void ShiftParticles(uint3 dispatchThreadID : SV_DispatchThreadID)
+{
+    uint id = dispatchThreadID.x;
+
+    if (id >= (uint)_ParticleCount)
+        return;
+
+    Particle particle = _WriteParticles[id];
+    particle.position += _ShiftOffset;
+    _WriteParticles[id] = particle;
 }
 
 [numthreads(64, 1, 1)]
@@ -135,16 +237,404 @@ void Simulate(uint id : SV_DispatchThreadID)
         emitterMask = emitterMask * emitterMask * (3.0 - 2.0 * emitterMask);
 
         float tankHeight = max(_TankMax.y - _TankMin.y, 0.001);
+        float tankWidth = max(_TankMax.x - _TankMin.x, 0.001);
         float height01 = saturate((particle.position.y - _TankMin.y) / tankHeight);
+        float horizontal01 = saturate((particle.position.x - _TankMin.x) / tankWidth);
         float phase = _SimulationTime * 6.2831853 * _WaveFrequency;
-        float piston = sin(phase);
-        float lift = sin(phase - height01 * _WaveVerticalVariation);
 
-        force.x += piston * _WaveHorizontalForce * emitterMask;
-        force.y += lift * _WaveVerticalForce * emitterMask * saturate(0.2 + height01);
+        // A positive, sharpened pulse creates separated swell sets instead of noisy oscillation.
+        float positiveStroke = pow(saturate(sin(phase) * 0.5 + 0.5), max(_WavePulseSharpness, 1.0));
+        float returnStroke = saturate(-sin(phase)) * 0.16;
+        float piston = positiveStroke - returnStroke;
+        float liftPhase = sin(phase - height01 * _WaveVerticalVariation);
+        float upperWater = smoothstep(0.18, 0.92, height01);
+
+        float typePower = _SurfWaveType == 0 ? 0.72 : (_SurfWaveType == 1 ? 0.92 : (_SurfWaveType == 2 ? 1.0 : 1.16));
+        force.x += piston * _WaveHorizontalForce * emitterMask * typePower;
+        force.y += max(liftPhase, -0.22) * _WaveVerticalForce * emitterMask * (0.20 + upperWater * 0.80) * typePower;
+
+        // Layered wave train: deep surge, body mass, and crest/lip each arrive
+        // with a slight phase delay. This stacks water vertically instead of
+        // pushing the whole tank as one flat piston.
+        if (_LayeredWaveEnabled != 0)
+        {
+            float layerCount = max((float)_WaveLayerCount, 2.0);
+            float deepBand = 1.0 - smoothstep(0.18, 0.50, height01);
+            float bodyBand = smoothstep(0.14, 0.42, height01) *
+                             (1.0 - smoothstep(0.62, 0.86, height01));
+            float crestBandStart = saturate(1.0 - _CrestLayerThickness);
+            float crestBand = smoothstep(crestBandStart, 0.98, height01);
+
+            float deepPhase = phase;
+            float bodyPhase = phase - _WaveLayerPhaseOffset;
+            float crestPhase = phase - _WaveLayerPhaseOffset * min(layerCount - 1.0, 3.0);
+
+            float deepPulse = pow(
+                saturate(sin(deepPhase) * 0.5 + 0.5),
+                max(_WavePulseSharpness * 0.72, 1.0));
+
+            float bodyPulse = pow(
+                saturate(sin(bodyPhase) * 0.5 + 0.5),
+                max(_WavePulseSharpness * 0.90, 1.0));
+
+            float crestPulse = pow(
+                saturate(sin(crestPhase) * 0.5 + 0.5),
+                max(_WavePulseSharpness * 1.18, 1.0));
+
+            float scale = max(_BigWaveScale, 0.1);
+
+            // The deep layer supplies momentum and pushes the entire water mass.
+            force.x += deepBand * deepPulse * _DeepSurgeForce *
+                       emitterMask * scale;
+
+            // The middle layer catches the deep surge and thickens the wave body.
+            force.x += bodyBand * bodyPulse * _BodyPushForce *
+                       emitterMask * scale;
+            force.y += bodyBand * bodyPulse * _LayerCompression *
+                       emitterMask * scale;
+
+            // The upper layer climbs and moves slightly faster, creating height
+            // and a distinct lip rather than a uniformly raised wall.
+            force.x += crestBand * crestPulse * _LayerForwardStacking *
+                       emitterMask * scale;
+            force.y += crestBand * crestPulse * _CrestLiftForce *
+                       emitterMask * scale;
+
+            // A short delayed downward-and-forward throw helps the lip pitch over.
+            float throwPulse = pow(
+                saturate(sin(crestPhase - 0.48) * 0.5 + 0.5),
+                max(_WavePulseSharpness * 1.35, 1.0));
+            float emergingLip = crestBand * emitterMask *
+                                smoothstep(0.30, 0.95, horizontal01);
+            force.x += emergingLip * throwPulse * _LipThrowBoost * scale;
+            force.y -= emergingLip * throwPulse * _LipThrowBoost * 0.34 * scale;
+        }
+
+        // Shoaling: the lower water slows over the rising bottom while the upper water keeps moving.
+        float breakMask = 1.0 - saturate(abs(horizontal01 - _BreakPoint) / max(_BreakZoneWidth, 0.001));
+        breakMask = breakMask * breakMask * (3.0 - 2.0 * breakMask);
+        float seabed = GetSeabedHeight(particle.position.x);
+        float depthAboveBed = max(particle.position.y - seabed, 0.0);
+        float shallowMask = 1.0 - smoothstep(0.12, 1.05, depthAboveBed);
+        force.x -= particle.velocity.x * shallowMask * breakMask * _ShoalingStrength * 0.16;
+        force.y += positiveStroke * breakMask * shallowMask * _ShoalingStrength * 0.55;
+
+        // Tube / plunging lip forces are active mainly on reef presets.
+        float surfaceExposure = saturate((_FoamSurfaceDensity - particle.density) / max(_FoamSurfaceDensity, 0.001));
+        float crestMask = smoothstep(0.05, 0.85, surfaceExposure) * smoothstep(0.28, 0.92, height01);
+        float risingMask = saturate(particle.velocity.y * 0.35 + 0.35);
+
+        // Cascade echo volume:
+        // Delayed copies reuse the master pulse while trailing spatially
+        // behind it. This produces a thicker, layered wave face.
+        if (_CascadeEnabled != 0)
+        {
+            int echoCount = min(max(_CascadeEchoCount, 1), 4);
+            float masterAngularSpeed =
+                max(_WaveFrequency * 6.2831853, 0.0001);
+
+            [unroll(4)]
+            for (int echoIndex = 1; echoIndex <= 4; echoIndex++)
+            {
+                float echoActive =
+                    echoIndex <= echoCount ? 1.0 : 0.0;
+
+                float echoF = (float)echoIndex;
+                float delayPhase =
+                    masterAngularSpeed * _CascadeDelay * echoF;
+
+                float echoAmplitude = pow(
+                    saturate(_CascadeAmplitudeFalloff),
+                    echoF);
+
+                float echoSpeedScale = pow(
+                    saturate(_CascadeSpeedFalloff),
+                    echoF);
+
+                // Move the effective emitter farther behind for every echo.
+                float shiftedDistanceFromEmitter =
+                    distanceFromEmitter -
+                    _CascadeBackOffset * echoF;
+
+                float echoEmitterMask = saturate(
+                    1.0 -
+                    shiftedDistanceFromEmitter /
+                    max(_WaveEmitterWidth, 0.001));
+
+                echoEmitterMask =
+                    echoEmitterMask *
+                    echoEmitterMask *
+                    (3.0 - 2.0 * echoEmitterMask);
+
+                // Do not affect particles that are still in front of the
+                // delayed emitter position.
+                echoEmitterMask *=
+                    step(0.0, shiftedDistanceFromEmitter);
+
+                float echoPhase = phase - delayPhase;
+
+                // Match the original simulation pulse shape.
+                float echoPositiveStroke = pow(
+                    saturate(sin(echoPhase) * 0.5 + 0.5),
+                    max(_WavePulseSharpness, 1.0));
+
+                float echoReturnStroke =
+                    saturate(-sin(echoPhase)) * 0.16;
+
+                float echoPiston =
+                    echoPositiveStroke - echoReturnStroke;
+
+                float echoLiftPhase =
+                    sin(
+                        echoPhase -
+                        height01 * _WaveVerticalVariation);
+
+                // Lower each delayed copy slightly to form overlapping
+                // depth bands rather than a single flat particle sheet.
+                float echoBandCentre = saturate(
+                    0.50 -
+                    _CascadeVerticalOffset * echoF);
+
+                float echoBandDistance =
+                    abs(height01 - echoBandCentre);
+
+                float echoBand = 1.0 - smoothstep(
+                    _CascadeBandThickness,
+                    max(_CascadeBandThickness * 1.9, 0.051),
+                    echoBandDistance);
+
+                float echoStrength =
+                    echoActive *
+                    echoEmitterMask *
+                    echoAmplitude *
+                    _CascadeBlend;
+
+                force.x +=
+                    echoPiston *
+                    _WaveHorizontalForce *
+                    echoStrength *
+                    echoSpeedScale *
+                    typePower *
+                    (0.42 + echoBand * 0.58);
+
+                force.y +=
+                    max(echoLiftPhase, -0.18) *
+                    _WaveVerticalForce *
+                    echoStrength *
+                    typePower *
+                    (0.18 +
+                     upperWater * 0.52 +
+                     echoBand * 0.30);
+
+                // Preserve thickness between delayed copies.
+                force.x +=
+                    echoBand *
+                    echoPositiveStroke *
+                    _CascadeVolumeForce *
+                    echoStrength;
+
+                force.y +=
+                    echoBand *
+                    echoPositiveStroke *
+                    _CascadeStackLift *
+                    echoStrength;
+
+                // Give every delayed copy the same break/curl behaviour
+                // around the existing normalized break point.
+                float echoHorizontal01 = saturate(
+                    (
+                        particle.position.x -
+                        _TankMin.x -
+                        _CascadeBackOffset * echoF
+                    ) / tankWidth);
+
+                float echoBreakMask =
+                    1.0 -
+                    saturate(
+                        abs(echoHorizontal01 - _BreakPoint) /
+                        max(_BreakZoneWidth, 0.001));
+
+                echoBreakMask =
+                    echoBreakMask *
+                    echoBreakMask *
+                    (3.0 - 2.0 * echoBreakMask);
+
+                float echoCrestMask = smoothstep(
+                    0.55,
+                    0.96,
+                    saturate(
+                        height01 +
+                        _CascadeVerticalOffset * echoF));
+
+                float echoCurlMask =
+                    echoBreakMask *
+                    echoCrestMask *
+                    echoPositiveStroke *
+                    echoStrength *
+                    _CascadeCurlRetention;
+
+                float echoBreakWorldX =
+                    _TankMin.x +
+                    tankWidth *
+                    (
+                        _BreakPoint +
+                        (
+                            _CascadeBackOffset * echoF /
+                            tankWidth
+                        )
+                    );
+
+                float2 echoCurlCentre = float2(
+                    echoBreakWorldX,
+                    GetSeabedHeight(echoBreakWorldX) +
+                    _CurlRadius *
+                    (
+                        0.88 -
+                        _CascadeVerticalOffset * echoF
+                    ));
+
+                float2 echoRadial =
+                    particle.position - echoCurlCentre;
+
+                float echoDistance =
+                    max(length(echoRadial), 0.0001);
+
+                float echoVortexMask = saturate(
+                    1.0 -
+                    echoDistance /
+                    max(_CurlRadius, 0.001));
+
+                float2 echoTangent =
+                    float2(
+                        echoRadial.y,
+                        -echoRadial.x
+                    ) / echoDistance;
+
+                force +=
+                    echoTangent *
+                    _CurlRotationStrength *
+                    echoCurlMask *
+                    echoVortexMask *
+                    echoVortexMask;
+            }
+        }
+
+        float layeredCrestPulse = 1.0;
+        if (_LayeredWaveEnabled != 0)
+        {
+            float layeredPhase = phase - _WaveLayerPhaseOffset * min((float)_WaveLayerCount - 1.0, 3.0);
+            layeredCrestPulse = lerp(
+                1.0,
+                1.0 + pow(saturate(sin(layeredPhase) * 0.5 + 0.5),
+                          max(_WavePulseSharpness, 1.0)) * (_BigWaveScale - 1.0),
+                0.85);
+        }
+
+        float curlMask = breakMask * crestMask * risingMask * positiveStroke * layeredCrestPulse;
+        float tubeAmount = _SurfWaveType == 2 ? 1.0 : (_SurfWaveType == 3 ? 1.32 : (_SurfWaveType == 1 ? 0.38 : 0.10));
+
+        force.x += curlMask * _CurlForwardStrength * tubeAmount;
+        force.y -= curlMask * _CurlDownStrength * tubeAmount;
+
+        float2 curlCenter = float2(
+            _TankMin.x + tankWidth * (_BreakPoint + _BreakZoneWidth * 0.10),
+            GetSeabedHeight(_TankMin.x + tankWidth * _BreakPoint) + _CurlRadius * 0.88);
+        float2 radial = particle.position - curlCenter;
+        float radialDistance = length(radial);
+        float vortexMask = saturate(1.0 - radialDistance / max(_CurlRadius, 0.001));
+        float2 tangent = radialDistance > 0.0001 ? float2(radial.y, -radial.x) / radialDistance : float2(0.0, 0.0);
+        force += tangent * (_CurlRotationStrength * vortexMask * vortexMask * positiveStroke * tubeAmount);
     }
 
     particle.velocity += force * _DeltaTime;
+
+    // Rounded, tapered board contact instead of a padded rectangle.
+    // This keeps water close to the visible rails and lets particles drain off the deck.
+    if (_BoardEnabled != 0)
+    {
+        float2 relative = particle.position - _BoardCenter;
+        float2 local = float2(dot(relative, _BoardRight), dot(relative, _BoardUp));
+
+        float effectiveRadius =
+            _BoardParticlePadding + _ParticleRadius * saturate(_BoardParticleRadiusScale);
+
+        float halfLength = max(_BoardHalfExtents.x + effectiveRadius, 0.001);
+        float halfThickness = max(_BoardHalfExtents.y + effectiveRadius, 0.001);
+
+        float longitudinal01 = saturate(abs(local.x) / halfLength);
+
+        // Narrow the hull toward both tips. The centre remains full and rounded.
+        float tipTaper = sqrt(saturate(1.0 - longitudinal01 * longitudinal01));
+        float localHalfThickness = max(
+            effectiveRadius * 0.65,
+            halfThickness * tipTaper);
+
+        float nx = local.x / halfLength;
+        float ny = local.y / max(localHalfThickness, 0.001);
+        float hullDistance = nx * nx + ny * ny;
+
+        if (hullDistance < 1.0)
+        {
+            float distanceToSurface = sqrt(max(hullDistance, 0.000001));
+            float2 localNormal = normalize(float2(
+                nx / halfLength,
+                ny / max(localHalfThickness, 0.001)));
+
+            float2 worldNormal = normalize(
+                _BoardRight * localNormal.x +
+                _BoardUp * localNormal.y);
+
+            float penetration =
+                (1.0 - distanceToSurface) *
+                min(halfLength, localHalfThickness);
+
+            float2 angularBoardVelocity =
+                float2(-relative.y, relative.x) * _BoardAngularVelocity;
+            float2 boardPointVelocity = _BoardVelocity + angularBoardVelocity;
+
+            particle.position += worldNormal * penetration;
+
+            float inward = dot(
+                particle.velocity - boardPointVelocity,
+                worldNormal);
+
+            if (inward < 0.0)
+                particle.velocity -= worldNormal * inward * 1.04;
+
+            // Very little surface grip prevents water from sticking to the board.
+            float2 carriedVelocity = lerp(
+                particle.velocity,
+                boardPointVelocity,
+                saturate(_BoardSurfaceGrip));
+
+            // Water on the upper half drains toward the closest nose/tail.
+            // Gravity projected along the board also makes it fall from a tilted deck.
+            float upperMask = smoothstep(-0.08, 0.42, ny);
+            float edgeDirection = local.x >= 0.0 ? 1.0 : -1.0;
+            float centreEscape = smoothstep(0.05, 0.82, abs(nx));
+            float gravityAlongBoard = dot(_Gravity, _BoardRight);
+
+            float drainSpeed =
+                _BoardParticleDrain *
+                upperMask *
+                (0.30 + centreEscape * 0.70);
+
+            carriedVelocity += _BoardRight *
+                (edgeDirection * drainSpeed + gravityAlongBoard * 0.12);
+
+            // Slight outward lift breaks clusters away from the deck surface.
+            carriedVelocity += worldNormal *
+                (_BoardParticlePush * penetration + upperMask * 0.20);
+
+            particle.velocity = lerp(
+                particle.velocity,
+                carriedVelocity,
+                saturate(_BoardVelocityTransfer + upperMask * 0.22));
+
+            particle.foam = saturate(
+                particle.foam + penetration * 1.4);
+        }
+    }
 
     float speed = length(particle.velocity);
     if (speed > _MaximumSpeed)
@@ -161,6 +651,12 @@ void Simulate(uint id : SV_DispatchThreadID)
     float speedFoam = saturate((speed - _FoamSpeedThreshold) / max(_FoamSpeedThreshold, 0.001));
     float turbulenceFoam = saturate(turbulence * 0.08 * _FoamTurbulence);
     float generatedFoam = max(speedFoam, turbulenceFoam) * surfaceExposure * bottomMask * _FoamGeneration;
+    float width01 = max(_TankMax.x - _TankMin.x, 0.001);
+    float particleX01 = saturate((particle.position.x - _TankMin.x) / width01);
+    float breakerMask = 1.0 - saturate(abs(particleX01 - _BreakPoint) / max(_BreakZoneWidth, 0.001));
+    breakerMask = breakerMask * breakerMask;
+    float plungingFoam = breakerMask * surfaceExposure * saturate(particle.velocity.y * -0.25 + speedFoam) * (_SurfWaveType >= 2 ? 1.35 : 0.55);
+    generatedFoam += plungingFoam * _FoamGeneration;
 
     float submergedDecay = lerp(2.25, 1.0, surfaceExposure);
     particle.foam = saturate(particle.foam + generatedFoam * _DeltaTime - _FoamDecay * submergedDecay * _DeltaTime);
@@ -183,13 +679,26 @@ void Simulate(uint id : SV_DispatchThreadID)
             particle.velocity.x *= -_BoundaryBounce;
     }
 
-    if (particle.position.y < minimum.y)
+    float seabedY = GetSeabedHeight(particle.position.x) + _ParticleRadius;
+    if (particle.position.y < seabedY)
     {
-        particle.position.y = minimum.y;
-        if (particle.velocity.y < 0.0)
-            particle.velocity.y *= -_BoundaryBounce;
-        particle.velocity.x *= 0.995;
-        particle.foam *= 0.65;
+        // Curved beach collision. A numerical normal lets the water climb and recede
+        // along the shore instead of colliding with an invisible flat floor.
+        float sampleDistance = max(_ParticleRadius * 2.0, 0.015);
+        float leftHeight = GetSeabedHeight(particle.position.x - sampleDistance);
+        float rightHeight = GetSeabedHeight(particle.position.x + sampleDistance);
+        float slope = (rightHeight - leftHeight) / (sampleDistance * 2.0);
+        float2 normal = normalize(float2(-slope, 1.0));
+
+        particle.position.y = seabedY;
+        float inwardSpeed = dot(particle.velocity, normal);
+        if (inwardSpeed < 0.0)
+            particle.velocity -= normal * inwardSpeed * (1.0 + _BoundaryBounce);
+
+        float shoreAmount = saturate((particle.position.x - (_TankMin.x + (_TankMax.x - _TankMin.x) * (_ShoreStart - _ShallowZoneWidth))) /
+                                     max((_TankMax.x - _TankMin.x) * (1.0 - (_ShoreStart - _ShallowZoneWidth)), 0.001));
+        particle.velocity *= 1.0 - saturate(_ShoreFriction * shoreAmount) * _DeltaTime * 8.0;
+        particle.foam = saturate(particle.foam + length(particle.velocity) * shoreAmount * 0.018);
     }
     else if (particle.position.y > maximum.y)
     {

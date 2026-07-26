@@ -1,0 +1,1053 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1297594971934635656
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8718497182731065762}
+  - component: {fileID: 2463445240163943391}
+  m_Layer: 0
+  m_Name: Pixel Water GPU V2 (4)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8718497182731065762
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1297594971934635656}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -1.52148, y: 3.5, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 6403675661267374743}
+  m_Father: {fileID: 8332830430625356640}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2463445240163943391
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1297594971934635656}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad1ac2ef6df955e498cef8e63b7dc790, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PixelOcean.PixelWaterGPU
+  simulationShader: {fileID: 7200000, guid: b8833bdeddba55b43baac6a4a940ba50, type: 3}
+  renderingMaterial: {fileID: 0}
+  columns: 190
+  rows: 90
+  particleSpacing: 0.052
+  spawnOrigin: {x: -7.7595778, y: 0.31814957}
+  tankMinimum: {x: -12.159583, y: -4.1818504}
+  tankMaximum: {x: 4.8404293, y: 4.8181496}
+  particleRadius: 0.022
+  interactionRadius: 0.075
+  pressureStrength: 100
+  viscosity: 1.4
+  gravity: {x: 0, y: -9.81}
+  boundaryBounce: 0.08
+  maximumSpeed: 2
+  substeps: 3
+  simulationRate: 120
+  waveEmitterEnabled: 1
+  surfWaveType: 2
+  waveEmitterWidth: 2.65
+  waveHorizontalForce: 40
+  waveVerticalForce: 30
+  waveFrequency: 0.28
+  waveVerticalVariation: 0.28
+  wavePulseSharpness: 3.2
+  layeredWaveEnabled: 0
+  waveLayerCount: 3
+  waveLayerPhaseOffset: 0.34
+  deepSurgeForce: 13
+  bodyPushForce: 10
+  crestLiftForce: 17
+  crestLayerThickness: 0.24
+  layerCompression: 0.72
+  layerForwardStacking: 9
+  lipThrowBoost: 8
+  bigWaveScale: 1.35
+  synchronizeBigWaveEmitters: 0
+  independentEmitterScale: 1.7
+  independentEmitterWidthScale: 1.35
+  independentEmitterLiftScale: 1.35
+  independentEmitterPushScale: 1.25
+  createIndependentWaveLayers: 0
+  independentLayerCount: 4
+  independentLayerDelay: 0.18
+  independentLayerBackOffset: 0.34
+  independentLayerVerticalOffset: 0.055
+  independentLayerDepthOffset: 0.06
+  independentLayerScaleFalloff: 0.94
+  independentLayerRiseCurve: 1.15
+  independentLayerShade: 0.12
+  independentLayerAlphaLoss: 0.035
+  independentLayerForceFalloff: 0.94
+  runtimeLayerPosition: {x: 0, y: 0}
+  runtimeLayerRenderDepth: 0
+  runtimeLayerWaveDelay: 0
+  cascadeMode: 0
+  cascadeEchoCount: 3
+  cascadeDelay: 0.18
+  cascadeBackOffset: 0.42
+  cascadeVerticalOffset: 0.12
+  cascadeAmplitudeFalloff: 0.88
+  cascadeSpeedFalloff: 0.94
+  cascadeCurlRetention: 0.96
+  cascadeVolumeForce: 9.5
+  cascadeStackLift: 7.5
+  cascadeBandThickness: 0.28
+  cascadeBlend: 1
+  breakPoint: 0.73
+  breakZoneWidth: 0.17
+  shoalingStrength: 10
+  curlForwardStrength: 17
+  curlDownStrength: 7.5
+  curlRotationStrength: 12
+  curlRadius: 0.68
+  crestSurfaceBand: 0.38
+  shoreStart: 0.35
+  shallowZoneWidth: 0.5
+  beachHeight: 0.12
+  horizontalSeabedEnabled: 1
+  horizontalSeabedHeight: -3.1818502
+  beachCurve: 0.82
+  shoreFriction: 0.32
+  shallowWaterColor: {r: 0.3, g: 0.94, b: 0.84, a: 0.98}
+  sandColor: {r: 0.88, g: 0.76, b: 0.5, a: 1}
+  wetSandColor: {r: 0.53, g: 0.4, b: 0.22, a: 1}
+  deepSandColor: {r: 0.25, g: 0.19, b: 0.1, a: 1}
+  deepWaterColor: {r: 0, g: 0.16470589, b: 0.42352945, a: 0.9372549}
+  mainWaterColor: {r: 0.007843138, g: 0.5058824, b: 0.6431373, a: 0.97}
+  surfaceWaterColor: {r: 0.2509804, g: 0.7843138, b: 0.7411765, a: 0.99}
+  foamColor: {r: 0.9960785, g: 0.9960785, b: 0.9803922, a: 1}
+  surfaceBand: 0.38
+  colourBrightness: 1
+  foamSpeedThreshold: 4.5
+  foamGeneration: 2.2
+  foamDecay: 1.05
+  foamTurbulence: 1.2
+  foamRenderStrength: 1
+  foamBottomSuppression: 0.55
+  foamSurfaceDensity: 0.62
+  renderedParticleSize: 0.035
+  edgeSoftness: 0.28
+  boardParticlePadding: 0.01
+  boardParticlePush: 8
+  boardVelocityTransfer: 0.18
+  boardParticleDrain: 14
+  boardSurfaceGrip: 0.08
+  boardParticleRadiusScale: 0.28
+--- !u!1 &2902514105659005810
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4423188565835397127}
+  - component: {fileID: 6883851295125265615}
+  m_Layer: 0
+  m_Name: Pixel Water GPU V2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4423188565835397127
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2902514105659005810}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -1.52148, y: 4.5, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2750329559427770759}
+  m_Father: {fileID: 8332830430625356640}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6883851295125265615
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2902514105659005810}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad1ac2ef6df955e498cef8e63b7dc790, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PixelOcean.PixelWaterGPU
+  simulationShader: {fileID: 7200000, guid: b8833bdeddba55b43baac6a4a940ba50, type: 3}
+  renderingMaterial: {fileID: 0}
+  columns: 190
+  rows: 90
+  particleSpacing: 0.052
+  spawnOrigin: {x: -7.7595778, y: -0.783}
+  tankMinimum: {x: -12.159583, y: -9.283004}
+  tankMaximum: {x: 4.8404293, y: 7.7169933}
+  particleRadius: 0.022
+  interactionRadius: 0.075
+  pressureStrength: 100
+  viscosity: 1.4
+  gravity: {x: 0, y: -9.81}
+  boundaryBounce: 0.08
+  maximumSpeed: 2
+  substeps: 3
+  simulationRate: 120
+  waveEmitterEnabled: 1
+  surfWaveType: 2
+  waveEmitterWidth: 2.65
+  waveHorizontalForce: 40
+  waveVerticalForce: 30
+  waveFrequency: 0.28
+  waveVerticalVariation: 0.28
+  wavePulseSharpness: 3.2
+  layeredWaveEnabled: 0
+  waveLayerCount: 3
+  waveLayerPhaseOffset: 0.34
+  deepSurgeForce: 13
+  bodyPushForce: 10
+  crestLiftForce: 17
+  crestLayerThickness: 0.24
+  layerCompression: 0.72
+  layerForwardStacking: 9
+  lipThrowBoost: 8
+  bigWaveScale: 1.35
+  synchronizeBigWaveEmitters: 0
+  independentEmitterScale: 1.7
+  independentEmitterWidthScale: 1.35
+  independentEmitterLiftScale: 1.35
+  independentEmitterPushScale: 1.25
+  createIndependentWaveLayers: 0
+  independentLayerCount: 4
+  independentLayerDelay: 0.18
+  independentLayerBackOffset: 0.34
+  independentLayerVerticalOffset: 0.055
+  independentLayerDepthOffset: 0.06
+  independentLayerScaleFalloff: 0.94
+  independentLayerRiseCurve: 1.15
+  independentLayerShade: 0.12
+  independentLayerAlphaLoss: 0.035
+  independentLayerForceFalloff: 0.94
+  runtimeLayerPosition: {x: 0, y: 0}
+  runtimeLayerRenderDepth: 0
+  runtimeLayerWaveDelay: 0
+  cascadeMode: 0
+  cascadeEchoCount: 3
+  cascadeDelay: 0.18
+  cascadeBackOffset: 0.42
+  cascadeVerticalOffset: 0.12
+  cascadeAmplitudeFalloff: 0.88
+  cascadeSpeedFalloff: 0.94
+  cascadeCurlRetention: 0.96
+  cascadeVolumeForce: 9.5
+  cascadeStackLift: 7.5
+  cascadeBandThickness: 0.28
+  cascadeBlend: 1
+  breakPoint: 0.73
+  breakZoneWidth: 0.17
+  shoalingStrength: 10
+  curlForwardStrength: 17
+  curlDownStrength: 7.5
+  curlRotationStrength: 12
+  curlRadius: 0.68
+  crestSurfaceBand: 0.38
+  shoreStart: 0.35
+  shallowZoneWidth: 0.5
+  beachHeight: 0.3219999
+  horizontalSeabedEnabled: 1
+  horizontalSeabedHeight: -2.7829998
+  beachCurve: 0.82
+  shoreFriction: 0.32
+  shallowWaterColor: {r: 0.3, g: 0.94, b: 0.84, a: 0.98}
+  sandColor: {r: 0.88, g: 0.76, b: 0.5, a: 1}
+  wetSandColor: {r: 0.53, g: 0.4, b: 0.22, a: 1}
+  deepSandColor: {r: 0.25, g: 0.19, b: 0.1, a: 1}
+  deepWaterColor: {r: 0, g: 0.16470589, b: 0.42352945, a: 0.9372549}
+  mainWaterColor: {r: 0.007843138, g: 0.5058824, b: 0.6431373, a: 0.97}
+  surfaceWaterColor: {r: 0.2509804, g: 0.7843138, b: 0.7411765, a: 0.99}
+  foamColor: {r: 0.9960785, g: 0.9960785, b: 0.9803922, a: 1}
+  surfaceBand: 0.38
+  colourBrightness: 1
+  foamSpeedThreshold: 4.5
+  foamGeneration: 2.2
+  foamDecay: 1.05
+  foamTurbulence: 1.2
+  foamRenderStrength: 1
+  foamBottomSuppression: 0.55
+  foamSurfaceDensity: 0.62
+  renderedParticleSize: 0.035
+  edgeSoftness: 0.28
+  boardParticlePadding: 0.01
+  boardParticlePush: 8
+  boardVelocityTransfer: 0.18
+  boardParticleDrain: 14
+  boardSurfaceGrip: 0.08
+  boardParticleRadiusScale: 0.28
+--- !u!1 &3969816179200475448
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5638167633716789901}
+  - component: {fileID: 2639523219638432719}
+  m_Layer: 0
+  m_Name: Pixel Water GPU V2 (2)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5638167633716789901
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3969816179200475448}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -1.52148, y: 4, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 5141993288627258650}
+  m_Father: {fileID: 8332830430625356640}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2639523219638432719
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3969816179200475448}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad1ac2ef6df955e498cef8e63b7dc790, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PixelOcean.PixelWaterGPU
+  simulationShader: {fileID: 7200000, guid: b8833bdeddba55b43baac6a4a940ba50, type: 3}
+  renderingMaterial: {fileID: 0}
+  columns: 190
+  rows: 90
+  particleSpacing: 0.052
+  spawnOrigin: {x: -7.7595778, y: -0.487}
+  tankMinimum: {x: -12.159583, y: -6.987}
+  tankMaximum: {x: 4.8404293, y: 6.013}
+  particleRadius: 0.022
+  interactionRadius: 0.075
+  pressureStrength: 100
+  viscosity: 1.4
+  gravity: {x: 0, y: -9.81}
+  boundaryBounce: 0.08
+  maximumSpeed: 2
+  substeps: 3
+  simulationRate: 120
+  waveEmitterEnabled: 1
+  surfWaveType: 2
+  waveEmitterWidth: 2.65
+  waveHorizontalForce: 40
+  waveVerticalForce: 30
+  waveFrequency: 0.28
+  waveVerticalVariation: 0.28
+  wavePulseSharpness: 3.2
+  layeredWaveEnabled: 0
+  waveLayerCount: 3
+  waveLayerPhaseOffset: 0.34
+  deepSurgeForce: 13
+  bodyPushForce: 10
+  crestLiftForce: 17
+  crestLayerThickness: 0.24
+  layerCompression: 0.72
+  layerForwardStacking: 9
+  lipThrowBoost: 8
+  bigWaveScale: 1.35
+  synchronizeBigWaveEmitters: 0
+  independentEmitterScale: 1.7
+  independentEmitterWidthScale: 1.35
+  independentEmitterLiftScale: 1.35
+  independentEmitterPushScale: 1.25
+  createIndependentWaveLayers: 0
+  independentLayerCount: 4
+  independentLayerDelay: 0.18
+  independentLayerBackOffset: 0.34
+  independentLayerVerticalOffset: 0.055
+  independentLayerDepthOffset: 0.06
+  independentLayerScaleFalloff: 0.94
+  independentLayerRiseCurve: 1.15
+  independentLayerShade: 0.12
+  independentLayerAlphaLoss: 0.035
+  independentLayerForceFalloff: 0.94
+  runtimeLayerPosition: {x: 0, y: 0}
+  runtimeLayerRenderDepth: 0
+  runtimeLayerWaveDelay: 0
+  cascadeMode: 0
+  cascadeEchoCount: 3
+  cascadeDelay: 0.18
+  cascadeBackOffset: 0.42
+  cascadeVerticalOffset: 0.12
+  cascadeAmplitudeFalloff: 0.88
+  cascadeSpeedFalloff: 0.94
+  cascadeCurlRetention: 0.96
+  cascadeVolumeForce: 9.5
+  cascadeStackLift: 7.5
+  cascadeBandThickness: 0.28
+  cascadeBlend: 1
+  breakPoint: 0.73
+  breakZoneWidth: 0.17
+  shoalingStrength: 10
+  curlForwardStrength: 17
+  curlDownStrength: 7.5
+  curlRotationStrength: 12
+  curlRadius: 0.68
+  crestSurfaceBand: 0.38
+  shoreStart: 0.35
+  shallowZoneWidth: 0.5
+  beachHeight: 0.22094977
+  horizontalSeabedEnabled: 1
+  horizontalSeabedHeight: -2.987
+  beachCurve: 0.82
+  shoreFriction: 0.32
+  shallowWaterColor: {r: 0.3, g: 0.94, b: 0.84, a: 0.98}
+  sandColor: {r: 0.88, g: 0.76, b: 0.5, a: 1}
+  wetSandColor: {r: 0.53, g: 0.4, b: 0.22, a: 1}
+  deepSandColor: {r: 0.25, g: 0.19, b: 0.1, a: 1}
+  deepWaterColor: {r: 0, g: 0.16470589, b: 0.42352945, a: 0.9372549}
+  mainWaterColor: {r: 0.007843138, g: 0.5058824, b: 0.6431373, a: 0.97}
+  surfaceWaterColor: {r: 0.2509804, g: 0.7843138, b: 0.7411765, a: 0.99}
+  foamColor: {r: 0.9960785, g: 0.9960785, b: 0.9803922, a: 1}
+  surfaceBand: 0.38
+  colourBrightness: 1
+  foamSpeedThreshold: 4.5
+  foamGeneration: 2.2
+  foamDecay: 1.05
+  foamTurbulence: 1.2
+  foamRenderStrength: 1
+  foamBottomSuppression: 0.55
+  foamSurfaceDensity: 0.62
+  renderedParticleSize: 0.035
+  edgeSoftness: 0.28
+  boardParticlePadding: 0.01
+  boardParticlePush: 8
+  boardVelocityTransfer: 0.18
+  boardParticleDrain: 14
+  boardSurfaceGrip: 0.08
+  boardParticleRadiusScale: 0.28
+--- !u!1 &3999233326885578455
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8332830430625356640}
+  m_Layer: 0
+  m_Name: Water
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8332830430625356640
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3999233326885578455}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.71678, y: -3.63, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 4423188565835397127}
+  - {fileID: 8544978215167213826}
+  - {fileID: 5638167633716789901}
+  - {fileID: 6061519855691760076}
+  - {fileID: 8718497182731065762}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &4372895715163121767
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6403675661267374743}
+  - component: {fileID: 3994118118177870046}
+  m_Layer: 0
+  m_Name: Tropical Seabed
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6403675661267374743
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4372895715163121767}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8718497182731065762}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3994118118177870046
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4372895715163121767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c8f43bce5aa4f58a798e151d836dfea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PixelOcean.TropicalSeabed
+  sandParticleShader: {fileID: 4800000, guid: 521e1368423f4cf0bf6939f3ea9918dc, type: 3}
+  columns: 180
+  layers: 48
+  grainSpacing: 0.045
+  grainSize: 0.028
+  grainJitter: 0.28
+  colourVariation: 0.22
+--- !u!1 &5564881778904635149
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8234349574318842243}
+  - component: {fileID: 7781719698582656347}
+  m_Layer: 0
+  m_Name: Tropical Seabed
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8234349574318842243
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5564881778904635149}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8544978215167213826}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7781719698582656347
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5564881778904635149}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c8f43bce5aa4f58a798e151d836dfea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PixelOcean.TropicalSeabed
+  sandParticleShader: {fileID: 4800000, guid: 521e1368423f4cf0bf6939f3ea9918dc, type: 3}
+  columns: 180
+  layers: 48
+  grainSpacing: 0.045
+  grainSize: 0.028
+  grainJitter: 0.28
+  colourVariation: 0.22
+--- !u!1 &7238407522125520530
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8544978215167213826}
+  - component: {fileID: 2530019042785582613}
+  m_Layer: 0
+  m_Name: Pixel Water GPU V2 (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8544978215167213826
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7238407522125520530}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -1.52148, y: 4.25, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8234349574318842243}
+  m_Father: {fileID: 8332830430625356640}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2530019042785582613
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7238407522125520530}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad1ac2ef6df955e498cef8e63b7dc790, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PixelOcean.PixelWaterGPU
+  simulationShader: {fileID: 7200000, guid: b8833bdeddba55b43baac6a4a940ba50, type: 3}
+  renderingMaterial: {fileID: 0}
+  columns: 190
+  rows: 90
+  particleSpacing: 0.052
+  spawnOrigin: {x: -7.7595778, y: -0.6309004}
+  tankMinimum: {x: -12.159583, y: -8.130895}
+  tankMaximum: {x: 4.8404293, y: 8.869101}
+  particleRadius: 0.022
+  interactionRadius: 0.075
+  pressureStrength: 100
+  viscosity: 1.4
+  gravity: {x: 0, y: -9.81}
+  boundaryBounce: 0.08
+  maximumSpeed: 2
+  substeps: 3
+  simulationRate: 120
+  waveEmitterEnabled: 1
+  surfWaveType: 2
+  waveEmitterWidth: 2.65
+  waveHorizontalForce: 40
+  waveVerticalForce: 30
+  waveFrequency: 0.28
+  waveVerticalVariation: 0.28
+  wavePulseSharpness: 3.2
+  layeredWaveEnabled: 0
+  waveLayerCount: 3
+  waveLayerPhaseOffset: 0.34
+  deepSurgeForce: 13
+  bodyPushForce: 10
+  crestLiftForce: 17
+  crestLayerThickness: 0.24
+  layerCompression: 0.72
+  layerForwardStacking: 9
+  lipThrowBoost: 8
+  bigWaveScale: 1.35
+  synchronizeBigWaveEmitters: 0
+  independentEmitterScale: 1.7
+  independentEmitterWidthScale: 1.35
+  independentEmitterLiftScale: 1.35
+  independentEmitterPushScale: 1.25
+  createIndependentWaveLayers: 0
+  independentLayerCount: 4
+  independentLayerDelay: 0.18
+  independentLayerBackOffset: 0.34
+  independentLayerVerticalOffset: 0.055
+  independentLayerDepthOffset: 0.06
+  independentLayerScaleFalloff: 0.94
+  independentLayerRiseCurve: 1.15
+  independentLayerShade: 0.12
+  independentLayerAlphaLoss: 0.035
+  independentLayerForceFalloff: 0.94
+  runtimeLayerPosition: {x: 0, y: 0}
+  runtimeLayerRenderDepth: 0
+  runtimeLayerWaveDelay: 0
+  cascadeMode: 0
+  cascadeEchoCount: 3
+  cascadeDelay: 0.18
+  cascadeBackOffset: 0.42
+  cascadeVerticalOffset: 0.12
+  cascadeAmplitudeFalloff: 0.88
+  cascadeSpeedFalloff: 0.94
+  cascadeCurlRetention: 0.96
+  cascadeVolumeForce: 9.5
+  cascadeStackLift: 7.5
+  cascadeBandThickness: 0.28
+  cascadeBlend: 1
+  breakPoint: 0.73
+  breakZoneWidth: 0.17
+  shoalingStrength: 10
+  curlForwardStrength: 17
+  curlDownStrength: 7.5
+  curlRotationStrength: 12
+  curlRadius: 0.68
+  crestSurfaceBand: 0.38
+  shoreStart: 0.35
+  shallowZoneWidth: 0.5
+  beachHeight: 0.472
+  horizontalSeabedEnabled: 1
+  horizontalSeabedHeight: -2.8809001
+  beachCurve: 0.82
+  shoreFriction: 0.32
+  shallowWaterColor: {r: 0.3, g: 0.94, b: 0.84, a: 0.98}
+  sandColor: {r: 0.88, g: 0.76, b: 0.5, a: 1}
+  wetSandColor: {r: 0.53, g: 0.4, b: 0.22, a: 1}
+  deepSandColor: {r: 0.25, g: 0.19, b: 0.1, a: 1}
+  deepWaterColor: {r: 0, g: 0.16470589, b: 0.42352945, a: 0.9372549}
+  mainWaterColor: {r: 0.007843138, g: 0.5058824, b: 0.6431373, a: 0.97}
+  surfaceWaterColor: {r: 0.2509804, g: 0.7843138, b: 0.7411765, a: 0.99}
+  foamColor: {r: 0.9960785, g: 0.9960785, b: 0.9803922, a: 1}
+  surfaceBand: 0.38
+  colourBrightness: 1
+  foamSpeedThreshold: 4.5
+  foamGeneration: 2.2
+  foamDecay: 1.05
+  foamTurbulence: 1.2
+  foamRenderStrength: 1
+  foamBottomSuppression: 0.55
+  foamSurfaceDensity: 0.62
+  renderedParticleSize: 0.035
+  edgeSoftness: 0.28
+  boardParticlePadding: 0.01
+  boardParticlePush: 8
+  boardVelocityTransfer: 0.18
+  boardParticleDrain: 14
+  boardSurfaceGrip: 0.08
+  boardParticleRadiusScale: 0.28
+--- !u!1 &7449495640469318726
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5141993288627258650}
+  - component: {fileID: 7421210239724778337}
+  m_Layer: 0
+  m_Name: Tropical Seabed
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5141993288627258650
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7449495640469318726}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5638167633716789901}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7421210239724778337
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7449495640469318726}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c8f43bce5aa4f58a798e151d836dfea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PixelOcean.TropicalSeabed
+  sandParticleShader: {fileID: 4800000, guid: 521e1368423f4cf0bf6939f3ea9918dc, type: 3}
+  columns: 180
+  layers: 48
+  grainSpacing: 0.045
+  grainSize: 0.028
+  grainJitter: 0.28
+  colourVariation: 0.22
+--- !u!1 &7486909937330810892
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6061519855691760076}
+  - component: {fileID: 6092437946292329221}
+  m_Layer: 0
+  m_Name: Pixel Water GPU V2 (3)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6061519855691760076
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7486909937330810892}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -1.52148, y: 3.75, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8836063570559481678}
+  m_Father: {fileID: 8332830430625356640}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6092437946292329221
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7486909937330810892}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad1ac2ef6df955e498cef8e63b7dc790, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PixelOcean.PixelWaterGPU
+  simulationShader: {fileID: 7200000, guid: b8833bdeddba55b43baac6a4a940ba50, type: 3}
+  renderingMaterial: {fileID: 0}
+  columns: 190
+  rows: 90
+  particleSpacing: 0.052
+  spawnOrigin: {x: -7.7595778, y: -0.0880003}
+  tankMinimum: {x: -12.159583, y: -5.5880003}
+  tankMaximum: {x: 4.8404293, y: 5.4119997}
+  particleRadius: 0.022
+  interactionRadius: 0.075
+  pressureStrength: 100
+  viscosity: 1.4
+  gravity: {x: 0, y: -9.81}
+  boundaryBounce: 0.08
+  maximumSpeed: 2
+  substeps: 3
+  simulationRate: 120
+  waveEmitterEnabled: 1
+  surfWaveType: 2
+  waveEmitterWidth: 2.65
+  waveHorizontalForce: 40
+  waveVerticalForce: 30
+  waveFrequency: 0.28
+  waveVerticalVariation: 0.28
+  wavePulseSharpness: 3.2
+  layeredWaveEnabled: 0
+  waveLayerCount: 3
+  waveLayerPhaseOffset: 0.34
+  deepSurgeForce: 13
+  bodyPushForce: 10
+  crestLiftForce: 17
+  crestLayerThickness: 0.24
+  layerCompression: 0.72
+  layerForwardStacking: 9
+  lipThrowBoost: 8
+  bigWaveScale: 1.35
+  synchronizeBigWaveEmitters: 0
+  independentEmitterScale: 1.7
+  independentEmitterWidthScale: 1.35
+  independentEmitterLiftScale: 1.35
+  independentEmitterPushScale: 1.25
+  createIndependentWaveLayers: 0
+  independentLayerCount: 4
+  independentLayerDelay: 0.18
+  independentLayerBackOffset: 0.34
+  independentLayerVerticalOffset: 0.055
+  independentLayerDepthOffset: 0.06
+  independentLayerScaleFalloff: 0.94
+  independentLayerRiseCurve: 1.15
+  independentLayerShade: 0.12
+  independentLayerAlphaLoss: 0.035
+  independentLayerForceFalloff: 0.94
+  runtimeLayerPosition: {x: 0, y: 0}
+  runtimeLayerRenderDepth: 0
+  runtimeLayerWaveDelay: 0
+  cascadeMode: 0
+  cascadeEchoCount: 3
+  cascadeDelay: 0.18
+  cascadeBackOffset: 0.42
+  cascadeVerticalOffset: 0.12
+  cascadeAmplitudeFalloff: 0.88
+  cascadeSpeedFalloff: 0.94
+  cascadeCurlRetention: 0.96
+  cascadeVolumeForce: 9.5
+  cascadeStackLift: 7.5
+  cascadeBandThickness: 0.28
+  cascadeBlend: 1
+  breakPoint: 0.73
+  breakZoneWidth: 0.17
+  shoalingStrength: 10
+  curlForwardStrength: 17
+  curlDownStrength: 7.5
+  curlRotationStrength: 12
+  curlRadius: 0.68
+  crestSurfaceBand: 0.38
+  shoreStart: 0.35
+  shallowZoneWidth: 0.5
+  beachHeight: 0.12194979
+  horizontalSeabedEnabled: 1
+  horizontalSeabedHeight: -3.0880003
+  beachCurve: 0.82
+  shoreFriction: 0.32
+  shallowWaterColor: {r: 0.3, g: 0.94, b: 0.84, a: 0.98}
+  sandColor: {r: 0.88, g: 0.76, b: 0.5, a: 1}
+  wetSandColor: {r: 0.53, g: 0.4, b: 0.22, a: 1}
+  deepSandColor: {r: 0.25, g: 0.19, b: 0.1, a: 1}
+  deepWaterColor: {r: 0, g: 0.16470589, b: 0.42352945, a: 0.9372549}
+  mainWaterColor: {r: 0.007843138, g: 0.5058824, b: 0.6431373, a: 0.97}
+  surfaceWaterColor: {r: 0.2509804, g: 0.7843138, b: 0.7411765, a: 0.99}
+  foamColor: {r: 0.9960785, g: 0.9960785, b: 0.9803922, a: 1}
+  surfaceBand: 0.38
+  colourBrightness: 1
+  foamSpeedThreshold: 4.5
+  foamGeneration: 2.2
+  foamDecay: 1.05
+  foamTurbulence: 1.2
+  foamRenderStrength: 1
+  foamBottomSuppression: 0.55
+  foamSurfaceDensity: 0.62
+  renderedParticleSize: 0.035
+  edgeSoftness: 0.28
+  boardParticlePadding: 0.01
+  boardParticlePush: 8
+  boardVelocityTransfer: 0.18
+  boardParticleDrain: 14
+  boardSurfaceGrip: 0.08
+  boardParticleRadiusScale: 0.28
+--- !u!1 &7606355680561977038
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8836063570559481678}
+  - component: {fileID: 8055007018600961189}
+  m_Layer: 0
+  m_Name: Tropical Seabed
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8836063570559481678
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7606355680561977038}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6061519855691760076}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8055007018600961189
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7606355680561977038}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c8f43bce5aa4f58a798e151d836dfea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PixelOcean.TropicalSeabed
+  sandParticleShader: {fileID: 4800000, guid: 521e1368423f4cf0bf6939f3ea9918dc, type: 3}
+  columns: 180
+  layers: 48
+  grainSpacing: 0.045
+  grainSize: 0.028
+  grainJitter: 0.28
+  colourVariation: 0.22
+--- !u!1 &8346545719819902305
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2750329559427770759}
+  - component: {fileID: 4677608363808697967}
+  m_Layer: 0
+  m_Name: Tropical Seabed
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2750329559427770759
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8346545719819902305}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4423188565835397127}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4677608363808697967
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8346545719819902305}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c8f43bce5aa4f58a798e151d836dfea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PixelOcean.TropicalSeabed
+  sandParticleShader: {fileID: 4800000, guid: 521e1368423f4cf0bf6939f3ea9918dc, type: 3}
+  columns: 180
+  layers: 48
+  grainSpacing: 0.045
+  grainSize: 0.028
+  grainJitter: 0.28
+  colourVariation: 0.22

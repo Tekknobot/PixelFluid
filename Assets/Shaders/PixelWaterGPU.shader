@@ -6,7 +6,11 @@ Shader "PixelOcean/GPU Particle Water"
         _MainWaterColor ("Main Water", Color) = (0.02, 0.38, 0.90, 0.96)
         _SurfaceWaterColor ("Surface Water", Color) = (0.10, 0.75, 1.00, 0.98)
         _FoamColor ("Foam", Color) = (0.95, 0.99, 1.00, 1.00)
+        _ShallowWaterColor ("Shallow Water", Color) = (0.26, 0.92, 0.82, 0.98)
+        _ShoreStart ("Shore Start", Range(0,1)) = 0.68
+        _ShallowZoneWidth ("Shallow Zone Width", Range(0.05,0.45)) = 0.24
         _ParticleSize ("Particle Size", Float) = 0.035
+        _LayerDepthOffset ("Layer Depth Offset", Float) = 0
         _SurfaceBand ("Surface Band", Range(0,1)) = 0.38
         _ColourBrightness ("Colour Brightness", Range(0,2)) = 1
         _FoamRenderStrength ("Foam Strength", Range(0,2)) = 1
@@ -43,15 +47,19 @@ Shader "PixelOcean/GPU Particle Water"
             float4 _MainWaterColor;
             float4 _SurfaceWaterColor;
             float4 _FoamColor;
+            float4 _ShallowWaterColor;
             float2 _TankMin;
             float2 _TankMax;
             float _ParticleSize;
+            float _LayerDepthOffset;
             float _SurfaceBand;
             float _ColourBrightness;
             float _FoamRenderStrength;
             float _EdgeSoftness;
             float _FoamBottomSuppression;
             float _FoamSurfaceDensity;
+            float _ShoreStart;
+            float _ShallowZoneWidth;
 
             struct Attributes
             {
@@ -68,6 +76,7 @@ Shader "PixelOcean/GPU Particle Water"
                 float speed01 : TEXCOORD3;
                 float density : TEXCOORD4;
                 float foam : TEXCOORD5;
+                float horizontal01 : TEXCOORD6;
             };
 
             Varyings Vert(Attributes input)
@@ -80,7 +89,11 @@ Shader "PixelOcean/GPU Particle Water"
 
                 Particle particle = _Particles[input.instanceID];
                 float2 corner = corners[input.vertexID];
-                float3 worldPosition = float3(particle.position + corner * _ParticleSize, 0.0);
+                // Independent delayed simulations render on consecutive
+                // depth planes behind the master wave.
+                float3 worldPosition = float3(
+                    particle.position + corner * _ParticleSize,
+                    _LayerDepthOffset);
 
                 Varyings output;
                 output.positionCS = TransformWorldToHClip(worldPosition);
@@ -90,6 +103,7 @@ Shader "PixelOcean/GPU Particle Water"
                 output.speed01 = saturate(length(particle.velocity) / 12.0);
                 output.density = particle.density;
                 output.foam = particle.foam;
+                output.horizontal01 = saturate((particle.position.x - _TankMin.x) / max(_TankMax.x - _TankMin.x, 0.001));
                 return output;
             }
 
@@ -108,7 +122,15 @@ Shader "PixelOcean/GPU Particle Water"
 
                 half3 colour = lerp(_DeepWaterColor.rgb, _MainWaterColor.rgb, deepToMain);
                 colour = lerp(colour, _SurfaceWaterColor.rgb, mainToSurface);
-                colour += input.speed01 * 0.12 + (1.0 - input.density) * input.speed01 * 0.14;
+
+                // Tropical shallows begin over the final third of the tank and widen gradually.
+                float shoreMask = smoothstep(_ShoreStart - _ShallowZoneWidth, _ShoreStart + _ShallowZoneWidth, input.horizontal01);
+                float shallowDepthMask = smoothstep(0.08, 0.72, input.height01);
+                float shallowBlend = shoreMask * shallowDepthMask;
+                colour = lerp(colour, _ShallowWaterColor.rgb, shallowBlend * 0.82);
+
+                // Clear tropical water is brighter at the surface but remains dark at depth.
+                colour += input.speed01 * 0.08 + (1.0 - input.density) * input.speed01 * 0.10;
                 colour *= _ColourBrightness;
 
                 float bottomMask = smoothstep(_FoamBottomSuppression * 0.45, _FoamBottomSuppression, input.heightAboveBottom);

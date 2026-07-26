@@ -30,13 +30,17 @@ Material:
     - _FoamBottomSuppression: 0.55
     - _FoamRenderStrength: 1
     - _FoamSurfaceDensity: 0.62
+    - _LayerDepthOffset: 0
     - _ParticleSize: 0.035
+    - _ShallowZoneWidth: 0.5
+    - _ShoreStart: 0.35
     - _SurfaceBand: 0.38
     m_Colors:
-    - _DeepWaterColor: {r: 0.01, g: 0.1, b: 0.32, a: 0.96}
-    - _FoamColor: {r: 0.95, g: 0.99, b: 1, a: 1}
-    - _MainWaterColor: {r: 0.02, g: 0.38, b: 0.9, a: 0.96}
-    - _SurfaceWaterColor: {r: 0.1, g: 0.75, b: 1, a: 0.98}
+    - _DeepWaterColor: {r: 0, g: 0.16470589, b: 0.42352945, a: 0.9372549}
+    - _FoamColor: {r: 0.9960785, g: 0.9960785, b: 0.9803922, a: 1}
+    - _MainWaterColor: {r: 0.007843138, g: 0.5058824, b: 0.6431373, a: 0.97}
+    - _ShallowWaterColor: {r: 0.3, g: 0.94, b: 0.84, a: 0.98}
+    - _SurfaceWaterColor: {r: 0.2509804, g: 0.7843138, b: 0.7411765, a: 0.99}
     - _WaterColor: {r: 0.05, g: 0.5, b: 1, a: 0.95}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

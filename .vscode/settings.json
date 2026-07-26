@@ -67,5 +67,5 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "PixelOcean.slnx"
+    "dotnet.defaultSolution": "PixelFluid.slnx"
 }
