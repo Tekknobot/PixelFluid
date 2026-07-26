@@ -45,7 +45,7 @@ namespace PixelOcean
         [SerializeField, Range(0f, 1f)] private float flipChance = 0.45f;
 
         [Header("8x8 Pixel Look")]
-        [SerializeField, Min(0.005f)] private float pixelWorldSize = 0.025f;
+        [SerializeField, Min(0.005f)] private float pixelWorldSize = 0.045f;
         [SerializeField] private int sortingOrder = 1;
         [SerializeField] private Color bodyColor = new(0.12f, 0.08f, 0.06f, 1f);
         [SerializeField] private Color shirtColor = new(0.95f, 0.32f, 0.12f, 1f);
