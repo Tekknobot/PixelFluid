@@ -12,8 +12,6 @@ namespace PixelOcean
     {
         private PixelWaterGPU water;
         private SurfboardController board;
-        private GUIStyle titleStyle;
-        private GUIStyle bodyStyle;
         private float bestRide;
         private float rideScore;
         private float sceneStartTime;
@@ -394,28 +392,6 @@ namespace PixelOcean
             SetRide(score, riding);
         }
 
-        private void OnGUI()
-        {
-            titleStyle ??= new GUIStyle(GUI.skin.label)
-            {
-                fontSize = 19,
-                fontStyle = FontStyle.Bold,
-                normal = { textColor = Color.white }
-            };
-            bodyStyle ??= new GUIStyle(GUI.skin.label)
-            {
-                fontSize = 14,
-                normal = { textColor = Color.white }
-            };
 
-            GUI.Box(new Rect(16, 16, 430, 112), GUIContent.none);
-            GUI.Label(new Rect(30, 25, 390, 26), "TROPICAL BREAK", titleStyle);
-            GUI.Label(new Rect(30, 53, 400, 22), message, bodyStyle);
-
-            string controls = board == null
-                ? "B — spawn board"
-                : $"A / D steer   B respawn   Ride: {Mathf.RoundToInt(rideScore * 10f)}   Best: {Mathf.RoundToInt(bestRide * 10f)}";
-            GUI.Label(new Rect(30, 78, 400, 22), controls, bodyStyle);
-        }
     }
 }

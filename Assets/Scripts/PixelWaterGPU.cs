@@ -110,6 +110,20 @@ namespace PixelOcean
         private Vector2 appliedTransformPosition;
         private bool transformOriginInitialised;
 
+        [Header("Startup Preswarm")]
+        [Tooltip("Starts every manually duplicated simulation with particles already dropping and moving.")]
+        [SerializeField] private bool preswarmOnStart = true;
+        [Tooltip("Raises the starting water particles so they visibly fall into the tank.")]
+        [SerializeField, Range(0f, 4f)] private float startupDropHeight = 1.15f;
+        [Tooltip("Initial downward speed applied to every particle.")]
+        [SerializeField, Range(0f, 8f)] private float startupDownwardSpeed = 2.4f;
+        [Tooltip("Small height variation that prevents the whole water block falling as one rigid rectangle.")]
+        [SerializeField, Range(0f, 1f)] private float startupDropVariation = 0.28f;
+        [Tooltip("Simulation steps calculated immediately before the first rendered frame.")]
+        [SerializeField, Range(0, 120)] private int startupPreswarmSteps = 24;
+        [Tooltip("Time step used for each startup preswarm simulation step.")]
+        [SerializeField, Range(0.001f, 0.033f)] private float startupPreswarmDelta = 0.008333f;
+
         [Header("Runtime Layer Position")]
         [Tooltip("Adjust this while Play Mode is running. It moves this simulation's real GPU particles, tank, emitter and seabed together.")]
         [SerializeField] private Vector2 runtimeLayerPosition;
@@ -817,10 +831,29 @@ namespace PixelOcean
                 for (int x = 0; x < columns; x++)
                 {
                     float stagger = (y & 1) == 0 ? 0f : particleSpacing * 0.5f;
+                    float dropNoise = Mathf.Sin(
+                        x * 12.9898f +
+                        y * 78.233f +
+                        gameObject.transform.position.x * 17.37f +
+                        gameObject.transform.position.y * 9.81f) * 43758.5453f;
+                        dropNoise = Mathf.Repeat(dropNoise, 1f);
+
+                    float startLift = preswarmOnStart
+                        ? startupDropHeight +
+                          (dropNoise - 0.5f) * startupDropVariation
+                        : 0f;
+
+                    float downwardVelocity = preswarmOnStart
+                        ? -startupDownwardSpeed *
+                          Mathf.Lerp(0.82f, 1.18f, dropNoise)
+                        : 0f;
+
                     initialParticles[index++] = new GPUParticle
                     {
-                        Position = spawnOrigin + new Vector2(x * particleSpacing + stagger, y * particleSpacing),
-                        Velocity = Vector2.zero,
+                        Position = spawnOrigin + new Vector2(
+                            x * particleSpacing + stagger,
+                            y * particleSpacing + startLift),
+                        Velocity = new Vector2(0f, downwardVelocity),
                         Density = 0f,
                         Foam = 0f
                     };
@@ -856,8 +889,41 @@ namespace PixelOcean
 
             renderBounds = new Bounds(
                 (Vector3)((tankMinimum + tankMaximum) * 0.5f),
-                new Vector3(tankMaximum.x - tankMinimum.x + 2f, tankMaximum.y - tankMinimum.y + 2f, 10f)
+                new Vector3(
+                    tankMaximum.x - tankMinimum.x + 2f,
+                    tankMaximum.y - tankMinimum.y +
+                    startupDropHeight +
+                    startupDropVariation +
+                    2f,
+                    10f)
             );
+
+            PreswarmStartupSimulation();
+        }
+
+        private void PreswarmStartupSimulation()
+        {
+            if (!preswarmOnStart ||
+                startupPreswarmSteps <= 0 ||
+                particleBuffers == null)
+            {
+                return;
+            }
+
+            float delta = Mathf.Clamp(
+                startupPreswarmDelta,
+                0.001f,
+                0.033f);
+
+            for (int i = 0; i < startupPreswarmSteps; i++)
+            {
+                simulationTime += delta;
+                DispatchSimulation(delta);
+            }
+
+            // Force a fresh surface sample after the startup fall has advanced.
+            hasParticleSurfaceSamples = false;
+            readbackPending = false;
         }
 
         private void ApplyRuntimeLayerInspectorChanges()

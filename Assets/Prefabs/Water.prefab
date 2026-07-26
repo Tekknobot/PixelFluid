@@ -46,27 +46,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PixelOcean.PixelWaterGPU
   simulationShader: {fileID: 7200000, guid: b8833bdeddba55b43baac6a4a940ba50, type: 3}
-  renderingMaterial: {fileID: 0}
-  columns: 190
-  rows: 90
+  renderingMaterial: {fileID: 2100000, guid: 8127f4053393d6f4a87ebd1fa6543df0, type: 2}
+  columns: 110
+  rows: 72
   particleSpacing: 0.052
-  spawnOrigin: {x: -7.7595778, y: 0.31814957}
-  tankMinimum: {x: -12.159583, y: -4.1818504}
-  tankMaximum: {x: 4.8404293, y: 4.8181496}
+  spawnOrigin: {x: -4.1, y: -2.2}
+  tankMinimum: {x: -14.5, y: -2.5}
+  tankMaximum: {x: 14.5, y: 2.5}
   particleRadius: 0.022
   interactionRadius: 0.075
-  pressureStrength: 100
+  pressureStrength: 38
   viscosity: 1.4
   gravity: {x: 0, y: -9.81}
   boundaryBounce: 0.08
-  maximumSpeed: 2
+  maximumSpeed: 22
   substeps: 3
   simulationRate: 120
   waveEmitterEnabled: 1
   surfWaveType: 2
-  waveEmitterWidth: 2.65
-  waveHorizontalForce: 40
-  waveVerticalForce: 30
+  waveEmitterWidth: 1.65
+  waveHorizontalForce: 21
+  waveVerticalForce: 6.5
   waveFrequency: 0.28
   waveVerticalVariation: 0.28
   wavePulseSharpness: 3.2
@@ -81,22 +81,28 @@ MonoBehaviour:
   layerForwardStacking: 9
   lipThrowBoost: 8
   bigWaveScale: 1.35
-  synchronizeBigWaveEmitters: 0
+  synchronizeBigWaveEmitters: 1
   independentEmitterScale: 1.7
   independentEmitterWidthScale: 1.35
   independentEmitterLiftScale: 1.35
   independentEmitterPushScale: 1.25
   createIndependentWaveLayers: 0
-  independentLayerCount: 4
+  independentLayerCount: 1
   independentLayerDelay: 0.18
-  independentLayerBackOffset: 0.34
-  independentLayerVerticalOffset: 0.055
+  independentLayerBackOffset: 0.08
+  independentLayerVerticalOffset: 0.34
   independentLayerDepthOffset: 0.06
-  independentLayerScaleFalloff: 0.94
-  independentLayerRiseCurve: 1.15
+  independentLayerScaleFalloff: 1
+  independentLayerRiseCurve: 1
   independentLayerShade: 0.12
   independentLayerAlphaLoss: 0.035
-  independentLayerForceFalloff: 0.94
+  independentLayerForceFalloff: 1
+  preswarmOnStart: 1
+  startupDropHeight: 1.15
+  startupDownwardSpeed: 2.4
+  startupDropVariation: 0.28
+  startupPreswarmSteps: 24
+  startupPreswarmDelta: 0.008333
   runtimeLayerPosition: {x: 0, y: 0}
   runtimeLayerRenderDepth: 0
   runtimeLayerWaveDelay: 0
@@ -120,25 +126,25 @@ MonoBehaviour:
   curlRotationStrength: 12
   curlRadius: 0.68
   crestSurfaceBand: 0.38
-  shoreStart: 0.35
-  shallowZoneWidth: 0.5
-  beachHeight: 0.12
+  shoreStart: 0.62
+  shallowZoneWidth: 0.3
+  beachHeight: 0.64
   horizontalSeabedEnabled: 1
-  horizontalSeabedHeight: -3.1818502
+  horizontalSeabedHeight: -2.05
   beachCurve: 0.82
   shoreFriction: 0.32
   shallowWaterColor: {r: 0.3, g: 0.94, b: 0.84, a: 0.98}
   sandColor: {r: 0.88, g: 0.76, b: 0.5, a: 1}
   wetSandColor: {r: 0.53, g: 0.4, b: 0.22, a: 1}
   deepSandColor: {r: 0.25, g: 0.19, b: 0.1, a: 1}
-  deepWaterColor: {r: 0, g: 0.16470589, b: 0.42352945, a: 0.9372549}
-  mainWaterColor: {r: 0.007843138, g: 0.5058824, b: 0.6431373, a: 0.97}
-  surfaceWaterColor: {r: 0.2509804, g: 0.7843138, b: 0.7411765, a: 0.99}
-  foamColor: {r: 0.9960785, g: 0.9960785, b: 0.9803922, a: 1}
+  deepWaterColor: {r: 0.015, g: 0.16, b: 0.2, a: 0.98}
+  mainWaterColor: {r: 0.02, g: 0.5, b: 0.58, a: 0.97}
+  surfaceWaterColor: {r: 0.16, g: 0.82, b: 0.8, a: 0.99}
+  foamColor: {r: 0.95, g: 0.99, b: 1, a: 1}
   surfaceBand: 0.38
   colourBrightness: 1
   foamSpeedThreshold: 4.5
-  foamGeneration: 2.2
+  foamGeneration: 10
   foamDecay: 1.05
   foamTurbulence: 1.2
   foamRenderStrength: 1
@@ -198,27 +204,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PixelOcean.PixelWaterGPU
   simulationShader: {fileID: 7200000, guid: b8833bdeddba55b43baac6a4a940ba50, type: 3}
-  renderingMaterial: {fileID: 0}
-  columns: 190
-  rows: 90
+  renderingMaterial: {fileID: 2100000, guid: 8127f4053393d6f4a87ebd1fa6543df0, type: 2}
+  columns: 110
+  rows: 72
   particleSpacing: 0.052
-  spawnOrigin: {x: -7.7595778, y: -0.783}
-  tankMinimum: {x: -12.159583, y: -9.283004}
-  tankMaximum: {x: 4.8404293, y: 7.7169933}
+  spawnOrigin: {x: -4.1, y: -2.2}
+  tankMinimum: {x: -14.5, y: -10.5}
+  tankMaximum: {x: 14.5, y: 10.5}
   particleRadius: 0.022
   interactionRadius: 0.075
-  pressureStrength: 100
+  pressureStrength: 38
   viscosity: 1.4
   gravity: {x: 0, y: -9.81}
   boundaryBounce: 0.08
-  maximumSpeed: 2
+  maximumSpeed: 22
   substeps: 3
   simulationRate: 120
   waveEmitterEnabled: 1
   surfWaveType: 2
-  waveEmitterWidth: 2.65
-  waveHorizontalForce: 40
-  waveVerticalForce: 30
+  waveEmitterWidth: 1.65
+  waveHorizontalForce: 21
+  waveVerticalForce: 6.5
   waveFrequency: 0.28
   waveVerticalVariation: 0.28
   wavePulseSharpness: 3.2
@@ -233,22 +239,28 @@ MonoBehaviour:
   layerForwardStacking: 9
   lipThrowBoost: 8
   bigWaveScale: 1.35
-  synchronizeBigWaveEmitters: 0
+  synchronizeBigWaveEmitters: 1
   independentEmitterScale: 1.7
   independentEmitterWidthScale: 1.35
   independentEmitterLiftScale: 1.35
   independentEmitterPushScale: 1.25
   createIndependentWaveLayers: 0
-  independentLayerCount: 4
+  independentLayerCount: 1
   independentLayerDelay: 0.18
-  independentLayerBackOffset: 0.34
-  independentLayerVerticalOffset: 0.055
+  independentLayerBackOffset: 0.08
+  independentLayerVerticalOffset: 0.34
   independentLayerDepthOffset: 0.06
-  independentLayerScaleFalloff: 0.94
-  independentLayerRiseCurve: 1.15
+  independentLayerScaleFalloff: 1
+  independentLayerRiseCurve: 1
   independentLayerShade: 0.12
   independentLayerAlphaLoss: 0.035
-  independentLayerForceFalloff: 0.94
+  independentLayerForceFalloff: 1
+  preswarmOnStart: 1
+  startupDropHeight: 1.15
+  startupDownwardSpeed: 2.4
+  startupDropVariation: 0.28
+  startupPreswarmSteps: 24
+  startupPreswarmDelta: 0.008333
   runtimeLayerPosition: {x: 0, y: 0}
   runtimeLayerRenderDepth: 0
   runtimeLayerWaveDelay: 0
@@ -272,25 +284,25 @@ MonoBehaviour:
   curlRotationStrength: 12
   curlRadius: 0.68
   crestSurfaceBand: 0.38
-  shoreStart: 0.35
-  shallowZoneWidth: 0.5
-  beachHeight: 0.3219999
+  shoreStart: 0.62
+  shallowZoneWidth: 0.3
+  beachHeight: 0.64
   horizontalSeabedEnabled: 1
-  horizontalSeabedHeight: -2.7829998
+  horizontalSeabedHeight: -2.05
   beachCurve: 0.82
   shoreFriction: 0.32
   shallowWaterColor: {r: 0.3, g: 0.94, b: 0.84, a: 0.98}
   sandColor: {r: 0.88, g: 0.76, b: 0.5, a: 1}
   wetSandColor: {r: 0.53, g: 0.4, b: 0.22, a: 1}
   deepSandColor: {r: 0.25, g: 0.19, b: 0.1, a: 1}
-  deepWaterColor: {r: 0, g: 0.16470589, b: 0.42352945, a: 0.9372549}
-  mainWaterColor: {r: 0.007843138, g: 0.5058824, b: 0.6431373, a: 0.97}
-  surfaceWaterColor: {r: 0.2509804, g: 0.7843138, b: 0.7411765, a: 0.99}
-  foamColor: {r: 0.9960785, g: 0.9960785, b: 0.9803922, a: 1}
+  deepWaterColor: {r: 0.015, g: 0.16, b: 0.2, a: 0.98}
+  mainWaterColor: {r: 0.02, g: 0.5, b: 0.58, a: 0.97}
+  surfaceWaterColor: {r: 0.16, g: 0.82, b: 0.8, a: 0.99}
+  foamColor: {r: 0.95, g: 0.99, b: 1, a: 1}
   surfaceBand: 0.38
   colourBrightness: 1
   foamSpeedThreshold: 4.5
-  foamGeneration: 2.2
+  foamGeneration: 10
   foamDecay: 1.05
   foamTurbulence: 1.2
   foamRenderStrength: 1
@@ -350,27 +362,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PixelOcean.PixelWaterGPU
   simulationShader: {fileID: 7200000, guid: b8833bdeddba55b43baac6a4a940ba50, type: 3}
-  renderingMaterial: {fileID: 0}
-  columns: 190
-  rows: 90
+  renderingMaterial: {fileID: 2100000, guid: 8127f4053393d6f4a87ebd1fa6543df0, type: 2}
+  columns: 110
+  rows: 72
   particleSpacing: 0.052
-  spawnOrigin: {x: -7.7595778, y: -0.487}
-  tankMinimum: {x: -12.159583, y: -6.987}
-  tankMaximum: {x: 4.8404293, y: 6.013}
+  spawnOrigin: {x: -4.1, y: -2.2}
+  tankMinimum: {x: -14.5, y: -6.5}
+  tankMaximum: {x: 14.5, y: 6.5}
   particleRadius: 0.022
   interactionRadius: 0.075
-  pressureStrength: 100
+  pressureStrength: 38
   viscosity: 1.4
   gravity: {x: 0, y: -9.81}
   boundaryBounce: 0.08
-  maximumSpeed: 2
+  maximumSpeed: 22
   substeps: 3
   simulationRate: 120
   waveEmitterEnabled: 1
   surfWaveType: 2
-  waveEmitterWidth: 2.65
-  waveHorizontalForce: 40
-  waveVerticalForce: 30
+  waveEmitterWidth: 1.65
+  waveHorizontalForce: 21
+  waveVerticalForce: 6.5
   waveFrequency: 0.28
   waveVerticalVariation: 0.28
   wavePulseSharpness: 3.2
@@ -385,22 +397,28 @@ MonoBehaviour:
   layerForwardStacking: 9
   lipThrowBoost: 8
   bigWaveScale: 1.35
-  synchronizeBigWaveEmitters: 0
+  synchronizeBigWaveEmitters: 1
   independentEmitterScale: 1.7
   independentEmitterWidthScale: 1.35
   independentEmitterLiftScale: 1.35
   independentEmitterPushScale: 1.25
   createIndependentWaveLayers: 0
-  independentLayerCount: 4
+  independentLayerCount: 1
   independentLayerDelay: 0.18
-  independentLayerBackOffset: 0.34
-  independentLayerVerticalOffset: 0.055
+  independentLayerBackOffset: 0.08
+  independentLayerVerticalOffset: 0.34
   independentLayerDepthOffset: 0.06
-  independentLayerScaleFalloff: 0.94
-  independentLayerRiseCurve: 1.15
+  independentLayerScaleFalloff: 1
+  independentLayerRiseCurve: 1
   independentLayerShade: 0.12
   independentLayerAlphaLoss: 0.035
-  independentLayerForceFalloff: 0.94
+  independentLayerForceFalloff: 1
+  preswarmOnStart: 1
+  startupDropHeight: 1.15
+  startupDownwardSpeed: 2.4
+  startupDropVariation: 0.28
+  startupPreswarmSteps: 24
+  startupPreswarmDelta: 0.008333
   runtimeLayerPosition: {x: 0, y: 0}
   runtimeLayerRenderDepth: 0
   runtimeLayerWaveDelay: 0
@@ -424,25 +442,25 @@ MonoBehaviour:
   curlRotationStrength: 12
   curlRadius: 0.68
   crestSurfaceBand: 0.38
-  shoreStart: 0.35
-  shallowZoneWidth: 0.5
-  beachHeight: 0.22094977
+  shoreStart: 0.62
+  shallowZoneWidth: 0.3
+  beachHeight: 0.64
   horizontalSeabedEnabled: 1
-  horizontalSeabedHeight: -2.987
+  horizontalSeabedHeight: -2.05
   beachCurve: 0.82
   shoreFriction: 0.32
   shallowWaterColor: {r: 0.3, g: 0.94, b: 0.84, a: 0.98}
   sandColor: {r: 0.88, g: 0.76, b: 0.5, a: 1}
   wetSandColor: {r: 0.53, g: 0.4, b: 0.22, a: 1}
   deepSandColor: {r: 0.25, g: 0.19, b: 0.1, a: 1}
-  deepWaterColor: {r: 0, g: 0.16470589, b: 0.42352945, a: 0.9372549}
-  mainWaterColor: {r: 0.007843138, g: 0.5058824, b: 0.6431373, a: 0.97}
-  surfaceWaterColor: {r: 0.2509804, g: 0.7843138, b: 0.7411765, a: 0.99}
-  foamColor: {r: 0.9960785, g: 0.9960785, b: 0.9803922, a: 1}
+  deepWaterColor: {r: 0.015, g: 0.16, b: 0.2, a: 0.98}
+  mainWaterColor: {r: 0.02, g: 0.5, b: 0.58, a: 0.97}
+  surfaceWaterColor: {r: 0.16, g: 0.82, b: 0.8, a: 0.99}
+  foamColor: {r: 0.95, g: 0.99, b: 1, a: 1}
   surfaceBand: 0.38
   colourBrightness: 1
   foamSpeedThreshold: 4.5
-  foamGeneration: 2.2
+  foamGeneration: 10
   foamDecay: 1.05
   foamTurbulence: 1.2
   foamRenderStrength: 1
@@ -640,27 +658,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PixelOcean.PixelWaterGPU
   simulationShader: {fileID: 7200000, guid: b8833bdeddba55b43baac6a4a940ba50, type: 3}
-  renderingMaterial: {fileID: 0}
-  columns: 190
-  rows: 90
+  renderingMaterial: {fileID: 2100000, guid: 8127f4053393d6f4a87ebd1fa6543df0, type: 2}
+  columns: 110
+  rows: 72
   particleSpacing: 0.052
-  spawnOrigin: {x: -7.7595778, y: -0.6309004}
-  tankMinimum: {x: -12.159583, y: -8.130895}
-  tankMaximum: {x: 4.8404293, y: 8.869101}
+  spawnOrigin: {x: -4.1, y: -2.2}
+  tankMinimum: {x: -14.5, y: -8.5}
+  tankMaximum: {x: 14.5, y: 8.5}
   particleRadius: 0.022
   interactionRadius: 0.075
-  pressureStrength: 100
+  pressureStrength: 38
   viscosity: 1.4
   gravity: {x: 0, y: -9.81}
   boundaryBounce: 0.08
-  maximumSpeed: 2
+  maximumSpeed: 22
   substeps: 3
   simulationRate: 120
   waveEmitterEnabled: 1
   surfWaveType: 2
-  waveEmitterWidth: 2.65
-  waveHorizontalForce: 40
-  waveVerticalForce: 30
+  waveEmitterWidth: 1.65
+  waveHorizontalForce: 21
+  waveVerticalForce: 6.5
   waveFrequency: 0.28
   waveVerticalVariation: 0.28
   wavePulseSharpness: 3.2
@@ -675,22 +693,28 @@ MonoBehaviour:
   layerForwardStacking: 9
   lipThrowBoost: 8
   bigWaveScale: 1.35
-  synchronizeBigWaveEmitters: 0
+  synchronizeBigWaveEmitters: 1
   independentEmitterScale: 1.7
   independentEmitterWidthScale: 1.35
   independentEmitterLiftScale: 1.35
   independentEmitterPushScale: 1.25
   createIndependentWaveLayers: 0
-  independentLayerCount: 4
+  independentLayerCount: 1
   independentLayerDelay: 0.18
-  independentLayerBackOffset: 0.34
-  independentLayerVerticalOffset: 0.055
+  independentLayerBackOffset: 0.08
+  independentLayerVerticalOffset: 0.34
   independentLayerDepthOffset: 0.06
-  independentLayerScaleFalloff: 0.94
-  independentLayerRiseCurve: 1.15
+  independentLayerScaleFalloff: 1
+  independentLayerRiseCurve: 1
   independentLayerShade: 0.12
   independentLayerAlphaLoss: 0.035
-  independentLayerForceFalloff: 0.94
+  independentLayerForceFalloff: 1
+  preswarmOnStart: 1
+  startupDropHeight: 1.15
+  startupDownwardSpeed: 2.4
+  startupDropVariation: 0.28
+  startupPreswarmSteps: 24
+  startupPreswarmDelta: 0.008333
   runtimeLayerPosition: {x: 0, y: 0}
   runtimeLayerRenderDepth: 0
   runtimeLayerWaveDelay: 0
@@ -714,25 +738,25 @@ MonoBehaviour:
   curlRotationStrength: 12
   curlRadius: 0.68
   crestSurfaceBand: 0.38
-  shoreStart: 0.35
-  shallowZoneWidth: 0.5
-  beachHeight: 0.472
+  shoreStart: 0.62
+  shallowZoneWidth: 0.3
+  beachHeight: 0.64
   horizontalSeabedEnabled: 1
-  horizontalSeabedHeight: -2.8809001
+  horizontalSeabedHeight: -2.05
   beachCurve: 0.82
   shoreFriction: 0.32
   shallowWaterColor: {r: 0.3, g: 0.94, b: 0.84, a: 0.98}
   sandColor: {r: 0.88, g: 0.76, b: 0.5, a: 1}
   wetSandColor: {r: 0.53, g: 0.4, b: 0.22, a: 1}
   deepSandColor: {r: 0.25, g: 0.19, b: 0.1, a: 1}
-  deepWaterColor: {r: 0, g: 0.16470589, b: 0.42352945, a: 0.9372549}
-  mainWaterColor: {r: 0.007843138, g: 0.5058824, b: 0.6431373, a: 0.97}
-  surfaceWaterColor: {r: 0.2509804, g: 0.7843138, b: 0.7411765, a: 0.99}
-  foamColor: {r: 0.9960785, g: 0.9960785, b: 0.9803922, a: 1}
+  deepWaterColor: {r: 0.015, g: 0.16, b: 0.2, a: 0.98}
+  mainWaterColor: {r: 0.02, g: 0.5, b: 0.58, a: 0.97}
+  surfaceWaterColor: {r: 0.16, g: 0.82, b: 0.8, a: 0.99}
+  foamColor: {r: 0.95, g: 0.99, b: 1, a: 1}
   surfaceBand: 0.38
   colourBrightness: 1
   foamSpeedThreshold: 4.5
-  foamGeneration: 2.2
+  foamGeneration: 10
   foamDecay: 1.05
   foamTurbulence: 1.2
   foamRenderStrength: 1
@@ -843,27 +867,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PixelOcean.PixelWaterGPU
   simulationShader: {fileID: 7200000, guid: b8833bdeddba55b43baac6a4a940ba50, type: 3}
-  renderingMaterial: {fileID: 0}
-  columns: 190
-  rows: 90
+  renderingMaterial: {fileID: 2100000, guid: 8127f4053393d6f4a87ebd1fa6543df0, type: 2}
+  columns: 110
+  rows: 72
   particleSpacing: 0.052
-  spawnOrigin: {x: -7.7595778, y: -0.0880003}
-  tankMinimum: {x: -12.159583, y: -5.5880003}
-  tankMaximum: {x: 4.8404293, y: 5.4119997}
+  spawnOrigin: {x: -4.1, y: -2.2}
+  tankMinimum: {x: -14.5, y: -4.5}
+  tankMaximum: {x: 14.5, y: 4.5}
   particleRadius: 0.022
   interactionRadius: 0.075
-  pressureStrength: 100
+  pressureStrength: 38
   viscosity: 1.4
   gravity: {x: 0, y: -9.81}
   boundaryBounce: 0.08
-  maximumSpeed: 2
+  maximumSpeed: 22
   substeps: 3
   simulationRate: 120
   waveEmitterEnabled: 1
   surfWaveType: 2
-  waveEmitterWidth: 2.65
-  waveHorizontalForce: 40
-  waveVerticalForce: 30
+  waveEmitterWidth: 1.65
+  waveHorizontalForce: 21
+  waveVerticalForce: 6.5
   waveFrequency: 0.28
   waveVerticalVariation: 0.28
   wavePulseSharpness: 3.2
@@ -878,22 +902,28 @@ MonoBehaviour:
   layerForwardStacking: 9
   lipThrowBoost: 8
   bigWaveScale: 1.35
-  synchronizeBigWaveEmitters: 0
+  synchronizeBigWaveEmitters: 1
   independentEmitterScale: 1.7
   independentEmitterWidthScale: 1.35
   independentEmitterLiftScale: 1.35
   independentEmitterPushScale: 1.25
   createIndependentWaveLayers: 0
-  independentLayerCount: 4
+  independentLayerCount: 1
   independentLayerDelay: 0.18
-  independentLayerBackOffset: 0.34
-  independentLayerVerticalOffset: 0.055
+  independentLayerBackOffset: 0.08
+  independentLayerVerticalOffset: 0.34
   independentLayerDepthOffset: 0.06
-  independentLayerScaleFalloff: 0.94
-  independentLayerRiseCurve: 1.15
+  independentLayerScaleFalloff: 1
+  independentLayerRiseCurve: 1
   independentLayerShade: 0.12
   independentLayerAlphaLoss: 0.035
-  independentLayerForceFalloff: 0.94
+  independentLayerForceFalloff: 1
+  preswarmOnStart: 1
+  startupDropHeight: 1.15
+  startupDownwardSpeed: 2.4
+  startupDropVariation: 0.28
+  startupPreswarmSteps: 24
+  startupPreswarmDelta: 0.008333
   runtimeLayerPosition: {x: 0, y: 0}
   runtimeLayerRenderDepth: 0
   runtimeLayerWaveDelay: 0
@@ -917,25 +947,25 @@ MonoBehaviour:
   curlRotationStrength: 12
   curlRadius: 0.68
   crestSurfaceBand: 0.38
-  shoreStart: 0.35
-  shallowZoneWidth: 0.5
-  beachHeight: 0.12194979
+  shoreStart: 0.62
+  shallowZoneWidth: 0.3
+  beachHeight: 0.64
   horizontalSeabedEnabled: 1
-  horizontalSeabedHeight: -3.0880003
+  horizontalSeabedHeight: -2.05
   beachCurve: 0.82
   shoreFriction: 0.32
   shallowWaterColor: {r: 0.3, g: 0.94, b: 0.84, a: 0.98}
   sandColor: {r: 0.88, g: 0.76, b: 0.5, a: 1}
   wetSandColor: {r: 0.53, g: 0.4, b: 0.22, a: 1}
   deepSandColor: {r: 0.25, g: 0.19, b: 0.1, a: 1}
-  deepWaterColor: {r: 0, g: 0.16470589, b: 0.42352945, a: 0.9372549}
-  mainWaterColor: {r: 0.007843138, g: 0.5058824, b: 0.6431373, a: 0.97}
-  surfaceWaterColor: {r: 0.2509804, g: 0.7843138, b: 0.7411765, a: 0.99}
-  foamColor: {r: 0.9960785, g: 0.9960785, b: 0.9803922, a: 1}
+  deepWaterColor: {r: 0.015, g: 0.16, b: 0.2, a: 0.98}
+  mainWaterColor: {r: 0.02, g: 0.5, b: 0.58, a: 0.97}
+  surfaceWaterColor: {r: 0.16, g: 0.82, b: 0.8, a: 0.99}
+  foamColor: {r: 0.95, g: 0.99, b: 1, a: 1}
   surfaceBand: 0.38
   colourBrightness: 1
   foamSpeedThreshold: 4.5
-  foamGeneration: 2.2
+  foamGeneration: 10
   foamDecay: 1.05
   foamTurbulence: 1.2
   foamRenderStrength: 1
