@@ -30,9 +30,19 @@ namespace PixelOcean
         private float nextRandomAttackTime;
         private float nextAllowedAttackTime;
         private bool attacking;
+        private bool autonomousRandomAttacks = true;
 
         public bool IsAttacking => attacking;
         public float MovementSpeedMultiplier => attacking ? attackSpeedMultiplier : 1f;
+        public bool IsInHitWindow => attacking && attackFrames != null && attackFrames.Length > 0 &&
+            frameIndex >= Mathf.Max(1, attackFrames.Length / 2);
+
+        public void SetAutonomousRandomAttacks(bool enabled)
+        {
+            autonomousRandomAttacks = enabled;
+            if (enabled) ScheduleRandomAttack();
+            else nextRandomAttackTime = float.PositiveInfinity;
+        }
 
         private void Awake()
         {
@@ -48,12 +58,12 @@ namespace PixelOcean
             frameIndex = 0;
             frameTimer = 0f;
             ShowFrame(swimFrames, 0);
-            ScheduleRandomAttack();
+            if (autonomousRandomAttacks) ScheduleRandomAttack();
         }
 
         private void Update()
         {
-            if (!attacking && Time.time >= nextRandomAttackTime)
+            if (autonomousRandomAttacks && !attacking && Time.time >= nextRandomAttackTime)
                 Attack();
 
             Sprite[] activeFrames = attacking ? attackFrames : swimFrames;
@@ -106,7 +116,7 @@ namespace PixelOcean
             frameTimer = 0f;
             nextAllowedAttackTime = Time.time + attackCooldown;
             ShowFrame(swimFrames, 0);
-            ScheduleRandomAttack();
+            if (autonomousRandomAttacks) ScheduleRandomAttack();
         }
 
         private void ScheduleRandomAttack()

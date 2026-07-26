@@ -17,7 +17,8 @@ namespace PixelOcean
         {
             Riding,
             TurningTrick,
-            SwitchingWave
+            SwitchingWave,
+            Dead
         }
 
         [Header("Wave Selection")]
@@ -56,6 +57,14 @@ namespace PixelOcean
         [SerializeField] private bool lockPlayerToScreenX = false;
         [SerializeField] private float playerScreenX = 0f;
 
+        [Header("Shark Death Response")]
+        [SerializeField, Min(0.25f)] private float deathDuration = 1.6f;
+        [SerializeField, Min(0f)] private float deathKnockUp = 0.7f;
+        [SerializeField, Min(0f)] private float deathSinkSpeed = 0.65f;
+        [SerializeField, Range(90f, 1080f)] private float deathSpinSpeed = 520f;
+        [SerializeField] private bool respawnAfterDeath = true;
+        [SerializeField, Min(0f)] private float respawnDelay = 0.7f;
+
         [Header("8x8 Pixel Look")]
         [SerializeField, Min(0.005f)] private float pixelWorldSize = 0.045f;
         [SerializeField] private int sortingOrder = 1;
@@ -84,14 +93,24 @@ namespace PixelOcean
         private bool previousJumpHeld;
         private bool previousLayerUpHeld;
         private bool previousLayerDownHeld;
+        private float deathTimer;
+        private float respawnTimer;
+        private Vector2 deathVelocity;
+        private Vector3 livingScale;
+        private Color livingColor = Color.white;
 
         public int CurrentWaveIndex => waveIndex;
         public PixelWaterGPU CurrentWave => currentWave;
         public float TravelDirection => direction;
+        public bool IsDead => state == RiderState.Dead;
+        public bool IsPlayerControlled => playerControlled;
 
         private void Awake()
         {
             EnsurePixelSprite();
+            EnsureSharkHitCollider();
+            livingScale = transform.localScale;
+            if (spriteRenderer != null) livingColor = spriteRenderer.color;
             RefreshWaveList();
             direction = startMovingRight ? 1f : -1f;
             PickWave(startingWaveIndex, true);
@@ -102,6 +121,99 @@ namespace PixelOcean
         {
             if (runtimeSprite != null) Destroy(runtimeSprite);
             if (runtimeTexture != null) Destroy(runtimeTexture);
+        }
+
+        private void EnsureSharkHitCollider()
+        {
+            Collider2D collider = GetComponent<Collider2D>();
+            if (collider == null)
+            {
+                CircleCollider2D circle = gameObject.AddComponent<CircleCollider2D>();
+                circle.isTrigger = true;
+                circle.radius = 0.28f;
+                collider = circle;
+            }
+
+            Rigidbody2D body = GetComponent<Rigidbody2D>();
+            if (body == null)
+                body = gameObject.AddComponent<Rigidbody2D>();
+            body.bodyType = RigidbodyType2D.Kinematic;
+            body.gravityScale = 0f;
+            body.freezeRotation = true;
+        }
+
+        public bool DieFromShark(Vector2 sharkPosition)
+        {
+            if (state == RiderState.Dead)
+                return false;
+
+            state = RiderState.Dead;
+            deathTimer = 0f;
+            respawnTimer = 0f;
+            float away = transform.position.x >= sharkPosition.x ? 1f : -1f;
+            deathVelocity = new Vector2(away * 0.8f, deathKnockUp);
+            livingScale = transform.localScale;
+            if (spriteRenderer != null)
+                livingColor = spriteRenderer.color;
+
+            Collider2D collider = GetComponent<Collider2D>();
+            if (collider != null) collider.enabled = false;
+            return true;
+        }
+
+        private void UpdateDeathResponse(float dt)
+        {
+            deathTimer += dt;
+            Vector3 position = transform.position;
+            deathVelocity.y -= deathSinkSpeed * dt;
+            position += (Vector3)(deathVelocity * dt);
+            transform.position = position;
+            transform.Rotate(0f, 0f, deathSpinSpeed * dt * (deathVelocity.x >= 0f ? -1f : 1f));
+
+            float normalized = Mathf.Clamp01(deathTimer / Mathf.Max(0.01f, deathDuration));
+            if (spriteRenderer != null)
+            {
+                Color faded = livingColor;
+                faded.a = 1f - normalized;
+                spriteRenderer.color = faded;
+            }
+
+            if (deathTimer < deathDuration)
+                return;
+
+            if (!respawnAfterDeath)
+            {
+                gameObject.SetActive(false);
+                return;
+            }
+
+            respawnTimer += dt;
+            if (respawnTimer >= respawnDelay)
+                RespawnAfterShark();
+        }
+
+        private void RespawnAfterShark()
+        {
+            if (simulations.Count == 0)
+                RefreshWaveList();
+            if (simulations.Count == 0)
+                return;
+
+            int safeWave = Mathf.Clamp(waveIndex, 0, simulations.Count - 1);
+            PickWave(safeWave, true);
+            Vector3 p = GetStartingPosition(currentWave);
+            p.x = ClampPlayerXToSandbox((currentWave.TankMinimum.x + currentWave.TankMaximum.x) * 0.5f);
+            localRideX = p.x;
+            transform.position = p;
+            transform.rotation = Quaternion.identity;
+            transform.localScale = livingScale;
+            direction = 1f;
+            state = RiderState.Riding;
+            deathTimer = 0f;
+            respawnTimer = 0f;
+            if (spriteRenderer != null) spriteRenderer.color = livingColor;
+            Collider2D collider = GetComponent<Collider2D>();
+            if (collider != null) collider.enabled = true;
         }
 
         public void ConfigureGeneratedSurfer(
@@ -158,6 +270,12 @@ namespace PixelOcean
 
         private void Update()
         {
+            if (state == RiderState.Dead)
+            {
+                UpdateDeathResponse(Time.deltaTime);
+                return;
+            }
+
             if (simulations.Count == 0)
             {
                 RefreshWaveList();
