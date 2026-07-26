@@ -17,8 +17,8 @@ namespace PixelOcean
         [SerializeField, Range(0f, 0.35f)] private float viewportPadding = 0.045f;
 
         [Header("Predator Awareness")]
-        [SerializeField, Min(0.5f)] private float detectionRange = 8f;
-        [SerializeField, Min(0.1f)] private float loseTargetRange = 11f;
+        [SerializeField, Min(0.5f)] private float detectionRange = 0.3f;
+        [SerializeField, Min(0.1f)] private float loseTargetRange = 0.4f;
         [SerializeField, Min(0.1f)] private float attackRange = 1.15f;
         [SerializeField, Min(0.05f)] private float hitRange = 0.72f;
         [SerializeField, Range(1f, 3f)] private float stalkSpeedMultiplier = 1.35f;
@@ -130,7 +130,7 @@ namespace PixelOcean
             Vector2 waterVelocity = GetLaneVelocity(currentLane, position.x);
             float swimSpeed = horizontalSpeed * speedMultiplier + waterVelocity.x * currentInfluence;
             position.x += direction * Mathf.Max(0.08f, swimSpeed) * Time.fixedDeltaTime;
-            KeepInsideVisibleScreen(ref position);
+            KeepInsideGameArea(ref position);
 
             if (!changingLane && (sharkAnimation == null || !sharkAnimation.IsAttacking))
             {
@@ -285,20 +285,31 @@ namespace PixelOcean
                 waterLayers[clamped + 1].GetGameplayWaveVelocity(worldX), 0.5f);
         }
 
-        private void KeepInsideVisibleScreen(ref Vector2 position)
+        private void KeepInsideGameArea(ref Vector2 position)
         {
             float minX = waterLayers[0].TankMinimum.x;
             float maxX = waterLayers[0].TankMaximum.x;
-            if (gameplayCamera != null && gameplayCamera.orthographic)
+
+            float halfWidth =
+                spriteRenderer != null
+                    ? spriteRenderer.bounds.extents.x
+                    : 0.45f;
+
+            minX += halfWidth;
+            maxX -= halfWidth;
+
+            if (position.x > maxX)
             {
-                float zDistance = Mathf.Abs(gameplayCamera.transform.position.z - transform.position.z);
-                minX = Mathf.Max(minX, gameplayCamera.ViewportToWorldPoint(new Vector3(viewportPadding, 0.5f, zDistance)).x);
-                maxX = Mathf.Min(maxX, gameplayCamera.ViewportToWorldPoint(new Vector3(1f - viewportPadding, 0.5f, zDistance)).x);
+                position.x = maxX;
+                direction = -1f;
+                spriteRenderer.flipX = true;
             }
-            float halfWidth = spriteRenderer != null ? spriteRenderer.bounds.extents.x : 0.45f;
-            minX += halfWidth; maxX -= halfWidth;
-            if (position.x >= maxX) { position.x = maxX; direction = -1f; if (spriteRenderer != null) spriteRenderer.flipX = true; }
-            else if (position.x <= minX) { position.x = minX; direction = 1f; if (spriteRenderer != null) spriteRenderer.flipX = false; }
+            else if (position.x < minX)
+            {
+                position.x = minX;
+                direction = 1f;
+                spriteRenderer.flipX = false;
+            }
         }
 
         private float GetVisibleHorizontalCentre() => gameplayCamera != null && gameplayCamera.orthographic

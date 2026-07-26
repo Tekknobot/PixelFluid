@@ -651,9 +651,9 @@ MonoBehaviour:
   shoreStart: 0.62
   shallowZoneWidth: 0.3
   beachHeight: 0.64
-  singlePlayerModeEnabled: 0
-  singlePlayerScrollSpeed: 1.56
-  singlePlayerBoostMultiplier: 2
+  singlePlayerModeEnabled: 1
+  singlePlayerScrollSpeed: 1.25
+  singlePlayerBoostMultiplier: 1.25
   horizontalSeabedEnabled: 1
   horizontalSeabedHeight: -2.05
   beachCurve: 0.35
@@ -677,6 +677,11 @@ MonoBehaviour:
   foamSurfaceDensity: 0.62
   renderedParticleSize: 0.035
   edgeSoftness: 0.28
+  interleavedRenderingEnabled: 1
+  interleavedWaterBandCount: 4
+  interleavedBaseRenderQueue: 3000
+  interleavedQueueStep: 2
+  interleavedBandOverlap: 0.04
   boardParticlePadding: 0.01
   boardParticlePush: 8
   boardVelocityTransfer: 0.18
