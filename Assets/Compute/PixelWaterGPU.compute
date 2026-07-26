@@ -1,0 +1,202 @@
+#pragma kernel ClearGrid
+#pragma kernel BuildGrid
+#pragma kernel Simulate
+
+struct Particle
+{
+    float2 position;
+    float2 velocity;
+    float density;
+    float foam;
+};
+
+StructuredBuffer<Particle> _ReadParticles;
+RWStructuredBuffer<Particle> _WriteParticles;
+RWStructuredBuffer<int> _CellHeads;
+RWStructuredBuffer<int> _NextParticle;
+
+int _ParticleCount;
+int2 _GridSize;
+float2 _TankMin;
+float2 _TankMax;
+float _CellSize;
+float _InteractionRadius;
+float _DeltaTime;
+float2 _Gravity;
+float _PressureStrength;
+float _Viscosity;
+float _BoundaryBounce;
+float _ParticleRadius;
+float _MaximumSpeed;
+float _FoamSpeedThreshold;
+float _FoamGeneration;
+float _FoamDecay;
+float _FoamTurbulence;
+float _FoamBottomSuppression;
+float _FoamSurfaceDensity;
+float _SimulationTime;
+int _WaveEnabled;
+float _WaveEmitterWidth;
+float _WaveHorizontalForce;
+float _WaveVerticalForce;
+float _WaveFrequency;
+float _WaveVerticalVariation;
+
+int GetCellIndex(float2 position)
+{
+    int2 cell = (int2)floor((position - _TankMin) / _CellSize);
+    cell = clamp(cell, int2(0, 0), _GridSize - 1);
+    return cell.y * _GridSize.x + cell.x;
+}
+
+[numthreads(64, 1, 1)]
+void ClearGrid(uint id : SV_DispatchThreadID)
+{
+    uint cellCount = (uint)(_GridSize.x * _GridSize.y);
+    if (id < cellCount)
+        _CellHeads[id] = -1;
+}
+
+[numthreads(64, 1, 1)]
+void BuildGrid(uint id : SV_DispatchThreadID)
+{
+    if (id >= (uint)_ParticleCount)
+        return;
+
+    int cellIndex = GetCellIndex(_ReadParticles[id].position);
+    int previous;
+    InterlockedExchange(_CellHeads[cellIndex], (int)id, previous);
+    _NextParticle[id] = previous;
+}
+
+[numthreads(64, 1, 1)]
+void Simulate(uint id : SV_DispatchThreadID)
+{
+    if (id >= (uint)_ParticleCount)
+        return;
+
+    Particle particle = _ReadParticles[id];
+    float2 force = _Gravity;
+    float neighbourWeight = 0.0;
+    float turbulence = 0.0;
+
+    int2 centreCell = (int2)floor((particle.position - _TankMin) / _CellSize);
+    centreCell = clamp(centreCell, int2(0, 0), _GridSize - 1);
+    float radiusSquared = _InteractionRadius * _InteractionRadius;
+
+    [loop]
+    for (int offsetY = -1; offsetY <= 1; offsetY++)
+    {
+        [loop]
+        for (int offsetX = -1; offsetX <= 1; offsetX++)
+        {
+            int2 cell = centreCell + int2(offsetX, offsetY);
+            if (cell.x < 0 || cell.y < 0 || cell.x >= _GridSize.x || cell.y >= _GridSize.y)
+                continue;
+
+            int neighbour = _CellHeads[cell.y * _GridSize.x + cell.x];
+            int guard = 0;
+
+            [loop]
+            while (neighbour >= 0 && guard < 128)
+            {
+                if (neighbour != (int)id)
+                {
+                    Particle other = _ReadParticles[neighbour];
+                    float2 offset = particle.position - other.position;
+                    float distanceSquared = dot(offset, offset);
+
+                    if (distanceSquared > 0.0000001 && distanceSquared < radiusSquared)
+                    {
+                        float distance = sqrt(distanceSquared);
+                        float influence = 1.0 - distance / _InteractionRadius;
+                        float2 direction = offset / distance;
+                        float2 relativeVelocity = other.velocity - particle.velocity;
+
+                        force += direction * (_PressureStrength * influence * influence);
+                        force += relativeVelocity * (_Viscosity * influence);
+                        neighbourWeight += influence;
+                        turbulence += length(relativeVelocity) * influence;
+                    }
+                }
+
+                neighbour = _NextParticle[neighbour];
+                guard++;
+            }
+        }
+    }
+
+    particle.density = saturate(neighbourWeight / 8.0);
+
+    if (_WaveEnabled != 0)
+    {
+        float distanceFromEmitter = particle.position.x - _TankMin.x;
+        float emitterMask = saturate(1.0 - distanceFromEmitter / max(_WaveEmitterWidth, 0.001));
+        emitterMask = emitterMask * emitterMask * (3.0 - 2.0 * emitterMask);
+
+        float tankHeight = max(_TankMax.y - _TankMin.y, 0.001);
+        float height01 = saturate((particle.position.y - _TankMin.y) / tankHeight);
+        float phase = _SimulationTime * 6.2831853 * _WaveFrequency;
+        float piston = sin(phase);
+        float lift = sin(phase - height01 * _WaveVerticalVariation);
+
+        force.x += piston * _WaveHorizontalForce * emitterMask;
+        force.y += lift * _WaveVerticalForce * emitterMask * saturate(0.2 + height01);
+    }
+
+    particle.velocity += force * _DeltaTime;
+
+    float speed = length(particle.velocity);
+    if (speed > _MaximumSpeed)
+    {
+        particle.velocity *= _MaximumSpeed / max(speed, 0.0001);
+        speed = _MaximumSpeed;
+    }
+
+    float heightAboveBottom = particle.position.y - _TankMin.y;
+    float bottomMask = smoothstep(_FoamBottomSuppression * 0.45, _FoamBottomSuppression, heightAboveBottom);
+    float surfaceExposure = saturate((_FoamSurfaceDensity - particle.density) / max(_FoamSurfaceDensity, 0.001));
+    surfaceExposure = surfaceExposure * surfaceExposure;
+
+    float speedFoam = saturate((speed - _FoamSpeedThreshold) / max(_FoamSpeedThreshold, 0.001));
+    float turbulenceFoam = saturate(turbulence * 0.08 * _FoamTurbulence);
+    float generatedFoam = max(speedFoam, turbulenceFoam) * surfaceExposure * bottomMask * _FoamGeneration;
+
+    float submergedDecay = lerp(2.25, 1.0, surfaceExposure);
+    particle.foam = saturate(particle.foam + generatedFoam * _DeltaTime - _FoamDecay * submergedDecay * _DeltaTime);
+
+    particle.position += particle.velocity * _DeltaTime;
+
+    float2 minimum = _TankMin + _ParticleRadius;
+    float2 maximum = _TankMax - _ParticleRadius;
+
+    if (particle.position.x < minimum.x)
+    {
+        particle.position.x = minimum.x;
+        if (particle.velocity.x < 0.0)
+            particle.velocity.x *= -_BoundaryBounce;
+    }
+    else if (particle.position.x > maximum.x)
+    {
+        particle.position.x = maximum.x;
+        if (particle.velocity.x > 0.0)
+            particle.velocity.x *= -_BoundaryBounce;
+    }
+
+    if (particle.position.y < minimum.y)
+    {
+        particle.position.y = minimum.y;
+        if (particle.velocity.y < 0.0)
+            particle.velocity.y *= -_BoundaryBounce;
+        particle.velocity.x *= 0.995;
+        particle.foam *= 0.65;
+    }
+    else if (particle.position.y > maximum.y)
+    {
+        particle.position.y = maximum.y;
+        if (particle.velocity.y > 0.0)
+            particle.velocity.y *= -_BoundaryBounce;
+    }
+
+    _WriteParticles[id] = particle;
+}

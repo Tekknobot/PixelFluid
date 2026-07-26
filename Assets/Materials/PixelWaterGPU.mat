@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: PixelWaterGPU
+  m_Shader: {fileID: 4800000, guid: b6f4f3043a312c445b4f8e3923854d67, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _ColourBrightness: 1
+    - _EdgeSoftness: 0.28
+    - _FoamBottomSuppression: 0.55
+    - _FoamRenderStrength: 1
+    - _FoamSurfaceDensity: 0.62
+    - _ParticleSize: 0.035
+    - _SurfaceBand: 0.38
+    m_Colors:
+    - _DeepWaterColor: {r: 0.01, g: 0.1, b: 0.32, a: 0.96}
+    - _FoamColor: {r: 0.95, g: 0.99, b: 1, a: 1}
+    - _MainWaterColor: {r: 0.02, g: 0.38, b: 0.9, a: 0.96}
+    - _SurfaceWaterColor: {r: 0.1, g: 0.75, b: 1, a: 0.98}
+    - _WaterColor: {r: 0.05, g: 0.5, b: 1, a: 0.95}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
