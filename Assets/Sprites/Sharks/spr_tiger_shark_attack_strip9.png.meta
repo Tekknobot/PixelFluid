@@ -1,0 +1,351 @@
+fileFormatVersion: 2
+guid: 714ca011fb526a943aa5fc9b424367f9
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 7767861535311751321
+    second: spr_tiger_shark_attack_strip9_0
+  - first:
+      213: 8010666468059657694
+    second: spr_tiger_shark_attack_strip9_1
+  - first:
+      213: -6075348312149320954
+    second: spr_tiger_shark_attack_strip9_2
+  - first:
+      213: -1211456962344219030
+    second: spr_tiger_shark_attack_strip9_3
+  - first:
+      213: 6990102676870019190
+    second: spr_tiger_shark_attack_strip9_4
+  - first:
+      213: -5256070294403165733
+    second: spr_tiger_shark_attack_strip9_5
+  - first:
+      213: -9061094103470982478
+    second: spr_tiger_shark_attack_strip9_6
+  - first:
+      213: 6218960591160404135
+    second: spr_tiger_shark_attack_strip9_7
+  - first:
+      213: 7136654749593407999
+    second: spr_tiger_shark_attack_strip9_8
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: spr_tiger_shark_attack_strip9_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 18
+        width: 63
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9986da419ecfccb60800000000000000
+      internalID: 7767861535311751321
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: spr_tiger_shark_attack_strip9_1
+      rect:
+        serializedVersion: 2
+        x: 65
+        y: 19
+        width: 62
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ed534dad5ba9b2f60800000000000000
+      internalID: 8010666468059657694
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: spr_tiger_shark_attack_strip9_2
+      rect:
+        serializedVersion: 2
+        x: 129
+        y: 20
+        width: 62
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 60b129f06e600bba0800000000000000
+      internalID: -6075348312149320954
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: spr_tiger_shark_attack_strip9_3
+      rect:
+        serializedVersion: 2
+        x: 193
+        y: 20
+        width: 61
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a6e8cc2bf4a003fe0800000000000000
+      internalID: -1211456962344219030
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: spr_tiger_shark_attack_strip9_4
+      rect:
+        serializedVersion: 2
+        x: 258
+        y: 19
+        width: 60
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 67838567955d10160800000000000000
+      internalID: 6990102676870019190
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: spr_tiger_shark_attack_strip9_5
+      rect:
+        serializedVersion: 2
+        x: 323
+        y: 18
+        width: 59
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bd1dd934aefae07b0800000000000000
+      internalID: -5256070294403165733
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: spr_tiger_shark_attack_strip9_6
+      rect:
+        serializedVersion: 2
+        x: 387
+        y: 18
+        width: 59
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2bab93eabe6804280800000000000000
+      internalID: -9061094103470982478
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: spr_tiger_shark_attack_strip9_7
+      rect:
+        serializedVersion: 2
+        x: 449
+        y: 19
+        width: 62
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a8e44c45bf2e4650800000000000000
+      internalID: 6218960591160404135
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: spr_tiger_shark_attack_strip9_8
+      rect:
+        serializedVersion: 2
+        x: 513
+        y: 19
+        width: 62
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ff19e12eead7a0360800000000000000
+      internalID: 7136654749593407999
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      spr_tiger_shark_attack_strip9_0: 7767861535311751321
+      spr_tiger_shark_attack_strip9_1: 8010666468059657694
+      spr_tiger_shark_attack_strip9_2: -6075348312149320954
+      spr_tiger_shark_attack_strip9_3: -1211456962344219030
+      spr_tiger_shark_attack_strip9_4: 6990102676870019190
+      spr_tiger_shark_attack_strip9_5: -5256070294403165733
+      spr_tiger_shark_attack_strip9_6: -9061094103470982478
+      spr_tiger_shark_attack_strip9_7: 6218960591160404135
+      spr_tiger_shark_attack_strip9_8: 7136654749593407999
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

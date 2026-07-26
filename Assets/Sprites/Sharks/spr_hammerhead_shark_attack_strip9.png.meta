@@ -1,0 +1,351 @@
+fileFormatVersion: 2
+guid: 13138819a89209b428bd65242cb4ff93
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 6949338635335131345
+    second: spr_hammerhead_shark_attack_strip9_0
+  - first:
+      213: 1070696726337006724
+    second: spr_hammerhead_shark_attack_strip9_1
+  - first:
+      213: 167157832199270256
+    second: spr_hammerhead_shark_attack_strip9_2
+  - first:
+      213: 2491423180728587040
+    second: spr_hammerhead_shark_attack_strip9_3
+  - first:
+      213: -2653497024370081295
+    second: spr_hammerhead_shark_attack_strip9_4
+  - first:
+      213: 2586954775221848169
+    second: spr_hammerhead_shark_attack_strip9_5
+  - first:
+      213: -1078891623921658735
+    second: spr_hammerhead_shark_attack_strip9_6
+  - first:
+      213: -8308091577903180366
+    second: spr_hammerhead_shark_attack_strip9_7
+  - first:
+      213: -1533160594371914395
+    second: spr_hammerhead_shark_attack_strip9_8
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: spr_hammerhead_shark_attack_strip9_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 14
+        width: 64
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1d06c0f6ba2017060800000000000000
+      internalID: 6949338635335131345
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: spr_hammerhead_shark_attack_strip9_1
+      rect:
+        serializedVersion: 2
+        x: 65
+        y: 13
+        width: 62
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 48cad73fff0ebde00800000000000000
+      internalID: 1070696726337006724
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: spr_hammerhead_shark_attack_strip9_2
+      rect:
+        serializedVersion: 2
+        x: 130
+        y: 14
+        width: 61
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 07f69a9a92dd15200800000000000000
+      internalID: 167157832199270256
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: spr_hammerhead_shark_attack_strip9_3
+      rect:
+        serializedVersion: 2
+        x: 195
+        y: 14
+        width: 60
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0235088ce20539220800000000000000
+      internalID: 2491423180728587040
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: spr_hammerhead_shark_attack_strip9_4
+      rect:
+        serializedVersion: 2
+        x: 260
+        y: 14
+        width: 59
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1f18dd1e382ec2bd0800000000000000
+      internalID: -2653497024370081295
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: spr_hammerhead_shark_attack_strip9_5
+      rect:
+        serializedVersion: 2
+        x: 322
+        y: 15
+        width: 61
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 968491b69a5b6e320800000000000000
+      internalID: 2586954775221848169
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: spr_hammerhead_shark_attack_strip9_6
+      rect:
+        serializedVersion: 2
+        x: 385
+        y: 15
+        width: 63
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1945105c8c10701f0800000000000000
+      internalID: -1078891623921658735
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: spr_hammerhead_shark_attack_strip9_7
+      rect:
+        serializedVersion: 2
+        x: 447
+        y: 15
+        width: 65
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b59aa16abab3bc80800000000000000
+      internalID: -8308091577903180366
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: spr_hammerhead_shark_attack_strip9_8
+      rect:
+        serializedVersion: 2
+        x: 511
+        y: 14
+        width: 65
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 565d5dcff8e19bae0800000000000000
+      internalID: -1533160594371914395
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      spr_hammerhead_shark_attack_strip9_0: 6949338635335131345
+      spr_hammerhead_shark_attack_strip9_1: 1070696726337006724
+      spr_hammerhead_shark_attack_strip9_2: 167157832199270256
+      spr_hammerhead_shark_attack_strip9_3: 2491423180728587040
+      spr_hammerhead_shark_attack_strip9_4: -2653497024370081295
+      spr_hammerhead_shark_attack_strip9_5: 2586954775221848169
+      spr_hammerhead_shark_attack_strip9_6: -1078891623921658735
+      spr_hammerhead_shark_attack_strip9_7: -8308091577903180366
+      spr_hammerhead_shark_attack_strip9_8: -1533160594371914395
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

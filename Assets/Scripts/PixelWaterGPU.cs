@@ -210,6 +210,19 @@ namespace PixelOcean
         [SerializeField, Min(0.001f)] private float renderedParticleSize = 0.035f;
         [SerializeField, Range(0f, 1f)] private float edgeSoftness = 0.28f;
 
+        [Header("Interleaved Water Rendering")]
+        [Tooltip("Splits this one GPU simulation into separately sortable horizontal render passes so sprites can be placed between parts of the wave.")]
+        [SerializeField] private bool interleavedRenderingEnabled = true;
+        [Tooltip("Number of horizontal water passes. Four gives three usable object lanes between the water passes.")]
+        [SerializeField, Range(2, 8)] private int interleavedWaterBandCount = 4;
+        [Tooltip("Transparent render queue used by the lowest/background water band.")]
+        [SerializeField, Range(2501, 4990)] private int interleavedBaseRenderQueue = 3000;
+        [Tooltip("Queue distance between water passes. Objects use the queue immediately after a water pass.")]
+        [SerializeField, Range(2, 20)] private int interleavedQueueStep = 2;
+        [Tooltip("Small overlap between adjacent bands, in world units, to prevent visible seams.")]
+        [SerializeField, Range(0f, 0.25f)] private float interleavedBandOverlap = 0.04f;
+
+        private Material[] interleavedBandMaterials;
         private ComputeBuffer[] particleBuffers;
         private ComputeBuffer cellHeads;
         private ComputeBuffer nextParticle;
@@ -378,6 +391,7 @@ namespace PixelOcean
         private void OnDisable()
         {
             ReleaseBuffers();
+            ReleaseInterleavedBandMaterials();
 
             if (runtimeLayerMaterial != null)
             {
@@ -1041,8 +1055,159 @@ namespace PixelOcean
             renderingMaterial.SetFloat("_ShoreStart", shoreStart);
             renderingMaterial.SetFloat("_ShallowZoneWidth", shallowZoneWidth);
 
-            Graphics.DrawProcedural(renderingMaterial, renderBounds, MeshTopology.Triangles, 6, particleCount);
+            DrawWaterRenderPasses();
         }
+
+        private void DrawWaterRenderPasses()
+        {
+            // The visible ocean is made from complete independent simulations.
+            // Render each full simulation at its own transparent queue so ordinary
+            // SpriteRenderers can be inserted between neighbouring waves.
+            if (createIndependentWaveLayers || isIndependentLayerClone || independentLayerCount > 1)
+            {
+                renderingMaterial.SetFloat("_RenderBandEnabled", 0f);
+                int layerCount = Mathf.Max(1, independentLayerCount);
+                int visualOrder = Mathf.Clamp(layerCount - 1 - independentLayerIndex, 0, layerCount - 1);
+                renderingMaterial.renderQueue = Mathf.Clamp(
+                    interleavedBaseRenderQueue + visualOrder * interleavedQueueStep,
+                    2501,
+                    4999);
+
+                Graphics.DrawProcedural(
+                    renderingMaterial,
+                    renderBounds,
+                    MeshTopology.Triangles,
+                    6,
+                    particleCount);
+                return;
+            }
+
+            if (!interleavedRenderingEnabled || interleavedWaterBandCount < 2)
+            {
+                renderingMaterial.SetFloat("_RenderBandEnabled", 0f);
+                Graphics.DrawProcedural(
+                    renderingMaterial,
+                    renderBounds,
+                    MeshTopology.Triangles,
+                    6,
+                    particleCount);
+                return;
+            }
+
+            EnsureInterleavedBandMaterials();
+
+            float minimumY = tankMinimum.y - renderedParticleSize;
+            float maximumY = tankMaximum.y + renderedParticleSize;
+            float bandHeight = (maximumY - minimumY) /
+                               Mathf.Max(1, interleavedWaterBandCount);
+
+            for (int band = 0; band < interleavedBandMaterials.Length; band++)
+            {
+                Material bandMaterial = interleavedBandMaterials[band];
+                if (bandMaterial == null)
+                    continue;
+
+                CopyWaterMaterialProperties(renderingMaterial, bandMaterial);
+                bandMaterial.SetBuffer(ParticlesID, particleBuffers[readIndex]);
+                bandMaterial.SetFloat("_RenderBandEnabled", 1f);
+                bandMaterial.SetFloat(
+                    "_RenderBandMinY",
+                    minimumY + bandHeight * band - interleavedBandOverlap);
+                bandMaterial.SetFloat(
+                    "_RenderBandMaxY",
+                    minimumY + bandHeight * (band + 1) + interleavedBandOverlap);
+                bandMaterial.renderQueue = Mathf.Clamp(
+                    interleavedBaseRenderQueue + band * interleavedQueueStep,
+                    2501,
+                    4999);
+
+                Graphics.DrawProcedural(
+                    bandMaterial,
+                    renderBounds,
+                    MeshTopology.Triangles,
+                    6,
+                    particleCount);
+            }
+        }
+
+        private void EnsureInterleavedBandMaterials()
+        {
+            int requiredCount = Mathf.Clamp(interleavedWaterBandCount, 2, 8);
+            if (interleavedBandMaterials != null &&
+                interleavedBandMaterials.Length == requiredCount)
+                return;
+
+            ReleaseInterleavedBandMaterials();
+            interleavedBandMaterials = new Material[requiredCount];
+
+            for (int i = 0; i < requiredCount; i++)
+            {
+                interleavedBandMaterials[i] = new Material(renderingMaterial)
+                {
+                    name = $"{renderingMaterial.name} Interleaved Band {i}",
+                    hideFlags = HideFlags.HideAndDontSave
+                };
+            }
+        }
+
+        private static void CopyWaterMaterialProperties(
+            Material source,
+            Material destination)
+        {
+            destination.CopyPropertiesFromMaterial(source);
+        }
+
+        private void ReleaseInterleavedBandMaterials()
+        {
+            if (interleavedBandMaterials == null)
+                return;
+
+            foreach (Material material in interleavedBandMaterials)
+            {
+                if (material == null)
+                    continue;
+
+                if (Application.isPlaying)
+                    Destroy(material);
+                else
+                    DestroyImmediate(material);
+            }
+
+            interleavedBandMaterials = null;
+        }
+
+        public int GetInterleavedObjectRenderQueue(int laneIndex)
+        {
+            if (createIndependentWaveLayers || isIndependentLayerClone || independentLayerCount > 1)
+            {
+                int usableLaneCount = Mathf.Max(1, independentLayerCount - 1);
+                int clampedLane = Mathf.Clamp(laneIndex, 0, usableLaneCount - 1);
+                // Lane 0 is between foreground layer 0 and layer 1.
+                int visualGapOrder = usableLaneCount - 1 - clampedLane;
+                return Mathf.Clamp(
+                    interleavedBaseRenderQueue +
+                    visualGapOrder * interleavedQueueStep + 1,
+                    2501,
+                    4999);
+            }
+
+            int bandLaneCount = Mathf.Max(1, interleavedWaterBandCount - 1);
+            int bandLane = Mathf.Clamp(laneIndex, 0, bandLaneCount - 1);
+            return Mathf.Clamp(
+                interleavedBaseRenderQueue +
+                bandLane * interleavedQueueStep + 1,
+                2501,
+                4999);
+        }
+
+        public int InterleavedLaneCount => Mathf.Max(1,
+            (createIndependentWaveLayers || isIndependentLayerClone || independentLayerCount > 1)
+                ? independentLayerCount - 1
+                : interleavedWaterBandCount - 1);
+
+        public int IndependentLayerIndex => independentLayerIndex;
+        public int IndependentLayerCount => Mathf.Max(1, independentLayerCount);
+        public bool IsIndependentLayerClone => isIndependentLayerClone;
 
 
         private void RemoveTropicalSeabed()

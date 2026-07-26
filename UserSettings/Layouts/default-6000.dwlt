@@ -1365,7 +1365,7 @@ MonoBehaviour:
   m_AudioPlay: 0
   m_DebugDrawModesUseInteractiveLightBakingData: 0
   m_Position:
-    m_Target: {x: -0.078329414, y: -0.6127471, z: -0.0038969172}
+    m_Target: {x: -0.23095587, y: -3.872352, z: 0.05899732}
     speed: 2
     m_Value: {x: -0.078329414, y: -0.6127471, z: -0.0038969172}
   m_RenderMode: 0
@@ -1418,7 +1418,7 @@ MonoBehaviour:
     speed: 2
     m_Value: {x: 0, y: 0, z: 0, w: 1}
   m_Size:
-    m_Target: 10.389738
+    m_Target: 4.1003065
     speed: 2
     m_Value: 10.389738
   m_Ortho:
@@ -1531,8 +1531,8 @@ MonoBehaviour:
       m_rawData: 568105584918860012
     m_ExpandedIDs:
     - m_rawData: 0
-    - m_rawData: 568105584918855554
-    - m_rawData: 568105584918859704
+    - m_rawData: 568105584918855558
+    - m_rawData: 568105584918859884
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1566,8 +1566,8 @@ MonoBehaviour:
       m_rawData: 0
     m_ExpandedIDs:
     - m_rawData: 0
-    - m_rawData: 568105584918855554
-    - m_rawData: 568105584918859704
+    - m_rawData: 568105584918855558
+    - m_rawData: 568105584918859884
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 

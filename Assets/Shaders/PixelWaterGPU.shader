@@ -17,6 +17,9 @@ Shader "PixelOcean/GPU Particle Water"
         _EdgeSoftness ("Edge Softness", Range(0,1)) = 0.28
         _FoamBottomSuppression ("Foam Bottom Suppression", Float) = 0.55
         _FoamSurfaceDensity ("Foam Surface Density", Range(0,1)) = 0.62
+        [HideInInspector] _RenderBandEnabled ("Render Band Enabled", Float) = 0
+        [HideInInspector] _RenderBandMinY ("Render Band Minimum Y", Float) = -10000
+        [HideInInspector] _RenderBandMaxY ("Render Band Maximum Y", Float) = 10000
     }
 
     SubShader
@@ -60,6 +63,9 @@ Shader "PixelOcean/GPU Particle Water"
             float _FoamSurfaceDensity;
             float _ShoreStart;
             float _ShallowZoneWidth;
+            float _RenderBandEnabled;
+            float _RenderBandMinY;
+            float _RenderBandMaxY;
 
             struct Attributes
             {
@@ -77,6 +83,7 @@ Shader "PixelOcean/GPU Particle Water"
                 float density : TEXCOORD4;
                 float foam : TEXCOORD5;
                 float horizontal01 : TEXCOORD6;
+                float particleWorldY : TEXCOORD7;
             };
 
             Varyings Vert(Attributes input)
@@ -104,11 +111,18 @@ Shader "PixelOcean/GPU Particle Water"
                 output.density = particle.density;
                 output.foam = particle.foam;
                 output.horizontal01 = saturate((particle.position.x - _TankMin.x) / max(_TankMax.x - _TankMin.x, 0.001));
+                output.particleWorldY = particle.position.y;
                 return output;
             }
 
             half4 Frag(Varyings input) : SV_Target
             {
+                if (_RenderBandEnabled > 0.5)
+                {
+                    clip(input.particleWorldY - _RenderBandMinY);
+                    clip(_RenderBandMaxY - input.particleWorldY);
+                }
+
                 float2 centred = input.uv * 2.0 - 1.0;
                 float distanceFromCentre = length(centred);
                 clip(1.0 - distanceFromCentre);

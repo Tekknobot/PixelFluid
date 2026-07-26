@@ -1,0 +1,351 @@
+fileFormatVersion: 2
+guid: ef1b3898ba4379840afb3351a52c3b6e
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -3036864194255011031
+    second: spr_tiger_shark_move_strip9_0
+  - first:
+      213: 6308520269338840758
+    second: spr_tiger_shark_move_strip9_1
+  - first:
+      213: -7968454874624263878
+    second: spr_tiger_shark_move_strip9_2
+  - first:
+      213: -5524238684191289439
+    second: spr_tiger_shark_move_strip9_3
+  - first:
+      213: -1003639250249552545
+    second: spr_tiger_shark_move_strip9_4
+  - first:
+      213: -5349554367278018502
+    second: spr_tiger_shark_move_strip9_5
+  - first:
+      213: 2275931827343748350
+    second: spr_tiger_shark_move_strip9_6
+  - first:
+      213: -4081611936048063479
+    second: spr_tiger_shark_move_strip9_7
+  - first:
+      213: -79001665175888650
+    second: spr_tiger_shark_move_strip9_8
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: spr_tiger_shark_move_strip9_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 18
+        width: 63
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 923c356fa14ead5d0800000000000000
+      internalID: -3036864194255011031
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: spr_tiger_shark_move_strip9_1
+      rect:
+        serializedVersion: 2
+        x: 63
+        y: 19
+        width: 64
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6be0b40d2cd5c8750800000000000000
+      internalID: 6308520269338840758
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: spr_tiger_shark_move_strip9_2
+      rect:
+        serializedVersion: 2
+        x: 127
+        y: 19
+        width: 64
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a397a4d928c5a6190800000000000000
+      internalID: -7968454874624263878
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: spr_tiger_shark_move_strip9_3
+      rect:
+        serializedVersion: 2
+        x: 191
+        y: 19
+        width: 64
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1af8e467f26f553b0800000000000000
+      internalID: -5524238684191289439
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: spr_tiger_shark_move_strip9_4
+      rect:
+        serializedVersion: 2
+        x: 255
+        y: 19
+        width: 64
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f5d6c3e5b6b5212f0800000000000000
+      internalID: -1003639250249552545
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: spr_tiger_shark_move_strip9_5
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 18
+        width: 63
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a3011c765a092c5b0800000000000000
+      internalID: -5349554367278018502
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: spr_tiger_shark_move_strip9_6
+      rect:
+        serializedVersion: 2
+        x: 385
+        y: 18
+        width: 62
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: efc64d540fbb59f10800000000000000
+      internalID: 2275931827343748350
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: spr_tiger_shark_move_strip9_7
+      rect:
+        serializedVersion: 2
+        x: 450
+        y: 18
+        width: 61
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 90c5cd8c1933b57c0800000000000000
+      internalID: -4081611936048063479
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: spr_tiger_shark_move_strip9_8
+      rect:
+        serializedVersion: 2
+        x: 515
+        y: 18
+        width: 60
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6fcd682776457eef0800000000000000
+      internalID: -79001665175888650
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      spr_tiger_shark_move_strip9_0: -3036864194255011031
+      spr_tiger_shark_move_strip9_1: 6308520269338840758
+      spr_tiger_shark_move_strip9_2: -7968454874624263878
+      spr_tiger_shark_move_strip9_3: -5524238684191289439
+      spr_tiger_shark_move_strip9_4: -1003639250249552545
+      spr_tiger_shark_move_strip9_5: -5349554367278018502
+      spr_tiger_shark_move_strip9_6: 2275931827343748350
+      spr_tiger_shark_move_strip9_7: -4081611936048063479
+      spr_tiger_shark_move_strip9_8: -79001665175888650
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

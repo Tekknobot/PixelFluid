@@ -7,12 +7,26 @@ namespace PixelOcean
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Install()
         {
-            if (Object.FindAnyObjectByType<PixelWaterGPU>() == null ||
-                Object.FindAnyObjectByType<BeachGameController>() != null)
+            PixelWaterGPU water = Object.FindAnyObjectByType<PixelWaterGPU>();
+            if (water == null)
                 return;
 
-            GameObject root = new("Beach Game Prototype");
-            root.AddComponent<BeachGameController>();
+            if (Object.FindAnyObjectByType<BeachGameController>() == null)
+            {
+                GameObject controllerRoot = new("Beach Game Prototype");
+                controllerRoot.AddComponent<BeachGameController>();
+            }
+
+            // The old RandomInterWaveItemSpawner is deliberately not installed.
+            // This project now spawns only the user's animated Shark prefab.
+            SharkLaneSpawner sharkSpawner =
+                Object.FindAnyObjectByType<SharkLaneSpawner>();
+
+            if (sharkSpawner == null)
+            {
+                sharkSpawner = water.gameObject.AddComponent<SharkLaneSpawner>();
+                Debug.Log("Installed single animated inter-wave shark spawner.", water);
+            }
         }
     }
 }
