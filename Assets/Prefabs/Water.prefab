@@ -86,8 +86,8 @@ MonoBehaviour:
   independentEmitterWidthScale: 1.35
   independentEmitterLiftScale: 1.35
   independentEmitterPushScale: 1.25
-  createIndependentWaveLayers: 0
-  independentLayerCount: 1
+  createIndependentWaveLayers: 1
+  independentLayerCount: 8
   independentLayerDelay: 0.18
   independentLayerBackOffset: 0.08
   independentLayerVerticalOffset: 0.34
@@ -129,7 +129,7 @@ MonoBehaviour:
   shoreStart: 0.62
   shallowZoneWidth: 0.3
   beachHeight: 0.64
-  horizontalSeabedEnabled: 1
+  horizontalSeabedEnabled: 0
   horizontalSeabedHeight: -2.05
   beachCurve: 0.82
   shoreFriction: 0.32
@@ -244,8 +244,8 @@ MonoBehaviour:
   independentEmitterWidthScale: 1.35
   independentEmitterLiftScale: 1.35
   independentEmitterPushScale: 1.25
-  createIndependentWaveLayers: 0
-  independentLayerCount: 1
+  createIndependentWaveLayers: 1
+  independentLayerCount: 8
   independentLayerDelay: 0.18
   independentLayerBackOffset: 0.08
   independentLayerVerticalOffset: 0.34
@@ -287,7 +287,7 @@ MonoBehaviour:
   shoreStart: 0.62
   shallowZoneWidth: 0.3
   beachHeight: 0.64
-  horizontalSeabedEnabled: 1
+  horizontalSeabedEnabled: 0
   horizontalSeabedHeight: -2.05
   beachCurve: 0.82
   shoreFriction: 0.32
@@ -402,8 +402,8 @@ MonoBehaviour:
   independentEmitterWidthScale: 1.35
   independentEmitterLiftScale: 1.35
   independentEmitterPushScale: 1.25
-  createIndependentWaveLayers: 0
-  independentLayerCount: 1
+  createIndependentWaveLayers: 1
+  independentLayerCount: 8
   independentLayerDelay: 0.18
   independentLayerBackOffset: 0.08
   independentLayerVerticalOffset: 0.34
@@ -445,7 +445,7 @@ MonoBehaviour:
   shoreStart: 0.62
   shallowZoneWidth: 0.3
   beachHeight: 0.64
-  horizontalSeabedEnabled: 1
+  horizontalSeabedEnabled: 0
   horizontalSeabedHeight: -2.05
   beachCurve: 0.82
   shoreFriction: 0.32
@@ -698,8 +698,8 @@ MonoBehaviour:
   independentEmitterWidthScale: 1.35
   independentEmitterLiftScale: 1.35
   independentEmitterPushScale: 1.25
-  createIndependentWaveLayers: 0
-  independentLayerCount: 1
+  createIndependentWaveLayers: 1
+  independentLayerCount: 8
   independentLayerDelay: 0.18
   independentLayerBackOffset: 0.08
   independentLayerVerticalOffset: 0.34
@@ -741,7 +741,7 @@ MonoBehaviour:
   shoreStart: 0.62
   shallowZoneWidth: 0.3
   beachHeight: 0.64
-  horizontalSeabedEnabled: 1
+  horizontalSeabedEnabled: 0
   horizontalSeabedHeight: -2.05
   beachCurve: 0.82
   shoreFriction: 0.32
@@ -907,8 +907,8 @@ MonoBehaviour:
   independentEmitterWidthScale: 1.35
   independentEmitterLiftScale: 1.35
   independentEmitterPushScale: 1.25
-  createIndependentWaveLayers: 0
-  independentLayerCount: 1
+  createIndependentWaveLayers: 1
+  independentLayerCount: 8
   independentLayerDelay: 0.18
   independentLayerBackOffset: 0.08
   independentLayerVerticalOffset: 0.34
@@ -950,7 +950,7 @@ MonoBehaviour:
   shoreStart: 0.62
   shallowZoneWidth: 0.3
   beachHeight: 0.64
-  horizontalSeabedEnabled: 1
+  horizontalSeabedEnabled: 0
   horizontalSeabedHeight: -2.05
   beachCurve: 0.82
   shoreFriction: 0.32

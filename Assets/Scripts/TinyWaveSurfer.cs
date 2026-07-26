@@ -1,5 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 namespace PixelOcean
 {
@@ -26,7 +29,7 @@ namespace PixelOcean
         [Tooltip("Choose a different simulation layer instead of always moving to the next one.")]
         [SerializeField] private bool jumpToRandomWaveLayer = true;
         [Tooltip("Extra height used while jumping between simulation layers.")]
-        [SerializeField, Range(0.1f, 3f)] private float layerJumpHeight = 0.15f;
+        [SerializeField, Range(0.1f, 3f)] private float layerJumpHeight = 0.55f;
         [SerializeField] private bool sortWavesBackToFront = true;
         [SerializeField, Min(0)] private int startingWaveIndex;
 
@@ -43,6 +46,14 @@ namespace PixelOcean
         [SerializeField, Range(0.2f, 1.5f)] private float turnTrickDuration = 0.38f;
         [SerializeField, Range(90f, 1080f)] private float turnSpinDegrees = 360f;
         [SerializeField, Range(0f, 1f)] private float flipChance = 0.45f;
+
+        [Header("Player Control")]
+        [SerializeField] private bool playerControlled;
+        [SerializeField, Min(0.25f)] private float playerScrollSpeed = 2.4f;
+        [SerializeField, Range(1f, 4f)] private float playerBoostMultiplier = 1.75f;
+        [SerializeField, Range(0.05f, 0.4f)] private float endlessLoopPadding = 0.16f;
+        [SerializeField] private bool lockPlayerToScreenX = true;
+        [SerializeField] private float playerScreenX = 0f;
 
         [Header("8x8 Pixel Look")]
         [SerializeField, Min(0.005f)] private float pixelWorldSize = 0.045f;
@@ -69,6 +80,9 @@ namespace PixelOcean
         private bool flipTrick;
         private Vector3 switchStart;
         private Vector3 switchTarget;
+        private bool previousJumpHeld;
+        private bool previousLayerUpHeld;
+        private bool previousLayerDownHeld;
 
         public int CurrentWaveIndex => waveIndex;
         public PixelWaterGPU CurrentWave => currentWave;
@@ -122,6 +136,25 @@ namespace PixelOcean
             ScheduleNextLayerJump(initialLayerJumpDelay);
         }
 
+        public void ConfigureSinglePlayer(float scrollSpeed, float boostMultiplier)
+        {
+            playerControlled = true;
+            playerScrollSpeed = Mathf.Max(0.25f, scrollSpeed);
+            playerBoostMultiplier = Mathf.Max(1f, boostMultiplier);
+            cycleContinuously = false;
+            jumpToRandomWaveLayer = false;
+            direction = 1f;
+            RefreshWaveList();
+            PickWave(Mathf.Clamp(startingWaveIndex, 0, Mathf.Max(0, simulations.Count - 1)), true);
+            if (lockPlayerToScreenX)
+            {
+                localRideX = playerScreenX;
+                Vector3 p = transform.position;
+                p.x = playerScreenX;
+                transform.position = p;
+            }
+        }
+
         private void Update()
         {
             if (simulations.Count == 0)
@@ -136,6 +169,12 @@ namespace PixelOcean
 
             if (currentWave == null || !currentWave.isActiveAndEnabled)
                 PickWave(Mathf.Clamp(waveIndex, 0, simulations.Count - 1), true);
+
+            if (playerControlled)
+            {
+                UpdatePlayerControl(Time.deltaTime);
+                return;
+            }
 
             float dt = Time.deltaTime;
             waveTimer += dt;
@@ -182,6 +221,127 @@ namespace PixelOcean
             }
         }
 
+        private void UpdatePlayerControl(float dt)
+        {
+            ReadPlayerInput(out float horizontal, out bool jumpHeld,
+                out bool layerUpHeld, out bool layerDownHeld, out bool boostHeld);
+
+            if (Mathf.Abs(horizontal) > 0.01f)
+            {
+                direction = Mathf.Sign(horizontal);
+                float speed = playerScrollSpeed * (boostHeld ? playerBoostMultiplier : 1f);
+                float worldDelta = -horizontal * speed * dt;
+
+                foreach (PixelWaterGPU wave in simulations)
+                {
+                    if (wave != null && wave.isActiveAndEnabled)
+                        wave.ShiftCompleteSimulation(new Vector2(worldDelta, 0f));
+                }
+
+                KeepEndlessRowsAroundPlayer();
+            }
+
+            if (jumpHeld && !previousJumpHeld && state == RiderState.Riding)
+                BeginTurnTrick();
+
+            // Inverted depth controls: Down/S moves one row toward the horizon,
+            // while Up/W moves one row toward the foreground. Each press is
+            // clamped to the immediately adjacent row; it can never wrap from
+            // the first row to the last row (or vice versa).
+            if (layerUpHeld && !previousLayerUpHeld && state == RiderState.Riding)
+                BeginAdjacentWave(-1);
+            else if (layerDownHeld && !previousLayerDownHeld && state == RiderState.Riding)
+                BeginAdjacentWave(+1);
+
+            previousJumpHeld = jumpHeld;
+            previousLayerUpHeld = layerUpHeld;
+            previousLayerDownHeld = layerDownHeld;
+
+            stateTimer += dt;
+            if (state == RiderState.SwitchingWave)
+                UpdateWaveSwitch();
+            else if (state == RiderState.TurningTrick)
+                UpdateTurnTrick();
+            else
+            {
+                if (lockPlayerToScreenX)
+                    localRideX = playerScreenX;
+                FollowSurface(dt);
+            }
+        }
+
+        private void BeginAdjacentWave(int step)
+        {
+            if (simulations.Count <= 1) return;
+
+            // Only permit a single neighbouring layer per input. Clamping here
+            // prevents edge rows from wrapping across the entire wave stack.
+            step = Mathf.Clamp(step, -1, 1);
+            int next = Mathf.Clamp(waveIndex + step, 0, simulations.Count - 1);
+            if (next == waveIndex) return;
+
+            currentWave = simulations[next];
+            waveIndex = next;
+            stateTimer = 0f;
+            state = RiderState.SwitchingWave;
+            renderDepth = currentWave.transform.position.z - 0.02f;
+            switchStart = transform.position;
+            switchTarget = GetStartingPosition(currentWave);
+            switchTarget.x = lockPlayerToScreenX ? playerScreenX : switchTarget.x;
+            switchTarget.z = renderDepth;
+        }
+
+        private void KeepEndlessRowsAroundPlayer()
+        {
+            if (currentWave == null) return;
+            Vector2 min = currentWave.TankMinimum;
+            Vector2 max = currentWave.TankMaximum;
+            float width = Mathf.Max(0.1f, max.x - min.x);
+            float padding = width * endlessLoopPadding;
+            float correction = 0f;
+
+            if (playerScreenX < min.x + padding)
+                correction = width * (1f - endlessLoopPadding * 2f);
+            else if (playerScreenX > max.x - padding)
+                correction = -width * (1f - endlessLoopPadding * 2f);
+
+            if (Mathf.Abs(correction) <= 0.001f) return;
+            foreach (PixelWaterGPU wave in simulations)
+            {
+                if (wave != null && wave.isActiveAndEnabled)
+                    wave.ShiftCompleteSimulation(new Vector2(correction, 0f));
+            }
+        }
+
+        private static void ReadPlayerInput(out float horizontal, out bool jump,
+            out bool layerUp, out bool layerDown, out bool boost)
+        {
+#if ENABLE_INPUT_SYSTEM
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard != null)
+            {
+                horizontal = (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed ? 1f : 0f)
+                    - (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed ? 1f : 0f);
+                jump = keyboard.spaceKey.isPressed;
+                layerUp = keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed;
+                layerDown = keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed;
+                boost = keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed;
+                return;
+            }
+#endif
+#if ENABLE_LEGACY_INPUT_MANAGER
+            horizontal = (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow) ? 1f : 0f)
+                - (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow) ? 1f : 0f);
+            jump = Input.GetKey(KeyCode.Space);
+            layerUp = Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow);
+            layerDown = Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow);
+            boost = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+#else
+            horizontal = 0f;
+            jump = layerUp = layerDown = boost = false;
+#endif
+        }
+
         private void UpdateRide(float dt)
         {
             Vector2 min = currentWave.TankMinimum;
@@ -221,8 +381,16 @@ namespace PixelOcean
             float slope = Mathf.Atan2(rightY - leftY, sample * 2f) * Mathf.Rad2Deg;
 
             Vector3 target = new(localRideX, surfaceY + surfaceOffset, renderDepth);
-            transform.position = Vector3.Lerp(
-                transform.position, target, 1f - Mathf.Exp(-surfaceFollow * dt));
+
+            // In single-player mode the rider must remain planted on the active
+            // wave. Horizontal controls scroll the simulations; they must not add
+            // airborne motion. Tricks and layer switches use their own states and
+            // are the only actions allowed to lift the surfer off the surface.
+            if (playerControlled && state == RiderState.Riding)
+                transform.position = target;
+            else
+                transform.position = Vector3.Lerp(
+                    transform.position, target, 1f - Mathf.Exp(-surfaceFollow * dt));
 
             float facingScale = direction >= 0f ? pixelWorldSize : -pixelWorldSize;
             transform.localScale = new Vector3(facingScale, pixelWorldSize, 1f);
@@ -264,7 +432,8 @@ namespace PixelOcean
 
             if (t >= 1f)
             {
-                direction *= -1f;
+                if (!playerControlled)
+                    direction *= -1f;
                 state = RiderState.Riding;
                 stateTimer = 0f;
                 transform.rotation = Quaternion.identity;
@@ -335,7 +504,11 @@ namespace PixelOcean
 
             if (t >= 1f)
             {
-                localRideX = switchTarget.x;
+                localRideX = playerControlled && lockPlayerToScreenX
+                    ? playerScreenX
+                    : switchTarget.x;
+                if (playerControlled && lockPlayerToScreenX)
+                    switchTarget.x = playerScreenX;
                 transform.position = switchTarget;
                 transform.rotation = Quaternion.identity;
                 state = RiderState.Riding;
@@ -469,7 +642,9 @@ namespace PixelOcean
                 new(0.85f, 0.95f, 0.28f, 1f)
             };
 
-            const int surferCount = 6;
+            PixelWaterGPU master = Object.FindFirstObjectByType<PixelWaterGPU>();
+            bool singlePlayer = master != null && master.SinglePlayerModeEnabled;
+            int surferCount = singlePlayer ? 1 : 6;
             for (int i = 0; i < surferCount; i++)
             {
                 GameObject go = new($"Tiny 8x8 Surfer {i + 1}");
@@ -483,6 +658,11 @@ namespace PixelOcean
                     100 + i,
                     1.25f + i * 1.85f,
                     (i - 2.5f) * 0.55f);
+
+                if (singlePlayer)
+                    surfer.ConfigureSinglePlayer(
+                        master.SinglePlayerScrollSpeed,
+                        master.SinglePlayerBoostMultiplier);
             }
         }
     }

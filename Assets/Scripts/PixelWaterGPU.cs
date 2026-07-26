@@ -89,11 +89,11 @@ namespace PixelOcean
         [SerializeField, Range(0.5f, 2f)] private float independentEmitterPushScale = 1.25f;
 
         [Header("Independent Wave Simulation Layers")]
-        [SerializeField] private bool createIndependentWaveLayers = false;
-        [SerializeField, Range(1, 5)] private int independentLayerCount = 1;
-        [SerializeField, Range(0.02f, 1f)] private float independentLayerDelay = 0.18f;
-        [SerializeField, Range(0f, 1.5f)] private float independentLayerBackOffset = 0.08f;
-        [SerializeField, Range(0f, 0.5f)] private float independentLayerVerticalOffset = 0.34f;
+        [SerializeField] private bool createIndependentWaveLayers = true;
+        [SerializeField, Range(1, 12)] private int independentLayerCount = 8;
+        [SerializeField, Range(0.02f, 1f)] private float independentLayerDelay = 0.22f;
+        [SerializeField, Range(0f, 1.5f)] private float independentLayerBackOffset = 0.14f;
+        [SerializeField, Range(0f, 0.75f)] private float independentLayerVerticalOffset = 0.34f;
         [SerializeField, Range(0f, 0.5f)] private float independentLayerDepthOffset = 0.06f;
         [SerializeField, Range(0.75f, 1f)] private float independentLayerScaleFalloff = 1f;
         [SerializeField, Range(0.5f, 2f)] private float independentLayerRiseCurve = 1f;
@@ -165,6 +165,18 @@ namespace PixelOcean
         [SerializeField, Range(0.35f, 0.85f)] private float shoreStart = 0.62f;
         [SerializeField, Range(0.08f, 0.5f)] private float shallowZoneWidth = 0.30f;
         [SerializeField, Range(0.12f, 0.80f)] private float beachHeight = 0.64f;
+        [Header("Single Player Infinite Mode")]
+        [Tooltip("When enabled, runtime spawning is limited to one keyboard-controlled surfer and the wave rows scroll endlessly beneath the rider.")]
+        [SerializeField] private bool singlePlayerModeEnabled = false;
+        [Tooltip("Horizontal speed used by the player-controlled endless world scroll.")]
+        [SerializeField, Range(0.25f, 8f)] private float singlePlayerScrollSpeed = 2.4f;
+        [Tooltip("Extra speed multiplier while Left Shift is held.")]
+        [SerializeField, Range(1f, 4f)] private float singlePlayerBoostMultiplier = 1.75f;
+
+        public bool SinglePlayerModeEnabled => singlePlayerModeEnabled;
+        public float SinglePlayerScrollSpeed => singlePlayerScrollSpeed;
+        public float SinglePlayerBoostMultiplier => singlePlayerBoostMultiplier;
+
         [Header("Horizontal Seabed")]
         [SerializeField] private bool horizontalSeabedEnabled = true;
         [Tooltip("World-space height of the perfectly flat seabed. Adjustable live in Play Mode.")]
@@ -313,8 +325,25 @@ namespace PixelOcean
                 positionDelta.y,
                 0f);
 
-            hasParticleSurfaceSamples = false;
-            readbackPending = false;
+            // A pure world-space translation does not invalidate the sampled
+            // surface profile because the particles and tank bounds move together.
+            // Invalidating here forced GetGameplaySurfaceHeight() to use the much
+            // higher procedural fallback every frame while the player held Left or
+            // Right, which made the surfer appear to rise away from the wave.
+            if (hasParticleSurfaceSamples && Mathf.Abs(positionDelta.y) > 0.000001f)
+            {
+                for (int i = 0; i < sampledSurface.Length; i++)
+                    sampledSurface[i] += positionDelta.y;
+            }
+        }
+
+        /// <summary>
+        /// Moves this complete simulation in world space, including GPU particles,
+        /// tank bounds, emitter coordinates and horizontal seabed.
+        /// </summary>
+        public void ShiftCompleteSimulation(Vector2 worldDelta)
+        {
+            ShiftSimulationWorldSpace(worldDelta);
         }
 
         private void ApplyTransformOriginChanges()
@@ -337,8 +366,11 @@ namespace PixelOcean
             EnsureUniqueRenderingMaterial();
             ApplyInitialTransformOrigin();
             ApplyIndependentBigWaveEmitter();
-            EnsureTropicalSeabed();
+            RemoveTropicalSeabed();
             Initialise();
+
+            if (!isIndependentLayerClone)
+                CreateIndependentSimulationLayers();
 
             // Single-simulator mode: duplicate this GameObject manually
             // when you want additional independent water layers.
@@ -473,7 +505,7 @@ namespace PixelOcean
         private void UseIndependentLayeredRealBigWave()
         {
             createIndependentWaveLayers = true;
-            independentLayerCount = 4;
+            independentLayerCount = 8;
             independentLayerDelay = 0.18f;
             independentLayerBackOffset = 0.34f;
             independentLayerVerticalOffset = 0.18f;
@@ -497,7 +529,7 @@ namespace PixelOcean
         private void UseHorizontalDepthWaveLines()
         {
             createIndependentWaveLayers = true;
-            independentLayerCount = 4;
+            independentLayerCount = 8;
             independentLayerDelay = 0.18f;
 
             // Fixed parallel rows:
@@ -603,6 +635,13 @@ namespace PixelOcean
             tankMaximum += simulationOffset;
             beachHeight += simulationOffset.y;
 
+            // A horizontal seabed is stored as an absolute world-space Y value.
+            // Offset it with the layer so every independent simulation keeps
+            // the same local water depth instead of sharing the master row's
+            // seabed height.
+            if (horizontalSeabedEnabled)
+                horizontalSeabedHeight += simulationOffset.y;
+
             // Keep the GameObject transform unchanged. The particle positions,
             // tank boundaries, emitter, seabed and render bounds now occupy the
             // correct horizontal line themselves.
@@ -667,11 +706,21 @@ namespace PixelOcean
                 // Every simulation occupies its own straight horizontal world-space line.
                 // Layer 0 is the lowest foreground line. Each delayed layer is
                 // moved upward by one fixed step and rendered farther behind.
+                float horizonProgress = layer /
+                    (float)Mathf.Max(1, independentLayerCount - 1);
                 float horizontalLineY =
                     independentLayerVerticalOffset * layer;
 
+                // Alternate the rows slightly left and right so the eight
+                // simulations do not read as one synchronized stack. The
+                // offset tapers toward the horizon.
+                float alternatingOffset =
+                    ((layer & 1) == 0 ? 1f : -1f) *
+                    independentLayerBackOffset *
+                    (1f - horizonProgress * 0.45f);
+
                 Vector3 lineOffset = new Vector3(
-                    -independentLayerBackOffset * layer,
+                    alternatingOffset,
                     horizontalLineY,
                     0f);
 
@@ -705,7 +754,7 @@ namespace PixelOcean
 
         private void OnValidate()
         {
-            independentLayerCount = Mathf.Clamp(independentLayerCount, 1, 5);
+            independentLayerCount = Mathf.Clamp(independentLayerCount, 1, 12);
             independentLayerScaleFalloff = Mathf.Clamp(
                 independentLayerScaleFalloff,
                 0.75f,
@@ -992,36 +1041,23 @@ namespace PixelOcean
             renderingMaterial.SetFloat("_ShoreStart", shoreStart);
             renderingMaterial.SetFloat("_ShallowZoneWidth", shallowZoneWidth);
 
-            TropicalSeabed seabed = GetComponentInChildren<TropicalSeabed>(true);
-            if (seabed != null)
-            {
-                seabed.Configure(
-                    tankMinimum, tankMaximum, shoreStart, shallowZoneWidth,
-                    beachHeight, beachCurve, (int)surfWaveType, breakPoint,
-                    horizontalSeabedEnabled, horizontalSeabedHeight,
-                    sandColor, wetSandColor, deepSandColor);
-                seabed.Draw();
-            }
-
             Graphics.DrawProcedural(renderingMaterial, renderBounds, MeshTopology.Triangles, 6, particleCount);
         }
 
 
-        private void EnsureTropicalSeabed()
+        private void RemoveTropicalSeabed()
         {
-            TropicalSeabed seabed = GetComponentInChildren<TropicalSeabed>(true);
-            if (seabed == null)
+            TropicalSeabed[] seabeds = GetComponentsInChildren<TropicalSeabed>(true);
+            foreach (TropicalSeabed seabed in seabeds)
             {
-                GameObject seabedObject = new("Tropical Seabed");
-                seabedObject.transform.SetParent(transform, false);
-                seabed = seabedObject.AddComponent<TropicalSeabed>();
-            }
+                if (seabed == null)
+                    continue;
 
-            seabed.Configure(
-                tankMinimum, tankMaximum, shoreStart, shallowZoneWidth,
-                beachHeight, beachCurve, (int)surfWaveType, breakPoint,
-                horizontalSeabedEnabled, horizontalSeabedHeight,
-                sandColor, wetSandColor, deepSandColor);
+                if (Application.isPlaying)
+                    Destroy(seabed.gameObject);
+                else
+                    DestroyImmediate(seabed.gameObject);
+            }
         }
 
         private void DispatchSimulation(float deltaTime)
