@@ -67,15 +67,15 @@ namespace PixelOcean
 
         [Header("Death Blood Particles")]
         [SerializeField] private bool emitBloodOnDeath = true;
-        [SerializeField, Range(4, 80)] private int deathBloodParticleCount = 64;
+        [SerializeField, Range(4, 80)] private int deathBloodParticleCount = 32;
         [SerializeField, Min(0.05f)] private float deathBloodLifetime = 2.35f;
         [SerializeField, Min(0f)] private float deathBloodMinSpeed = 0.12f;
         [SerializeField, Min(0f)] private float deathBloodMaxSpeed = 0.48f;
-        [SerializeField, Range(0.005f, 0.2f)] private float deathBloodMinSize = 0.018f;
-        [SerializeField, Range(0.005f, 0.25f)] private float deathBloodMaxSize = 0.018f;
+        [SerializeField, Range(0.005f, 0.2f)] private float deathBloodMinSize = 0.020f;
+        [SerializeField, Range(0.005f, 0.25f)] private float deathBloodMaxSize = 0.020f;
         [SerializeField] private float deathBloodGravity = 0.01f;
         [SerializeField] private Vector2 deathBloodOffset = new(0f, 0.08f);
-        [SerializeField, ColorUsage(true, true)] private Color deathBloodColor = new(1f, 0f, 0f, 1f);
+        [SerializeField, ColorUsage(true, true)] private Color deathBloodColor = new(0.9f, 0f, 0f, 0.7f);
 
         [Header("Surfer Sprite")]
         [SerializeField] private string surferSpriteResource = "Surfers/chuck";
@@ -435,7 +435,7 @@ namespace PixelOcean
                 deathBloodMaxSize);
 
             // Use ordinary non-HDR red.
-            Color bloodRed = new Color(1f, 0f, 0f, 1f);
+            Color bloodRed = deathBloodColor;
 
             ParticleSystem.EmitParams emit =
                 new ParticleSystem.EmitParams
@@ -481,7 +481,7 @@ namespace PixelOcean
                 emitterObject.AddComponent<ParticleSystem>();
 
             Color bloodRed =
-                new Color(1f, 0f, 0f, 1f);
+                deathBloodColor;
 
             // Main particle settings.
             ParticleSystem.MainModule main =
