@@ -84,6 +84,10 @@ namespace PixelOcean
         [Tooltip("Local SpriteRenderer order inside the surfer render queue. Kept below lane creatures so a shark in front can cover this surfer.")]
         [SerializeField] private int surferWithinWaveSortingOrder = 0;
 
+        [Header("Long Idle Animation")]
+        [SerializeField] private bool playProneAfterLongIdle = true;
+        [SerializeField, Min(0.5f)] private float proneIdleDelay = 7f;
+
         [Header("Single-Frame Water Motion")]
         [SerializeField, Range(0f, 0.12f)] private float idleBobHeight = 0.018f;
         [SerializeField, Range(0.1f, 8f)] private float idleBobFrequency = 2.4f;
@@ -101,8 +105,11 @@ namespace PixelOcean
             Animator.StringToHash("chuck_move");
         private static readonly int DeathStateHash =
             Animator.StringToHash("chuck_death");
+        private static readonly int ProneStateHash =
+            Animator.StringToHash("chuck_prone");
 
-        private bool? animationMoving;
+        private int currentAnimationStateHash;
+        private float playerIdleTimer;
 
         private readonly List<PixelWaterGPU> simulations = new();
         private PixelWaterGPU currentWave;
@@ -348,7 +355,8 @@ namespace PixelOcean
             surferAnimator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
             surferAnimator.enabled = true;
 
-            animationMoving = null;
+            currentAnimationStateHash = 0;
+            playerIdleTimer = 0f;
             UpdateAnimation(false, true);
         }
 
@@ -362,11 +370,22 @@ namespace PixelOcean
                 return;
             }
 
-            if (!force && animationMoving.HasValue && animationMoving.Value == moving)
+            bool useProne =
+                playerControlled &&
+                playProneAfterLongIdle &&
+                !moving &&
+                state == RiderState.Riding &&
+                playerIdleTimer >= proneIdleDelay;
+
+            int desiredStateHash = useProne
+                ? ProneStateHash
+                : moving ? MoveStateHash : IdleStateHash;
+
+            if (!force && currentAnimationStateHash == desiredStateHash)
                 return;
 
-            animationMoving = moving;
-            surferAnimator.Play(moving ? MoveStateHash : IdleStateHash, 0, 0f);
+            currentAnimationStateHash = desiredStateHash;
+            surferAnimator.Play(desiredStateHash, 0, 0f);
         }
 
         private void PlayDeathAnimation()
@@ -378,7 +397,7 @@ namespace PixelOcean
                 return;
             }
 
-            animationMoving = null;
+            currentAnimationStateHash = DeathStateHash;
             surferAnimator.Play(DeathStateHash, 0, 0f);
         }
 
@@ -388,6 +407,7 @@ namespace PixelOcean
                 return false;
 
             state = RiderState.Dead;
+            playerIdleTimer = 0f;
             PlayDeathAnimation();
             EmitDeathBlood();
             if (humanDeathClip != null && deathAudioSource != null)
@@ -765,6 +785,7 @@ namespace PixelOcean
         public void ConfigureSinglePlayer(float scrollSpeed, float boostMultiplier)
         {
             playerControlled = true;
+            playerIdleTimer = 0f;
             playerScrollSpeed = Mathf.Max(0.25f, scrollSpeed);
             playerBoostMultiplier = Mathf.Max(1f, boostMultiplier);
             cycleContinuously = false;
@@ -885,6 +906,14 @@ namespace PixelOcean
             bool moving =
                 Mathf.Abs(horizontal) > 0.01f &&
                 state == RiderState.Riding;
+
+            bool hasPlayerActivity =
+                moving || jumpHeld || layerUpHeld || layerDownHeld;
+
+            if (hasPlayerActivity || state != RiderState.Riding)
+                playerIdleTimer = 0f;
+            else
+                playerIdleTimer += dt;
 
             UpdateAnimation(moving);
 
