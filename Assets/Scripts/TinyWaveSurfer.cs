@@ -85,6 +85,8 @@ namespace PixelOcean
             Animator.StringToHash("Idle");
         private static readonly int MoveStateHash =
             Animator.StringToHash("chuck_move");
+        private static readonly int DeathStateHash =
+            Animator.StringToHash("chuck_death");
 
         private bool? animationMoving;
 
@@ -211,7 +213,8 @@ namespace PixelOcean
         {
             if (surferAnimator == null ||
                 !surferAnimator.enabled ||
-                surferAnimator.runtimeAnimatorController == null)
+                surferAnimator.runtimeAnimatorController == null ||
+                state == RiderState.Dead)
             {
                 return;
             }
@@ -223,13 +226,26 @@ namespace PixelOcean
             surferAnimator.Play(moving ? MoveStateHash : IdleStateHash, 0, 0f);
         }
 
+        private void PlayDeathAnimation()
+        {
+            if (surferAnimator == null ||
+                !surferAnimator.enabled ||
+                surferAnimator.runtimeAnimatorController == null)
+            {
+                return;
+            }
+
+            animationMoving = null;
+            surferAnimator.Play(DeathStateHash, 0, 0f);
+        }
+
         public bool DieFromShark(Vector2 sharkPosition)
         {
             if (state == RiderState.Dead)
                 return false;
 
             state = RiderState.Dead;
-            UpdateAnimation(false);
+            PlayDeathAnimation();
             deathTimer = 0f;
             respawnTimer = 0f;
             float away = transform.position.x >= sharkPosition.x ? 1f : -1f;
