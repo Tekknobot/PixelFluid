@@ -577,9 +577,10 @@ namespace PixelOcean
                 BeginTurnTrick();
 
             // Inverted depth controls: Down/S moves one row toward the horizon,
-            // while Up/W moves one row toward the foreground. Each press is
-            // clamped to the immediately adjacent row; it can never wrap from
-            // the first row to the last row (or vice versa).
+            // while Up/W moves one row toward the foreground. Interior presses
+            // move exactly one row. Only an outward press on an edge wraps:
+            // Up from the first row reaches the last row, and Down from the last
+            // row reaches the first row.
             if (layerUpHeld && !previousLayerUpHeld && state == RiderState.Riding)
                 BeginAdjacentWave(-1);
             else if (layerDownHeld && !previousLayerDownHeld && state == RiderState.Riding)
@@ -605,10 +606,21 @@ namespace PixelOcean
         {
             if (simulations.Count <= 1) return;
 
-            // Only permit a single neighbouring layer per input. Clamping here
-            // prevents edge rows from wrapping across the entire wave stack.
+            // One press always moves one row. Wrapping is allowed only when the
+            // requested direction points outward from an edge of the stack.
             step = Mathf.Clamp(step, -1, 1);
-            int next = Mathf.Clamp(waveIndex + step, 0, simulations.Count - 1);
+            if (step == 0) return;
+
+            int lastWaveIndex = simulations.Count - 1;
+            int next;
+
+            if (waveIndex == 0 && step < 0)
+                next = lastWaveIndex;
+            else if (waveIndex == lastWaveIndex && step > 0)
+                next = 0;
+            else
+                next = Mathf.Clamp(waveIndex + step, 0, lastWaveIndex);
+
             if (next == waveIndex) return;
 
             currentWave = simulations[next];
