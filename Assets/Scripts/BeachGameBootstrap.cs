@@ -27,6 +27,15 @@ namespace PixelOcean
                 sharkSpawner = water.gameObject.AddComponent<SharkLaneSpawner>();
                 Debug.Log("Installed single animated inter-wave shark spawner.", water);
             }
+
+            HeartLaneSpawner heartSpawner =
+                Object.FindAnyObjectByType<HeartLaneSpawner>();
+
+            if (heartSpawner == null)
+            {
+                heartSpawner = water.gameObject.AddComponent<HeartLaneSpawner>();
+                Debug.Log("Installed animated heart in the middle inter-wave lane.", water);
+            }
         }
     }
 }
