@@ -217,7 +217,7 @@ namespace PixelOcean
             if (!sharkAnimation.IsInHitWindow) return;
             if (Vector2.Distance(sharkPosition, target.transform.position) > hitRange) return;
 
-            attackHitApplied = target.DieFromShark(sharkPosition);
+            attackHitApplied = target.TakeSharkHit(sharkPosition);
             if (attackHitApplied)
             {
                 predatorState = PredatorState.Search;

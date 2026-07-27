@@ -77,6 +77,18 @@ namespace PixelOcean
         [SerializeField] private Vector2 deathBloodOffset = new(0f, 0.08f);
         [SerializeField, ColorUsage(true, true)] private Color deathBloodColor = new(0.9f, 0f, 0f, 0.7f);
 
+        [Header("Health and Hit Reaction")]
+        [SerializeField, Min(1)] private int maximumHealth = 3;
+        [SerializeField, Min(1)] private int sharkHitDamage = 1;
+        [SerializeField, Min(0f)] private float hitInvulnerability = 0.8f;
+        [SerializeField, Min(0.02f)] private float hitFlashDuration = 0.34f;
+        [SerializeField, Min(0.01f)] private float hitFlashInterval = 0.055f;
+        [SerializeField, Min(0f)] private float hitBumpDistance = 0.24f;
+        [SerializeField, Min(0f)] private float hitBumpHeight = 0.10f;
+        [SerializeField] private Color hitFlashColor = Color.white;
+        [SerializeField] private Color heartPickupFlashColor = new(0.45f, 1f, 0.58f, 1f);
+        [SerializeField, Min(0.05f)] private float heartPickupReactionDuration = 0.42f;
+
         [Header("Surfer Sprite")]
         [SerializeField] private string surferSpriteResource = "Surfers/chuck";
         [SerializeField, Min(0.05f)] private float spriteWorldScale = 0.65f;
@@ -234,12 +246,22 @@ namespace PixelOcean
         private Vector2 deathVelocity;
         private Vector3 livingScale;
         private Color livingColor = Color.white;
+        private int currentHealth;
+        private float invulnerableUntil;
+        private float spriteReactionTimer;
+        private float spriteReactionDuration;
+        private float spriteFlashInterval;
+        private Color spriteReactionColor = Color.white;
+        private SurferHealthBar healthBar;
 
         public int CurrentWaveIndex => waveIndex;
         public PixelWaterGPU CurrentWave => currentWave;
         public float TravelDirection => direction;
         public bool IsDead => state == RiderState.Dead;
         public bool IsPlayerControlled => playerControlled;
+        public int CurrentHealth => currentHealth;
+        public int MaximumHealth => Mathf.Max(1, maximumHealth);
+        public bool IsSwitchingWave => state == RiderState.SwitchingWave;
 
         [Tooltip("Enable this when the original sprite artwork faces right.")]
         [SerializeField] private bool spriteFacesRight = true;
@@ -277,6 +299,9 @@ namespace PixelOcean
             EnsureSurferAnimator();
             EnsureSharkHitCollider();
             EnsureSpeechBubble();
+            EnsureHealthBar();
+            currentHealth = Mathf.Max(1, maximumHealth);
+            healthBar?.SetHealth(currentHealth, MaximumHealth);
 
             livingScale = transform.localScale;
 
@@ -297,6 +322,8 @@ namespace PixelOcean
 
         private void LateUpdate()
         {
+            UpdateSpriteReaction(Time.deltaTime);
+
             if (speechBubble != null)
                 speechBubble.RefreshSorting();
 
@@ -424,6 +451,74 @@ namespace PixelOcean
             body.freezeRotation = true;
         }
 
+
+        private void EnsureHealthBar()
+        {
+            healthBar = GetComponent<SurferHealthBar>();
+            if (healthBar == null)
+                healthBar = gameObject.AddComponent<SurferHealthBar>();
+        }
+
+        public bool TakeSharkHit(Vector2 sharkPosition)
+        {
+            if (state == RiderState.Dead || Time.time < invulnerableUntil)
+                return false;
+
+            invulnerableUntil = Time.time + hitInvulnerability;
+            currentHealth = Mathf.Max(0, currentHealth - Mathf.Max(1, sharkHitDamage));
+            healthBar?.SetHealth(currentHealth, MaximumHealth);
+
+            float away = transform.position.x >= sharkPosition.x ? 1f : -1f;
+            transform.position += new Vector3(away * hitBumpDistance, hitBumpHeight, 0f);
+            localRideX = transform.position.x;
+            BeginSpriteReaction(hitFlashColor, hitFlashDuration, hitFlashInterval);
+            if (speechBubble != null) speechBubble.HideImmediate();
+
+            if (currentHealth <= 0)
+                return DieFromShark(sharkPosition);
+
+            return true;
+        }
+
+        public bool HealFromHeart(int amount = 1)
+        {
+            if (state == RiderState.Dead || currentHealth >= MaximumHealth)
+                return false;
+
+            currentHealth = Mathf.Min(MaximumHealth, currentHealth + Mathf.Max(1, amount));
+            healthBar?.SetHealth(currentHealth, MaximumHealth);
+            BeginSpriteReaction(heartPickupFlashColor, heartPickupReactionDuration, 0.07f);
+            transform.localScale = livingScale * 1.16f;
+            return true;
+        }
+
+        private void BeginSpriteReaction(Color colour, float duration, float interval)
+        {
+            spriteReactionColor = colour;
+            spriteReactionDuration = Mathf.Max(0.02f, duration);
+            spriteReactionTimer = spriteReactionDuration;
+            spriteFlashInterval = Mathf.Max(0.02f, interval);
+        }
+
+        private void UpdateSpriteReaction(float dt)
+        {
+            if (spriteRenderer == null || state == RiderState.Dead)
+                return;
+
+            if (spriteReactionTimer <= 0f)
+            {
+                spriteRenderer.color = livingColor;
+                transform.localScale = Vector3.Lerp(transform.localScale, livingScale, 1f - Mathf.Exp(-18f * dt));
+                return;
+            }
+
+            spriteReactionTimer = Mathf.Max(0f, spriteReactionTimer - dt);
+            bool flashOn = Mathf.FloorToInt(spriteReactionTimer / spriteFlashInterval) % 2 == 0;
+            spriteRenderer.color = flashOn ? spriteReactionColor : livingColor;
+            float t = 1f - spriteReactionTimer / spriteReactionDuration;
+            float pulse = 1f + Mathf.Sin(t * Mathf.PI) * 0.16f;
+            transform.localScale = livingScale * pulse;
+        }
 
         private void EnsureSpeechBubble()
         {
@@ -908,6 +1003,8 @@ namespace PixelOcean
             UpdateAnimation(false, true);
             deathTimer = 0f;
             respawnTimer = 0f;
+            currentHealth = MaximumHealth;
+            healthBar?.SetHealth(currentHealth, MaximumHealth);
             if (spriteRenderer != null) spriteRenderer.color = livingColor;
             Collider2D collider = GetComponent<Collider2D>();
             if (collider != null) collider.enabled = true;
