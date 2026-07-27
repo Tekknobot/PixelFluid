@@ -79,6 +79,15 @@ namespace PixelOcean
         [SerializeField] private Color shirtColor = new(0.95f, 0.32f, 0.12f, 1f);
         [SerializeField] private Color boardColor = new(1f, 0.88f, 0.24f, 1f);
 
+        private Animator surferAnimator;
+
+        private static readonly int IdleStateHash =
+            Animator.StringToHash("Idle");
+        private static readonly int MoveStateHash =
+            Animator.StringToHash("chuck_move");
+
+        private bool? animationMoving;
+
         private readonly List<PixelWaterGPU> simulations = new();
         private PixelWaterGPU currentWave;
         private SpriteRenderer spriteRenderer;
@@ -135,6 +144,7 @@ namespace PixelOcean
         private void Awake()
         {
             EnsurePixelSprite();
+            EnsureSurferAnimator();
             EnsureSharkHitCollider();
             livingScale = transform.localScale;
             if (spriteRenderer != null) livingColor = spriteRenderer.color;
@@ -169,12 +179,57 @@ namespace PixelOcean
             body.freezeRotation = true;
         }
 
+        private void EnsureSurferAnimator()
+        {
+            surferAnimator = GetComponent<Animator>();
+
+            if (surferAnimator == null)
+                surferAnimator = gameObject.AddComponent<Animator>();
+
+            RuntimeAnimatorController controller =
+                Resources.Load<RuntimeAnimatorController>("Animations/chuck");
+
+            if (controller == null)
+            {
+                Debug.LogWarning(
+                    "TinyWaveSurfer could not load Resources/Animations/chuck.controller.",
+                    this);
+                surferAnimator.enabled = false;
+                return;
+            }
+
+            surferAnimator.runtimeAnimatorController = controller;
+            surferAnimator.applyRootMotion = false;
+            surferAnimator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+            surferAnimator.enabled = true;
+
+            animationMoving = null;
+            UpdateAnimation(false, true);
+        }
+
+        private void UpdateAnimation(bool moving, bool force = false)
+        {
+            if (surferAnimator == null ||
+                !surferAnimator.enabled ||
+                surferAnimator.runtimeAnimatorController == null)
+            {
+                return;
+            }
+
+            if (!force && animationMoving.HasValue && animationMoving.Value == moving)
+                return;
+
+            animationMoving = moving;
+            surferAnimator.Play(moving ? MoveStateHash : IdleStateHash, 0, 0f);
+        }
+
         public bool DieFromShark(Vector2 sharkPosition)
         {
             if (state == RiderState.Dead)
                 return false;
 
             state = RiderState.Dead;
+            UpdateAnimation(false);
             deathTimer = 0f;
             respawnTimer = 0f;
             float away = transform.position.x >= sharkPosition.x ? 1f : -1f;
@@ -236,6 +291,7 @@ namespace PixelOcean
             transform.localScale = livingScale;
             direction = 1f;
             state = RiderState.Riding;
+            UpdateAnimation(false, true);
             deathTimer = 0f;
             respawnTimer = 0f;
             if (spriteRenderer != null) spriteRenderer.color = livingColor;
@@ -324,9 +380,12 @@ namespace PixelOcean
 
             if (state == RiderState.SwitchingWave)
             {
+                UpdateAnimation(true);
                 UpdateWaveSwitch();
                 return;
             }
+
+            UpdateAnimation(true);
 
             if (state == RiderState.TurningTrick)
                 UpdateTurnTrick();
@@ -374,6 +433,12 @@ namespace PixelOcean
                 float speed = playerScrollSpeed * (boostHeld ? playerBoostMultiplier : 1f);
                 localRideX += horizontal * speed * dt;
             }
+
+            bool moving =
+                Mathf.Abs(horizontal) > 0.01f &&
+                state == RiderState.Riding;
+
+            UpdateAnimation(moving);
 
             // This is a finite sandbox: the simulations stay in place and the
             // surfer is confined to the overlap between the current wave and
@@ -853,8 +918,12 @@ namespace PixelOcean
 
             Sprite imported = Resources.Load<Sprite>(surferSpriteResource);
 
-            Debug.Log($"Loading surfer sprite: {surferSpriteResource}");
-            Debug.Log(imported != null ? imported.name : "Sprite not found");
+            if (imported == null)
+            {
+                Sprite[] importedSprites = Resources.LoadAll<Sprite>(surferSpriteResource);
+                if (importedSprites != null && importedSprites.Length > 0)
+                    imported = importedSprites[0];
+            }
 
             if (imported != null)
             {
