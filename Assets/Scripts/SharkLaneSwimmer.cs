@@ -63,6 +63,7 @@ namespace PixelOcean
         private bool attackHitApplied;
         private bool initialised;
         private AudioSource attackAudioSource;
+        private Coroutine sodaHitRoutine;
 
         public void Initialise(int requestedLane)
         {
@@ -249,6 +250,29 @@ namespace PixelOcean
                 searchUntil = Time.time + searchDuration;
                 target = null;
             }
+        }
+
+
+        public void TakeSodaCanHit(Vector2 hitPosition)
+        {
+            if (sodaHitRoutine != null) StopCoroutine(sodaHitRoutine);
+            sodaHitRoutine = StartCoroutine(SodaHitReaction(hitPosition));
+            predatorState = PredatorState.Search; searchUntil = Time.time + 1.4f; target = null;
+        }
+
+        private System.Collections.IEnumerator SodaHitReaction(Vector2 hitPosition)
+        {
+            Color original = spriteRenderer != null ? spriteRenderer.color : Color.white;
+            Vector2 away = ((Vector2)transform.position - hitPosition).normalized;
+            if (away.sqrMagnitude < .01f) away = Vector2.right * -direction;
+            for (int i = 0; i < 6; i++)
+            {
+                if (spriteRenderer != null) spriteRenderer.color = (i % 2 == 0) ? new Color(1f,.05f,.05f,1f) : original;
+                Vector2 p = body != null ? body.position : (Vector2)transform.position; p += away * .045f + Vector2.up * .012f; SetPosition(p);
+                transform.rotation = Quaternion.Euler(0,0,(i%2==0?1f:-1f)*9f);
+                yield return new WaitForSeconds(.055f);
+            }
+            if (spriteRenderer != null) spriteRenderer.color = original; transform.rotation = Quaternion.identity; sodaHitRoutine = null;
         }
 
         private int GetTargetLane(TinyWaveSurfer surfer)

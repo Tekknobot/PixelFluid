@@ -258,6 +258,8 @@ namespace PixelOcean
         private float spriteFlashInterval;
         private Color spriteReactionColor = Color.white;
         private SurferHealthBar healthBar;
+        private bool hasSodaCan;
+        private bool previousAttackHeld;
 
         public int CurrentWaveIndex => waveIndex;
         public PixelWaterGPU CurrentWave => currentWave;
@@ -309,6 +311,7 @@ namespace PixelOcean
             EnsureSharkHitCollider();
             EnsureSpeechBubble();
             EnsureHealthBar();
+            if (FindFirstObjectByType<SodaCanSpawner>() == null) new GameObject("Soda Can Spawner").AddComponent<SodaCanSpawner>();
             currentHealth = Mathf.Max(1, maximumHealth);
             healthBar?.SetHealth(currentHealth, MaximumHealth);
 
@@ -490,6 +493,47 @@ namespace PixelOcean
                 return DieFromShark(sharkPosition);
 
             return true;
+        }
+
+
+        public bool CollectSodaCan()
+        {
+            if (IsDead || hasSodaCan) return false;
+            hasSodaCan = true;
+            BeginSpriteReaction(new Color(0.35f, 0.85f, 1f, 1f), 0.35f, 0.06f);
+            transform.localScale = livingScale * 1.14f;
+            return true;
+        }
+
+        private void ThrowSodaCan()
+        {
+            if (!hasSodaCan || IsDead || state != RiderState.Riding) return;
+            hasSodaCan = false;
+            SharkLaneSwimmer nearest = null; float best = float.MaxValue;
+            foreach (SharkLaneSwimmer shark in FindObjectsByType<SharkLaneSwimmer>(FindObjectsSortMode.None))
+            {
+                if (shark == null) continue; float d = Vector2.Distance(transform.position, shark.transform.position);
+                if (d < best) { best = d; nearest = shark; }
+            }
+            GameObject projectile = new GameObject("Thrown Soda Can");
+            Sprite sprite = Resources.Load<Sprite>("Items/soda_can");
+            projectile.AddComponent<SpriteRenderer>().sortingOrder = sortingOrder + 20;
+            projectile.AddComponent<CircleCollider2D>();
+            SodaCanProjectile can = projectile.AddComponent<SodaCanProjectile>();
+            can.Launch((Vector2)transform.position + new Vector2(direction * .22f, .22f), nearest, sprite, direction);
+        }
+
+        private static bool ReadAttackInput()
+        {
+#if ENABLE_INPUT_SYSTEM
+            Keyboard k = Keyboard.current;
+            if (k != null) return k.fKey.isPressed || k.xKey.isPressed;
+#endif
+#if ENABLE_LEGACY_INPUT_MANAGER
+            return Input.GetKey(KeyCode.F) || Input.GetKey(KeyCode.X);
+#else
+            return false;
+#endif
         }
 
         public bool HealFromHeart(int amount = 1)
@@ -1168,6 +1212,9 @@ namespace PixelOcean
         {
             ReadPlayerInput(out float horizontal, out bool jumpHeld,
                 out bool layerUpHeld, out bool layerDownHeld, out bool boostHeld);
+            bool attackHeld = ReadAttackInput();
+            if (attackHeld && !previousAttackHeld) ThrowSodaCan();
+            previousAttackHeld = attackHeld;
 
             if (Mathf.Abs(horizontal) > 0.01f && state == RiderState.Riding)
             {
