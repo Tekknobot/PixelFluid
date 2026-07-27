@@ -85,7 +85,7 @@ namespace PixelOcean
         [SerializeField, Min(0.01f)] private float hitFlashInterval = 0.055f;
         [SerializeField, Min(0f)] private float hitBumpDistance = 0.24f;
         [SerializeField, Min(0f)] private float hitBumpHeight = 0.10f;
-        [SerializeField] private Color hitFlashColor = Color.white;
+        [SerializeField] private Color hitFlashColor = new(1f, 0.08f, 0.08f, 1f);
         [SerializeField] private Color heartPickupFlashColor = new(0.45f, 1f, 0.58f, 1f);
         [SerializeField, Min(0.05f)] private float heartPickupReactionDuration = 0.42f;
 
@@ -222,7 +222,12 @@ namespace PixelOcean
         private ParticleSystem deathBloodParticles;
         private Material deathBloodMaterial;
         private AudioSource deathAudioSource;
+        [Header("Reaction Audio")]
         [SerializeField] private AudioClip humanDeathClip;
+        [SerializeField] private AudioClip maleHurtClip;
+        [SerializeField] private AudioClip healthUpClip;
+        [SerializeField, Range(0f, 1f)] private float hurtSoundVolume = 1f;
+        [SerializeField, Range(0f, 1f)] private float healthUpSoundVolume = 1f;
         private int lastWaveRenderQueue = -1;
 
         private RiderState state;
@@ -295,6 +300,10 @@ namespace PixelOcean
 
             if (humanDeathClip == null)
                 humanDeathClip = Resources.Load<AudioClip>("Audio/SFX/human_death");
+            if (maleHurtClip == null)
+                maleHurtClip = Resources.Load<AudioClip>("Audio/SFX/male_hurt");
+            if (healthUpClip == null)
+                healthUpClip = Resources.Load<AudioClip>("Audio/SFX/health_up");
             EnsurePixelSprite();
             EnsureSurferAnimator();
             EnsureSharkHitCollider();
@@ -471,7 +480,10 @@ namespace PixelOcean
             float away = transform.position.x >= sharkPosition.x ? 1f : -1f;
             transform.position += new Vector3(away * hitBumpDistance, hitBumpHeight, 0f);
             localRideX = transform.position.x;
+            // A strong red-only flash clearly communicates damage without washing the sprite white.
             BeginSpriteReaction(hitFlashColor, hitFlashDuration, hitFlashInterval);
+            if (maleHurtClip != null && deathAudioSource != null)
+                deathAudioSource.PlayOneShot(maleHurtClip, hurtSoundVolume);
             if (speechBubble != null) speechBubble.HideImmediate();
 
             if (currentHealth <= 0)
@@ -488,6 +500,8 @@ namespace PixelOcean
             currentHealth = Mathf.Min(MaximumHealth, currentHealth + Mathf.Max(1, amount));
             healthBar?.SetHealth(currentHealth, MaximumHealth);
             BeginSpriteReaction(heartPickupFlashColor, heartPickupReactionDuration, 0.07f);
+            if (healthUpClip != null && deathAudioSource != null)
+                deathAudioSource.PlayOneShot(healthUpClip, healthUpSoundVolume);
             transform.localScale = livingScale * 1.16f;
             return true;
         }

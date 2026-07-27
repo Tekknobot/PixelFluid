@@ -25,6 +25,10 @@ namespace PixelOcean
         [SerializeField, Min(0f)] private float attackRecovery = 2.2f;
         [SerializeField, Min(0f)] private float searchDuration = 3f;
 
+        [Header("Attack Audio")]
+        [SerializeField] private AudioClip sharkAttackClip;
+        [SerializeField, Range(0f, 1f)] private float sharkAttackVolume = 1f;
+
         [Header("Lane Changes")]
         [SerializeField] private Vector2 laneChangeDelayRange = new(2.8f, 5.5f);
         [SerializeField, Min(0.2f)] private float laneChangeDuration = 1.25f;
@@ -58,10 +62,12 @@ namespace PixelOcean
         private float searchUntil;
         private bool attackHitApplied;
         private bool initialised;
+        private AudioSource attackAudioSource;
 
         public void Initialise(int requestedLane)
         {
             ResolveReferences();
+            EnsureAttackAudio();
             if (waterLayers.Count < 2)
             {
                 Debug.LogError("SharkLaneSwimmer requires at least two water layers.", this);
@@ -206,6 +212,22 @@ namespace PixelOcean
             return best;
         }
 
+        private void EnsureAttackAudio()
+        {
+            if (attackAudioSource == null)
+            {
+                attackAudioSource = GetComponent<AudioSource>();
+                if (attackAudioSource == null)
+                    attackAudioSource = gameObject.AddComponent<AudioSource>();
+                attackAudioSource.playOnAwake = false;
+                attackAudioSource.loop = false;
+                attackAudioSource.spatialBlend = 0f;
+            }
+
+            if (sharkAttackClip == null)
+                sharkAttackClip = Resources.Load<AudioClip>("Audio/SFX/shark_attack");
+        }
+
         private void ApplyAttackHit(Vector2 sharkPosition)
         {
             if (sharkAnimation == null || !sharkAnimation.IsAttacking)
@@ -220,6 +242,9 @@ namespace PixelOcean
             attackHitApplied = target.TakeSharkHit(sharkPosition);
             if (attackHitApplied)
             {
+                EnsureAttackAudio();
+                if (sharkAttackClip != null && attackAudioSource != null)
+                    attackAudioSource.PlayOneShot(sharkAttackClip, sharkAttackVolume);
                 predatorState = PredatorState.Search;
                 searchUntil = Time.time + searchDuration;
                 target = null;
