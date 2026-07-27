@@ -71,8 +71,8 @@ namespace PixelOcean
         [SerializeField, Min(0.05f)] private float deathBloodLifetime = 2.35f;
         [SerializeField, Min(0f)] private float deathBloodMinSpeed = 0.12f;
         [SerializeField, Min(0f)] private float deathBloodMaxSpeed = 0.48f;
-        [SerializeField, Range(0.005f, 0.2f)] private float deathBloodMinSize = 0.025f;
-        [SerializeField, Range(0.005f, 0.25f)] private float deathBloodMaxSize = 0.025f;
+        [SerializeField, Range(0.005f, 0.2f)] private float deathBloodMinSize = 0.018f;
+        [SerializeField, Range(0.005f, 0.25f)] private float deathBloodMaxSize = 0.018f;
         [SerializeField] private float deathBloodGravity = 0.01f;
         [SerializeField] private Vector2 deathBloodOffset = new(0f, 0.08f);
         [SerializeField, ColorUsage(true, true)] private Color deathBloodColor = new(1f, 0f, 0f, 1f);
