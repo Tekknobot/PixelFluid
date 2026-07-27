@@ -65,9 +65,16 @@ namespace PixelOcean
         [SerializeField] private bool respawnAfterDeath = true;
         [SerializeField, Min(0f)] private float respawnDelay = 0.7f;
 
-        [Header("8x8 Pixel Look")]
-        [SerializeField, Min(0.005f)] private float pixelWorldSize = 0.045f;
+        [Header("Surfer Sprite")]
+        [SerializeField] private string surferSpriteResource = "Surfers/chuck";
+        [SerializeField, Min(0.05f)] private float spriteWorldScale = 0.65f;
         [SerializeField] private int sortingOrder = 1;
+
+        [Header("Single-Frame Water Motion")]
+        [SerializeField, Range(0f, 0.12f)] private float idleBobHeight = 0.018f;
+        [SerializeField, Range(0.1f, 8f)] private float idleBobFrequency = 2.4f;
+        [SerializeField, Range(0f, 12f)] private float directionalLean = 3.5f;
+        [SerializeField, Range(0f, 0.12f)] private float stanceSquash = 0.035f;
         [SerializeField] private Color bodyColor = new(0.12f, 0.08f, 0.06f, 1f);
         [SerializeField] private Color shirtColor = new(0.95f, 0.32f, 0.12f, 1f);
         [SerializeField] private Color boardColor = new(1f, 0.88f, 0.24f, 1f);
@@ -104,6 +111,26 @@ namespace PixelOcean
         public float TravelDirection => direction;
         public bool IsDead => state == RiderState.Dead;
         public bool IsPlayerControlled => playerControlled;
+
+        [Tooltip("Enable this when the original sprite artwork faces right.")]
+        [SerializeField] private bool spriteFacesRight = true;
+
+        private void ApplyFacing(float xScale, float yScale)
+        {
+            bool movingRight = direction > 0f;
+
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.flipX = spriteFacesRight
+                    ? !movingRight
+                    : movingRight;
+            }
+
+            transform.localScale = new Vector3(
+                Mathf.Abs(xScale),
+                Mathf.Abs(yScale),
+                1f);
+        }
 
         private void Awake()
         {
@@ -237,11 +264,7 @@ namespace PixelOcean
                 secondsPerSimulation + personalIntervalOffset);
 
             if (spriteRenderer != null)
-            {
-                if (runtimeSprite != null) Destroy(runtimeSprite);
-                if (runtimeTexture != null) Destroy(runtimeTexture);
-                EnsurePixelSprite();
-            }
+                spriteRenderer.sortingOrder = sortingOrder;
 
             RefreshWaveList();
             direction = movingRight ? 1f : -1f;
@@ -513,30 +536,89 @@ namespace PixelOcean
         private void FollowSurface(float dt)
         {
             float surfaceY = currentWave.GetGameplaySurfaceHeight(localRideX);
+
             const float sample = 0.09f;
             float leftY = currentWave.GetGameplaySurfaceHeight(localRideX - sample);
             float rightY = currentWave.GetGameplaySurfaceHeight(localRideX + sample);
-            float slope = Mathf.Atan2(rightY - leftY, sample * 2f) * Mathf.Rad2Deg;
 
-            Vector3 target = new(localRideX, surfaceY + surfaceOffset, renderDepth);
+            float slope = Mathf.Atan2(
+                rightY - leftY,
+                sample * 2f) * Mathf.Rad2Deg;
 
-            // In single-player mode the rider must remain planted on the active
-            // wave while moving through the finite sandbox. Tricks and layer
-            // switches are the only actions allowed to lift the surfer.
+            float speedRatio = playerControlled
+                ? Mathf.Clamp01(
+                    Mathf.Abs(direction) * playerScrollSpeed /
+                    Mathf.Max(
+                        0.01f,
+                        playerScrollSpeed * playerBoostMultiplier))
+                : Mathf.Clamp01(horizontalRideSpeed / 2f);
+
+            float waterMotion = Mathf.Clamp01(
+                Mathf.Abs(
+                    currentWave.GetGameplayWaveVelocity(localRideX).y));
+
+            float bobPhase =
+                Time.time *
+                idleBobFrequency *
+                Mathf.PI *
+                2f +
+                waveIndex * 0.73f;
+
+            float bob =
+                Mathf.Sin(bobPhase) *
+                idleBobHeight *
+                (0.35f + waterMotion * 0.65f);
+
+            Vector3 target = new Vector3(
+                localRideX,
+                surfaceY + surfaceOffset + bob,
+                renderDepth);
+
             if (playerControlled && state == RiderState.Riding)
+            {
                 transform.position = target;
+            }
             else
+            {
                 transform.position = Vector3.Lerp(
-                    transform.position, target, 1f - Mathf.Exp(-surfaceFollow * dt));
+                    transform.position,
+                    target,
+                    1f - Mathf.Exp(-surfaceFollow * dt));
+            }
 
-            float facingScale = direction >= 0f ? pixelWorldSize : -pixelWorldSize;
-            transform.localScale = new Vector3(facingScale, pixelWorldSize, 1f);
+            float compression =
+                Mathf.Sin(bobPhase + Mathf.PI * 0.5f) *
+                stanceSquash *
+                (0.4f + speedRatio * 0.6f);
+
+            float xScale =
+                spriteWorldScale *
+                (1f + compression * 0.35f);
+
+            float yScale =
+                spriteWorldScale *
+                (1f - compression);
+
+            ApplyFacing(xScale, yScale);
+
+            float balanceLean =
+                -direction *
+                directionalLean *
+                speedRatio;
+
+            float microPitch =
+                Mathf.Cos(bobPhase) *
+                1.2f *
+                waterMotion;
+
             transform.rotation = Quaternion.Lerp(
                 transform.rotation,
-                Quaternion.Euler(0f, 0f, slope),
+                Quaternion.Euler(
+                    0f,
+                    0f,
+                    slope + balanceLean + microPitch),
                 1f - Mathf.Exp(-surfaceFollow * 0.7f * dt));
         }
-
         private void BeginTurnTrick()
         {
             state = RiderState.TurningTrick;
@@ -547,38 +629,69 @@ namespace PixelOcean
 
         private void UpdateTurnTrick()
         {
-            float t = Mathf.Clamp01(stateTimer / Mathf.Max(0.01f, turnTrickDuration));
-            float surfaceY = currentWave.GetGameplaySurfaceHeight(localRideX);
-            float arc = Mathf.Sin(t * Mathf.PI) * turnJumpHeight;
+            float t = Mathf.Clamp01(
+                stateTimer /
+                Mathf.Max(0.01f, turnTrickDuration));
+
+            float surfaceY =
+                currentWave.GetGameplaySurfaceHeight(localRideX);
+
+            float arc =
+                Mathf.Sin(t * Mathf.PI) *
+                turnJumpHeight;
 
             transform.position = new Vector3(
                 localRideX,
-                Mathf.Max(surfaceY + surfaceOffset, airStartY + arc),
+                Mathf.Max(
+                    surfaceY + surfaceOffset,
+                    airStartY + arc),
                 renderDepth);
 
-            float spinDirection = direction >= 0f ? -1f : 1f;
+            float spinDirection =
+                direction >= 0f ? -1f : 1f;
+
             transform.rotation = Quaternion.Euler(
-                0f, 0f, turnSpinDegrees * spinDirection * t);
+                0f,
+                0f,
+                turnSpinDegrees * spinDirection * t);
 
-            float facing = direction >= 0f ? 1f : -1f;
-            float flip = flipTrick ? Mathf.Cos(t * Mathf.PI * 2f) : 1f;
-            float xScale = facing * pixelWorldSize *
-                Mathf.Max(0.18f, Mathf.Abs(flip)) *
-                Mathf.Sign(Mathf.Approximately(flip, 0f) ? 1f : flip);
-            transform.localScale = new Vector3(xScale, pixelWorldSize, 1f);
+            float flipAmount = flipTrick
+                ? Mathf.Cos(t * Mathf.PI * 2f)
+                : 1f;
 
-            if (t >= 1f)
+            float trickScale =
+                spriteWorldScale *
+                Mathf.Max(
+                    0.18f,
+                    Mathf.Abs(flipAmount));
+
+            ApplyFacing(
+                trickScale,
+                spriteWorldScale);
+
+            // Temporarily reverse the visual during the middle of a flip trick.
+            if (flipTrick &&
+                spriteRenderer != null &&
+                flipAmount < 0f)
             {
-                if (!playerControlled)
-                    direction *= -1f;
-                state = RiderState.Riding;
-                stateTimer = 0f;
-                transform.rotation = Quaternion.identity;
-                transform.localScale = new Vector3(
-                    direction >= 0f ? pixelWorldSize : -pixelWorldSize,
-                    pixelWorldSize,
-                    1f);
+                spriteRenderer.flipX =
+                    !spriteRenderer.flipX;
             }
+
+            if (t < 1f)
+                return;
+
+            if (!playerControlled)
+                direction *= -1f;
+
+            state = RiderState.Riding;
+            stateTimer = 0f;
+
+            transform.rotation = Quaternion.identity;
+
+            ApplyFacing(
+                spriteWorldScale,
+                spriteWorldScale);
         }
 
         [ContextMenu("Ride Next Wave")]
@@ -618,39 +731,70 @@ namespace PixelOcean
 
         private void UpdateWaveSwitch()
         {
-            float t = Mathf.Clamp01(stateTimer / Mathf.Max(0.01f, switchDuration));
-            float eased = t * t * (3f - 2f * t);
-            Vector3 p = Vector3.Lerp(switchStart, switchTarget, eased);
-            float layerDistance = Mathf.Abs(switchTarget.y - switchStart.y);
-            float jump = layerJumpHeight + layerDistance * 0.35f;
-            p.y += Mathf.Sin(t * Mathf.PI) * jump;
+            float t = Mathf.Clamp01(
+                stateTimer /
+                Mathf.Max(0.01f, switchDuration));
+
+            float eased =
+                t * t * (3f - 2f * t);
+
+            Vector3 p = Vector3.Lerp(
+                switchStart,
+                switchTarget,
+                eased);
+
+            float layerDistance =
+                Mathf.Abs(
+                    switchTarget.y -
+                    switchStart.y);
+
+            float jump =
+                layerJumpHeight +
+                layerDistance * 0.35f;
+
+            p.y +=
+                Mathf.Sin(t * Mathf.PI) *
+                jump;
+
             transform.position = p;
 
-            float spinDirection = direction >= 0f ? -1f : 1f;
+            float spinDirection =
+                direction >= 0f ? -1f : 1f;
+
             transform.rotation = Quaternion.Euler(
                 0f,
                 0f,
                 540f * spinDirection * eased);
 
-            float tuck = 1f - Mathf.Sin(t * Mathf.PI) * 0.35f;
-            float facing = direction >= 0f ? 1f : -1f;
-            transform.localScale = new Vector3(
-                facing * pixelWorldSize * tuck,
-                pixelWorldSize * tuck,
-                1f);
+            float tuck =
+                1f -
+                Mathf.Sin(t * Mathf.PI) *
+                0.35f;
 
-            if (t >= 1f)
-            {
-                localRideX = playerControlled && lockPlayerToScreenX
+            ApplyFacing(
+                spriteWorldScale * tuck,
+                spriteWorldScale * tuck);
+
+            if (t < 1f)
+                return;
+
+            localRideX =
+                playerControlled && lockPlayerToScreenX
                     ? playerScreenX
                     : switchTarget.x;
-                if (playerControlled && lockPlayerToScreenX)
-                    switchTarget.x = playerScreenX;
-                transform.position = switchTarget;
-                transform.rotation = Quaternion.identity;
-                state = RiderState.Riding;
-                stateTimer = 0f;
-            }
+
+            if (playerControlled && lockPlayerToScreenX)
+                switchTarget.x = playerScreenX;
+
+            transform.position = switchTarget;
+            transform.rotation = Quaternion.identity;
+
+            state = RiderState.Riding;
+            stateTimer = 0f;
+
+            ApplyFacing(
+                spriteWorldScale,
+                spriteWorldScale);
         }
 
         private void ScheduleNextLayerJump(float initialDelay)
@@ -703,46 +847,109 @@ namespace PixelOcean
         private void EnsurePixelSprite()
         {
             spriteRenderer = GetComponent<SpriteRenderer>();
+
             if (spriteRenderer == null)
                 spriteRenderer = gameObject.AddComponent<SpriteRenderer>();
 
-            runtimeTexture = new Texture2D(8, 8, TextureFormat.RGBA32, false)
+            Sprite imported = Resources.Load<Sprite>(surferSpriteResource);
+
+            Debug.Log($"Loading surfer sprite: {surferSpriteResource}");
+            Debug.Log(imported != null ? imported.name : "Sprite not found");
+
+            if (imported != null)
             {
-                name = "Tiny Surfer 8x8",
+                spriteRenderer.sprite = imported;
+                spriteRenderer.sortingOrder = sortingOrder;
+                spriteRenderer.color = Color.white;
+
+                ApplyFacing(
+                    spriteWorldScale,
+                    spriteWorldScale);
+
+                return;
+            }
+
+            Debug.LogWarning(
+                $"TinyWaveSurfer could not load Resources/{surferSpriteResource}. " +
+                "Falling back to a generated marker.",
+                this);
+
+            runtimeTexture = new Texture2D(
+                8,
+                8,
+                TextureFormat.RGBA32,
+                false)
+            {
+                name = "Fallback Tiny Surfer",
                 filterMode = FilterMode.Point,
                 wrapMode = TextureWrapMode.Clamp
             };
 
             Color[] pixels = new Color[64];
-            void Set(int x, int y, Color c)
+
+            void Set(int x, int y, Color color)
             {
-                if (x >= 0 && x < 8 && y >= 0 && y < 8)
-                    pixels[y * 8 + x] = c;
+                if (x < 0 ||
+                    x >= 8 ||
+                    y < 0 ||
+                    y >= 8)
+                {
+                    return;
+                }
+
+                pixels[y * 8 + x] = color;
             }
 
-            for (int x = 1; x <= 6; x++) Set(x, 1, boardColor);
-            Set(3, 2, bodyColor); Set(5, 2, bodyColor);
-            Set(3, 3, bodyColor); Set(4, 3, bodyColor);
-            Set(4, 4, shirtColor); Set(4, 5, shirtColor);
-            Set(3, 5, shirtColor); Set(5, 5, shirtColor);
-            Set(2, 5, bodyColor); Set(6, 5, bodyColor);
-            Set(4, 6, bodyColor); Set(4, 7, bodyColor); Set(3, 7, bodyColor);
+            for (int x = 1; x <= 6; x++)
+                Set(x, 1, boardColor);
+
+            Set(3, 2, bodyColor);
+            Set(5, 2, bodyColor);
+
+            Set(3, 3, bodyColor);
+            Set(4, 3, bodyColor);
+
+            Set(4, 4, shirtColor);
+            Set(4, 5, shirtColor);
+            Set(3, 5, shirtColor);
+            Set(5, 5, shirtColor);
+
+            Set(2, 5, bodyColor);
+            Set(6, 5, bodyColor);
+
+            Set(4, 6, bodyColor);
+            Set(4, 7, bodyColor);
+            Set(3, 7, bodyColor);
 
             runtimeTexture.SetPixels(pixels);
             runtimeTexture.Apply(false, false);
 
             runtimeSprite = Sprite.Create(
                 runtimeTexture,
-                new Rect(0f, 0f, 8f, 8f),
-                new Vector2(0.5f, 0.18f),
-                1f, 0, SpriteMeshType.FullRect);
+                new Rect(
+                    0f,
+                    0f,
+                    8f,
+                    8f),
+                new Vector2(
+                    0.5f,
+                    0.18f),
+                8f,
+                0,
+                SpriteMeshType.FullRect);
 
-            spriteRenderer.sprite = runtimeSprite;
-            spriteRenderer.sortingOrder = sortingOrder;
-            transform.localScale = new Vector3(
-                direction >= 0f ? pixelWorldSize : -pixelWorldSize,
-                pixelWorldSize,
-                1f);
+            spriteRenderer.sprite =
+                runtimeSprite;
+
+            spriteRenderer.sortingOrder =
+                sortingOrder;
+
+            spriteRenderer.color =
+                Color.white;
+
+            ApplyFacing(
+                spriteWorldScale,
+                spriteWorldScale);
         }
     }
 

@@ -17,9 +17,9 @@ namespace PixelOcean
         [SerializeField, Range(0f, 0.35f)] private float viewportPadding = 0.045f;
 
         [Header("Predator Awareness")]
-        [SerializeField, Min(0.5f)] private float detectionRange = 0.3f;
-        [SerializeField, Min(0.1f)] private float loseTargetRange = 0.4f;
-        [SerializeField, Min(0.1f)] private float attackRange = 1.15f;
+        [SerializeField, Min(0.5f)] private float detectionRange = 1f;
+        [SerializeField, Min(0.1f)] private float loseTargetRange = 1.5f;
+        [SerializeField, Min(0.1f)] private float attackRange = 1.72f;
         [SerializeField, Min(0.05f)] private float hitRange = 0.72f;
         [SerializeField, Range(1f, 3f)] private float stalkSpeedMultiplier = 1.35f;
         [SerializeField, Min(0f)] private float attackRecovery = 2.2f;
