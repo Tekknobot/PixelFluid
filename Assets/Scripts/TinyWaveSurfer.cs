@@ -88,6 +88,90 @@ namespace PixelOcean
         [SerializeField] private bool playProneAfterLongIdle = true;
         [SerializeField, Min(0.5f)] private float proneIdleDelay = 7f;
 
+        [Header("Speech Bubbles")]
+        [SerializeField] private bool enableSpeechBubbles = true;
+        [SerializeField, Min(0.5f)] private float idleSpeechDelay = 4.5f;
+        [SerializeField, Min(1f)] private float idleSpeechCooldown = 10f;
+        [SerializeField, Min(0.25f)] private float sharkSpeechRange = 2.25f;
+        [SerializeField, Min(0.1f)] private float sharkCheckInterval = 0.2f;
+        [SerializeField, Min(1f)] private float sharkSpeechCooldown = 6f;
+        [SerializeField] private string[] idleSpeechLines =
+        {
+            "JUST BREATHE.",
+            "THE OCEAN REMEMBERS.",
+            "QUIET OUT HERE.",
+            "ONE MORE WAVE.",
+            "THE TIDE IS CHANGING.",
+            "KEEP PADDLING.",
+            "JUST RIDE.",
+            "DON'T THINK.",
+            "THIS FEELS DIFFERENT.",
+            "I'VE BEEN HERE BEFORE.",
+            "WHERE DID EVERYONE GO?",
+            "THE SEA NEVER SLEEPS.",
+            "WAIT FOR THE SET.",
+            "THE WIND JUST TURNED.",
+            "TOO QUIET.",
+            "STAY LOOSE.",
+            "FIND THE LINE.",
+            "LET IT CARRY ME.",
+            "NOT A BAD PLACE TO BE.",
+            "THE HORIZON KEEPS MOVING.",
+            "I COULD STAY OUT HERE.",
+            "SOMETHING'S WATCHING.",
+            "THE WATER FEELS COLD.",
+            "NO RUSH.",
+            "LISTEN TO THE WATER.",
+            "HERE COMES ANOTHER ONE.",
+            "KEEP YOUR BALANCE.",
+            "DON'T LOOK DOWN.",
+            "THE CURRENT IS STRONG.",
+            "MAYBE THIS IS ENOUGH.",
+            "I NEEDED THIS.",
+            "THE SHORE FEELS FAR AWAY.",
+            "JUST ME AND THE SWELL.",
+            "THE SKY LOOKS ENDLESS.",
+            "RIDE IT CLEAN.",
+            "WAIT... NOW.",
+            "EVERY WAVE IS DIFFERENT.",
+            "STILL HERE.",
+            "KEEP MOVING FORWARD.",
+            "THE NEXT ONE'S MINE."
+        };
+        [SerializeField] private string[] sharkSpeechLines =
+        {
+            "THAT FIN IS CLOSE.",
+            "NOT ALONE OUT HERE.",
+            "EASY... EASY...",
+            "I SHOULD MOVE.",
+            "NOT NOW.",
+            "I SAW THAT.",
+            "TOO CLOSE.",
+            "STAY CALM.",
+            "DON'T PANIC.",
+            "KEEP MOVING.",
+            "PLEASE LEAVE.",
+            "I'M NOT FOOD.",
+            "JUST PASS BY...",
+            "NO SUDDEN MOVES.",
+            "THAT'S A BIG ONE.",
+            "WRONG WAVE, FRIEND.",
+            "KEEP YOUR DISTANCE.",
+            "DON'T TURN TOWARD ME.",
+            "I KNOW YOU'RE THERE.",
+            "THIS IS YOUR OCEAN.",
+            "WE CAN SHARE, RIGHT?",
+            "JUST KEEP SWIMMING.",
+            "WHY IS IT CIRCLING?",
+            "I DON'T LIKE THIS.",
+            "STAY ON THE BOARD.",
+            "DON'T FALL NOW.",
+            "MOVE. MOVE. MOVE.",
+            "THE SHORE IS THAT WAY.",
+            "YOU DIDN'T SEE ME.",
+            "PLEASE BE A DOLPHIN."
+        };
+
         [Header("Single-Frame Water Motion")]
         [SerializeField, Range(0f, 0.12f)] private float idleBobHeight = 0.018f;
         [SerializeField, Range(0.1f, 8f)] private float idleBobFrequency = 2.4f;
@@ -110,6 +194,11 @@ namespace PixelOcean
 
         private int currentAnimationStateHash;
         private float playerIdleTimer;
+        private SurferSpeechBubble speechBubble;
+        private float nextIdleSpeechTime;
+        private float nextSharkSpeechTime;
+        private float nextSharkCheckTime;
+        private bool sharkWasNearby;
 
         private readonly List<PixelWaterGPU> simulations = new();
         private PixelWaterGPU currentWave;
@@ -187,6 +276,7 @@ namespace PixelOcean
             EnsurePixelSprite();
             EnsureSurferAnimator();
             EnsureSharkHitCollider();
+            EnsureSpeechBubble();
 
             livingScale = transform.localScale;
 
@@ -207,6 +297,9 @@ namespace PixelOcean
 
         private void LateUpdate()
         {
+            if (speechBubble != null)
+                speechBubble.RefreshSorting();
+
             // Re-apply after movement/animation so changing wave layers immediately
             // changes the surfer's transparent queue as well.
             ApplyCurrentWaveSorting();
@@ -331,6 +424,71 @@ namespace PixelOcean
             body.freezeRotation = true;
         }
 
+
+        private void EnsureSpeechBubble()
+        {
+            if (!enableSpeechBubbles) return;
+            speechBubble = GetComponent<SurferSpeechBubble>();
+            if (speechBubble == null)
+                speechBubble = gameObject.AddComponent<SurferSpeechBubble>();
+            nextIdleSpeechTime = Time.time + idleSpeechDelay;
+        }
+
+        private void UpdateSpeechBubbles()
+        {
+            if (!enableSpeechBubbles || speechBubble == null)
+                return;
+
+            // Dialogue is only allowed while the surfer is steadily riding.
+            // Hide any active bubble immediately during tricks/jumps, wave
+            // crossings, or death so it never follows the surfer through the air.
+            if (state != RiderState.Riding)
+            {
+                speechBubble.HideImmediate();
+                return;
+            }
+
+            if (Time.time >= nextSharkCheckTime)
+            {
+                nextSharkCheckTime = Time.time + sharkCheckInterval;
+                bool sharkNearby = false;
+                float closestDistance = sharkSpeechRange;
+                foreach (SharkLaneSwimmer shark in FindObjectsByType<SharkLaneSwimmer>(FindObjectsSortMode.None))
+                {
+                    if (shark == null || !shark.isActiveAndEnabled) continue;
+                    float distance = Vector2.Distance(transform.position, shark.transform.position);
+                    if (distance <= closestDistance)
+                    {
+                        closestDistance = distance;
+                        sharkNearby = true;
+                    }
+                }
+
+                if (sharkNearby && (!sharkWasNearby || Time.time >= nextSharkSpeechTime))
+                {
+                    ShowRandomSpeech(sharkSpeechLines, 2.2f);
+                    nextSharkSpeechTime = Time.time + sharkSpeechCooldown;
+                    nextIdleSpeechTime = Time.time + idleSpeechCooldown;
+                }
+                sharkWasNearby = sharkNearby;
+            }
+
+            if (playerControlled && playerIdleTimer >= idleSpeechDelay &&
+                Time.time >= nextIdleSpeechTime && !sharkWasNearby)
+            {
+                ShowRandomSpeech(idleSpeechLines, 2.8f);
+                nextIdleSpeechTime = Time.time + idleSpeechCooldown;
+            }
+        }
+
+        private void ShowRandomSpeech(string[] lines, float duration)
+        {
+            if (lines == null || lines.Length == 0 || speechBubble == null) return;
+            string line = lines[Random.Range(0, lines.Length)];
+            if (!string.IsNullOrWhiteSpace(line))
+                speechBubble.Show(line, duration);
+        }
+
         private void EnsureSurferAnimator()
         {
             surferAnimator = GetComponent<Animator>();
@@ -408,6 +566,7 @@ namespace PixelOcean
 
             state = RiderState.Dead;
             playerIdleTimer = 0f;
+            if (speechBubble != null) speechBubble.HideImmediate();
             PlayDeathAnimation();
             EmitDeathBlood();
             if (humanDeathClip != null && deathAudioSource != null)
@@ -806,9 +965,12 @@ namespace PixelOcean
         {
             if (state == RiderState.Dead)
             {
+                if (speechBubble != null) speechBubble.HideImmediate();
                 UpdateDeathResponse(Time.deltaTime);
                 return;
             }
+
+            UpdateSpeechBubbles();
 
             if (simulations.Count == 0)
             {
@@ -967,6 +1129,8 @@ namespace PixelOcean
         {
             if (state != RiderState.Riding)
                 return;
+
+            if (speechBubble != null) speechBubble.HideImmediate();
 
             // Refresh first because the independent layers are generated at
             // runtime. This also restores a strict 0..N layer-index order.
@@ -1205,6 +1369,7 @@ namespace PixelOcean
         }
         private void BeginTurnTrick()
         {
+            if (speechBubble != null) speechBubble.HideImmediate();
             state = RiderState.TurningTrick;
             stateTimer = 0f;
             airStartY = currentWave.GetGameplaySurfaceHeight(localRideX) + surfaceOffset;
@@ -1281,6 +1446,7 @@ namespace PixelOcean
         [ContextMenu("Ride Next Wave")]
         public void BeginNextWave()
         {
+            if (speechBubble != null) speechBubble.HideImmediate();
             if (simulations.Count <= 1)
             {
                 waveTimer = 0f;
