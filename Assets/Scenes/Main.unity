@@ -680,7 +680,7 @@ MonoBehaviour:
   interleavedRenderingEnabled: 1
   interleavedWaterBandCount: 4
   interleavedBaseRenderQueue: 3000
-  interleavedQueueStep: 2
+  interleavedQueueStep: 4
   interleavedBandOverlap: 0.04
   boardParticlePadding: 0.01
   boardParticlePush: 8

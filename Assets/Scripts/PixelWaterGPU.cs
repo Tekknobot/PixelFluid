@@ -218,7 +218,7 @@ namespace PixelOcean
         [Tooltip("Transparent render queue used by the lowest/background water band.")]
         [SerializeField, Range(2501, 4990)] private int interleavedBaseRenderQueue = 3000;
         [Tooltip("Queue distance between water passes. Objects use the queue immediately after a water pass.")]
-        [SerializeField, Range(2, 20)] private int interleavedQueueStep = 2;
+        [SerializeField, Range(4, 20)] private int interleavedQueueStep = 4;
         [Tooltip("Small overlap between adjacent bands, in world units, to prevent visible seams.")]
         [SerializeField, Range(0f, 0.25f)] private float interleavedBandOverlap = 0.04f;
 
@@ -1069,7 +1069,7 @@ namespace PixelOcean
                 int layerCount = Mathf.Max(1, independentLayerCount);
                 int visualOrder = Mathf.Clamp(layerCount - 1 - independentLayerIndex, 0, layerCount - 1);
                 renderingMaterial.renderQueue = Mathf.Clamp(
-                    interleavedBaseRenderQueue + visualOrder * interleavedQueueStep,
+                    interleavedBaseRenderQueue + visualOrder * EffectiveInterleavedQueueStep,
                     2501,
                     4999);
 
@@ -1117,7 +1117,7 @@ namespace PixelOcean
                     "_RenderBandMaxY",
                     minimumY + bandHeight * (band + 1) + interleavedBandOverlap);
                 bandMaterial.renderQueue = Mathf.Clamp(
-                    interleavedBaseRenderQueue + band * interleavedQueueStep,
+                    interleavedBaseRenderQueue + band * EffectiveInterleavedQueueStep,
                     2501,
                     4999);
 
@@ -1176,8 +1176,37 @@ namespace PixelOcean
             interleavedBandMaterials = null;
         }
 
+        private int EffectiveInterleavedQueueStep => Mathf.Max(4, interleavedQueueStep);
+
+        /// <summary>
+        /// Returns the exact transparent queue used by this independent wave.
+        /// Queue spacing is at least four, leaving one queue for riders and one
+        /// queue for the inter-wave lane between adjacent water layers.
+        /// </summary>
+        public int GetWaveLayerRenderQueue()
+        {
+            if (createIndependentWaveLayers || isIndependentLayerClone || independentLayerCount > 1)
+            {
+                int layerCount = Mathf.Max(1, independentLayerCount);
+                int visualOrder = Mathf.Clamp(
+                    layerCount - 1 - independentLayerIndex,
+                    0,
+                    layerCount - 1);
+
+                return Mathf.Clamp(
+                    interleavedBaseRenderQueue +
+                    visualOrder * EffectiveInterleavedQueueStep,
+                    2501,
+                    4999);
+            }
+
+            return Mathf.Clamp(interleavedBaseRenderQueue, 2501, 4999);
+        }
+
         public int GetInterleavedObjectRenderQueue(int laneIndex)
         {
+            int halfStep = EffectiveInterleavedQueueStep / 2;
+
             if (createIndependentWaveLayers || isIndependentLayerClone || independentLayerCount > 1)
             {
                 int usableLaneCount = Mathf.Max(1, independentLayerCount - 1);
@@ -1186,7 +1215,7 @@ namespace PixelOcean
                 int visualGapOrder = usableLaneCount - 1 - clampedLane;
                 return Mathf.Clamp(
                     interleavedBaseRenderQueue +
-                    visualGapOrder * interleavedQueueStep + 1,
+                    visualGapOrder * EffectiveInterleavedQueueStep + halfStep,
                     2501,
                     4999);
             }
@@ -1195,7 +1224,7 @@ namespace PixelOcean
             int bandLane = Mathf.Clamp(laneIndex, 0, bandLaneCount - 1);
             return Mathf.Clamp(
                 interleavedBaseRenderQueue +
-                bandLane * interleavedQueueStep + 1,
+                bandLane * EffectiveInterleavedQueueStep + halfStep,
                 2501,
                 4999);
         }

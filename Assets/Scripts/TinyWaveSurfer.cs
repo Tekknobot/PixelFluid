@@ -69,6 +69,8 @@ namespace PixelOcean
         [SerializeField] private string surferSpriteResource = "Surfers/chuck";
         [SerializeField, Min(0.05f)] private float spriteWorldScale = 0.65f;
         [SerializeField] private int sortingOrder = 1;
+        [Tooltip("Local SpriteRenderer order inside the surfer render queue. Kept below lane creatures so a shark in front can cover this surfer.")]
+        [SerializeField] private int surferWithinWaveSortingOrder = 0;
 
         [Header("Single-Frame Water Motion")]
         [SerializeField, Range(0f, 0.12f)] private float idleBobHeight = 0.018f;
@@ -95,6 +97,9 @@ namespace PixelOcean
         private SpriteRenderer spriteRenderer;
         private Sprite runtimeSprite;
         private Texture2D runtimeTexture;
+        private Material originalSpriteMaterial;
+        private Material surferWaveMaterial;
+        private int lastWaveRenderQueue = -1;
 
         private RiderState state;
         private int waveIndex;
@@ -148,18 +153,126 @@ namespace PixelOcean
             EnsurePixelSprite();
             EnsureSurferAnimator();
             EnsureSharkHitCollider();
+
             livingScale = transform.localScale;
-            if (spriteRenderer != null) livingColor = spriteRenderer.color;
+
+            if (spriteRenderer != null)
+                livingColor = spriteRenderer.color;
+
             RefreshWaveList();
-            direction = startMovingRight ? 1f : -1f;
+
+            direction =
+                startMovingRight ? 1f : -1f;
+
             PickWave(startingWaveIndex, true);
+
+            ApplyCurrentWaveSorting(true);
+
             ScheduleNextLayerJump(0f);
+        }
+
+        private void LateUpdate()
+        {
+            // Re-apply after movement/animation so changing wave layers immediately
+            // changes the surfer's transparent queue as well.
+            ApplyCurrentWaveSorting();
         }
 
         private void OnDestroy()
         {
+            if (spriteRenderer != null && originalSpriteMaterial != null)
+                spriteRenderer.sharedMaterial = originalSpriteMaterial;
+
+            if (surferWaveMaterial != null)
+                Destroy(surferWaveMaterial);
+
             if (runtimeSprite != null) Destroy(runtimeSprite);
             if (runtimeTexture != null) Destroy(runtimeTexture);
+        }
+
+        private void ApplyCurrentWaveSorting(bool force = false)
+        {
+            if (spriteRenderer == null)
+                return;
+
+            if (currentWave == null)
+            {
+                if (simulations.Count == 0)
+                    RefreshWaveList();
+
+                if (simulations.Count == 0)
+                    return;
+
+                waveIndex = Mathf.Clamp(
+                    waveIndex,
+                    0,
+                    simulations.Count - 1);
+
+                currentWave = simulations[waveIndex];
+            }
+
+            // Queue layout uses four slots per wave depth:
+            // water = N, surfer = N + 1, shark lane = N + 2,
+            // next foreground water = N + 4.
+            // This guarantees a surfer is above its own water, behind a shark
+            // in the lane immediately in front, and in front of a shark in the
+            // lane immediately behind.
+            int waterQueue =
+                currentWave.GetWaveLayerRenderQueue();
+
+            int surferQueue = Mathf.Clamp(
+                waterQueue + 1,
+                2501,
+                4999);
+
+            if (surferWaveMaterial == null)
+            {
+                originalSpriteMaterial =
+                    spriteRenderer.sharedMaterial;
+
+                Material source = originalSpriteMaterial;
+
+                if (source == null)
+                {
+                    Shader spriteShader =
+                        Shader.Find("Sprites/Default");
+
+                    if (spriteShader == null)
+                    {
+                        Debug.LogWarning(
+                            "Sprites/Default shader could not be found.",
+                            this);
+
+                        return;
+                    }
+
+                    source = new Material(spriteShader);
+                }
+
+                surferWaveMaterial = new Material(source)
+                {
+                    name = $"{name} Dynamic Wave Sorting",
+                    hideFlags = HideFlags.HideAndDontSave
+                };
+
+                spriteRenderer.sharedMaterial =
+                    surferWaveMaterial;
+
+                force = true;
+            }
+
+            if (force ||
+                surferQueue != lastWaveRenderQueue)
+            {
+                surferWaveMaterial.renderQueue =
+                    surferQueue;
+
+                lastWaveRenderQueue =
+                    surferQueue;
+            }
+
+            spriteRenderer.sortingOrder =
+                surferWithinWaveSortingOrder;
         }
 
         private void EnsureSharkHitCollider()
@@ -335,9 +448,8 @@ namespace PixelOcean
                 1f,
                 secondsPerSimulation + personalIntervalOffset);
 
-            if (spriteRenderer != null)
-                spriteRenderer.sortingOrder = sortingOrder;
-
+            // sortingOrder remains available as legacy configuration, while the
+            // active queue/order is derived from the wave being ridden.
             RefreshWaveList();
             direction = movingRight ? 1f : -1f;
             PickWave(wave, true);
@@ -501,6 +613,7 @@ namespace PixelOcean
 
             currentWave = simulations[next];
             waveIndex = next;
+            ApplyCurrentWaveSorting(true);
             stateTimer = 0f;
             state = RiderState.SwitchingWave;
             renderDepth = currentWave.transform.position.z - 0.02f;
@@ -799,6 +912,7 @@ namespace PixelOcean
 
             currentWave = simulations[next];
             waveIndex = next;
+            ApplyCurrentWaveSorting(true);
             waveTimer = 0f;
             ScheduleNextLayerJump(0f);
             stateTimer = 0f;
@@ -899,6 +1013,7 @@ namespace PixelOcean
 
             waveIndex = Mathf.Abs(index) % simulations.Count;
             currentWave = simulations[waveIndex];
+            ApplyCurrentWaveSorting(true);
             stateTimer = 0f;
             state = RiderState.Riding;
             renderDepth = currentWave.transform.position.z - 0.02f;
@@ -944,7 +1059,7 @@ namespace PixelOcean
             if (imported != null)
             {
                 spriteRenderer.sprite = imported;
-                spriteRenderer.sortingOrder = sortingOrder;
+                spriteRenderer.sortingOrder = surferWithinWaveSortingOrder;
                 spriteRenderer.color = Color.white;
 
                 ApplyFacing(
@@ -1027,7 +1142,7 @@ namespace PixelOcean
                 runtimeSprite;
 
             spriteRenderer.sortingOrder =
-                sortingOrder;
+                surferWithinWaveSortingOrder;
 
             spriteRenderer.color =
                 Color.white;

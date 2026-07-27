@@ -24,7 +24,7 @@ MonoBehaviour:
   m_MinSize: {x: 400, y: 112}
   m_MaxSize: {x: 32384, y: 16192}
   vertical: 0
-  controlID: 8594
+  controlID: 10308
   draggingID: 0
 --- !u!114 &2
 MonoBehaviour:
@@ -155,7 +155,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 112}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 1
-  controlID: 8595
+  controlID: 10309
   draggingID: 0
 --- !u!114 &4
 MonoBehaviour:
@@ -182,7 +182,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 56}
   m_MaxSize: {x: 24288, y: 8096}
   vertical: 0
-  controlID: 8596
+  controlID: 10310
   draggingID: 0
 --- !u!114 &5
 MonoBehaviour:
@@ -1229,7 +1229,7 @@ MonoBehaviour:
   m_LockTracker:
     m_IsLocked: 0
   m_LastSelectedObjectID:
-    m_rawData: 568105584918859816
+    m_rawData: 0
 --- !u!114 &12
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -1308,7 +1308,7 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Assets/Animations
+    - Assets
     m_Globs: []
     m_ProductIds: 
     m_AnyWithAssetOrigin: 0
@@ -1318,7 +1318,7 @@ MonoBehaviour:
   m_ViewMode: 1
   m_StartGridSize: 96
   m_LastFolders:
-  - Assets/Animations
+  - Assets
   m_LastFoldersGridSize: 96
   m_LastProjectPath: D:\Unity\PixelFluid
   m_LockTracker:
@@ -1327,9 +1327,9 @@ MonoBehaviour:
   m_FolderTreeState:
     scrollPos: {x: 0, y: 21.333313}
     m_SelectedIDs:
-    - m_rawData: 568105584918860196
+    - m_rawData: 568105584918855582
     m_LastClickedID:
-      m_rawData: 568105584918860196
+      m_rawData: 568105584918855582
     m_ExpandedIDs:
     - m_rawData: 568105589213755274
     - m_rawData: 0
