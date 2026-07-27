@@ -65,6 +65,18 @@ namespace PixelOcean
         [SerializeField] private bool respawnAfterDeath = true;
         [SerializeField, Min(0f)] private float respawnDelay = 0.7f;
 
+        [Header("Death Blood Particles")]
+        [SerializeField] private bool emitBloodOnDeath = true;
+        [SerializeField, Range(4, 80)] private int deathBloodParticleCount = 64;
+        [SerializeField, Min(0.05f)] private float deathBloodLifetime = 2.35f;
+        [SerializeField, Min(0f)] private float deathBloodMinSpeed = 0.12f;
+        [SerializeField, Min(0f)] private float deathBloodMaxSpeed = 0.48f;
+        [SerializeField, Range(0.005f, 0.2f)] private float deathBloodMinSize = 0.025f;
+        [SerializeField, Range(0.005f, 0.25f)] private float deathBloodMaxSize = 0.025f;
+        [SerializeField] private float deathBloodGravity = 0.01f;
+        [SerializeField] private Vector2 deathBloodOffset = new(0f, 0.08f);
+        [SerializeField, ColorUsage(true, true)] private Color deathBloodColor = new(1f, 0f, 0f, 1f);
+
         [Header("Surfer Sprite")]
         [SerializeField] private string surferSpriteResource = "Surfers/chuck";
         [SerializeField, Min(0.05f)] private float spriteWorldScale = 0.65f;
@@ -99,6 +111,10 @@ namespace PixelOcean
         private Texture2D runtimeTexture;
         private Material originalSpriteMaterial;
         private Material surferWaveMaterial;
+        private ParticleSystem deathBloodParticles;
+        private Material deathBloodMaterial;
+        private AudioSource deathAudioSource;
+        [SerializeField] private AudioClip humanDeathClip;
         private int lastWaveRenderQueue = -1;
 
         private RiderState state;
@@ -116,6 +132,7 @@ namespace PixelOcean
         private bool previousJumpHeld;
         private bool previousLayerUpHeld;
         private bool previousLayerDownHeld;
+        private bool layerSwitchInputLocked;
         private float deathTimer;
         private float respawnTimer;
         private Vector2 deathVelocity;
@@ -150,6 +167,16 @@ namespace PixelOcean
 
         private void Awake()
         {
+            deathAudioSource = GetComponent<AudioSource>();
+            if (deathAudioSource == null)
+                deathAudioSource = gameObject.AddComponent<AudioSource>();
+
+            deathAudioSource.playOnAwake = false;
+            deathAudioSource.loop = false;
+            deathAudioSource.spatialBlend = 0f;
+
+            if (humanDeathClip == null)
+                humanDeathClip = Resources.Load<AudioClip>("Audio/SFX/human_death");
             EnsurePixelSprite();
             EnsureSurferAnimator();
             EnsureSharkHitCollider();
@@ -185,6 +212,9 @@ namespace PixelOcean
 
             if (surferWaveMaterial != null)
                 Destroy(surferWaveMaterial);
+
+            if (deathBloodMaterial != null)
+                Destroy(deathBloodMaterial);
 
             if (runtimeSprite != null) Destroy(runtimeSprite);
             if (runtimeTexture != null) Destroy(runtimeTexture);
@@ -359,6 +389,9 @@ namespace PixelOcean
 
             state = RiderState.Dead;
             PlayDeathAnimation();
+            EmitDeathBlood();
+            if (humanDeathClip != null && deathAudioSource != null)
+                deathAudioSource.PlayOneShot(humanDeathClip);
             deathTimer = 0f;
             respawnTimer = 0f;
             float away = transform.position.x >= sharkPosition.x ? 1f : -1f;
@@ -370,6 +403,279 @@ namespace PixelOcean
             Collider2D collider = GetComponent<Collider2D>();
             if (collider != null) collider.enabled = false;
             return true;
+        }
+
+        private void EmitDeathBlood()
+        {
+            if (!emitBloodOnDeath || deathBloodParticleCount <= 0)
+                return;
+
+            EnsureDeathBloodEmitter();
+
+            if (deathBloodParticles == null)
+                return;
+
+            deathBloodParticles.transform.position =
+                transform.position + (Vector3)deathBloodOffset;
+
+            float minSpeed = Mathf.Min(
+                deathBloodMinSpeed,
+                deathBloodMaxSpeed);
+
+            float maxSpeed = Mathf.Max(
+                deathBloodMinSpeed,
+                deathBloodMaxSpeed);
+
+            float minSize = Mathf.Min(
+                deathBloodMinSize,
+                deathBloodMaxSize);
+
+            float maxSize = Mathf.Max(
+                deathBloodMinSize,
+                deathBloodMaxSize);
+
+            // Use ordinary non-HDR red.
+            Color bloodRed = new Color(1f, 0f, 0f, 1f);
+
+            ParticleSystem.EmitParams emit =
+                new ParticleSystem.EmitParams
+                {
+                    startColor = bloodRed,
+                    startLifetime = deathBloodLifetime
+                };
+
+            for (int i = 0; i < deathBloodParticleCount; i++)
+            {
+                float angle =
+                    Random.Range(0f, 360f) *
+                    Mathf.Deg2Rad;
+
+                float speed =
+                    Random.Range(minSpeed, maxSpeed);
+
+                emit.velocity = new Vector3(
+                    Mathf.Cos(angle) * speed,
+                    Mathf.Sin(angle) * speed,
+                    Random.Range(-0.03f, 0.03f));
+
+                emit.startSize =
+                    Random.Range(minSize, maxSize);
+
+                deathBloodParticles.Emit(emit, 1);
+            }
+        }
+
+        private void EnsureDeathBloodEmitter()
+        {
+            if (deathBloodParticles != null)
+                return;
+
+            GameObject emitterObject =
+                new GameObject("Death Blood Particles");
+
+            emitterObject.transform.SetParent(null);
+            emitterObject.transform.position =
+                transform.position;
+
+            deathBloodParticles =
+                emitterObject.AddComponent<ParticleSystem>();
+
+            Color bloodRed =
+                new Color(1f, 0f, 0f, 1f);
+
+            // Main particle settings.
+            ParticleSystem.MainModule main =
+                deathBloodParticles.main;
+
+            main.loop = false;
+            main.playOnAwake = false;
+            main.simulationSpace =
+                ParticleSystemSimulationSpace.World;
+
+            main.startLifetime =
+                deathBloodLifetime;
+
+            main.startSpeed = 0f;
+
+            main.startSize =
+                new ParticleSystem.MinMaxCurve(
+                    deathBloodMinSize,
+                    deathBloodMaxSize);
+
+            main.startColor = bloodRed;
+            main.gravityModifier = deathBloodGravity;
+
+            main.maxParticles =
+                Mathf.Max(
+                    64,
+                    deathBloodParticleCount * 3);
+
+            main.stopAction =
+                ParticleSystemStopAction.None;
+
+            // Particles are emitted manually.
+            ParticleSystem.EmissionModule emission =
+                deathBloodParticles.emission;
+
+            emission.enabled = false;
+
+            ParticleSystem.ShapeModule shape =
+                deathBloodParticles.shape;
+
+            shape.enabled = false;
+
+            // Keep their launch velocity simple.
+            ParticleSystem.LimitVelocityOverLifetimeModule limitVelocity =
+                deathBloodParticles.limitVelocityOverLifetime;
+
+            limitVelocity.enabled = false;
+
+            // Fade from fully visible red to transparent red.
+            ParticleSystem.ColorOverLifetimeModule colourOverLifetime =
+                deathBloodParticles.colorOverLifetime;
+
+            colourOverLifetime.enabled = true;
+
+            Gradient fadeGradient = new Gradient();
+
+            fadeGradient.SetKeys(
+                new[]
+                {
+                    new GradientColorKey(bloodRed, 0f),
+                    new GradientColorKey(bloodRed, 1f)
+                },
+                new[]
+                {
+                    new GradientAlphaKey(1f, 0f),
+                    new GradientAlphaKey(1f, 0.15f),
+                    new GradientAlphaKey(0.65f, 0.45f),
+                    new GradientAlphaKey(0.25f, 0.75f),
+                    new GradientAlphaKey(0f, 1f)
+                });
+
+            colourOverLifetime.color =
+                new ParticleSystem.MinMaxGradient(
+                    fadeGradient);
+
+            // Shrink the particles while they fade.
+            ParticleSystem.SizeOverLifetimeModule sizeOverLifetime =
+                deathBloodParticles.sizeOverLifetime;
+
+            sizeOverLifetime.enabled = true;
+
+            AnimationCurve sizeCurve =
+                new AnimationCurve(
+                    new Keyframe(0f, 1f),
+                    new Keyframe(0.65f, 0.85f),
+                    new Keyframe(1f, 0f));
+
+            sizeOverLifetime.size =
+                new ParticleSystem.MinMaxCurve(
+                    1f,
+                    sizeCurve);
+
+            ParticleSystemRenderer particleRenderer =
+                emitterObject.GetComponent<ParticleSystemRenderer>();
+
+            particleRenderer.renderMode =
+                ParticleSystemRenderMode.Billboard;
+
+            particleRenderer.sortingOrder =
+                surferWithinWaveSortingOrder + 3;
+
+            // Find a shader supported by the active render pipeline.
+            Shader shader =
+                Shader.Find(
+                    "Universal Render Pipeline/Particles/Unlit");
+
+            if (shader == null)
+            {
+                shader =
+                    Shader.Find(
+                        "Universal Render Pipeline/2D/Sprite-Unlit-Default");
+            }
+
+            if (shader == null)
+                shader = Shader.Find("Sprites/Default");
+
+            if (shader == null)
+            {
+                Debug.LogWarning(
+                    "Could not find a compatible shader for the death blood particles.",
+                    this);
+
+                Destroy(emitterObject);
+                deathBloodParticles = null;
+                return;
+            }
+
+            deathBloodMaterial =
+                new Material(shader)
+                {
+                    name = $"{name} Basic Blood Material",
+                    hideFlags = HideFlags.HideAndDontSave
+                };
+
+            // Ordinary red, with no HDR or emission.
+            if (deathBloodMaterial.HasProperty("_BaseColor"))
+            {
+                deathBloodMaterial.SetColor(
+                    "_BaseColor",
+                    bloodRed);
+            }
+
+            if (deathBloodMaterial.HasProperty("_Color"))
+            {
+                deathBloodMaterial.SetColor(
+                    "_Color",
+                    bloodRed);
+            }
+
+            // Disable emission so fading alpha actually removes the particles.
+            deathBloodMaterial.DisableKeyword("_EMISSION");
+
+            if (deathBloodMaterial.HasProperty("_EmissionColor"))
+            {
+                deathBloodMaterial.SetColor(
+                    "_EmissionColor",
+                    Color.black);
+            }
+
+            // Force ordinary transparent alpha blending.
+            if (deathBloodMaterial.HasProperty("_Surface"))
+                deathBloodMaterial.SetFloat("_Surface", 1f);
+
+            if (deathBloodMaterial.HasProperty("_Blend"))
+                deathBloodMaterial.SetFloat("_Blend", 0f);
+
+            if (deathBloodMaterial.HasProperty("_SrcBlend"))
+            {
+                deathBloodMaterial.SetFloat(
+                    "_SrcBlend",
+                    (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            }
+
+            if (deathBloodMaterial.HasProperty("_DstBlend"))
+            {
+                deathBloodMaterial.SetFloat(
+                    "_DstBlend",
+                    (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            }
+
+            if (deathBloodMaterial.HasProperty("_ZWrite"))
+                deathBloodMaterial.SetFloat("_ZWrite", 0f);
+
+            deathBloodMaterial.DisableKeyword(
+                "_ALPHAPREMULTIPLY_ON");
+
+            deathBloodMaterial.DisableKeyword(
+                "_ALPHAMODULATE_ON");
+
+            deathBloodMaterial.renderQueue =
+                (int)UnityEngine.Rendering.RenderQueue.Transparent;
+
+            particleRenderer.sharedMaterial =
+                deathBloodMaterial;
         }
 
         private void UpdateDeathResponse(float dt)
@@ -532,21 +838,35 @@ namespace PixelOcean
         [ContextMenu("Refresh Wave Simulations")]
         public void RefreshWaveList()
         {
+            PixelWaterGPU previouslySelectedWave = currentWave;
+
             simulations.Clear();
             simulations.AddRange(FindObjectsByType<PixelWaterGPU>(
                 FindObjectsInactive.Exclude,
                 FindObjectsSortMode.None));
 
             simulations.RemoveAll(w =>
-                w == null || !w.isActiveAndEnabled || w.gameObject == gameObject);
+                w == null ||
+                !w.isActiveAndEnabled ||
+                w.gameObject == gameObject);
 
-            if (sortWavesBackToFront)
+            // The independent simulations keep their GameObject transforms at
+            // zero. Their actual row position is stored internally, so sorting
+            // by transform Y/Z produces an unstable order. The layer index is
+            // the authoritative full wave-stack order:
+            // 0 = lowest/foreground, larger = higher/toward the horizon.
+            simulations.Sort((a, b) =>
+                a.IndependentLayerIndex.CompareTo(b.IndependentLayerIndex));
+
+            // Preserve the currently ridden wave after rebuilding the list.
+            if (previouslySelectedWave != null)
             {
-                simulations.Sort((a, b) =>
+                int selectedIndex = simulations.IndexOf(previouslySelectedWave);
+                if (selectedIndex >= 0)
                 {
-                    int y = a.transform.position.y.CompareTo(b.transform.position.y);
-                    return y != 0 ? y : a.transform.position.z.CompareTo(b.transform.position.z);
-                });
+                    waveIndex = selectedIndex;
+                    currentWave = previouslySelectedWave;
+                }
             }
         }
 
@@ -576,15 +896,27 @@ namespace PixelOcean
             if (jumpHeld && !previousJumpHeld && state == RiderState.Riding)
                 BeginTurnTrick();
 
-            // Inverted depth controls: Down/S moves one row toward the horizon,
-            // while Up/W moves one row toward the foreground. Interior presses
-            // move exactly one row. Only an outward press on an edge wraps:
-            // Up from the first row reaches the last row, and Down from the last
-            // row reaches the first row.
-            if (layerUpHeld && !previousLayerUpHeld && state == RiderState.Riding)
-                BeginAdjacentWave(-1);
-            else if (layerDownHeld && !previousLayerDownHeld && state == RiderState.Riding)
-                BeginAdjacentWave(+1);
+            // Depth controls: Up/W moves one row toward the horizon,
+            // while Down/S moves one row toward the foreground. Interior presses
+            // move exactly one row. Only an outward press on an edge wraps.
+            // A completed release is required between layer changes. This prevents
+            // a held key, overlapping W/arrow input, or a press during the jump
+            // from immediately starting a second wave transition.
+            if (!layerUpHeld && !layerDownHeld)
+                layerSwitchInputLocked = false;
+
+            if (!layerSwitchInputLocked && state == RiderState.Riding)
+            {
+                bool upPressed = layerUpHeld && !previousLayerUpHeld;
+                bool downPressed = layerDownHeld && !previousLayerDownHeld;
+
+                // Ignore contradictory simultaneous input rather than guessing.
+                if (upPressed != downPressed)
+                {
+                    BeginAdjacentWave(upPressed ? +1 : -1);
+                    layerSwitchInputLocked = true;
+                }
+            }
 
             previousJumpHeld = jumpHeld;
             previousLayerUpHeld = layerUpHeld;
@@ -604,31 +936,48 @@ namespace PixelOcean
 
         private void BeginAdjacentWave(int step)
         {
-            if (simulations.Count <= 1) return;
+            if (state != RiderState.Riding)
+                return;
 
-            // One press always moves one row. Wrapping is allowed only when the
-            // requested direction points outward from an edge of the stack.
+            // Refresh first because the independent layers are generated at
+            // runtime. This also restores a strict 0..N layer-index order.
+            RefreshWaveList();
+
+            if (simulations.Count <= 1)
+                return;
+
             step = Mathf.Clamp(step, -1, 1);
-            if (step == 0) return;
+            if (step == 0)
+                return;
 
-            int lastWaveIndex = simulations.Count - 1;
-            int next;
+            // Never trust an old numeric index. Resolve the surfer's current
+            // wave by reference, then move exactly one entry in the sorted list.
+            int currentIndex = simulations.IndexOf(currentWave);
+            if (currentIndex < 0)
+                currentIndex = Mathf.Clamp(waveIndex, 0, simulations.Count - 1);
 
-            if (waveIndex == 0 && step < 0)
-                next = lastWaveIndex;
-            else if (waveIndex == lastWaveIndex && step > 0)
-                next = 0;
-            else
-                next = Mathf.Clamp(waveIndex + step, 0, lastWaveIndex);
+            int nextIndex = currentIndex + step;
 
-            if (next == waveIndex) return;
+            // Wrap only when pressing outward at either end of the full stack.
+            if (nextIndex < 0)
+                nextIndex = simulations.Count - 1;
+            else if (nextIndex >= simulations.Count)
+                nextIndex = 0;
 
-            currentWave = simulations[next];
-            waveIndex = next;
+            PixelWaterGPU nextWave = simulations[nextIndex];
+            if (nextWave == null || nextWave == currentWave)
+                return;
+
+            layerSwitchInputLocked = true;
+            currentWave = nextWave;
+            waveIndex = nextIndex;
+
             ApplyCurrentWaveSorting(true);
+
             stateTimer = 0f;
             state = RiderState.SwitchingWave;
             renderDepth = currentWave.transform.position.z - 0.02f;
+
             switchStart = transform.position;
             switchTarget = GetStartingPosition(currentWave);
             switchTarget.x = ClampPlayerXToSandbox(localRideX);
