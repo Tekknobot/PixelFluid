@@ -237,17 +237,23 @@ namespace PixelOcean
 
         private void TryRescue(Vector2 swimmerPosition)
         {
-            foreach (TinyWaveSurfer surfer in FindObjectsByType<TinyWaveSurfer>(FindObjectsSortMode.None))
+            int swimmerLane = changingLane &&
+                            laneChangeElapsed >= laneChangeDuration * 0.5f
+                ? targetLaneIndex
+                : laneIndex;
+
+            foreach (TinyWaveSurfer surfer in
+                    FindObjectsByType<TinyWaveSurfer>(FindObjectsSortMode.None))
             {
                 if (surfer == null || surfer.IsDead || surfer.IsSwitchingWave)
                     continue;
 
-                bool matchesCurrent = surfer.CurrentWaveIndex == laneIndex || surfer.CurrentWaveIndex == laneIndex + 1;
-                bool matchesTarget = changingLane &&
-                    (surfer.CurrentWaveIndex == targetLaneIndex || surfer.CurrentWaveIndex == targetLaneIndex + 1);
-                if (!matchesCurrent && !matchesTarget)
+                if (surfer.CurrentWaveIndex - 1 != swimmerLane)
                     continue;
-                if (Vector2.Distance(swimmerPosition, surfer.transform.position) > rescueRadius)
+
+                if (Vector2.Distance(
+                        swimmerPosition,
+                        surfer.transform.position) > rescueRadius)
                     continue;
 
                 Rescue(surfer.transform);
