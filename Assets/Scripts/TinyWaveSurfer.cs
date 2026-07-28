@@ -101,7 +101,7 @@ namespace PixelOcean
         [SerializeField, Min(0.5f)] private float proneIdleDelay = 7f;
 
         [Header("Speech Bubbles")]
-        [SerializeField] private bool enableSpeechBubbles = true;
+        [SerializeField] private bool enableSpeechBubbles = false;
         [SerializeField, Min(0.5f)] private float idleSpeechDelay = 4.5f;
         [SerializeField, Min(1f)] private float idleSpeechCooldown = 10f;
         [SerializeField, Min(0.25f)] private float sharkSpeechRange = 2.25f;

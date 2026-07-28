@@ -263,6 +263,13 @@ namespace PixelOcean
             saved = true;
             PlaySwimmerSavedSfx();
 
+            // Replace the rescued swimmer with a temporary animated surfer who
+            // rides out through a randomly selected side of the level.
+            int rescuedLane = changingLane && laneChangeElapsed >= laneChangeDuration * 0.5f
+                ? targetLaneIndex
+                : laneIndex;
+            RescuedSurferExit.Spawn(transform.position, rescuedLane);
+
             Collider2D trigger = GetComponent<Collider2D>();
             if (trigger != null)
                 trigger.enabled = false;
