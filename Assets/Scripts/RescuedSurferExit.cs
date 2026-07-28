@@ -94,9 +94,7 @@ namespace PixelOcean
             if (waterLayers.Count == 0)
             {
                 waterLayers.AddRange(
-                    FindObjectsByType<PixelWaterGPU>(FindObjectsSortMode.None)
-                        .Where(layer => layer != null)
-                        .OrderBy(layer => layer.IndependentLayerIndex));
+                    EndlessWaveSections.LayersNearest(transform.position.x));
             }
         }
 

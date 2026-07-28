@@ -75,9 +75,7 @@ namespace PixelOcean
         {
             orderedWaterLayers.Clear();
             orderedWaterLayers.AddRange(
-                FindObjectsByType<PixelWaterGPU>(FindObjectsSortMode.None)
-                    .Where(w => w != null)
-                    .OrderBy(w => w.IndependentLayerIndex));
+                EndlessWaveSections.LayersNearest(transform.position.x));
 
             masterWater = orderedWaterLayers.FirstOrDefault(w => !w.IsIndependentLayerClone)
                           ?? orderedWaterLayers.FirstOrDefault();

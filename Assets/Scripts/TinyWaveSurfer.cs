@@ -1231,33 +1231,21 @@ namespace PixelOcean
         {
             PixelWaterGPU previouslySelectedWave = currentWave;
 
+            int desiredLayer = previouslySelectedWave != null
+                ? previouslySelectedWave.IndependentLayerIndex
+                : waveIndex;
+
             simulations.Clear();
-            simulations.AddRange(FindObjectsByType<PixelWaterGPU>(
-                FindObjectsInactive.Exclude,
-                FindObjectsSortMode.None));
+            simulations.AddRange(EndlessWaveSections.LayersNearest(localRideX));
+            simulations.RemoveAll(w => w == null || !w.isActiveAndEnabled || w.gameObject == gameObject);
+            simulations.Sort((a, b) => a.IndependentLayerIndex.CompareTo(b.IndependentLayerIndex));
 
-            simulations.RemoveAll(w =>
-                w == null ||
-                !w.isActiveAndEnabled ||
-                w.gameObject == gameObject);
-
-            // The independent simulations keep their GameObject transforms at
-            // zero. Their actual row position is stored internally, so sorting
-            // by transform Y/Z produces an unstable order. The layer index is
-            // the authoritative full wave-stack order:
-            // 0 = lowest/foreground, larger = higher/toward the horizon.
-            simulations.Sort((a, b) =>
-                a.IndependentLayerIndex.CompareTo(b.IndependentLayerIndex));
-
-            // Preserve the currently ridden wave after rebuilding the list.
-            if (previouslySelectedWave != null)
+            if (simulations.Count > 0)
             {
-                int selectedIndex = simulations.IndexOf(previouslySelectedWave);
-                if (selectedIndex >= 0)
-                {
-                    waveIndex = selectedIndex;
-                    currentWave = previouslySelectedWave;
-                }
+                int selectedIndex = simulations.FindIndex(w => w.IndependentLayerIndex == desiredLayer);
+                if (selectedIndex < 0) selectedIndex = Mathf.Clamp(desiredLayer, 0, simulations.Count - 1);
+                waveIndex = selectedIndex;
+                currentWave = simulations[selectedIndex];
             }
         }
 
@@ -1275,6 +1263,8 @@ namespace PixelOcean
                 float speed = playerScrollSpeed * (boostHeld ? playerBoostMultiplier : 1f);
                 localRideX += horizontal * speed * dt;
             }
+
+            RebindToNearestHorizontalSection();
 
             bool moving =
                 Mathf.Abs(horizontal) > 0.01f &&
@@ -1388,8 +1378,47 @@ namespace PixelOcean
             switchTarget.z = renderDepth;
         }
 
+        private void RebindToNearestHorizontalSection()
+        {
+            EndlessWaveSections endless = EndlessWaveSections.Instance;
+            if (endless == null || !endless.IsReady || currentWave == null)
+                return;
+
+            // Keep the same vertical layer while crossing a horizontal seam.
+            float padding = 0.02f;
+            if (localRideX >= currentWave.TankMinimum.x - padding &&
+                localRideX <= currentWave.TankMaximum.x + padding)
+                return;
+
+            int verticalLayer = currentWave.IndependentLayerIndex;
+            List<PixelWaterGPU> nearest = EndlessWaveSections.LayersNearest(localRideX);
+            PixelWaterGPU replacement = nearest.Find(w => w.IndependentLayerIndex == verticalLayer);
+            if (replacement == null || replacement == currentWave)
+                return;
+
+            simulations.Clear();
+            simulations.AddRange(nearest);
+            simulations.Sort((a, b) => a.IndependentLayerIndex.CompareTo(b.IndependentLayerIndex));
+            currentWave = replacement;
+            waveIndex = simulations.IndexOf(replacement);
+            renderDepth = currentWave.transform.position.z - 0.02f;
+            ApplyCurrentWaveSorting(true);
+        }
+
         private float ClampPlayerXToSandbox(float desiredX)
         {
+            EndlessWaveSections endless = EndlessWaveSections.Instance;
+            if (endless != null && endless.IsReady)
+            {
+                // Only clamp against the far outside edges of the active three
+                // sections. Normal section seams remain completely traversable.
+                float minimumX = endless.MinimumWorldX + playerCameraEdgePadding;
+                float maximumX = endless.MaximumWorldX - playerCameraEdgePadding;
+                return minimumX <= maximumX
+                    ? Mathf.Clamp(desiredX, minimumX, maximumX)
+                    : desiredX;
+            }
+
             if (currentWave == null)
                 return desiredX;
 
@@ -1397,40 +1426,7 @@ namespace PixelOcean
             Vector2 waveMax = currentWave.TankMaximum;
             float waveWidth = Mathf.Max(0.01f, waveMax.x - waveMin.x);
             float wavePadding = waveWidth * edgePadding;
-            float minimumX = waveMin.x + wavePadding;
-            float maximumX = waveMax.x - wavePadding;
-
-            Camera camera = Camera.main;
-            if (camera == null)
-                camera = FindFirstObjectByType<Camera>();
-
-            if (camera != null)
-            {
-                float halfWidth;
-                if (camera.orthographic)
-                {
-                    halfWidth = camera.orthographicSize * camera.aspect;
-                }
-                else
-                {
-                    float distance = Mathf.Abs(camera.transform.position.z - transform.position.z);
-                    halfWidth = Mathf.Tan(camera.fieldOfView * 0.5f * Mathf.Deg2Rad)
-                        * distance * camera.aspect;
-                }
-
-                float cameraLeft = camera.transform.position.x - halfWidth
-                    + playerCameraEdgePadding;
-                float cameraRight = camera.transform.position.x + halfWidth
-                    - playerCameraEdgePadding;
-
-                minimumX = Mathf.Max(minimumX, cameraLeft);
-                maximumX = Mathf.Min(maximumX, cameraRight);
-            }
-
-            if (minimumX > maximumX)
-                return (minimumX + maximumX) * 0.5f;
-
-            return Mathf.Clamp(desiredX, minimumX, maximumX);
+            return Mathf.Clamp(desiredX, waveMin.x + wavePadding, waveMax.x - wavePadding);
         }
 
         private static void ReadPlayerInput(out float horizontal, out bool jump,

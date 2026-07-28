@@ -210,6 +210,18 @@ namespace PixelOcean
         [SerializeField, Min(0.001f)] private float renderedParticleSize = 0.035f;
         [SerializeField, Range(0f, 1f)] private float edgeSoftness = 0.28f;
 
+        [Header("Endless Section Seam Blending")]
+        [Tooltip("Width in world units over which particles and foam fade at each horizontal tank edge. Neighbouring sections overlap by 3 units, so 1.5 gives a balanced cross-fade.")]
+        [SerializeField, Range(0f, 3f)] private float sectionEdgeFadeWidth = 1.5f;
+        [Tooltip("Width in world units used to gently slow outward-moving particles before they reach a horizontal tank wall.")]
+        [SerializeField, Range(0f, 3f)] private float softHorizontalBoundaryWidth = 1.5f;
+        [Tooltip("Strength of the gentle edge slowdown. One removes the hard reflected bounce while retaining particles inside their own simulation.")]
+        [SerializeField, Range(0f, 1f)] private float softHorizontalBoundaryStrength = 1f;
+        [Tooltip("Uses a common real-time clock for emitters in every horizontal section so wave crests keep the same phase.")]
+        [SerializeField] private bool synchronizeHorizontalSectionPhase = true;
+        [Tooltip("Disables the left-to-right tropical colour ramp for endless horizontal copies, preventing a dark/light colour jump at each seam.")]
+        [SerializeField] private bool seamlessSectionColour = true;
+
         [Header("Interleaved Water Rendering")]
         [Tooltip("Splits this one GPU simulation into separately sortable horizontal render passes so sprites can be placed between parts of the wave.")]
         [SerializeField] private bool interleavedRenderingEnabled = true;
@@ -1054,6 +1066,8 @@ namespace PixelOcean
             renderingMaterial.SetFloat("_FoamSurfaceDensity", foamSurfaceDensity);
             renderingMaterial.SetFloat("_ShoreStart", shoreStart);
             renderingMaterial.SetFloat("_ShallowZoneWidth", shallowZoneWidth);
+            renderingMaterial.SetFloat("_SectionEdgeFadeWidth", sectionEdgeFadeWidth);
+            renderingMaterial.SetFloat("_SeamlessSectionColour", seamlessSectionColour ? 1f : 0f);
 
             DrawWaterRenderPasses();
         }
@@ -1238,7 +1252,46 @@ namespace PixelOcean
         public int IndependentLayerCount => Mathf.Max(1, independentLayerCount);
         public bool IsIndependentLayerClone => isIndependentLayerClone;
 
+        /// <summary>
+        /// Marks an inactive runtime duplicate as a horizontal section copy.
+        /// This prevents the duplicate from creating another vertical wave stack
+        /// when it is enabled. Call before activating the cloned GameObject.
+        /// </summary>
+        public void ConfigureAsHorizontalSectionClone(
+            int verticalLayerIndex,
+            int verticalLayerCount)
+        {
+            independentLayerIndex = Mathf.Max(0, verticalLayerIndex);
+            independentLayerCount = Mathf.Max(1, verticalLayerCount);
 
+            isIndependentLayerClone = true;
+            createIndependentWaveLayers = false;
+            independentLayersCreated = true;
+
+            /*
+            * The cloned tank, particles, spawn origin and seabed are already stored
+            * in world-space coordinates copied from the centre simulation.
+            *
+            * Prevent OnEnable/Update from applying the source GameObject transform
+            * to those coordinates a second time.
+            */
+            transformOriginInitialised = true;
+            appliedTransformPosition = Vector2.zero;
+
+            /*
+            * The copied simulation already contains the source layer's vertical
+            * offset. Reset the live position controls so they do not reapply it.
+            */
+            runtimeLayerPosition = Vector2.zero;
+            appliedRuntimeLayerPosition = Vector2.zero;
+
+            Vector3 position = transform.position;
+            transform.position = new Vector3(
+                0f,
+                0f,
+                position.z);
+        }
+        
         private void RemoveTropicalSeabed()
         {
             TropicalSeabed[] seabeds = GetComponentsInChildren<TropicalSeabed>(true);
@@ -1270,6 +1323,8 @@ namespace PixelOcean
             simulationShader.SetFloat("_PressureStrength", pressureStrength);
             simulationShader.SetFloat("_Viscosity", viscosity);
             simulationShader.SetFloat("_BoundaryBounce", boundaryBounce);
+            simulationShader.SetFloat("_SoftHorizontalBoundaryWidth", softHorizontalBoundaryWidth);
+            simulationShader.SetFloat("_SoftHorizontalBoundaryStrength", softHorizontalBoundaryStrength);
             simulationShader.SetFloat("_ParticleRadius", particleRadius);
             simulationShader.SetFloat("_MaximumSpeed", maximumSpeed);
             simulationShader.SetFloat("_FoamSpeedThreshold", foamSpeedThreshold);
@@ -1278,8 +1333,13 @@ namespace PixelOcean
             simulationShader.SetFloat("_FoamTurbulence", foamTurbulence);
             simulationShader.SetFloat("_FoamBottomSuppression", foamBottomSuppression);
             simulationShader.SetFloat("_FoamSurfaceDensity", foamSurfaceDensity);
+            // All horizontal copies use the same clock so their emitters crest at
+            // the same local X position. The particle fields remain independent.
+            float emitterClock = synchronizeHorizontalSectionPhase
+                ? Time.timeSinceLevelLoad
+                : simulationTime;
             float layerSimulationTime =
-                Mathf.Max(0f, simulationTime - independentWaveDelay);
+                Mathf.Max(0f, emitterClock - independentWaveDelay);
 
             simulationShader.SetFloat(
                 "_SimulationTime",
@@ -1287,7 +1347,7 @@ namespace PixelOcean
             simulationShader.SetInt(
                 "_WaveEnabled",
                 waveEmitterEnabled &&
-                simulationTime >= independentWaveDelay
+                emitterClock >= independentWaveDelay
                     ? 1
                     : 0);
             simulationShader.SetFloat("_WaveEmitterWidth", waveEmitterWidth);

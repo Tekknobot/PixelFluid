@@ -128,10 +128,8 @@ namespace PixelOcean
         public void RefreshWaveList()
         {
             waves.Clear();
-            waves.AddRange(FindObjectsByType<PixelWaterGPU>(
-                FindObjectsInactive.Exclude,
-                FindObjectsSortMode.None));
-
+            float listenerX = Camera.main != null ? Camera.main.transform.position.x : transform.position.x;
+            waves.AddRange(EndlessWaveSections.LayersNearest(listenerX));
             waves.RemoveAll(w => w == null || !w.isActiveAndEnabled);
         }
 

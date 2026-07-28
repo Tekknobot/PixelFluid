@@ -30,11 +30,18 @@ namespace PixelOcean
                 maximumCameraY
             );
 
-            Vector3 desired = new(
-                Target.position.x + horizontalOffset,
-                desiredY,
-                -10f
-            );
+            float desiredX = Target.position.x + horizontalOffset;
+            Camera cameraComponent = GetComponent<Camera>();
+            EndlessWaveSections endless = EndlessWaveSections.Instance;
+            if (endless != null && endless.IsReady && cameraComponent != null && cameraComponent.orthographic)
+            {
+                float halfWidth = cameraComponent.orthographicSize * cameraComponent.aspect;
+                float minimumX = endless.MinimumWorldX + halfWidth;
+                float maximumX = endless.MaximumWorldX - halfWidth;
+                if (minimumX <= maximumX) desiredX = Mathf.Clamp(desiredX, minimumX, maximumX);
+            }
+
+            Vector3 desired = new(desiredX, desiredY, -10f);
 
             transform.position = Vector3.SmoothDamp(
                 transform.position,

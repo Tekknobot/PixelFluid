@@ -56,7 +56,7 @@ namespace PixelOcean
         {
             body = GetComponent<Rigidbody2D>(); spriteRenderer = GetComponent<SpriteRenderer>();
             waterLayers.Clear();
-            waterLayers.AddRange(FindObjectsByType<PixelWaterGPU>(FindObjectsSortMode.None).Where(x => x != null).OrderBy(x => x.IndependentLayerIndex));
+            waterLayers.AddRange(EndlessWaveSections.LayersNearest(transform.position.x));
         }
 
         private void FixedUpdate()

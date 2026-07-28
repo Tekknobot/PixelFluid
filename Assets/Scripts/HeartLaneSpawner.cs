@@ -28,10 +28,7 @@ namespace PixelOcean
         {
             if (spawnedHeart != null) return;
 
-            List<PixelWaterGPU> layers = FindObjectsByType<PixelWaterGPU>(FindObjectsSortMode.None)
-                .Where(layer => layer != null)
-                .OrderBy(layer => layer.IndependentLayerIndex)
-                .ToList();
+            List<PixelWaterGPU> layers = EndlessWaveSections.LayersNearest(transform.position.x);
             if (layers.Count < 2)
             {
                 Debug.LogError("HeartLaneSpawner requires at least two independent water layers.", this);

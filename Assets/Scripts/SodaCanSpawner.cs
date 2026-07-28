@@ -22,8 +22,7 @@ namespace PixelOcean
         public void SpawnCan()
         {
             if (spawnedCan != null) return;
-            List<PixelWaterGPU> layers = FindObjectsByType<PixelWaterGPU>(FindObjectsSortMode.None)
-                .Where(x => x != null).OrderBy(x => x.IndependentLayerIndex).ToList();
+            List<PixelWaterGPU> layers = EndlessWaveSections.LayersNearest(transform.position.x);
             if (layers.Count < 2) return;
             int lane = Random.Range(0, layers.Count - 1);
             spawnedCan = new GameObject($"Soda Can - Lane {lane + 1}");

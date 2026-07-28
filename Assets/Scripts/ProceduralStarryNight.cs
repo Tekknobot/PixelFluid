@@ -36,6 +36,7 @@ namespace PixelOcean
         private Color[] basePixels;
         private StarData[] stars;
         private float updateTimer;
+        private Camera gameplayCamera;
 
         private struct StarData
         {
@@ -46,10 +47,18 @@ namespace PixelOcean
             public Color Colour;
         }
 
-        private void Awake() => BuildNightSky();
+        private void Awake() { gameplayCamera = Camera.main; BuildNightSky(); }
 
         private void Update()
         {
+            if (gameplayCamera == null) gameplayCamera = Camera.main;
+            if (gameplayCamera != null)
+            {
+                Vector3 position = transform.position;
+                position.x = gameplayCamera.transform.position.x;
+                transform.position = position;
+            }
+
             if (!animateTwinkle || generatedTexture == null || stars == null)
                 return;
 

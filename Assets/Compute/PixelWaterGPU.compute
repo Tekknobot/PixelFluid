@@ -27,6 +27,8 @@ float2 _Gravity;
 float _PressureStrength;
 float _Viscosity;
 float _BoundaryBounce;
+float _SoftHorizontalBoundaryWidth;
+float _SoftHorizontalBoundaryStrength;
 float _ParticleRadius;
 float _MaximumSpeed;
 float _FoamSpeedThreshold;
@@ -661,6 +663,24 @@ void Simulate(uint id : SV_DispatchThreadID)
     float submergedDecay = lerp(2.25, 1.0, surfaceExposure);
     particle.foam = saturate(particle.foam + generatedFoam * _DeltaTime - _FoamDecay * submergedDecay * _DeltaTime);
 
+    // Gently remove only outward horizontal speed before particles reach the
+    // tank edge. This avoids the visible reflected splash created by a hard wall,
+    // while keeping each GPU simulation self-contained.
+    float horizontalSoftWidth = max(_SoftHorizontalBoundaryWidth, 0.0001);
+    float leftSoftMask = 1.0 - smoothstep(
+        _TankMin.x + _ParticleRadius,
+        _TankMin.x + _ParticleRadius + horizontalSoftWidth,
+        particle.position.x);
+    float rightSoftMask = smoothstep(
+        _TankMax.x - _ParticleRadius - horizontalSoftWidth,
+        _TankMax.x - _ParticleRadius,
+        particle.position.x);
+
+    if (particle.velocity.x < 0.0)
+        particle.velocity.x *= 1.0 - saturate(leftSoftMask * _SoftHorizontalBoundaryStrength) * _DeltaTime * 8.0;
+    else if (particle.velocity.x > 0.0)
+        particle.velocity.x *= 1.0 - saturate(rightSoftMask * _SoftHorizontalBoundaryStrength) * _DeltaTime * 8.0;
+
     particle.position += particle.velocity * _DeltaTime;
 
     float2 minimum = _TankMin + _ParticleRadius;
@@ -670,13 +690,13 @@ void Simulate(uint id : SV_DispatchThreadID)
     {
         particle.position.x = minimum.x;
         if (particle.velocity.x < 0.0)
-            particle.velocity.x *= -_BoundaryBounce;
+            particle.velocity.x = 0.0;
     }
     else if (particle.position.x > maximum.x)
     {
         particle.position.x = maximum.x;
         if (particle.velocity.x > 0.0)
-            particle.velocity.x *= -_BoundaryBounce;
+            particle.velocity.x = 0.0;
     }
 
     float seabedY = GetSeabedHeight(particle.position.x) + _ParticleRadius;

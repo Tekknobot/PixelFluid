@@ -17,6 +17,8 @@ Shader "PixelOcean/GPU Particle Water"
         _EdgeSoftness ("Edge Softness", Range(0,1)) = 0.28
         _FoamBottomSuppression ("Foam Bottom Suppression", Float) = 0.55
         _FoamSurfaceDensity ("Foam Surface Density", Range(0,1)) = 0.62
+        _SectionEdgeFadeWidth ("Section Edge Fade Width", Float) = 1.5
+        _SeamlessSectionColour ("Seamless Section Colour", Float) = 1
         [HideInInspector] _RenderBandEnabled ("Render Band Enabled", Float) = 0
         [HideInInspector] _RenderBandMinY ("Render Band Minimum Y", Float) = -10000
         [HideInInspector] _RenderBandMaxY ("Render Band Maximum Y", Float) = 10000
@@ -63,6 +65,8 @@ Shader "PixelOcean/GPU Particle Water"
             float _FoamSurfaceDensity;
             float _ShoreStart;
             float _ShallowZoneWidth;
+            float _SectionEdgeFadeWidth;
+            float _SeamlessSectionColour;
             float _RenderBandEnabled;
             float _RenderBandMinY;
             float _RenderBandMaxY;
@@ -139,6 +143,7 @@ Shader "PixelOcean/GPU Particle Water"
 
                 // Tropical shallows begin over the final third of the tank and widen gradually.
                 float shoreMask = smoothstep(_ShoreStart - _ShallowZoneWidth, _ShoreStart + _ShallowZoneWidth, input.horizontal01);
+                shoreMask *= 1.0 - saturate(_SeamlessSectionColour);
                 float shallowDepthMask = smoothstep(0.08, 0.72, input.height01);
                 float shallowBlend = shoreMask * shallowDepthMask;
                 colour = lerp(colour, _ShallowWaterColor.rgb, shallowBlend * 0.82);
@@ -150,14 +155,23 @@ Shader "PixelOcean/GPU Particle Water"
                 float bottomMask = smoothstep(_FoamBottomSuppression * 0.45, _FoamBottomSuppression, input.heightAboveBottom);
                 float surfaceExposure = saturate((_FoamSurfaceDensity - input.density) / max(_FoamSurfaceDensity, 0.001));
                 surfaceExposure *= surfaceExposure;
+                float tankWidth = max(_TankMax.x - _TankMin.x, 0.001);
+                float fade01 = saturate(_SectionEdgeFadeWidth / tankWidth);
+                float leftSectionFade = smoothstep(0.0, max(fade01, 0.0001), input.horizontal01);
+                float rightSectionFade = 1.0 - smoothstep(1.0 - max(fade01, 0.0001), 1.0, input.horizontal01);
+                float sectionFade = (_SectionEdgeFadeWidth <= 0.0001)
+                    ? 1.0
+                    : saturate(leftSectionFade * rightSectionFade);
+
                 float foamAmount = saturate(input.foam * _FoamRenderStrength) * bottomMask * surfaceExposure;
                 foamAmount *= saturate(0.25 + input.speed01 * 1.25);
+                foamAmount *= sectionFade;
 
                 colour = lerp(colour, _FoamColor.rgb, foamAmount);
 
                 float baseAlpha = lerp(_DeepWaterColor.a, _MainWaterColor.a, deepToMain);
                 baseAlpha = lerp(baseAlpha, _SurfaceWaterColor.a, mainToSurface);
-                float alpha = lerp(baseAlpha, _FoamColor.a, foamAmount) * edge;
+                float alpha = lerp(baseAlpha, _FoamColor.a, foamAmount) * edge * sectionFade;
 
                 return half4(saturate(colour), alpha);
             }

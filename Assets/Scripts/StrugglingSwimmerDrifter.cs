@@ -102,9 +102,7 @@ namespace PixelOcean
             spriteRenderer = GetComponent<SpriteRenderer>();
             renderItem = GetComponent<InterWaveRenderItem>();
             waterLayers.Clear();
-            waterLayers.AddRange(FindObjectsByType<PixelWaterGPU>(FindObjectsSortMode.None)
-                .Where(layer => layer != null)
-                .OrderBy(layer => layer.IndependentLayerIndex));
+            waterLayers.AddRange(EndlessWaveSections.LayersNearest(transform.position.x));
         }
 
         private void FixedUpdate()

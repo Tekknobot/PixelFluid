@@ -120,9 +120,7 @@ namespace PixelOcean
             }
 
             waterLayers.Clear();
-            waterLayers.AddRange(FindObjectsByType<PixelWaterGPU>(FindObjectsSortMode.None)
-                .Where(layer => layer != null)
-                .OrderBy(layer => layer.IndependentLayerIndex));
+            waterLayers.AddRange(EndlessWaveSections.LayersNearest(transform.position.x));
         }
 
         private void FixedUpdate()

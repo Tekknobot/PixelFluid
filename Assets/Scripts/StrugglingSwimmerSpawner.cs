@@ -29,10 +29,7 @@ namespace PixelOcean
             if (spawnedSwimmer != null)
                 return;
 
-            List<PixelWaterGPU> layers = FindObjectsByType<PixelWaterGPU>(FindObjectsSortMode.None)
-                .Where(layer => layer != null)
-                .OrderBy(layer => layer.IndependentLayerIndex)
-                .ToList();
+            List<PixelWaterGPU> layers = EndlessWaveSections.LayersNearest(transform.position.x);
 
             if (layers.Count < 2)
             {
