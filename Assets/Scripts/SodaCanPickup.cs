@@ -46,6 +46,27 @@ namespace PixelOcean
         private bool entering;
         private bool collected;
 
+        private static AudioClip sodaCanPickupClip;
+
+        private static void PlayPickupSfx()
+        {
+            if (sodaCanPickupClip == null)
+                sodaCanPickupClip = Resources.Load<AudioClip>("Audio/SFX/soda_can");
+
+            if (sodaCanPickupClip == null)
+                return;
+
+            GameObject soundObject = new GameObject("SFX - soda_can");
+            AudioSource source = soundObject.AddComponent<AudioSource>();
+            source.clip = sodaCanPickupClip;
+            source.playOnAwake = false;
+            source.loop = false;
+            source.spatialBlend = 0f;
+            source.Play();
+            Object.Destroy(soundObject, sodaCanPickupClip.length + 0.1f);
+        }
+
+
         public void Initialise(int laneIndex, SodaCanSpawner spawner)
         {
             owner = spawner;
@@ -243,6 +264,7 @@ namespace PixelOcean
                 pickupCollider.enabled = false;
 
             owner?.NotifyCollected(gameObject);
+            PlayPickupSfx();
 
             Vector3 startPosition = transform.position;
             Vector3 startScale = transform.localScale;
