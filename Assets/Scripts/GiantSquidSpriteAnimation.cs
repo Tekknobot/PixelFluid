@@ -9,7 +9,7 @@ namespace PixelOcean
     {
         [SerializeField, Min(1f)] private float swimFramesPerSecond = 7f;
         [SerializeField, Min(1f)] private float attackFramesPerSecond = 18f;
-        [SerializeField, Range(2, 5)] private int comboCycles = 3;
+        [SerializeField, Range(2, 5)] private int comboCycles = 1;
         [SerializeField, Range(1f, 3f)] private float attackSpeedMultiplier = 1.7f;
 
         private SpriteRenderer spriteRenderer;

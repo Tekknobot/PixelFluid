@@ -78,7 +78,7 @@ namespace PixelOcean
         [SerializeField, Range(0f, 2f)] private float layerCompression = 0.72f;
         [SerializeField, Range(0f, 25f)] private float layerForwardStacking = 9f;
         [SerializeField, Range(0f, 20f)] private float lipThrowBoost = 8f;
-        [SerializeField, Range(0.4f, 2.5f)] private float bigWaveScale = 1.35f;
+        [SerializeField, Range(0.4f, 5f)] private float bigWaveScale = 1.35f;
 
 
         [Header("Independent Big Wave Emitters")]

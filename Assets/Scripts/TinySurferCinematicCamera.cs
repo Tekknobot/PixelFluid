@@ -19,6 +19,12 @@ namespace PixelOcean
         [SerializeField] private KeyCode legacyToggleKey = KeyCode.Z;
         [SerializeField] private bool startInCinematicMode;
 
+        [Header("Normal Camera")]
+        [SerializeField, Min(0.1f)] private float normalOrthographicZoom = 3.5f;
+        [SerializeField] private Vector2 normalFramingOffset = new(0f, 0.15f);
+        [SerializeField, Min(0.01f)] private float normalFollowSmoothTime = 0.28f;
+        [SerializeField, Min(0f)] private float normalMaximumFollowSpeed = 25f;
+
         [Header("Cinematic Framing")]
         [SerializeField, Min(0.1f)] private float orthographicZoom = 1.75f;
         [SerializeField, Min(5f)] private float perspectiveFieldOfView = 32f;
@@ -73,75 +79,120 @@ namespace PixelOcean
         private void Update()
         {
             if (TogglePressed())
-                FocusNextSurfer();
+                ToggleCinematic();
 
             if (CancelPressed() && cinematicActive)
                 DisableCinematic();
 
-            if (!cinematicActive)
+            if (surfer == null || !surfer.isActiveAndEnabled)
+                SelectPlayerSurfer();
+        }
+        
+        private void LateUpdate()
+        {
+            if (controlledCamera == null)
                 return;
 
             if (surfer == null || !surfer.isActiveAndEnabled)
-                RefreshSurferListAndSelect(0);
-        }
+                SelectPlayerSurfer();
 
-        private void LateUpdate()
-        {
-            if (!cinematicActive || controlledCamera == null || surfer == null)
+            if (surfer == null)
                 return;
 
             float deltaTime = Mathf.Max(Time.unscaledDeltaTime, 0.0001f);
             Vector3 surferPosition = surfer.transform.position;
 
-            Vector3 estimatedVelocity = Vector3.zero;
-            if (hasPreviousSurferPosition)
-                estimatedVelocity =
-                    (surferPosition - previousSurferPosition) / deltaTime;
+            Vector3 desiredPosition;
+            float activeSmoothTime;
+            float activeMaximumSpeed;
 
-            previousSurferPosition = surferPosition;
-            hasPreviousSurferPosition = true;
+            if (cinematicActive)
+            {
+                Vector3 estimatedVelocity = Vector3.zero;
 
-            Vector3 desiredLookAhead = new(
-                Mathf.Clamp(estimatedVelocity.x, -1f, 1f) * horizontalLookAhead,
-                Mathf.Clamp(estimatedVelocity.y, -1f, 1f) * verticalLookAhead,
-                0f);
+                if (hasPreviousSurferPosition)
+                {
+                    estimatedVelocity =
+                        (surferPosition - previousSurferPosition) / deltaTime;
+                }
 
-            smoothedLookAhead = Vector3.SmoothDamp(
-                smoothedLookAhead,
-                desiredLookAhead,
-                ref lookAheadVelocity,
-                lookAheadSmoothTime,
-                Mathf.Infinity,
-                deltaTime);
+                previousSurferPosition = surferPosition;
+                hasPreviousSurferPosition = true;
 
-            Vector3 desiredPosition = new(
-                surferPosition.x + framingOffset.x + smoothedLookAhead.x,
-                surferPosition.y + framingOffset.y + smoothedLookAhead.y,
-                cameraDepth);
+                Vector3 desiredLookAhead = new(
+                    Mathf.Clamp(estimatedVelocity.x, -1f, 1f) *
+                    horizontalLookAhead,
 
-            if (clampToCurrentSimulation && surfer.CurrentWave != null)
+                    Mathf.Clamp(estimatedVelocity.y, -1f, 1f) *
+                    verticalLookAhead,
+
+                    0f);
+
+                smoothedLookAhead = Vector3.SmoothDamp(
+                    smoothedLookAhead,
+                    desiredLookAhead,
+                    ref lookAheadVelocity,
+                    lookAheadSmoothTime,
+                    Mathf.Infinity,
+                    deltaTime);
+
+                desiredPosition = new Vector3(
+                    surferPosition.x +
+                    framingOffset.x +
+                    smoothedLookAhead.x,
+
+                    surferPosition.y +
+                    framingOffset.y +
+                    smoothedLookAhead.y,
+
+                    cameraDepth);
+
+                activeSmoothTime = followSmoothTime;
+                activeMaximumSpeed = maximumFollowSpeed;
+            }
+            else
+            {
+                smoothedLookAhead = Vector3.SmoothDamp(
+                    smoothedLookAhead,
+                    Vector3.zero,
+                    ref lookAheadVelocity,
+                    normalFollowSmoothTime,
+                    Mathf.Infinity,
+                    deltaTime);
+
+                desiredPosition = new Vector3(
+                    surferPosition.x + normalFramingOffset.x,
+                    surferPosition.y + normalFramingOffset.y,
+                    cameraDepth);
+
+                activeSmoothTime = normalFollowSmoothTime;
+                activeMaximumSpeed = normalMaximumFollowSpeed;
+            }
+
+            if (clampToCurrentSimulation)
                 desiredPosition = ClampInsideSimulation(desiredPosition);
 
             Vector3 smoothedPosition = Vector3.SmoothDamp(
                 transform.position,
                 desiredPosition,
                 ref followVelocity,
-                followSmoothTime,
-                maximumFollowSpeed,
+                activeSmoothTime,
+                activeMaximumSpeed,
                 deltaTime);
 
-            // SmoothDamp can briefly overshoot the legal viewport area when the
-            // target changes layers. Clamp the actual camera position as well as
-            // the target so the star field can never appear beneath the water.
-            transform.position = clampToCurrentSimulation && surfer.CurrentWave != null
+            transform.position = clampToCurrentSimulation
                 ? ClampInsideSimulation(smoothedPosition)
                 : smoothedPosition;
 
             if (controlledCamera.orthographic)
             {
+                float targetZoom = cinematicActive
+                    ? orthographicZoom
+                    : normalOrthographicZoom;
+
                 controlledCamera.orthographicSize = Mathf.SmoothDamp(
                     controlledCamera.orthographicSize,
-                    orthographicZoom,
+                    targetZoom,
                     ref zoomVelocity,
                     zoomSmoothTime,
                     Mathf.Infinity,
@@ -149,13 +200,46 @@ namespace PixelOcean
             }
             else
             {
+                float targetFov = cinematicActive
+                    ? perspectiveFieldOfView
+                    : storedFieldOfView;
+
                 controlledCamera.fieldOfView = Mathf.SmoothDamp(
                     controlledCamera.fieldOfView,
-                    perspectiveFieldOfView,
+                    targetFov,
                     ref zoomVelocity,
                     zoomSmoothTime,
                     Mathf.Infinity,
                     deltaTime);
+            }
+        }
+
+        private void SelectPlayerSurfer()
+        {
+            TinyWaveSurfer[] surfers =
+                FindObjectsByType<TinyWaveSurfer>(
+                    FindObjectsInactive.Exclude,
+                    FindObjectsSortMode.None);
+
+            surfer = null;
+
+            foreach (TinyWaveSurfer candidate in surfers)
+            {
+                if (candidate == null ||
+                    !candidate.isActiveAndEnabled ||
+                    candidate.IsDead)
+                {
+                    continue;
+                }
+
+                if (candidate.IsPlayerControlled)
+                {
+                    surfer = candidate;
+                    return;
+                }
+
+                if (surfer == null)
+                    surfer = candidate;
             }
         }
 
@@ -361,18 +445,23 @@ namespace PixelOcean
                 return;
 
             cinematicActive = false;
-            transform.position = storedPosition;
-            transform.rotation = storedRotation;
-            controlledCamera.orthographicSize = storedOrthographicSize;
-            controlledCamera.fieldOfView = storedFieldOfView;
 
-            RestoreCameraControllers();
+            SelectPlayerSurfer();
 
             followVelocity = Vector3.zero;
             lookAheadVelocity = Vector3.zero;
             smoothedLookAhead = Vector3.zero;
             zoomVelocity = 0f;
-            hasPreviousSurferPosition = false;
+
+            if (surfer != null)
+            {
+                previousSurferPosition = surfer.transform.position;
+                hasPreviousSurferPosition = true;
+            }
+            else
+            {
+                hasPreviousSurferPosition = false;
+            }
         }
 
         private void DisableCompetingCameraControllers()
