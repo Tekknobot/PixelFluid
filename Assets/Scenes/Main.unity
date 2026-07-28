@@ -574,8 +574,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16cf7a0c76d59dc43bf2d0923e5e34ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PixelOcean.SceneFadeIn
-  startDelay: 1.5
-  fadeDuration: 2.5
+  startDelay: 4
+  fadeDuration: 1
   useUnscaledTime: 1
   destroyAfterFade: 1
 --- !u!225 &1838350016
@@ -800,11 +800,11 @@ MonoBehaviour:
   viscosity: 1.4
   gravity: {x: 0, y: -9.81}
   boundaryBounce: 0.08
-  maximumSpeed: 11
-  substeps: 3
+  maximumSpeed: 20
+  substeps: 1
   simulationRate: 120
   waveEmitterEnabled: 1
-  surfWaveType: 0
+  surfWaveType: 3
   waveEmitterWidth: 2
   waveHorizontalForce: 25
   waveVerticalForce: 8
@@ -896,6 +896,11 @@ MonoBehaviour:
   foamSurfaceDensity: 0.62
   renderedParticleSize: 0.035
   edgeSoftness: 0.28
+  sectionEdgeFadeWidth: 1.5
+  softHorizontalBoundaryWidth: 1.5
+  softHorizontalBoundaryStrength: 1
+  synchronizeHorizontalSectionPhase: 1
+  seamlessSectionColour: 1
   interleavedRenderingEnabled: 1
   interleavedWaterBandCount: 4
   interleavedBaseRenderQueue: 3000
