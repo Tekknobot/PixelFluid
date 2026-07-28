@@ -21,7 +21,7 @@ namespace PixelOcean
         [SerializeField] private float swoopDepth = 0.35f;
         [SerializeField] private float swoopDuration = 1.15f;
         [SerializeField] private float bankAngle = 13f;
-        [SerializeField] private float movementSmoothing = 5.5f;
+        [SerializeField] private float movementSmoothing = 0.5f;
 
         [Header("Abduction")]
         [SerializeField] private Vector2 firstAttackDelayRange = new Vector2(5f, 10f);
