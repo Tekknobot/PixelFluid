@@ -248,24 +248,21 @@ namespace PixelOcean
             if (Vector2.Distance(squidPosition, target.transform.position) > hitRange)
                 return;
 
-            // Every beat in the combo can shove the target visually, but only
-            // the first valid beat is allowed to remove health.
-            if (!attackHitApplied)
+            // The squid owns a special combo pathway: every strike beat restarts
+            // the surfer's hurt reaction, while only the first valid beat removes
+            // one health point. Sharks and all other hazards keep their normal
+            // invulnerability behaviour.
+            bool applyDamage = !attackHitApplied;
+            bool beatAccepted = target.TakeSquidComboBeat(squidPosition, applyDamage);
+            if (!beatAccepted)
+                return;
+
+            if (applyDamage)
             {
-                attackHitApplied = target.TakeSharkHit(squidPosition);
-                if (attackHitApplied)
-                {
-                    EnsureAttackAudio();
-                    if (squidAttackClip != null && attackAudioSource != null)
-                        attackAudioSource.PlayOneShot(squidAttackClip, squidAttackVolume);
-                }
-            }
-            else
-            {
-                Vector2 away = ((Vector2)target.transform.position - squidPosition).normalized;
-                if (away.sqrMagnitude < 0.01f)
-                    away = Vector2.right * direction;
-                target.transform.position += (Vector3)(away * 0.035f + Vector2.up * 0.015f);
+                attackHitApplied = true;
+                EnsureAttackAudio();
+                if (squidAttackClip != null && attackAudioSource != null)
+                    attackAudioSource.PlayOneShot(squidAttackClip, squidAttackVolume);
             }
 
             // Do not clear the target until the full animation combo ends.

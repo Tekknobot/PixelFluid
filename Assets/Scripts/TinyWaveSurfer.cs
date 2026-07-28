@@ -496,6 +496,48 @@ namespace PixelOcean
         }
 
 
+        /// <summary>
+        /// Plays one beat of the giant squid's combo. Every beat produces its own
+        /// bump, red flash and hurt sound, but only the beat with applyDamage=true
+        /// removes health. This intentionally bypasses the normal shark-hit
+        /// invulnerability gate for the reaction only.
+        /// </summary>
+        public bool TakeSquidComboBeat(Vector2 squidPosition, bool applyDamage)
+        {
+            if (state == RiderState.Dead)
+                return false;
+
+            if (applyDamage)
+            {
+                currentHealth = Mathf.Max(0, currentHealth - Mathf.Max(1, sharkHitDamage));
+                healthBar?.SetHealth(currentHealth, MaximumHealth);
+
+                // Preserve normal protection from unrelated hazards after the
+                // combo begins, without suppressing the squid's later visual beats.
+                invulnerableUntil = Mathf.Max(invulnerableUntil, Time.time + hitInvulnerability);
+            }
+
+            float away = transform.position.x >= squidPosition.x ? 1f : -1f;
+            float beatBumpX = hitBumpDistance * (applyDamage ? 0.72f : 0.34f);
+            float beatBumpY = hitBumpHeight * (applyDamage ? 0.72f : 0.38f);
+            transform.position += new Vector3(away * beatBumpX, beatBumpY, 0f);
+            localRideX = transform.position.x;
+
+            // Restart a short reaction on every combo beat instead of waiting for
+            // the normal hurt cooldown or the previous flash to finish.
+            BeginSpriteReaction(hitFlashColor, 0.14f, 0.035f);
+            if (maleHurtClip != null && deathAudioSource != null)
+                deathAudioSource.PlayOneShot(maleHurtClip, hurtSoundVolume);
+            if (speechBubble != null)
+                speechBubble.HideImmediate();
+
+            if (applyDamage && currentHealth <= 0)
+                return DieFromShark(squidPosition);
+
+            return true;
+        }
+
+
         public bool CollectSodaCan()
         {
             if (IsDead || hasSodaCan) return false;
