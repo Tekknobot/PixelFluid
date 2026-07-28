@@ -574,8 +574,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16cf7a0c76d59dc43bf2d0923e5e34ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PixelOcean.SceneFadeIn
-  startDelay: 0.15
-  fadeDuration: 1.5
+  startDelay: 1.5
+  fadeDuration: 2.5
   useUnscaledTime: 1
   destroyAfterFade: 1
 --- !u!225 &1838350016
@@ -792,8 +792,8 @@ MonoBehaviour:
   rows: 150
   particleSpacing: 0.052
   spawnOrigin: {x: -4.1, y: -2.2}
-  tankMinimum: {x: -9, y: -2.5}
-  tankMaximum: {x: 9, y: 2.5}
+  tankMinimum: {x: -9, y: -3}
+  tankMaximum: {x: 9, y: 3}
   particleRadius: 0.022
   interactionRadius: 0.075
   pressureStrength: 38
@@ -928,9 +928,9 @@ GameObject:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 2084051963}
   - {fileID: 519420032}
   - {fileID: 619394802}
+  - {fileID: 827814610}
   - {fileID: 1424985332}
   - {fileID: 4423188565574514314}
-  - {fileID: 827814610}
-  - {fileID: 2084051963}
