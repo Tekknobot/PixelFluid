@@ -45,6 +45,12 @@ namespace PixelOcean
 
         [Header("Zoom")]
         [SerializeField, Min(0.01f)] private float zoomSmoothTime = 0.22f;
+        [SerializeField, Min(0.1f)] private float minimumOrthographicZoom = 0.85f;
+        [SerializeField, Min(0.1f)] private float maximumOrthographicZoom = 3.5f;
+        [SerializeField, Min(0.05f)] private float gamepadZoomSpeed = 2.2f;
+        [SerializeField, Range(0f, 0.95f)] private float gamepadZoomDeadZone = 0.18f;
+        [Tooltip("Y / North toggles cinematic mode. Right-stick vertical zooms. Right-stick click resets zoom.")]
+        [SerializeField] private bool enableGamepadCameraControls = true;
 
         private Camera controlledCamera;
         private TinyWaveSurfer surfer;
@@ -64,6 +70,8 @@ namespace PixelOcean
 
         private readonly List<MonoBehaviour> disabledCameraControllers = new();
         private float zoomVelocity;
+        private float normalZoomAdjustment;
+        private float cinematicZoomAdjustment;
 
         public bool CinematicActive => cinematicActive;
 
@@ -83,6 +91,8 @@ namespace PixelOcean
 
             if (CancelPressed() && cinematicActive)
                 DisableCinematic();
+
+            UpdateManualZoomInput();
 
             if (surfer == null || !surfer.isActiveAndEnabled)
                 SelectPlayerSurfer();
@@ -186,9 +196,16 @@ namespace PixelOcean
 
             if (controlledCamera.orthographic)
             {
-                float targetZoom = cinematicActive
+                float baseZoom = cinematicActive
                     ? orthographicZoom
                     : normalOrthographicZoom;
+                float adjustment = cinematicActive
+                    ? cinematicZoomAdjustment
+                    : normalZoomAdjustment;
+                float targetZoom = Mathf.Clamp(
+                    baseZoom + adjustment,
+                    minimumOrthographicZoom,
+                    maximumOrthographicZoom);
 
                 controlledCamera.orthographicSize = Mathf.SmoothDamp(
                     controlledCamera.orthographicSize,
@@ -499,6 +516,60 @@ namespace PixelOcean
             disabledCameraControllers.Clear();
         }
 
+        private void UpdateManualZoomInput()
+        {
+            if (!enableGamepadCameraControls || controlledCamera == null)
+                return;
+
+#if ENABLE_INPUT_SYSTEM
+            Gamepad gamepad = Gamepad.current;
+            if (gamepad == null)
+                return;
+
+            if (gamepad.rightStickButton.wasPressedThisFrame)
+            {
+                if (cinematicActive)
+                    cinematicZoomAdjustment = 0f;
+                else
+                    normalZoomAdjustment = 0f;
+
+                zoomVelocity = 0f;
+            }
+
+            float zoomInput = gamepad.rightStick.ReadValue().y;
+            if (Mathf.Abs(zoomInput) < gamepadZoomDeadZone)
+                zoomInput = 0f;
+
+            if (!Mathf.Approximately(zoomInput, 0f))
+            {
+                // Stick up zooms in (smaller orthographic size); down zooms out.
+                float delta = -zoomInput * gamepadZoomSpeed * Time.unscaledDeltaTime;
+
+                if (cinematicActive)
+                {
+                    cinematicZoomAdjustment = ClampZoomAdjustment(
+                        orthographicZoom,
+                        cinematicZoomAdjustment + delta);
+                }
+                else
+                {
+                    normalZoomAdjustment = ClampZoomAdjustment(
+                        normalOrthographicZoom,
+                        normalZoomAdjustment + delta);
+                }
+            }
+#endif
+        }
+
+        private float ClampZoomAdjustment(float baseZoom, float adjustment)
+        {
+            float target = Mathf.Clamp(
+                baseZoom + adjustment,
+                minimumOrthographicZoom,
+                maximumOrthographicZoom);
+            return target - baseZoom;
+        }
+
         private bool CancelPressed()
         {
 #if ENABLE_INPUT_SYSTEM
@@ -521,6 +592,13 @@ namespace PixelOcean
 #if ENABLE_INPUT_SYSTEM
             if (Keyboard.current != null &&
                 Keyboard.current.zKey.wasPressedThisFrame)
+            {
+                return true;
+            }
+
+            if (enableGamepadCameraControls &&
+                Gamepad.current != null &&
+                Gamepad.current.buttonNorth.wasPressedThisFrame)
             {
                 return true;
             }
@@ -550,6 +628,9 @@ namespace PixelOcean
             followSmoothTime = Mathf.Max(0.01f, followSmoothTime);
             lookAheadSmoothTime = Mathf.Max(0.01f, lookAheadSmoothTime);
             zoomSmoothTime = Mathf.Max(0.01f, zoomSmoothTime);
+            minimumOrthographicZoom = Mathf.Max(0.1f, minimumOrthographicZoom);
+            maximumOrthographicZoom = Mathf.Max(minimumOrthographicZoom, maximumOrthographicZoom);
+            gamepadZoomSpeed = Mathf.Max(0.05f, gamepadZoomSpeed);
         }
 #endif
     }

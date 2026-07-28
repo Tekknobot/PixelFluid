@@ -58,6 +58,22 @@ namespace PixelOcean
         [SerializeField] private bool lockPlayerToScreenX = false;
         [SerializeField] private float playerScreenX = 0f;
 
+        [Header("Player Movement Feel")]
+        [Tooltip("How quickly movement builds toward full speed.")]
+        [SerializeField, Min(0.1f)] private float playerAcceleration = 7.5f;
+        [Tooltip("How quickly the surfer slows when movement is released.")]
+        [SerializeField, Min(0.1f)] private float playerDeceleration = 10f;
+        [Tooltip("Analog-stick dead zone.")]
+        [SerializeField, Range(0f, 0.5f)] private float gamepadDeadZone = 0.18f;
+        [Tooltip("Allows horizontal steering while airborne.")]
+        [SerializeField, Range(0f, 1f)] private float airControl = 0.45f;
+
+        [Header("Player Air Tricks")]
+        [Tooltip("Maximum extra rotation controlled with the right stick while airborne.")]
+        [SerializeField, Range(0f, 1080f)] private float playerAirTrickDegrees = 540f;
+        [Tooltip("Smooths the jump arc at takeoff and landing.")]
+        [SerializeField, Range(0.1f, 3f)] private float playerJumpArcPower = 1.35f;
+
         [Header("Random Initial Ocean Spawn")]
         [Tooltip("When enabled, the player surfer starts on a random horizontal section and random wave layer after the endless ocean has finished building.")]
         [SerializeField] private bool randomizeInitialOceanSpawn;
@@ -257,6 +273,8 @@ namespace PixelOcean
         private bool previousLayerUpHeld;
         private bool previousLayerDownHeld;
         private bool layerSwitchInputLocked;
+        private float playerHorizontalVelocity;
+        private float playerTrickInput;
         private float deathTimer;
         private float respawnTimer;
         private Vector2 deathVelocity;
@@ -617,7 +635,16 @@ namespace PixelOcean
         {
 #if ENABLE_INPUT_SYSTEM
             Keyboard k = Keyboard.current;
-            if (k != null) return k.fKey.isPressed || k.xKey.isPressed;
+            if (k != null)
+            {
+                bool keyboard = k.fKey.isPressed || k.xKey.isPressed;
+#if ENABLE_INPUT_SYSTEM
+                bool gamepad = UnityEngine.InputSystem.Gamepad.current != null && UnityEngine.InputSystem.Gamepad.current.buttonWest.isPressed;
+#else
+                bool gamepad = false;
+#endif
+                return keyboard || gamepad;
+            }
 #endif
 #if ENABLE_LEGACY_INPUT_MANAGER
             return Input.GetKey(KeyCode.F) || Input.GetKey(KeyCode.X);
@@ -1290,26 +1317,39 @@ namespace PixelOcean
         private void UpdatePlayerControl(float dt)
         {
             ReadPlayerInput(out float horizontal, out bool jumpHeld,
-                out bool layerUpHeld, out bool layerDownHeld, out bool boostHeld);
+                out bool layerUpHeld, out bool layerDownHeld, out bool boostHeld,
+                out float trickInput);
+            playerTrickInput = trickInput;
+
             bool attackHeld = ReadAttackInput();
             if (attackHeld && !previousAttackHeld) ThrowSodaCan();
             previousAttackHeld = attackHeld;
 
-            if (Mathf.Abs(horizontal) > 0.01f && state == RiderState.Riding)
+            float targetSpeed = horizontal * playerScrollSpeed *
+                (boostHeld ? playerBoostMultiplier : 1f);
+            float response = Mathf.Abs(targetSpeed) > 0.01f
+                ? playerAcceleration
+                : playerDeceleration;
+            playerHorizontalVelocity = Mathf.MoveTowards(
+                playerHorizontalVelocity,
+                targetSpeed,
+                response * dt);
+
+            bool canMove = state == RiderState.Riding || state == RiderState.TurningTrick;
+            if (canMove)
             {
-                direction = Mathf.Sign(horizontal);
-                float speed = playerScrollSpeed * (boostHeld ? playerBoostMultiplier : 1f);
-                localRideX += horizontal * speed * dt;
+                float control = state == RiderState.TurningTrick ? airControl : 1f;
+                localRideX += playerHorizontalVelocity * control * dt;
+                if (Mathf.Abs(playerHorizontalVelocity) > 0.02f)
+                    direction = Mathf.Sign(playerHorizontalVelocity);
             }
 
             RebindToNearestHorizontalSection();
 
-            bool moving =
-                Mathf.Abs(horizontal) > 0.01f &&
+            bool moving = Mathf.Abs(playerHorizontalVelocity) > 0.03f &&
                 state == RiderState.Riding;
-
-            bool hasPlayerActivity =
-                moving || jumpHeld || layerUpHeld || layerDownHeld;
+            bool hasPlayerActivity = moving || jumpHeld || layerUpHeld || layerDownHeld ||
+                Mathf.Abs(trickInput) > 0.05f;
 
             if (hasPlayerActivity || state != RiderState.Riding)
                 playerIdleTimer = 0f;
@@ -1317,21 +1357,11 @@ namespace PixelOcean
                 playerIdleTimer += dt;
 
             UpdateAnimation(moving);
-
-            // This is a finite sandbox: the simulations stay in place and the
-            // surfer is confined to the overlap between the current wave and
-            // the visible camera viewport.
             localRideX = ClampPlayerXToSandbox(localRideX);
 
             if (jumpHeld && !previousJumpHeld && state == RiderState.Riding)
                 BeginTurnTrick();
 
-            // Depth controls: Up/W moves one row toward the horizon,
-            // while Down/S moves one row toward the foreground. Interior presses
-            // move exactly one row. Only an outward press on an edge wraps.
-            // A completed release is required between layer changes. This prevents
-            // a held key, overlapping W/arrow input, or a press during the jump
-            // from immediately starting a second wave transition.
             if (!layerUpHeld && !layerDownHeld)
                 layerSwitchInputLocked = false;
 
@@ -1339,8 +1369,6 @@ namespace PixelOcean
             {
                 bool upPressed = layerUpHeld && !previousLayerUpHeld;
                 bool downPressed = layerDownHeld && !previousLayerDownHeld;
-
-                // Ignore contradictory simultaneous input rather than guessing.
                 if (upPressed != downPressed)
                 {
                     BeginAdjacentWave(upPressed ? +1 : -1);
@@ -1467,31 +1495,61 @@ namespace PixelOcean
             return Mathf.Clamp(desiredX, waveMin.x + wavePadding, waveMax.x - wavePadding);
         }
 
-        private static void ReadPlayerInput(out float horizontal, out bool jump,
-            out bool layerUp, out bool layerDown, out bool boost)
+        private void ReadPlayerInput(out float horizontal, out bool jump,
+            out bool layerUp, out bool layerDown, out bool boost, out float trick)
         {
 #if ENABLE_INPUT_SYSTEM
+            horizontal = 0f;
+            jump = layerUp = layerDown = boost = false;
+            trick = 0f;
+
             Keyboard keyboard = Keyboard.current;
             if (keyboard != null)
             {
-                horizontal = (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed ? 1f : 0f)
+                horizontal += (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed ? 1f : 0f)
                     - (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed ? 1f : 0f);
-                jump = keyboard.spaceKey.isPressed;
-                layerUp = keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed;
-                layerDown = keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed;
-                boost = keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed;
-                return;
+                jump |= keyboard.spaceKey.isPressed;
+                layerUp |= keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed;
+                layerDown |= keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed;
+                boost |= keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed;
+                trick += (keyboard.eKey.isPressed ? 1f : 0f) - (keyboard.qKey.isPressed ? 1f : 0f);
             }
+
+            Gamepad gamepad = Gamepad.current;
+            if (gamepad != null)
+            {
+                float stickX = gamepad.leftStick.x.ReadValue();
+                if (Mathf.Abs(stickX) >= gamepadDeadZone)
+                    horizontal = stickX;
+
+                if (gamepad.dpad.left.isPressed)
+                    horizontal = -1f;
+                else if (gamepad.dpad.right.isPressed)
+                    horizontal = 1f;
+
+                jump |= gamepad.buttonSouth.isPressed;          // Xbox A
+                layerUp |= gamepad.dpad.up.isPressed || gamepad.leftShoulder.isPressed;
+                layerDown |= gamepad.dpad.down.isPressed || gamepad.rightShoulder.isPressed;
+                boost |= gamepad.rightTrigger.ReadValue() > 0.2f;
+
+                float rightX = gamepad.rightStick.x.ReadValue();
+                if (Mathf.Abs(rightX) >= gamepadDeadZone)
+                    trick = rightX;
+            }
+
+            horizontal = Mathf.Clamp(horizontal, -1f, 1f);
+            trick = Mathf.Clamp(trick, -1f, 1f);
+            return;
 #endif
 #if ENABLE_LEGACY_INPUT_MANAGER
-            horizontal = (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow) ? 1f : 0f)
-                - (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow) ? 1f : 0f);
-            jump = Input.GetKey(KeyCode.Space);
+            horizontal = Input.GetAxisRaw("Horizontal");
+            jump = Input.GetKey(KeyCode.Space) || Input.GetButton("Jump");
             layerUp = Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow);
             layerDown = Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow);
             boost = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+            trick = (Input.GetKey(KeyCode.E) ? 1f : 0f) - (Input.GetKey(KeyCode.Q) ? 1f : 0f);
 #else
-            horizontal = 0f;
+            horizontal = trick = 0f;
             jump = layerUp = layerDown = boost = false;
 #endif
         }
@@ -1630,8 +1688,8 @@ namespace PixelOcean
             float surfaceY =
                 currentWave.GetGameplaySurfaceHeight(localRideX);
 
-            float arc =
-                Mathf.Sin(t * Mathf.PI) *
+            float baseArc = Mathf.Sin(t * Mathf.PI);
+            float arc = Mathf.Pow(Mathf.Max(0f, baseArc), playerJumpArcPower) *
                 turnJumpHeight;
 
             transform.position = new Vector3(
@@ -1644,10 +1702,14 @@ namespace PixelOcean
             float spinDirection =
                 direction >= 0f ? -1f : 1f;
 
+            float automaticSpin = turnSpinDegrees * spinDirection * t;
+            float controlledSpin = playerControlled
+                ? playerTrickInput * playerAirTrickDegrees * t
+                : 0f;
             transform.rotation = Quaternion.Euler(
                 0f,
                 0f,
-                turnSpinDegrees * spinDirection * t);
+                automaticSpin + controlledSpin);
 
             float flipAmount = flipTrick
                 ? Mathf.Cos(t * Mathf.PI * 2f)
