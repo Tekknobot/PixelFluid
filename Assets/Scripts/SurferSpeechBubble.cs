@@ -16,7 +16,7 @@ namespace PixelOcean
         [SerializeField, Range(12, 64)] private int preferredFontSize = 84;
         [SerializeField, Range(10, 48)] private int minimumFontSize = 84;
         [SerializeField, Min(4)] private int maximumCharactersPerLine = 100;
-        [SerializeField, Min(1.25f)] private float maximumBubbleWorldWidth = 16.4f;
+        [SerializeField, Min(4.25f)] private float maximumBubbleWorldWidth = 16.4f;
         [SerializeField, Min(1)] private int horizontalPaddingPixels = 2;
         [SerializeField, Min(1)] private int verticalPaddingPixels = 0;
         [SerializeField, Range(1, 4)] private int outlinePixels = 1;
