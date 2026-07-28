@@ -856,6 +856,29 @@ namespace PixelOcean
             return true;
         }
 
+        public bool DieFromAbduction(Vector2 ufoPosition)
+        {
+            if (state == RiderState.Dead)
+                return false;
+
+            state = RiderState.Dead;
+            playerIdleTimer = 0f;
+            if (speechBubble != null) speechBubble.HideImmediate();
+            PlayDeathAnimation();
+            if (humanDeathClip != null && deathAudioSource != null)
+                deathAudioSource.PlayOneShot(humanDeathClip);
+            deathTimer = 0f;
+            respawnTimer = 0f;
+            deathVelocity = new Vector2((ufoPosition.x - transform.position.x) * 0.35f, deathKnockUp * 1.55f);
+            livingScale = transform.localScale;
+            if (spriteRenderer != null)
+                livingColor = spriteRenderer.color;
+
+            Collider2D collider = GetComponent<Collider2D>();
+            if (collider != null) collider.enabled = false;
+            return true;
+        }
+
         private void EmitDeathBlood()
         {
             if (!emitBloodOnDeath || deathBloodParticleCount <= 0)
