@@ -631,20 +631,24 @@ namespace PixelOcean
             can.Launch((Vector2)transform.position + new Vector2(direction * .22f, .22f), nearest, sprite, direction);
         }
 
+        private void PerformAction()
+        {
+            OceanItemSpawner oceanItems = FindFirstObjectByType<OceanItemSpawner>();
+            if (oceanItems != null && oceanItems.TryInteractNearest(this))
+                return;
+
+            ThrowSodaCan();
+        }
+
         private static bool ReadAttackInput()
         {
 #if ENABLE_INPUT_SYSTEM
-            Keyboard k = Keyboard.current;
-            if (k != null)
-            {
-                bool keyboard = k.fKey.isPressed || k.xKey.isPressed;
-#if ENABLE_INPUT_SYSTEM
-                bool gamepad = UnityEngine.InputSystem.Gamepad.current != null && UnityEngine.InputSystem.Gamepad.current.buttonWest.isPressed;
-#else
-                bool gamepad = false;
-#endif
-                return keyboard || gamepad;
-            }
+            bool keyboard = Keyboard.current != null &&
+                (Keyboard.current.fKey.isPressed || Keyboard.current.xKey.isPressed);
+            bool gamepad = Gamepad.current != null &&
+                Gamepad.current.buttonWest.isPressed;
+            if (keyboard || gamepad)
+                return true;
 #endif
 #if ENABLE_LEGACY_INPUT_MANAGER
             return Input.GetKey(KeyCode.F) || Input.GetKey(KeyCode.X);
@@ -1322,7 +1326,7 @@ namespace PixelOcean
             playerTrickInput = trickInput;
 
             bool attackHeld = ReadAttackInput();
-            if (attackHeld && !previousAttackHeld) ThrowSodaCan();
+            if (attackHeld && !previousAttackHeld) PerformAction();
             previousAttackHeld = attackHeld;
 
             float targetSpeed = horizontal * playerScrollSpeed *

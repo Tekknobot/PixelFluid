@@ -123,6 +123,13 @@ namespace PixelOcean
                 }
             }
 
+            if (FindFirstObjectByType<OceanItemSpawner>() == null)
+            {
+                GameObject oceanItems = new("All Ocean Items");
+                oceanItems.transform.SetParent(transform, false);
+                oceanItems.AddComponent<OceanItemSpawner>();
+            }
+
             hasSpawned = true;
 
             int totalSpawned = centres.Count * enabledKinds.Count;
