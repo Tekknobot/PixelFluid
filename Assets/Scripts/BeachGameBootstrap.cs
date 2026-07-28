@@ -28,6 +28,15 @@ namespace PixelOcean
                 Debug.Log("Installed single animated inter-wave shark spawner.", water);
             }
 
+            GiantSquidLaneSpawner squidSpawner =
+                Object.FindAnyObjectByType<GiantSquidLaneSpawner>();
+
+            if (squidSpawner == null)
+            {
+                squidSpawner = water.gameObject.AddComponent<GiantSquidLaneSpawner>();
+                Debug.Log("Installed giant squid inter-wave predator spawner.", water);
+            }
+
             HeartLaneSpawner heartSpawner =
                 Object.FindAnyObjectByType<HeartLaneSpawner>();
 

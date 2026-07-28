@@ -15,7 +15,7 @@ namespace PixelOcean
 
         public void Launch(
             Vector2 start,
-            SharkLaneSwimmer target,
+            Transform target,
             Sprite sprite,
             float direction)
         {
@@ -31,7 +31,7 @@ namespace PixelOcean
             PlaySfx(canThrowClip, 0.9f);
 
             Vector2 aim = target != null
-                ? (Vector2)target.transform.position
+                ? (Vector2)target.position
                 : start + Vector2.right * direction * 4f;
 
             float miss = Random.value < 0.28f
@@ -77,9 +77,20 @@ namespace PixelOcean
             {
                 LoadSfx();
                 PlaySfx(sharkHitClip, 1f);
-
                 shark.TakeSodaCanHit(transform.position);
                 Bounce(shark.transform.position);
+                return;
+            }
+
+            GiantSquidLaneSwimmer squid =
+                other.GetComponentInParent<GiantSquidLaneSwimmer>();
+
+            if (squid != null)
+            {
+                LoadSfx();
+                PlaySfx(sharkHitClip, 1f);
+                squid.TakeSodaCanHit(transform.position);
+                Bounce(squid.transform.position);
                 return;
             }
 

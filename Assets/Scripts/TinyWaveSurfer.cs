@@ -509,12 +509,23 @@ namespace PixelOcean
         {
             if (!hasSodaCan || IsDead || state != RiderState.Riding) return;
             hasSodaCan = false;
-            SharkLaneSwimmer nearest = null; float best = float.MaxValue;
+            Transform nearest = null;
+            float best = float.MaxValue;
+
             foreach (SharkLaneSwimmer shark in FindObjectsByType<SharkLaneSwimmer>(FindObjectsSortMode.None))
             {
-                if (shark == null) continue; float d = Vector2.Distance(transform.position, shark.transform.position);
-                if (d < best) { best = d; nearest = shark; }
+                if (shark == null) continue;
+                float d = Vector2.Distance(transform.position, shark.transform.position);
+                if (d < best) { best = d; nearest = shark.transform; }
             }
+
+            foreach (GiantSquidLaneSwimmer squid in FindObjectsByType<GiantSquidLaneSwimmer>(FindObjectsSortMode.None))
+            {
+                if (squid == null) continue;
+                float d = Vector2.Distance(transform.position, squid.transform.position);
+                if (d < best) { best = d; nearest = squid.transform; }
+            }
+
             GameObject projectile = new GameObject("Thrown Soda Can");
             Sprite sprite = Resources.Load<Sprite>("Items/soda_can");
             projectile.AddComponent<SpriteRenderer>().sortingOrder = sortingOrder + 20;
