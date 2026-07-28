@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
@@ -56,6 +57,16 @@ namespace PixelOcean
         [SerializeField, Range(0f, 1f)] private float playerCameraEdgePadding = 0.12f;
         [SerializeField] private bool lockPlayerToScreenX = false;
         [SerializeField] private float playerScreenX = 0f;
+
+        [Header("Random Initial Ocean Spawn")]
+        [Tooltip("When enabled, the player surfer starts on a random horizontal section and random wave layer after the endless ocean has finished building.")]
+        [SerializeField] private bool randomizeInitialOceanSpawn;
+        [Tooltip("Keeps the initial position away from the far outside edges of the three-section ocean.")]
+        [SerializeField, Range(0f, 0.45f)] private float randomSpawnEdgePadding = 0.08f;
+        [Tooltip("Minimum world-space clearance from sharks and giant squids when choosing the initial player spawn.")]
+        [SerializeField, Min(0f)] private float enemySafeSpawnRadius = 3.5f;
+        [Tooltip("How many random ocean positions are tested before using the safest position found.")]
+        [SerializeField, Range(1, 100)] private int safeSpawnAttempts = 40;
 
         [Header("Shark Death Response")]
         [SerializeField, Min(0.25f)] private float deathDuration = 1.6f;
@@ -330,6 +341,32 @@ namespace PixelOcean
             ApplyCurrentWaveSorting(true);
 
             ScheduleNextLayerJump(0f);
+        }
+
+        private IEnumerator Start()
+        {
+            if (!randomizeInitialOceanSpawn)
+                yield break;
+
+            // EndlessWaveSections builds after the independent vertical wave layers,
+            // so wait until all three horizontal ocean sections are available.
+            float timeout = 5f;
+            while (timeout > 0f)
+            {
+                EndlessWaveSections endless = EndlessWaveSections.Instance;
+                if (endless != null && endless.IsReady)
+                    break;
+
+                timeout -= Time.unscaledDeltaTime;
+                yield return null;
+            }
+
+            // Population spawners also wait for the ocean. Give them two frames to
+            // create sharks and squids before selecting a safe player position.
+            yield return null;
+            yield return null;
+
+            SpawnAtRandomOceanPosition();
         }
 
         private void LateUpdate()
@@ -1152,6 +1189,7 @@ namespace PixelOcean
         public void ConfigureSinglePlayer(float scrollSpeed, float boostMultiplier)
         {
             playerControlled = true;
+            randomizeInitialOceanSpawn = true;
             playerIdleTimer = 0f;
             playerScrollSpeed = Mathf.Max(0.25f, scrollSpeed);
             playerBoostMultiplier = Mathf.Max(1f, boostMultiplier);
@@ -1768,6 +1806,165 @@ namespace PixelOcean
             // A negative timer creates a unique initial delay without forcing
             // every surfer to jump at scene start.
             waveTimer = -Mathf.Max(0f, initialDelay);
+        }
+
+        [ContextMenu("Spawn Randomly In Ocean")]
+        public void SpawnAtRandomOceanPosition()
+        {
+            EndlessWaveSections endless = EndlessWaveSections.Instance;
+
+            float minimumX;
+            float maximumX;
+
+            if (endless != null && endless.IsReady)
+            {
+                minimumX = endless.MinimumWorldX;
+                maximumX = endless.MaximumWorldX;
+            }
+            else
+            {
+                PixelWaterGPU fallback = Object.FindFirstObjectByType<PixelWaterGPU>();
+                if (fallback == null)
+                    return;
+
+                minimumX = fallback.TankMinimum.x;
+                maximumX = fallback.TankMaximum.x;
+            }
+
+            float oceanWidth = Mathf.Max(0.01f, maximumX - minimumX);
+            float padding = oceanWidth * Mathf.Clamp(randomSpawnEdgePadding, 0f, 0.45f);
+            float left = minimumX + padding;
+            float right = maximumX - padding;
+
+            if (left > right)
+            {
+                float centre = (minimumX + maximumX) * 0.5f;
+                left = centre;
+                right = centre;
+            }
+
+            List<Transform> enemies = CollectSpawnEnemies();
+            int attempts = Mathf.Max(1, safeSpawnAttempts);
+
+            PixelWaterGPU bestWave = null;
+            Vector3 bestPosition = transform.position;
+            float bestX = left;
+            float bestClearance = float.NegativeInfinity;
+
+            for (int attempt = 0; attempt < attempts; attempt++)
+            {
+                float candidateX = Random.Range(left, right);
+                List<PixelWaterGPU> candidateLayers = EndlessWaveSections.LayersNearest(candidateX);
+                candidateLayers.RemoveAll(w => w == null || !w.isActiveAndEnabled);
+                candidateLayers.Sort((a, b) =>
+                    a.IndependentLayerIndex.CompareTo(b.IndependentLayerIndex));
+
+                if (candidateLayers.Count == 0)
+                    continue;
+
+                PixelWaterGPU candidateWave = candidateLayers[Random.Range(0, candidateLayers.Count)];
+                candidateX = Mathf.Clamp(
+                    candidateX,
+                    candidateWave.TankMinimum.x + 0.02f,
+                    candidateWave.TankMaximum.x - 0.02f);
+
+                Vector3 candidatePosition = GetStartingPosition(candidateWave);
+                candidatePosition.x = candidateX;
+                candidatePosition.y = candidateWave.GetGameplaySurfaceHeight(candidateX) + surfaceOffset;
+                candidatePosition.z = candidateWave.transform.position.z - 0.02f;
+
+                float clearance = GetNearestEnemyDistance(candidatePosition, enemies);
+                if (clearance > bestClearance)
+                {
+                    bestClearance = clearance;
+                    bestWave = candidateWave;
+                    bestPosition = candidatePosition;
+                    bestX = candidateX;
+                }
+
+                if (clearance >= enemySafeSpawnRadius)
+                    break;
+            }
+
+            if (bestWave == null)
+                return;
+
+            List<PixelWaterGPU> nearbyLayers = EndlessWaveSections.LayersNearest(bestX);
+            nearbyLayers.RemoveAll(w => w == null || !w.isActiveAndEnabled);
+            nearbyLayers.Sort((a, b) =>
+                a.IndependentLayerIndex.CompareTo(b.IndependentLayerIndex));
+
+            simulations.Clear();
+            simulations.AddRange(nearbyLayers);
+
+            waveIndex = simulations.IndexOf(bestWave);
+            if (waveIndex < 0)
+            {
+                simulations.Add(bestWave);
+                simulations.Sort((a, b) =>
+                    a.IndependentLayerIndex.CompareTo(b.IndependentLayerIndex));
+                waveIndex = simulations.IndexOf(bestWave);
+            }
+
+            currentWave = bestWave;
+            direction = Random.value < 0.5f ? -1f : 1f;
+            startMovingRight = direction > 0f;
+            localRideX = bestX;
+            renderDepth = bestPosition.z;
+            state = RiderState.Riding;
+            stateTimer = 0f;
+            waveTimer = 0f;
+
+            transform.position = bestPosition;
+            transform.rotation = Quaternion.identity;
+            ApplyCurrentWaveSorting(true);
+            UpdateAnimation(false, true);
+        }
+
+        private static List<Transform> CollectSpawnEnemies()
+        {
+            List<Transform> enemies = new();
+
+            foreach (SharkLaneSwimmer shark in
+                     Object.FindObjectsByType<SharkLaneSwimmer>(FindObjectsSortMode.None))
+            {
+                if (shark != null && shark.isActiveAndEnabled)
+                    enemies.Add(shark.transform);
+            }
+
+            foreach (GiantSquidLaneSwimmer squid in
+                     Object.FindObjectsByType<GiantSquidLaneSwimmer>(FindObjectsSortMode.None))
+            {
+                if (squid != null && squid.isActiveAndEnabled)
+                    enemies.Add(squid.transform);
+            }
+
+            return enemies;
+        }
+
+        private static float GetNearestEnemyDistance(
+            Vector3 candidatePosition,
+            List<Transform> enemies)
+        {
+            if (enemies == null || enemies.Count == 0)
+                return float.PositiveInfinity;
+
+            float nearestSquared = float.PositiveInfinity;
+            Vector2 candidate = candidatePosition;
+
+            foreach (Transform enemy in enemies)
+            {
+                if (enemy == null)
+                    continue;
+
+                float squaredDistance =
+                    ((Vector2)enemy.position - candidate).sqrMagnitude;
+
+                if (squaredDistance < nearestSquared)
+                    nearestSquared = squaredDistance;
+            }
+
+            return Mathf.Sqrt(nearestSquared);
         }
 
         private void PickWave(int index, bool snap)

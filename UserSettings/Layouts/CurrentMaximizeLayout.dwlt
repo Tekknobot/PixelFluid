@@ -24,7 +24,7 @@ MonoBehaviour:
   m_MinSize: {x: 400, y: 112}
   m_MaxSize: {x: 32384, y: 16192}
   vertical: 0
-  controlID: 12835
+  controlID: 15103
   draggingID: 0
 --- !u!114 &2
 MonoBehaviour:
@@ -99,7 +99,7 @@ MonoBehaviour:
     m_HSlider: 0
     m_VSlider: 0
     m_IgnoreScrollWheelUntilClicked: 0
-    m_EnableMouseInput: 0
+    m_EnableMouseInput: 1
     m_EnableSliderZoomHorizontal: 0
     m_EnableSliderZoomVertical: 0
     m_UniformScale: 1
@@ -155,7 +155,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 112}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 1
-  controlID: 12836
+  controlID: 15104
   draggingID: 0
 --- !u!114 &4
 MonoBehaviour:
@@ -182,7 +182,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 56}
   m_MaxSize: {x: 24288, y: 8096}
   vertical: 0
-  controlID: 12837
+  controlID: 15057
   draggingID: 0
 --- !u!114 &5
 MonoBehaviour:
@@ -255,15 +255,8 @@ MonoBehaviour:
       scrollPos: {x: 0, y: 0}
       m_SelectedIDs:
       - m_rawData: 568105584918867940
-      - m_rawData: 568105589213501772
-      - m_rawData: 568105589213501764
-      - m_rawData: 568105589213501756
-      - m_rawData: 568105589213501748
-      - m_rawData: 568105589213501740
-      - m_rawData: 568105589213501732
-      - m_rawData: 568105589213501724
       m_LastClickedID:
-        m_rawData: 568105589213501724
+        m_rawData: 568105584918867940
       m_ExpandedIDs:
       - m_rawData: 568105589213502146
       - m_rawData: 568105589213705660
@@ -1232,7 +1225,7 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Assets/Shaders
+    - Assets
     m_Globs: []
     m_ProductIds: 
     m_AnyWithAssetOrigin: 0
@@ -1242,18 +1235,18 @@ MonoBehaviour:
   m_ViewMode: 1
   m_StartGridSize: 96
   m_LastFolders:
-  - Assets/Shaders
+  - Assets
   m_LastFoldersGridSize: 96
   m_LastProjectPath: /Users/machome/Unity/Projects/PixelFluid
   m_LockTracker:
     m_IsLocked: 0
   m_LastLocalAssetsSearchArea: 1
   m_FolderTreeState:
-    scrollPos: {x: 0, y: 72}
+    scrollPos: {x: 0, y: 31}
     m_SelectedIDs:
-    - m_rawData: 568105584918860342
+    - m_rawData: 568105584918855598
     m_LastClickedID:
-      m_rawData: 568105584918860342
+      m_rawData: 568105584918855598
     m_ExpandedIDs:
     - m_rawData: 0
     - m_rawData: 568105584918855598
@@ -1320,13 +1313,6 @@ MonoBehaviour:
   m_ListAreaState:
     m_SelectedInstanceIDs:
     - m_rawData: 568105584918867940
-    - m_rawData: 568105589213501772
-    - m_rawData: 568105589213501764
-    - m_rawData: 568105589213501756
-    - m_rawData: 568105589213501748
-    - m_rawData: 568105589213501740
-    - m_rawData: 568105589213501732
-    - m_rawData: 568105589213501724
     m_LastClickedEntityId:
       m_rawData: 568105584918867940
     m_HadKeyboardFocusLastEvent: 0
