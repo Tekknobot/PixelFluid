@@ -20,7 +20,8 @@ namespace PixelOcean
             SodaCan,
             StrugglingSwimmer,
             Shark,
-            GiantSquid
+            GiantSquid,
+            Whale
         }
 
         [Header("Startup")]
@@ -33,6 +34,7 @@ namespace PixelOcean
         [SerializeField] private bool includeStrugglingSwimmers = true;
         [SerializeField] private bool includeSharks = true;
         [SerializeField] private bool includeGiantSquids = true;
+        [SerializeField] private bool includeWhales = true;
 
         [Header("Selection")]
         [Tooltip("Prevents the same type from being selected twice until every enabled type has been used.")]
@@ -159,6 +161,10 @@ namespace PixelOcean
                 case SpawnKind.GiantSquid:
                     holder.AddComponent<GiantSquidLaneSpawner>().SpawnSquid();
                     break;
+
+                case SpawnKind.Whale:
+                    holder.AddComponent<WhaleLaneSpawner>().SpawnWhale();
+                    break;
             }
         }
 
@@ -170,6 +176,7 @@ namespace PixelOcean
             if (includeStrugglingSwimmers) pool.Add(SpawnKind.StrugglingSwimmer);
             if (includeSharks) pool.Add(SpawnKind.Shark);
             if (includeGiantSquids) pool.Add(SpawnKind.GiantSquid);
+            if (includeWhales) pool.Add(SpawnKind.Whale);
             return pool;
         }
 
@@ -181,6 +188,7 @@ namespace PixelOcean
             DisableAll<RandomInterWaveItemSpawner>();
             DisableAll<SodaCanSpawner>();
             DisableAll<StrugglingSwimmerSpawner>();
+            DisableAll<WhaleLaneSpawner>();
         }
 
         private static void DisableAll<T>() where T : Behaviour
