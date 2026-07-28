@@ -7,7 +7,7 @@ namespace PixelOcean
 {
     /// <summary>
     /// Loads and spawns every sprite under Resources/OceanItems. All items are
-    /// half-sized, water responsive and collectable through the Action button.
+    /// half-sized, water responsive and collected automatically on surfer contact.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class OceanItemSpawner : MonoBehaviour
@@ -19,17 +19,19 @@ namespace PixelOcean
         [SerializeField, Range(0f, 0.3f)] private float laneJitter = 0.08f;
         [SerializeField, Min(0f)] private float respawnDelay = 10f;
 
-        [Header("Interaction")]
-        [SerializeField, Min(0.1f)] private float interactionRadius = 0.9f;
+        [Header("Pickup Audio")]
+        [SerializeField] private AudioClip oceanItemPickupClip;
+        [SerializeField, Range(0f, 1f)] private float pickupVolume = 0.85f;
 
         private readonly Dictionary<int, OceanItemBehaviour> liveItems = new();
         private readonly List<PixelWaterGPU> waters = new();
         private Sprite[] itemSprites;
 
-        public float InteractionRadius => interactionRadius;
-
         private IEnumerator Start()
         {
+            if (oceanItemPickupClip == null)
+                oceanItemPickupClip = Resources.Load<AudioClip>("Audio/SFX/ocean_item_pickup");
+
             yield return null;
             yield return null;
             ResolveWaters();
@@ -58,38 +60,40 @@ namespace PixelOcean
             Debug.Log($"Spawned all {itemSprites.Length} ocean items at half scale.", this);
         }
 
-        public bool TryInteractNearest(TinyWaveSurfer surfer)
-        {
-            if (surfer == null)
-                return false;
-
-            OceanItemBehaviour nearest = null;
-            float bestSqr = interactionRadius * interactionRadius;
-            Vector2 surferPosition = surfer.transform.position;
-
-            foreach (OceanItemBehaviour item in liveItems.Values)
-            {
-                if (item == null)
-                    continue;
-
-                float sqr = ((Vector2)item.transform.position - surferPosition).sqrMagnitude;
-                if (sqr <= bestSqr)
-                {
-                    bestSqr = sqr;
-                    nearest = item;
-                }
-            }
-
-            return nearest != null && nearest.TryInteract(surfer);
-        }
-
-        internal void NotifyCollected(int index, OceanItemBehaviour item)
+        internal void NotifyCollected(
+            int index,
+            OceanItemBehaviour item,
+            Vector3 pickupPosition)
         {
             if (liveItems.TryGetValue(index, out OceanItemBehaviour current) && current == item)
                 liveItems.Remove(index);
 
+            PlayPickupSound(pickupPosition);
+
             if (respawnDelay >= 0f)
                 StartCoroutine(RespawnAfterDelay(index));
+        }
+
+        private void PlayPickupSound(Vector3 position)
+        {
+            if (oceanItemPickupClip == null)
+                oceanItemPickupClip = Resources.Load<AudioClip>("Audio/SFX/ocean_item_pickup");
+
+            if (oceanItemPickupClip == null)
+                return;
+
+            GameObject soundObject = new GameObject("Ocean Item Pickup SFX");
+            soundObject.transform.position = position;
+
+            AudioSource source = soundObject.AddComponent<AudioSource>();
+            source.playOnAwake = false;
+            source.loop = false;
+            source.spatialBlend = 0f;
+            source.volume = pickupVolume;
+            source.clip = oceanItemPickupClip;
+            source.Play();
+
+            Destroy(soundObject, oceanItemPickupClip.length + 0.1f);
         }
 
         private IEnumerator RespawnAfterDelay(int index)

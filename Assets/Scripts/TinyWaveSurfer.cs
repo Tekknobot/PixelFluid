@@ -633,10 +633,8 @@ namespace PixelOcean
 
         private void PerformAction()
         {
-            OceanItemSpawner oceanItems = FindFirstObjectByType<OceanItemSpawner>();
-            if (oceanItems != null && oceanItems.TryInteractNearest(this))
-                return;
-
+            // F / X remains the deliberate action for using the held soda can.
+            // General ocean props now collect automatically on contact.
             ThrowSodaCan();
         }
 

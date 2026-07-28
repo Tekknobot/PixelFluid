@@ -4,7 +4,7 @@ namespace PixelOcean
 {
     /// <summary>
     /// A collectible ocean prop with individualised drift, buoyancy, spin and
-    /// water-following behaviour. It can be collected using the surfer Action input.
+    /// water-following behaviour. It is collected automatically on surfer contact.
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(SpriteRenderer), typeof(Collider2D), typeof(Rigidbody2D))]
@@ -119,16 +119,45 @@ namespace PixelOcean
                 1f - Mathf.Exp(-5f * Time.fixedDeltaTime)));
         }
 
-        public bool TryInteract(TinyWaveSurfer surfer)
+        private void OnTriggerEnter2D(Collider2D other)
+        {
+            TryCollectFrom(other);
+        }
+
+        private void OnTriggerStay2D(Collider2D other)
+        {
+            // Stay is intentional: it also catches items that spawn or drift into
+            // an already-overlapping surfer collider without requiring a new entry.
+            TryCollectFrom(other);
+        }
+
+        private void TryCollectFrom(Collider2D other)
+        {
+            if (collected || other == null)
+                return;
+
+            TinyWaveSurfer surfer = other.GetComponentInParent<TinyWaveSurfer>();
+            if (surfer == null || surfer.IsDead || !surfer.IsPlayerControlled)
+                return;
+
+            Collect(surfer);
+        }
+
+        public bool Collect(TinyWaveSurfer surfer)
         {
             if (collected || surfer == null || surfer.IsDead)
                 return false;
 
             collected = true;
+
+            Collider2D itemCollider = GetComponent<Collider2D>();
+            if (itemCollider != null)
+                itemCollider.enabled = false;
+
             if (spriteRenderer != null)
                 spriteRenderer.color = new Color(1f, 1f, 1f, 0.45f);
 
-            owner?.NotifyCollected(itemIndex, this);
+            owner?.NotifyCollected(itemIndex, this, transform.position);
             Destroy(gameObject, 0.08f);
             return true;
         }
