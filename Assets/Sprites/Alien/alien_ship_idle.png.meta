@@ -1,0 +1,572 @@
+fileFormatVersion: 2
+guid: ef6a94b9e77d3874ab1e5002c91feec8
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 8881599626405001888
+    second: alien_ship_idle_0
+  - first:
+      213: 6662808650950576375
+    second: alien_ship_idle_1
+  - first:
+      213: -2094721543270244893
+    second: alien_ship_idle_2
+  - first:
+      213: -8953377338287446318
+    second: alien_ship_idle_3
+  - first:
+      213: 2593105461651603288
+    second: alien_ship_idle_4
+  - first:
+      213: -8953480422369442087
+    second: alien_ship_idle_5
+  - first:
+      213: -1864433701857851708
+    second: alien_ship_idle_6
+  - first:
+      213: -5442682949561158819
+    second: alien_ship_idle_7
+  - first:
+      213: -3293991102321143531
+    second: alien_ship_idle_8
+  - first:
+      213: -5528626896075541833
+    second: alien_ship_idle_9
+  - first:
+      213: 6167250691216794351
+    second: alien_ship_idle_10
+  - first:
+      213: 935955267155393848
+    second: alien_ship_idle_11
+  - first:
+      213: -8464397414690446272
+    second: alien_ship_idle_12
+  - first:
+      213: 5195504016557513717
+    second: alien_ship_idle_13
+  - first:
+      213: -2708710072193396564
+    second: alien_ship_idle_14
+  - first:
+      213: -7492977002336300379
+    second: alien_ship_idle_15
+  - first:
+      213: -6030770250342609802
+    second: alien_ship_idle_16
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 1
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: alien_ship_idle_0
+      rect:
+        serializedVersion: 2
+        x: 5
+        y: 20
+        width: 117
+        height: 91
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0aabc11bdc7c14b70800000000000000
+      internalID: 8881599626405001888
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: alien_ship_idle_1
+      rect:
+        serializedVersion: 2
+        x: 133
+        y: 19
+        width: 117
+        height: 91
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7f80f4eba2d077c50800000000000000
+      internalID: 6662808650950576375
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: alien_ship_idle_2
+      rect:
+        serializedVersion: 2
+        x: 261
+        y: 19
+        width: 117
+        height: 91
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3edd40ecadd0ee2e0800000000000000
+      internalID: -2094721543270244893
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: alien_ship_idle_3
+      rect:
+        serializedVersion: 2
+        x: 389
+        y: 18
+        width: 117
+        height: 92
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2d628537fb63fb380800000000000000
+      internalID: -8953377338287446318
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: alien_ship_idle_4
+      rect:
+        serializedVersion: 2
+        x: 517
+        y: 19
+        width: 117
+        height: 92
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 85f7ed2bdaf8cf320800000000000000
+      internalID: 2593105461651603288
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: alien_ship_idle_5
+      rect:
+        serializedVersion: 2
+        x: 645
+        y: 20
+        width: 117
+        height: 92
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9d641415ef8deb380800000000000000
+      internalID: -8953480422369442087
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: alien_ship_idle_6
+      rect:
+        serializedVersion: 2
+        x: 773
+        y: 21
+        width: 117
+        height: 93
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4c60f752d633026e0800000000000000
+      internalID: -1864433701857851708
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: alien_ship_idle_7
+      rect:
+        serializedVersion: 2
+        x: 901
+        y: 21
+        width: 117
+        height: 94
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d53f456a1b4b774b0800000000000000
+      internalID: -5442682949561158819
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: alien_ship_idle_8
+      rect:
+        serializedVersion: 2
+        x: 1029
+        y: 19
+        width: 117
+        height: 97
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 511d9d47b846942d0800000000000000
+      internalID: -3293991102321143531
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: alien_ship_idle_9
+      rect:
+        serializedVersion: 2
+        x: 1157
+        y: 16
+        width: 117
+        height: 101
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7b23fb3412f5643b0800000000000000
+      internalID: -5528626896075541833
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: alien_ship_idle_10
+      rect:
+        serializedVersion: 2
+        x: 1285
+        y: 14
+        width: 117
+        height: 104
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fe262c204d9769550800000000000000
+      internalID: 6167250691216794351
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: alien_ship_idle_11
+      rect:
+        serializedVersion: 2
+        x: 1413
+        y: 12
+        width: 117
+        height: 106
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 83df3784b5e2dfc00800000000000000
+      internalID: 935955267155393848
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: alien_ship_idle_12
+      rect:
+        serializedVersion: 2
+        x: 1541
+        y: 11
+        width: 117
+        height: 107
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 04424abc56b688a80800000000000000
+      internalID: -8464397414690446272
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: alien_ship_idle_13
+      rect:
+        serializedVersion: 2
+        x: 1669
+        y: 13
+        width: 117
+        height: 105
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5fb960840632a1840800000000000000
+      internalID: 5195504016557513717
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: alien_ship_idle_14
+      rect:
+        serializedVersion: 2
+        x: 1797
+        y: 15
+        width: 117
+        height: 102
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ca0d36b6a8ab86ad0800000000000000
+      internalID: -2708710072193396564
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: alien_ship_idle_15
+      rect:
+        serializedVersion: 2
+        x: 1925
+        y: 16
+        width: 117
+        height: 100
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5a2d299ad19930890800000000000000
+      internalID: -7492977002336300379
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: alien_ship_idle_16
+      rect:
+        serializedVersion: 2
+        x: 2053
+        y: 18
+        width: 117
+        height: 97
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 67cc552e8666e4ca0800000000000000
+      internalID: -6030770250342609802
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      alien_ship_idle_0: 8881599626405001888
+      alien_ship_idle_1: 6662808650950576375
+      alien_ship_idle_10: 6167250691216794351
+      alien_ship_idle_11: 935955267155393848
+      alien_ship_idle_12: -8464397414690446272
+      alien_ship_idle_13: 5195504016557513717
+      alien_ship_idle_14: -2708710072193396564
+      alien_ship_idle_15: -7492977002336300379
+      alien_ship_idle_16: -6030770250342609802
+      alien_ship_idle_2: -2094721543270244893
+      alien_ship_idle_3: -8953377338287446318
+      alien_ship_idle_4: 2593105461651603288
+      alien_ship_idle_5: -8953480422369442087
+      alien_ship_idle_6: -1864433701857851708
+      alien_ship_idle_7: -5442682949561158819
+      alien_ship_idle_8: -3293991102321143531
+      alien_ship_idle_9: -5528626896075541833
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
