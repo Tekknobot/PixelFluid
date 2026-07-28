@@ -462,6 +462,22 @@ namespace PixelOcean
                 layer.TankMaximum.x) * 0.5f;
         }
 
+        /// <summary>
+        /// Returns the current horizontal centre of every active ocean section,
+        /// ordered from left to right.
+        /// </summary>
+        public IReadOnlyList<float> GetSectionCentres()
+        {
+            if (!ready || sections.Count == 0)
+                return System.Array.Empty<float>();
+
+            return sections
+                .Where(section => section != null && section.Layers.Any(layer => layer != null))
+                .OrderBy(section => section.CentreX)
+                .Select(section => section.CentreX)
+                .ToArray();
+        }
+
         public IReadOnlyList<PixelWaterGPU> GetLayersNearest(
             float worldX)
         {

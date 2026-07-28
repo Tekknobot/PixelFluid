@@ -7,7 +7,7 @@ namespace PixelOcean
     public sealed class GiantSquidLaneSpawner : MonoBehaviour
     {
         [SerializeField, Min(0)] private int startingLane = 4;
-        [SerializeField] private bool spawnOnStart = true;
+        [SerializeField] private bool spawnOnStart = false;
         [SerializeField, Min(0.05f)] private float scale = 0.52f;
 
         private GameObject spawnedSquid;

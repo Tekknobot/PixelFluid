@@ -8,7 +8,7 @@ namespace PixelOcean
     [DisallowMultipleComponent]
     public sealed class StrugglingSwimmerSpawner : MonoBehaviour
     {
-        [SerializeField] private bool spawnOnStart = true;
+        [SerializeField] private bool spawnOnStart = false;
         [SerializeField] private Vector2 scaleRange = new(0.42f, 0.52f);
         [SerializeField, Min(0f)] private float respawnDelay = 7f;
 

@@ -8,7 +8,7 @@ namespace PixelOcean
     [DisallowMultipleComponent]
     public sealed class HeartLaneSpawner : MonoBehaviour
     {
-        [SerializeField] private bool spawnOnStart = true;
+        [SerializeField] private bool spawnOnStart = false;
         [SerializeField] private Vector2 scaleRange = new(0.72f, 0.92f);
         [SerializeField, Min(0f)] private float respawnDelay = 2.5f;
         [SerializeField] private bool chooseRandomLaneAfterPickup = true;

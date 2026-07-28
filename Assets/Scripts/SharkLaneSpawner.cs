@@ -12,7 +12,7 @@ namespace PixelOcean
     {
         [SerializeField] private GameObject sharkPrefab;
         [SerializeField, Min(0)] private int startingLane = 2;
-        [SerializeField] private bool spawnOnStart = true;
+        [SerializeField] private bool spawnOnStart = false;
 
         private GameObject spawnedShark;
 
