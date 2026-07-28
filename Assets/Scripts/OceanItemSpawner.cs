@@ -14,7 +14,7 @@ namespace PixelOcean
     {
         [Header("Population")]
         [SerializeField] private bool spawnOnStart = true;
-        [SerializeField, Range(0.1f, 1f)] private float itemScale = 0.5f;
+        [SerializeField, Range(0.1f, 1f)] private float itemScale = 1f;
         [SerializeField, Min(0f)] private float horizontalPadding = 0.8f;
         [SerializeField, Range(0f, 0.3f)] private float laneJitter = 0.08f;
         [SerializeField, Min(0f)] private float respawnDelay = 10f;
