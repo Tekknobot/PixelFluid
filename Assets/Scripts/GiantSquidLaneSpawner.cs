@@ -8,7 +8,7 @@ namespace PixelOcean
     {
         [SerializeField, Min(0)] private int startingLane = 4;
         [SerializeField] private bool spawnOnStart = false;
-        [SerializeField, Min(0.05f)] private float scale = 0.52f;
+        [SerializeField, Min(0.05f)] private float scale = 1f;
 
         private GameObject spawnedSquid;
 
