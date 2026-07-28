@@ -8,6 +8,7 @@ namespace PixelOcean
     [RequireComponent(typeof(SpriteRenderer), typeof(Rigidbody2D), typeof(InterWaveRenderItem))]
     public sealed class StrugglingSwimmerDrifter : MonoBehaviour
     {
+        private static AudioClip swimmerSavedClip;
         [Header("Natural Entry")]
         [SerializeField, Min(0.1f)] private float offscreenDistance = 1.25f;
         [SerializeField, Min(0.05f)] private float fadeInDuration = 0.85f;
@@ -260,6 +261,8 @@ namespace PixelOcean
                 return;
 
             saved = true;
+            PlaySwimmerSavedSfx();
+
             Collider2D trigger = GetComponent<Collider2D>();
             if (trigger != null)
                 trigger.enabled = false;
@@ -292,6 +295,29 @@ namespace PixelOcean
             if (surfer != null)
                 SpawnSavedText(surfer.position + Vector3.up * 0.42f);
             Destroy(gameObject);
+        }
+
+        private static void PlaySwimmerSavedSfx()
+        {
+            if (swimmerSavedClip == null)
+                swimmerSavedClip = Resources.Load<AudioClip>("Audio/SFX/swimmer_saved");
+
+            if (swimmerSavedClip == null)
+            {
+                Debug.LogWarning(
+                    "Could not load Resources/Audio/SFX/swimmer_saved.wav.");
+                return;
+            }
+
+            GameObject soundObject = new($"SFX - {swimmerSavedClip.name}");
+            AudioSource source = soundObject.AddComponent<AudioSource>();
+            source.clip = swimmerSavedClip;
+            source.volume = 1f;
+            source.playOnAwake = false;
+            source.loop = false;
+            source.spatialBlend = 0f;
+            source.Play();
+            Destroy(soundObject, swimmerSavedClip.length + 0.1f);
         }
 
         private static void SpawnSavedText(Vector3 position)

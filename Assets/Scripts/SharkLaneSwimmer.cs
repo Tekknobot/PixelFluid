@@ -114,7 +114,7 @@ namespace PixelOcean
                 BoxCollider2D box = gameObject.AddComponent<BoxCollider2D>();
                 box.isTrigger = true;
                 box.size = spriteRenderer != null && spriteRenderer.sprite != null
-                    ? spriteRenderer.sprite.bounds.size * 0.72f
+                    ? spriteRenderer.sprite.bounds.size * 0.52f
                     : new Vector2(1.2f, 0.45f);
             }
 

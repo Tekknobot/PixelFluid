@@ -25,7 +25,7 @@ namespace PixelOcean
 
             CircleCollider2D canCollider = GetComponent<CircleCollider2D>();
             canCollider.isTrigger = true;
-            canCollider.radius = 0.22f;
+            canCollider.radius = 0.12f;
 
             LoadSfx();
             PlaySfx(canThrowClip, 0.9f);

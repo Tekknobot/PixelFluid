@@ -76,10 +76,14 @@ namespace PixelOcean
             Material template = Resources.Load<Material>("Materials/SwimmerWaterBlend");
             if (template != null)
             {
-                renderer.material = new Material(template)
-                {
-                    name = "Runtime Swimmer Water Blend"
-                };
+                // Use the actual material asset directly. This guarantees the SpriteRenderer
+                // is using the Resources material rather than silently keeping Sprites/Default.
+                renderer.sharedMaterial = template;
+
+                Debug.Log(
+                    $"Struggling swimmer material applied: {renderer.sharedMaterial.name} " +
+                    $"({renderer.sharedMaterial.shader.name})",
+                    renderer);
                 return;
             }
 
@@ -94,10 +98,15 @@ namespace PixelOcean
                 return;
             }
 
-            renderer.material = new Material(shader)
+            Material fallback = new Material(shader)
             {
                 name = "Runtime Swimmer Water Blend Fallback"
             };
+            renderer.sharedMaterial = fallback;
+
+            Debug.LogWarning(
+                $"Using fallback swimmer shader material: {renderer.sharedMaterial.shader.name}",
+                renderer);
         }
 
         public void NotifySaved(GameObject swimmer)
