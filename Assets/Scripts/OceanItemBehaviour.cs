@@ -148,6 +148,9 @@ namespace PixelOcean
             if (collected || surfer == null || surfer.IsDead)
                 return false;
 
+            if (spriteRenderer == null || !surfer.CollectThrowableItem(spriteRenderer.sprite))
+                return false;
+
             collected = true;
 
             Collider2D itemCollider = GetComponent<Collider2D>();

@@ -287,7 +287,7 @@ namespace PixelOcean
         private float spriteFlashInterval;
         private Color spriteReactionColor = Color.white;
         private SurferHealthBar healthBar;
-        private int sodaCanCount;
+        private readonly Queue<Sprite> throwableItems = new Queue<Sprite>();
         private bool previousAttackHeld;
 
         public int CurrentWaveIndex => waveIndex;
@@ -298,7 +298,10 @@ namespace PixelOcean
         public int CurrentHealth => currentHealth;
         public int MaximumHealth => Mathf.Max(1, maximumHealth);
         public bool IsSwitchingWave => state == RiderState.SwitchingWave;
-        public int SodaCanCount => Mathf.Max(0, sodaCanCount);
+        // Kept for compatibility with any UI or scripts that previously displayed cans.
+        // It now represents every collected throwable ocean item.
+        public int SodaCanCount => throwableItems.Count;
+        public int ThrowableItemCount => throwableItems.Count;
 
         [Tooltip("Enable this when the original sprite artwork faces right.")]
         [SerializeField] private bool spriteFacesRight = true;
@@ -596,10 +599,20 @@ namespace PixelOcean
 
         public bool CollectSodaCan()
         {
-            if (IsDead) return false;
+            Sprite canSprite = Resources.Load<Sprite>("Items/soda_can");
+            return CollectThrowableItem(canSprite);
+        }
 
-            // Cans now stack instead of replacing a single held-can flag.
-            sodaCanCount++;
+        /// <summary>
+        /// Adds any collected ocean sprite to the shared throwable inventory.
+        /// Each pickup retains its own artwork and is thrown later in pickup order.
+        /// </summary>
+        public bool CollectThrowableItem(Sprite itemSprite)
+        {
+            if (IsDead || itemSprite == null)
+                return false;
+
+            throwableItems.Enqueue(itemSprite);
             BeginSpriteReaction(new Color(0.35f, 0.85f, 1f, 1f), 0.35f, 0.06f);
             transform.localScale = livingScale * 1.14f;
             return true;
@@ -607,7 +620,7 @@ namespace PixelOcean
 
         private void ThrowSodaCan(bool aimAtUfo)
         {
-            if (sodaCanCount <= 0 || IsDead || state != RiderState.Riding) return;
+            if (throwableItems.Count <= 0 || IsDead || state != RiderState.Riding) return;
 
             Transform nearest = null;
             float best = float.MaxValue;
@@ -639,10 +652,9 @@ namespace PixelOcean
                 }
             }
 
-            sodaCanCount--;
+            Sprite sprite = throwableItems.Dequeue();
 
-            GameObject projectile = new GameObject(aimAtUfo ? "UFO Soda Can Shot" : "Thrown Soda Can");
-            Sprite sprite = Resources.Load<Sprite>("Items/soda_can");
+            GameObject projectile = new GameObject(aimAtUfo ? "UFO Thrown Item Shot" : $"Thrown Ocean Item - {sprite.name}");
             projectile.AddComponent<SpriteRenderer>().sortingOrder = sortingOrder + 20;
             projectile.AddComponent<CircleCollider2D>();
             projectile.AddComponent<Rigidbody2D>();
@@ -657,8 +669,8 @@ namespace PixelOcean
 
         private void PerformAction(bool aimAtUfo)
         {
-            // Action alone throws toward sea hazards. Up + Action fires into the
-            // sky at the UFO. Ocean props continue to collect automatically.
+            // Action alone throws the next stored ocean item toward sea hazards.
+            // Up + Action fires it into the sky at the UFO. Ocean props collect automatically.
             ThrowSodaCan(aimAtUfo);
         }
 

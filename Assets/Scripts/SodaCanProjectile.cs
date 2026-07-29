@@ -12,6 +12,7 @@ namespace PixelOcean
         private float gravity = 5.2f;
         private float life = 5f;
         private bool bounced;
+        private Transform lockedTarget;
 
         public void Launch(
             Vector2 start,
@@ -21,12 +22,21 @@ namespace PixelOcean
             bool precisionShot = false)
         {
             transform.position = start;
-            GetComponent<SpriteRenderer>().sprite = sprite;
-            transform.localScale = Vector3.one * 0.325f;
+            lockedTarget = target;
+            SpriteRenderer renderer = GetComponent<SpriteRenderer>();
+            renderer.sprite = sprite;
+
+            // Ocean-item artwork can have different source dimensions. Normalize
+            // the visible projectile to a consistent world-space size.
+            float largestSide = sprite != null
+                ? Mathf.Max(sprite.bounds.size.x, sprite.bounds.size.y)
+                : 1f;
+            float normalizedScale = 0.34f / Mathf.Max(0.01f, largestSide);
+            transform.localScale = Vector3.one * normalizedScale;
 
             CircleCollider2D canCollider = GetComponent<CircleCollider2D>();
             canCollider.isTrigger = true;
-            canCollider.radius = 0.12f;
+            canCollider.radius = largestSide * 0.38f;
 
             Rigidbody2D body = GetComponent<Rigidbody2D>();
             body.bodyType = RigidbodyType2D.Kinematic;
@@ -40,15 +50,8 @@ namespace PixelOcean
                 ? (Vector2)target.position
                 : start + Vector2.right * direction * 4f;
 
-            float miss = precisionShot
-                ? 0f
-                : (Random.value < 0.28f
-                    ? Random.Range(-0.85f, 0.85f)
-                    : Random.Range(-0.16f, 0.16f));
-
-            aim += precisionShot
-                ? Vector2.zero
-                : new Vector2(miss, Random.Range(-0.12f, 0.18f));
+            // Throws have no random miss spread. Once a target is selected, the
+            // item is aimed directly at it.
 
             float shotSpeed = precisionShot ? 8.5f : 5.5f;
             float travelTime = Mathf.Clamp(
@@ -72,6 +75,23 @@ namespace PixelOcean
                 return;
             }
 
+            // Gently correct toward the locked moving target. This preserves the
+            // thrown arc while preventing a valid target from escaping because it
+            // changed direction after launch.
+            if (!bounced && lockedTarget != null)
+            {
+                Vector2 toTarget = (Vector2)lockedTarget.position - (Vector2)transform.position;
+                if (toTarget.sqrMagnitude <= 0.16f)
+                {
+                    HitTarget(lockedTarget);
+                    return;
+                }
+
+                Vector2 desiredVelocity = toTarget.normalized * Mathf.Max(5.5f, velocity.magnitude);
+                velocity = Vector2.Lerp(velocity, desiredVelocity,
+                    1f - Mathf.Exp(-4.5f * Time.deltaTime));
+            }
+
             velocity.y -= gravity * Time.deltaTime;
             transform.position += (Vector3)(velocity * Time.deltaTime);
             transform.Rotate(0f, 0f, -760f * Time.deltaTime);
@@ -79,8 +99,28 @@ namespace PixelOcean
 
         private void OnTriggerEnter2D(Collider2D other)
         {
+            if (bounced || other == null)
+                return;
+
+            // Floating collectibles are triggers too, but they must never block,
+            // deflect, collect, or consume a thrown item travelling through them.
+            if (other.GetComponentInParent<OceanItemBehaviour>() != null ||
+                other.GetComponentInParent<SodaCanPickup>() != null ||
+                other.GetComponentInParent<HeartLaneDrifter>() != null)
+            {
+                return;
+            }
+
+            HitTarget(other.transform);
+        }
+
+        private void HitTarget(Transform hitTransform)
+        {
+            if (bounced || hitTransform == null)
+                return;
+
             AlienUfoController ufo =
-                other.GetComponentInParent<AlienUfoController>();
+                hitTransform.GetComponentInParent<AlienUfoController>();
 
             if (ufo != null)
             {
@@ -92,7 +132,7 @@ namespace PixelOcean
             }
 
             SharkLaneSwimmer shark =
-                other.GetComponentInParent<SharkLaneSwimmer>();
+                hitTransform.GetComponentInParent<SharkLaneSwimmer>();
 
             if (shark != null)
             {
@@ -104,7 +144,7 @@ namespace PixelOcean
             }
 
             GiantSquidLaneSwimmer squid =
-                other.GetComponentInParent<GiantSquidLaneSwimmer>();
+                hitTransform.GetComponentInParent<GiantSquidLaneSwimmer>();
 
             if (squid != null)
             {
@@ -112,11 +152,10 @@ namespace PixelOcean
                 PlaySfx(sharkHitClip, 1f);
                 squid.TakeSodaCanHit(transform.position);
                 Bounce(squid.transform.position);
-                return;
             }
 
-            if (!bounced)
-                Bounce(other.transform.position);
+            // Ignore every unrelated collider. Only valid combat targets can
+            // interrupt the projectile's trajectory.
         }
 
         private void Bounce(Vector2 from)
