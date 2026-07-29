@@ -51,6 +51,7 @@ namespace PixelOcean
 
         [Header("Player Control")]
         [SerializeField] private bool playerControlled;
+        [SerializeField] private bool aiControlled;
         [SerializeField, Min(0.25f)] private float playerScrollSpeed = 2.4f;
         [SerializeField, Range(1f, 4f)] private float playerBoostMultiplier = 1.75f;
         [Tooltip("World-space padding that keeps the surfer clear of the camera's left and right screen edges.")]
@@ -288,6 +289,13 @@ namespace PixelOcean
         private bool layerSwitchInputLocked;
         private float playerHorizontalVelocity;
         private float playerTrickInput;
+        private float aiDecisionTimer;
+        private float aiJumpPulse;
+        private float aiAttackPulse;
+        private float aiSpecialHold;
+        private float aiHorizontal = 1f;
+        private int aiLayerDirection;
+        private float aiTrick;
         private float deathTimer;
         private float respawnTimer;
         private Vector2 deathVelocity;
@@ -314,7 +322,8 @@ namespace PixelOcean
         public PixelWaterGPU CurrentWave => currentWave;
         public float TravelDirection => direction;
         public bool IsDead => state == RiderState.Dead;
-        public bool IsPlayerControlled => playerControlled;
+        public bool IsPlayerControlled => playerControlled && !aiControlled;
+        public bool IsAIControlled => aiControlled;
         public int CurrentHealth => currentHealth;
         public int MaximumHealth => Mathf.Max(1, maximumHealth);
         public bool IsSwitchingWave => state == RiderState.SwitchingWave;
@@ -1297,6 +1306,7 @@ namespace PixelOcean
         public void ConfigureSinglePlayer(float scrollSpeed, float boostMultiplier)
         {
             playerControlled = true;
+            aiControlled = false;
             randomizeInitialOceanSpawn = true;
             playerIdleTimer = 0f;
             playerScrollSpeed = Mathf.Max(0.25f, scrollSpeed);
@@ -1315,6 +1325,16 @@ namespace PixelOcean
             transform.position = p;
         }
 
+
+        public void ConfigureAIPlayer(float scrollSpeed, float boostMultiplier)
+        {
+            ConfigureSinglePlayer(scrollSpeed, boostMultiplier);
+            aiControlled = true;
+            randomizeInitialOceanSpawn = true;
+            aiDecisionTimer = Random.Range(0.6f, 1.4f);
+            aiHorizontal = Random.value < 0.5f ? -1f : 1f;
+            gameObject.name = "AI Player Surfer";
+        }
         private void Update()
         {
             if (state == RiderState.Dead)
@@ -1402,11 +1422,11 @@ namespace PixelOcean
                 out float trickInput);
             playerTrickInput = trickInput;
 
-            bool attackHeld = ReadAttackInput();
+            bool attackHeld = aiControlled ? aiAttackPulse > 0f : ReadAttackInput();
             if (attackHeld && !previousAttackHeld) PerformAction(layerUpHeld);
             previousAttackHeld = attackHeld;
 
-            bool specialHeld = ReadSpecialInput();
+            bool specialHeld = aiControlled ? aiSpecialHold > 0f : ReadSpecialInput();
             UpdateChargedWaterSkid(specialHeld, horizontal, dt);
             previousSpecialHeld = specialHeld;
 
@@ -1670,6 +1690,17 @@ namespace PixelOcean
         private void ReadPlayerInput(out float horizontal, out bool jump,
             out bool layerUp, out bool layerDown, out bool boost, out float trick)
         {
+            if (aiControlled)
+            {
+                UpdateAIIntent(Time.deltaTime);
+                horizontal = aiHorizontal;
+                jump = aiJumpPulse > 0f;
+                layerUp = aiLayerDirection > 0;
+                layerDown = aiLayerDirection < 0;
+                boost = Random.value < 0.35f;
+                trick = aiTrick;
+                return;
+            }
 #if ENABLE_INPUT_SYSTEM
             horizontal = 0f;
             jump = layerUp = layerDown = boost = false;
@@ -1733,6 +1764,53 @@ namespace PixelOcean
 #endif
         }
 
+
+        private void UpdateAIIntent(float dt)
+        {
+            aiDecisionTimer -= dt;
+            aiJumpPulse = Mathf.Max(0f, aiJumpPulse - dt);
+            aiAttackPulse = Mathf.Max(0f, aiAttackPulse - dt);
+            aiSpecialHold = Mathf.Max(0f, aiSpecialHold - dt);
+
+            if (currentWave != null)
+            {
+                float width = Mathf.Max(0.01f, currentWave.TankMaximum.x - currentWave.TankMinimum.x);
+                float leftTurn = currentWave.TankMinimum.x + width * 0.16f;
+                float rightTurn = currentWave.TankMaximum.x - width * 0.16f;
+                if (localRideX <= leftTurn) aiHorizontal = 1f;
+                if (localRideX >= rightTurn) aiHorizontal = -1f;
+            }
+
+            if (aiDecisionTimer > 0f || state != RiderState.Riding)
+                return;
+
+            aiDecisionTimer = Random.Range(0.7f, 2.2f);
+            aiLayerDirection = 0;
+            aiTrick = Random.Range(-1f, 1f);
+
+            float choice = Random.value;
+            if (choice < 0.24f)
+            {
+                aiJumpPulse = 0.12f;
+            }
+            else if (choice < 0.45f && simulations.Count > 1)
+            {
+                aiLayerDirection = Random.value < 0.5f ? -1 : 1;
+                aiJumpPulse = 0.12f;
+            }
+            else if (choice < 0.62f && throwableItems.Count > 0)
+            {
+                aiAttackPulse = 0.12f;
+            }
+            else if (choice < 0.76f && enableChargedWaterSkid)
+            {
+                aiSpecialHold = Random.Range(0.25f, maximumSkidChargeTime);
+            }
+            else if (choice < 0.88f)
+            {
+                aiHorizontal *= -1f;
+            }
+        }
         private void UpdateRide(float dt)
         {
             Vector2 min = currentWave.TankMinimum;
@@ -2386,10 +2464,29 @@ namespace PixelOcean
                 return;
             }
 
-            GameObject listenerObject =
-                new GameObject("Player Surfer Spawn Listener");
+            PixelWaterGPU master = Object.FindFirstObjectByType<PixelWaterGPU>();
+            if (master != null && !master.SinglePlayerModeEnabled)
+            {
+                SpawnAIPlayerSurfer();
+                return;
+            }
 
+            GameObject listenerObject = new GameObject("Player Surfer Spawn Listener");
             listenerObject.AddComponent<TinyWaveSurferSpawnListener>();
+        }
+
+        public static void SpawnAIPlayerSurfer()
+        {
+            if (surferSpawned) return;
+            PixelWaterGPU master = Object.FindFirstObjectByType<PixelWaterGPU>();
+            if (master == null || master.SinglePlayerModeEnabled) return;
+            surferSpawned = true;
+            GameObject go = new GameObject("AI Player Surfer");
+            TinyWaveSurfer surfer = go.AddComponent<TinyWaveSurfer>();
+            surfer.ConfigureGeneratedSurfer(0, true, 0.95f,
+                new Color(0.95f, 0.30f, 0.12f, 1f),
+                new Color(1f, 0.88f, 0.24f, 1f), 100, 0.35f, 0f);
+            surfer.ConfigureAIPlayer(master.SinglePlayerScrollSpeed, master.SinglePlayerBoostMultiplier);
         }
 
         public static void SpawnPlayerSurfer()

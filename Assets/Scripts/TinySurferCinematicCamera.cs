@@ -242,12 +242,18 @@ namespace PixelOcean
 
             foreach (TinyWaveSurfer candidate in surfers)
             {
-                if (candidate == null ||
-                    !candidate.isActiveAndEnabled ||
-                    candidate.IsDead)
-                {
+                if (candidate == null || !candidate.isActiveAndEnabled)
                     continue;
+
+                // Keep watching the AI through its death animation and respawn.
+                if (candidate.IsAIControlled)
+                {
+                    surfer = candidate;
+                    return;
                 }
+
+                if (candidate.IsDead)
+                    continue;
 
                 if (candidate.IsPlayerControlled)
                 {
