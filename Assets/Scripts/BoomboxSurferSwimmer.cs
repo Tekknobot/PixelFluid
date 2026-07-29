@@ -1,0 +1,232 @@
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
+
+namespace PixelOcean
+{
+    [DisallowMultipleComponent]
+    [RequireComponent(typeof(SpriteRenderer))]
+    [RequireComponent(typeof(Animator))]
+    [RequireComponent(typeof(AudioSource))]
+    [RequireComponent(typeof(Rigidbody2D))]
+
+    public sealed class BoomboxSurferSwimmer : MonoBehaviour
+    {
+        [Header("Surfing Movement")]
+        [SerializeField] private Vector2 speedRange = new(0.34f, 0.52f);
+        [SerializeField, Range(0f, 0.4f)] private float laneWander = 0.12f;
+        [SerializeField, Min(0.1f)] private float verticalResponsiveness = 5.5f;
+        [SerializeField] private Vector2 bobHeightRange = new(0.025f, 0.07f);
+        [SerializeField] private Vector2 bobSpeedRange = new(2.1f, 3.4f);
+        [SerializeField, Range(0f, 20f)] private float maximumTilt = 8f;
+
+        [Header("Unique Boombox Behaviour")]
+        [SerializeField] private Vector2 laneChangeDelayRange = new(5f, 10f);
+        [SerializeField, Min(0.2f)] private float laneChangeDuration = 1.2f;
+        [SerializeField, Min(1f)] private float playerGrooveRange = 4.5f;
+        [SerializeField, Range(0f, 1f)] private float grooveTowardPlayerChance = 0.65f;
+
+        [Header("Death Surfer Spatial Music")]
+        [SerializeField, Range(0f, 1f)] private float maximumVolume = 0.9f;
+        [SerializeField, Min(0f)] private float fullVolumeDistance = 1.25f;
+        [SerializeField, Min(0.1f)] private float silentDistance = 10f;
+        [SerializeField, Range(0f, 1f)] private float spatialBlend = 0.72f;
+        [SerializeField, Range(0f, 1f)] private float stereoPanStrength = 0.55f;
+        [SerializeField] private Vector2 lowPassCutoffRange = new(1200f, 22000f);
+
+        private readonly List<PixelWaterGPU> waterLayers = new();
+        private Rigidbody2D body;
+        private SpriteRenderer spriteRenderer;
+        private InterWaveRenderItem renderItem;
+        private AudioSource musicSource;
+        private AudioLowPassFilter lowPassFilter;
+        private Transform player;
+        private int laneIndex;
+        private int targetLaneIndex;
+        private float direction;
+        private float speed;
+        private float laneOffset;
+        private float bobHeight;
+        private float bobSpeed;
+        private float bobPhase;
+        private float nextLaneChangeTime;
+        private float laneChangeElapsed;
+        private bool changingLane;
+        private bool initialised;
+
+        public void Initialise(int requestedLane, AudioClip musicClip)
+        {
+            ResolveReferences();
+            if (waterLayers.Count < 2)
+            {
+                Debug.LogWarning("BoomboxSurferSwimmer needs at least two water layers.", this);
+                enabled = false;
+                return;
+            }
+
+            laneIndex = Mathf.Clamp(requestedLane, 0, waterLayers.Count - 2);
+            targetLaneIndex = laneIndex;
+            renderItem.SetLane(laneIndex);
+            direction = Random.value < 0.5f ? -1f : 1f;
+            speed = Random.Range(speedRange.x, speedRange.y);
+            laneOffset = Random.Range(-laneWander, laneWander);
+            bobHeight = Random.Range(bobHeightRange.x, bobHeightRange.y);
+            bobSpeed = Random.Range(bobSpeedRange.x, bobSpeedRange.y);
+            bobPhase = Random.Range(0f, Mathf.PI * 2f);
+
+            float minX = GetMinimumX(laneIndex);
+            float maxX = GetMaximumX(laneIndex);
+            Vector2 position = body.position;
+            position.x = direction > 0f ? minX + 0.6f : maxX - 0.6f;
+            position.y = GetLaneCentreY(laneIndex, position.x) + laneOffset;
+            body.position = position;
+            transform.position = position;
+
+            musicSource.clip = musicClip;
+            musicSource.loop = true;
+            musicSource.playOnAwake = false;
+            musicSource.spatialBlend = spatialBlend;
+            musicSource.rolloffMode = AudioRolloffMode.Linear;
+            musicSource.minDistance = Mathf.Max(0.05f, fullVolumeDistance);
+            musicSource.maxDistance = Mathf.Max(musicSource.minDistance + 0.1f, silentDistance);
+            musicSource.dopplerLevel = 0.15f;
+            musicSource.volume = 0f;
+            if (musicClip != null)
+                musicSource.Play();
+
+            ScheduleLaneChange();
+            initialised = true;
+        }
+
+        private void Awake() => ResolveReferences();
+        private void Start() { if (!initialised) Initialise(1, Resources.Load<AudioClip>("Audio/Music/Death Surfer")); }
+
+        private void ResolveReferences()
+        {
+            body = GetComponent<Rigidbody2D>();
+            body.bodyType = RigidbodyType2D.Kinematic;
+            body.gravityScale = 0f;
+            body.freezeRotation = true;
+            spriteRenderer = GetComponent<SpriteRenderer>();
+            renderItem = GetComponent<InterWaveRenderItem>();
+            musicSource = GetComponent<AudioSource>();
+            lowPassFilter = GetComponent<AudioLowPassFilter>();
+            if (lowPassFilter == null)
+                lowPassFilter = gameObject.AddComponent<AudioLowPassFilter>();
+            waterLayers.Clear();
+            waterLayers.AddRange(EndlessWaveSections.LayersNearest(transform.position.x));
+        }
+
+        private void FixedUpdate()
+        {
+            if (!initialised || waterLayers.Count < 2)
+                return;
+
+            FindPlayer();
+            Vector2 position = body.position;
+            position.x += direction * speed * Time.fixedDeltaTime;
+
+            int boundsLane = changingLane ? Mathf.Min(laneIndex, targetLaneIndex) : laneIndex;
+            float minX = GetMinimumX(boundsLane);
+            float maxX = GetMaximumX(boundsLane);
+            if (position.x <= minX) { position.x = minX; direction = 1f; }
+            else if (position.x >= maxX) { position.x = maxX; direction = -1f; }
+
+            if (!changingLane && Time.time >= nextLaneChangeTime)
+                BeginLaneChange();
+
+            float sampledX = Mathf.Clamp(position.x, minX, maxX);
+            float bob = Mathf.Sin(Time.time * bobSpeed + bobPhase) * bobHeight;
+            float desiredY = UpdateLaneTransition(sampledX) + laneOffset + bob;
+            position.y = Mathf.Lerp(position.y, desiredY,
+                1f - Mathf.Exp(-verticalResponsiveness * Time.fixedDeltaTime));
+
+            body.MovePosition(position);
+            spriteRenderer.flipX = direction < 0f;
+            transform.rotation = Quaternion.Euler(0f, 0f,
+                Mathf.Sin(Time.time * bobSpeed * 0.72f + bobPhase) * maximumTilt);
+            UpdateSpatialMusic(position);
+        }
+
+        private void FindPlayer()
+        {
+            if (player != null)
+                return;
+            TinyWaveSurfer surfer = FindObjectsByType<TinyWaveSurfer>(FindObjectsSortMode.None)
+                .Where(candidate => candidate != null && !candidate.IsDead)
+                .OrderByDescending(candidate => candidate.IsPlayerControlled)
+                .FirstOrDefault();
+            if (surfer != null)
+                player = surfer.transform;
+        }
+
+        private void BeginLaneChange()
+        {
+            int laneCount = waterLayers.Count - 1;
+            if (laneCount <= 1) { ScheduleLaneChange(); return; }
+
+            int desired = laneIndex;
+            if (player != null && Vector2.Distance(body.position, player.position) <= playerGrooveRange && Random.value <= grooveTowardPlayerChance)
+            {
+                TinyWaveSurfer surfer = player.GetComponent<TinyWaveSurfer>();
+                if (surfer != null)
+                    desired = Mathf.Clamp(surfer.CurrentWaveIndex, 0, laneCount - 1);
+            }
+
+            if (desired == laneIndex)
+                desired = laneIndex <= 0 ? 1 : laneIndex >= laneCount - 1 ? laneCount - 2 : laneIndex + (Random.value < 0.5f ? -1 : 1);
+
+            targetLaneIndex = Mathf.Clamp(desired, 0, laneCount - 1);
+            changingLane = targetLaneIndex != laneIndex;
+            laneChangeElapsed = 0f;
+            laneOffset = Random.Range(-laneWander, laneWander);
+            if (!changingLane)
+                ScheduleLaneChange();
+        }
+
+        private float UpdateLaneTransition(float worldX)
+        {
+            if (!changingLane)
+                return GetLaneCentreY(laneIndex, worldX);
+
+            laneChangeElapsed += Time.fixedDeltaTime;
+            float t = Mathf.Clamp01(laneChangeElapsed / Mathf.Max(0.2f, laneChangeDuration));
+            float eased = t * t * (3f - 2f * t);
+            if (t >= 0.5f)
+                renderItem.SetLane(targetLaneIndex);
+            float y = Mathf.Lerp(GetLaneCentreY(laneIndex, worldX), GetLaneCentreY(targetLaneIndex, worldX), eased);
+            if (t >= 1f)
+            {
+                laneIndex = targetLaneIndex;
+                changingLane = false;
+                renderItem.SetLane(laneIndex);
+                ScheduleLaneChange();
+            }
+            return y;
+        }
+
+        private void ScheduleLaneChange() => nextLaneChangeTime = Time.time + Random.Range(
+            Mathf.Min(laneChangeDelayRange.x, laneChangeDelayRange.y),
+            Mathf.Max(laneChangeDelayRange.x, laneChangeDelayRange.y));
+
+        private void UpdateSpatialMusic(Vector2 position)
+        {
+            if (musicSource == null || player == null)
+                return;
+
+            float distance = Vector2.Distance(position, player.position);
+            float t = Mathf.InverseLerp(fullVolumeDistance, silentDistance, distance);
+            float presence = 1f - Mathf.SmoothStep(0f, 1f, t);
+            musicSource.volume = maximumVolume * presence;
+
+            float horizontal = player.position.x - position.x;
+            musicSource.panStereo = Mathf.Clamp(horizontal / Mathf.Max(1f, silentDistance), -1f, 1f) * stereoPanStrength;
+            if (lowPassFilter != null)
+                lowPassFilter.cutoffFrequency = Mathf.Lerp(lowPassCutoffRange.y, lowPassCutoffRange.x, t);
+        }
+
+        private float GetMinimumX(int lane) => Mathf.Max(waterLayers[lane].TankMinimum.x, waterLayers[lane + 1].TankMinimum.x) + 0.15f;
+        private float GetMaximumX(int lane) => Mathf.Min(waterLayers[lane].TankMaximum.x, waterLayers[lane + 1].TankMaximum.x) - 0.15f;
+        private float GetLaneCentreY(int lane, float x) => (waterLayers[lane].GetGameplaySurfaceHeight(x) + waterLayers[lane + 1].GetGameplaySurfaceHeight(x)) * 0.5f;
+    }
+}
