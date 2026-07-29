@@ -68,6 +68,19 @@ namespace PixelOcean
         [Tooltip("Allows horizontal steering while airborne.")]
         [SerializeField, Range(0f, 1f)] private float airControl = 0.45f;
 
+        [Header("Charged Water Skid")]
+        [Tooltip("Keyboard E / controller east face button (Xbox B). Hold to charge, release to skid.")]
+        [SerializeField] private bool enableChargedWaterSkid = true;
+        [SerializeField, Min(0.1f)] private float maximumSkidChargeTime = 1.5f;
+        [SerializeField, Min(0.05f)] private float minimumSkidChargeTime = 0.12f;
+        [SerializeField, Min(0.1f)] private float minimumSkidDuration = 0.35f;
+        [SerializeField, Min(0.1f)] private float maximumSkidDuration = 1.35f;
+        [SerializeField, Min(0.1f)] private float minimumSkidSpeed = 3.5f;
+        [SerializeField, Min(0.1f)] private float maximumSkidSpeed = 9f;
+        [SerializeField, Range(0f, 0.2f)] private float chargeShakeAmount = 0.035f;
+        [SerializeField, Range(1f, 80f)] private float chargeShakeFrequency = 32f;
+        [SerializeField, Range(0f, 45f)] private float skidLeanDegrees = 18f;
+
         [Header("Player Air Tricks")]
         [Tooltip("Maximum extra rotation controlled with the right stick while airborne.")]
         [SerializeField, Range(0f, 1080f)] private float playerAirTrickDegrees = 540f;
@@ -289,6 +302,13 @@ namespace PixelOcean
         private SurferHealthBar healthBar;
         private readonly Queue<Sprite> throwableItems = new Queue<Sprite>();
         private bool previousAttackHeld;
+        private bool previousSpecialHeld;
+        private bool specialCharging;
+        private float specialChargeTime;
+        private bool specialSkidding;
+        private float specialSkidTimer;
+        private float specialSkidDuration;
+        private float specialSkidSpeed;
 
         public int CurrentWaveIndex => waveIndex;
         public PixelWaterGPU CurrentWave => currentWave;
@@ -1386,23 +1406,30 @@ namespace PixelOcean
             if (attackHeld && !previousAttackHeld) PerformAction(layerUpHeld);
             previousAttackHeld = attackHeld;
 
-            float targetSpeed = horizontal * playerScrollSpeed *
-                (boostHeld ? playerBoostMultiplier : 1f);
-            float response = Mathf.Abs(targetSpeed) > 0.01f
-                ? playerAcceleration
-                : playerDeceleration;
-            playerHorizontalVelocity = Mathf.MoveTowards(
-                playerHorizontalVelocity,
-                targetSpeed,
-                response * dt);
+            bool specialHeld = ReadSpecialInput();
+            UpdateChargedWaterSkid(specialHeld, horizontal, dt);
+            previousSpecialHeld = specialHeld;
 
-            bool canMove = state == RiderState.Riding || state == RiderState.TurningTrick;
-            if (canMove)
+            if (!specialCharging && !specialSkidding)
             {
-                float control = state == RiderState.TurningTrick ? airControl : 1f;
-                localRideX += playerHorizontalVelocity * control * dt;
-                if (Mathf.Abs(playerHorizontalVelocity) > 0.02f)
-                    direction = Mathf.Sign(playerHorizontalVelocity);
+                float targetSpeed = horizontal * playerScrollSpeed *
+                    (boostHeld ? playerBoostMultiplier : 1f);
+                float response = Mathf.Abs(targetSpeed) > 0.01f
+                    ? playerAcceleration
+                    : playerDeceleration;
+                playerHorizontalVelocity = Mathf.MoveTowards(
+                    playerHorizontalVelocity,
+                    targetSpeed,
+                    response * dt);
+
+                bool canMove = state == RiderState.Riding || state == RiderState.TurningTrick;
+                if (canMove)
+                {
+                    float control = state == RiderState.TurningTrick ? airControl : 1f;
+                    localRideX += playerHorizontalVelocity * control * dt;
+                    if (Mathf.Abs(playerHorizontalVelocity) > 0.02f)
+                        direction = Mathf.Sign(playerHorizontalVelocity);
+                }
             }
 
             RebindToNearestHorizontalSection();
@@ -1410,7 +1437,7 @@ namespace PixelOcean
             bool moving = Mathf.Abs(playerHorizontalVelocity) > 0.03f &&
                 state == RiderState.Riding;
             bool hasPlayerActivity = moving || jumpHeld || layerUpHeld || layerDownHeld ||
-                Mathf.Abs(trickInput) > 0.05f;
+                specialCharging || specialSkidding || Mathf.Abs(trickInput) > 0.05f;
 
             if (hasPlayerActivity || state != RiderState.Riding)
                 playerIdleTimer = 0f;
@@ -1428,7 +1455,7 @@ namespace PixelOcean
             // jump and remains on the current wave. Up/Down by themselves do not
             // switch waves anymore.
             bool jumpPressed = jumpHeld && !previousJumpHeld;
-            if (jumpPressed && state == RiderState.Riding)
+            if (jumpPressed && state == RiderState.Riding && !specialCharging && !specialSkidding)
             {
                 bool wantsUp = layerUpHeld && !layerDownHeld;
                 bool wantsDown = layerDownHeld && !layerUpHeld;
@@ -1463,6 +1490,77 @@ namespace PixelOcean
             {
                 localRideX = ClampPlayerXToSandbox(localRideX);
                 FollowSurface(dt);
+            }
+        }
+
+        private bool ReadSpecialInput()
+        {
+#if ENABLE_INPUT_SYSTEM
+            bool keyboardHeld = Keyboard.current != null && Keyboard.current.eKey.isPressed;
+            bool gamepadHeld = Gamepad.current != null && Gamepad.current.buttonEast.isPressed;
+            return keyboardHeld || gamepadHeld;
+#elif ENABLE_LEGACY_INPUT_MANAGER
+            return Input.GetKey(KeyCode.E) || Input.GetKey(KeyCode.JoystickButton1);
+#else
+            return false;
+#endif
+        }
+
+        private void UpdateChargedWaterSkid(bool specialHeld, float horizontalInput, float dt)
+        {
+            if (!enableChargedWaterSkid || state != RiderState.Riding || currentWave == null)
+            {
+                specialCharging = false;
+                specialChargeTime = 0f;
+                return;
+            }
+
+            if (specialHeld && !specialSkidding)
+            {
+                specialCharging = true;
+                specialChargeTime = Mathf.Min(maximumSkidChargeTime, specialChargeTime + dt);
+                playerHorizontalVelocity = Mathf.MoveTowards(
+                    playerHorizontalVelocity, 0f, playerDeceleration * 2f * dt);
+
+                if (Mathf.Abs(horizontalInput) >= gamepadDeadZone)
+                    direction = Mathf.Sign(horizontalInput);
+
+                return;
+            }
+
+            if (specialCharging && !specialHeld && previousSpecialHeld)
+            {
+                float heldTime = specialChargeTime;
+                specialCharging = false;
+                specialChargeTime = 0f;
+
+                if (heldTime >= minimumSkidChargeTime)
+                {
+                    float charge01 = Mathf.Clamp01(heldTime / Mathf.Max(0.01f, maximumSkidChargeTime));
+                    specialSkidDuration = Mathf.Lerp(minimumSkidDuration, maximumSkidDuration, charge01);
+                    specialSkidSpeed = Mathf.Lerp(minimumSkidSpeed, maximumSkidSpeed, charge01);
+                    specialSkidTimer = specialSkidDuration;
+                    specialSkidding = true;
+                    playerHorizontalVelocity = 0f;
+                    if (speechBubble != null) speechBubble.HideImmediate();
+                }
+            }
+
+            if (!specialSkidding)
+                return;
+
+            specialSkidTimer -= dt;
+            float skid01 = Mathf.Clamp01(specialSkidTimer / Mathf.Max(0.01f, specialSkidDuration));
+            float easedSpeed = specialSkidSpeed * Mathf.SmoothStep(0.15f, 1f, skid01);
+            localRideX += direction * easedSpeed * dt;
+            localRideX = ClampPlayerXToSandbox(localRideX);
+            RebindToNearestHorizontalSection();
+
+            if (specialSkidTimer <= 0f)
+            {
+                specialSkidding = false;
+                specialSkidTimer = 0f;
+                playerHorizontalVelocity = direction * Mathf.Min(playerScrollSpeed, specialSkidSpeed * 0.2f);
             }
         }
 
@@ -1586,7 +1684,7 @@ namespace PixelOcean
                 layerUp |= keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed;
                 layerDown |= keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed;
                 boost |= keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed;
-                trick += (keyboard.eKey.isPressed ? 1f : 0f) - (keyboard.qKey.isPressed ? 1f : 0f);
+                trick -= keyboard.qKey.isPressed ? 1f : 0f;
             }
 
             Gamepad gamepad = Gamepad.current;
@@ -1628,7 +1726,7 @@ namespace PixelOcean
             layerUp = Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow);
             layerDown = Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow);
             boost = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
-            trick = (Input.GetKey(KeyCode.E) ? 1f : 0f) - (Input.GetKey(KeyCode.Q) ? 1f : 0f);
+            trick = Input.GetKey(KeyCode.Q) ? -1f : 0f;
 #else
             horizontal = trick = 0f;
             jump = layerUp = layerDown = boost = false;
@@ -1718,6 +1816,17 @@ namespace PixelOcean
                     1f - Mathf.Exp(-surfaceFollow * dt));
             }
 
+            if (playerControlled && specialCharging)
+            {
+                float charge01 = Mathf.Clamp01(specialChargeTime / Mathf.Max(0.01f, maximumSkidChargeTime));
+                float shake = chargeShakeAmount * charge01;
+                float shakePhase = Time.time * chargeShakeFrequency;
+                transform.position += new Vector3(
+                    Mathf.Sin(shakePhase * 1.37f) * shake,
+                    Mathf.Cos(shakePhase * 1.91f) * shake * 0.55f,
+                    0f);
+            }
+
             float compression =
                 Mathf.Sin(bobPhase + Mathf.PI * 0.5f) *
                 stanceSquash *
@@ -1748,7 +1857,8 @@ namespace PixelOcean
                 Quaternion.Euler(
                     0f,
                     0f,
-                    slope + balanceLean + microPitch),
+                    slope + balanceLean + microPitch +
+                    (specialSkidding ? -direction * skidLeanDegrees : 0f)),
                 1f - Mathf.Exp(-surfaceFollow * 0.7f * dt));
         }
         private void BeginTurnTrick()
