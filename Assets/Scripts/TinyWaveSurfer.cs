@@ -287,7 +287,7 @@ namespace PixelOcean
         private float spriteFlashInterval;
         private Color spriteReactionColor = Color.white;
         private SurferHealthBar healthBar;
-        private bool hasSodaCan;
+        private int sodaCanCount;
         private bool previousAttackHeld;
 
         public int CurrentWaveIndex => waveIndex;
@@ -298,6 +298,7 @@ namespace PixelOcean
         public int CurrentHealth => currentHealth;
         public int MaximumHealth => Mathf.Max(1, maximumHealth);
         public bool IsSwitchingWave => state == RiderState.SwitchingWave;
+        public int SodaCanCount => Mathf.Max(0, sodaCanCount);
 
         [Tooltip("Enable this when the original sprite artwork faces right.")]
         [SerializeField] private bool spriteFacesRight = true;
@@ -595,47 +596,70 @@ namespace PixelOcean
 
         public bool CollectSodaCan()
         {
-            if (IsDead || hasSodaCan) return false;
-            hasSodaCan = true;
+            if (IsDead) return false;
+
+            // Cans now stack instead of replacing a single held-can flag.
+            sodaCanCount++;
             BeginSpriteReaction(new Color(0.35f, 0.85f, 1f, 1f), 0.35f, 0.06f);
             transform.localScale = livingScale * 1.14f;
             return true;
         }
 
-        private void ThrowSodaCan()
+        private void ThrowSodaCan(bool aimAtUfo)
         {
-            if (!hasSodaCan || IsDead || state != RiderState.Riding) return;
-            hasSodaCan = false;
+            if (sodaCanCount <= 0 || IsDead || state != RiderState.Riding) return;
+
             Transform nearest = null;
             float best = float.MaxValue;
 
-            foreach (SharkLaneSwimmer shark in FindObjectsByType<SharkLaneSwimmer>(FindObjectsSortMode.None))
+            // Holding Up while pressing Action reserves the throw for the UFO.
+            // This prevents a nearby shark from stealing the upward shot.
+            if (aimAtUfo)
             {
-                if (shark == null) continue;
-                float d = Vector2.Distance(transform.position, shark.transform.position);
-                if (d < best) { best = d; nearest = shark.transform; }
+                AlienUfoController ufo = FindFirstObjectByType<AlienUfoController>();
+                if (ufo != null && ufo.CanBeHit)
+                    nearest = ufo.transform;
+                else
+                    return; // Do not spend a can when there is no hittable UFO.
+            }
+            else
+            {
+                foreach (SharkLaneSwimmer shark in FindObjectsByType<SharkLaneSwimmer>(FindObjectsSortMode.None))
+                {
+                    if (shark == null) continue;
+                    float d = Vector2.Distance(transform.position, shark.transform.position);
+                    if (d < best) { best = d; nearest = shark.transform; }
+                }
+
+                foreach (GiantSquidLaneSwimmer squid in FindObjectsByType<GiantSquidLaneSwimmer>(FindObjectsSortMode.None))
+                {
+                    if (squid == null) continue;
+                    float d = Vector2.Distance(transform.position, squid.transform.position);
+                    if (d < best) { best = d; nearest = squid.transform; }
+                }
             }
 
-            foreach (GiantSquidLaneSwimmer squid in FindObjectsByType<GiantSquidLaneSwimmer>(FindObjectsSortMode.None))
-            {
-                if (squid == null) continue;
-                float d = Vector2.Distance(transform.position, squid.transform.position);
-                if (d < best) { best = d; nearest = squid.transform; }
-            }
+            sodaCanCount--;
 
-            GameObject projectile = new GameObject("Thrown Soda Can");
+            GameObject projectile = new GameObject(aimAtUfo ? "UFO Soda Can Shot" : "Thrown Soda Can");
             Sprite sprite = Resources.Load<Sprite>("Items/soda_can");
             projectile.AddComponent<SpriteRenderer>().sortingOrder = sortingOrder + 20;
             projectile.AddComponent<CircleCollider2D>();
+            projectile.AddComponent<Rigidbody2D>();
             SodaCanProjectile can = projectile.AddComponent<SodaCanProjectile>();
-            can.Launch((Vector2)transform.position + new Vector2(direction * .22f, .22f), nearest, sprite, direction);
+            can.Launch(
+                (Vector2)transform.position + new Vector2(direction * .22f, .22f),
+                nearest,
+                sprite,
+                direction,
+                aimAtUfo);
         }
 
-        private void PerformAction()
+        private void PerformAction(bool aimAtUfo)
         {
-            // F / X remains the deliberate action for using the held soda can.
-            // General ocean props now collect automatically on contact.
-            ThrowSodaCan();
+            // Action alone throws toward sea hazards. Up + Action fires into the
+            // sky at the UFO. Ocean props continue to collect automatically.
+            ThrowSodaCan(aimAtUfo);
         }
 
         private static bool ReadAttackInput()
@@ -1347,7 +1371,7 @@ namespace PixelOcean
             playerTrickInput = trickInput;
 
             bool attackHeld = ReadAttackInput();
-            if (attackHeld && !previousAttackHeld) PerformAction();
+            if (attackHeld && !previousAttackHeld) PerformAction(layerUpHeld);
             previousAttackHeld = attackHeld;
 
             float targetSpeed = horizontal * playerScrollSpeed *

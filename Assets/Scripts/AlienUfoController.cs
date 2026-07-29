@@ -4,7 +4,7 @@ using UnityEngine;
 namespace PixelOcean
 {
     [DisallowMultipleComponent]
-    [RequireComponent(typeof(SpriteRenderer))]
+    [RequireComponent(typeof(SpriteRenderer), typeof(BoxCollider2D), typeof(Rigidbody2D))]
     public sealed class AlienUfoController : MonoBehaviour
     {
         private enum UfoState { Arrival, Roaming, Swooping, Hunting, Beaming, Retreat }
@@ -34,6 +34,11 @@ namespace PixelOcean
         [SerializeField, Range(0.5f, 0.9f)] private float lowestSkyViewportY = 0.5f;
         [SerializeField, Range(0.75f, 1.05f)] private float highestSkyViewportY = 0.98f;
         [SerializeField] private float visibleEdgePadding = 0.2f;
+
+        [Header("Can Hit Response")]
+        [SerializeField] private Vector2 hitRetreatCooldownRange = new Vector2(8f, 14f);
+        [SerializeField] private float hitFlashDuration = 0.22f;
+        [SerializeField] private float hitKickSpeed = 4.5f;
 
         [Header("Beam Juice")]
         [SerializeField] private Color beamOuterColor = new Color(0.35f, 1f, 0.85f, 0.36f);
@@ -66,6 +71,16 @@ namespace PixelOcean
         private Material lineMaterial;
         private Vector3 baseScale;
         private float currentMoveSpeed;
+        private bool forcedRetreatFromHit;
+        private bool waitingOffscreen;
+        private float returnAfterTime;
+        private float hitFlashUntil;
+
+        public bool CanBeHit =>
+            isActiveAndEnabled &&
+            spriteRenderer != null &&
+            spriteRenderer.enabled &&
+            !waitingOffscreen;
 
         private void Awake()
         {
@@ -74,6 +89,19 @@ namespace PixelOcean
             frames = Resources.LoadAll<Sprite>("Alien/alien_ship_idle");
             if (frames != null && frames.Length > 0)
                 spriteRenderer.sprite = frames[0];
+
+            BoxCollider2D hitCollider = GetComponent<BoxCollider2D>();
+            hitCollider.isTrigger = true;
+            if (spriteRenderer.sprite != null)
+            {
+                hitCollider.size = spriteRenderer.sprite.bounds.size * 0.78f;
+                hitCollider.offset = spriteRenderer.sprite.bounds.center;
+            }
+
+            Rigidbody2D body = GetComponent<Rigidbody2D>();
+            body.bodyType = RigidbodyType2D.Kinematic;
+            body.gravityScale = 0f;
+            body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
 
             baseScale = Vector3.one * Mathf.Max(0.05f, shipScale);
             transform.localScale = baseScale;
@@ -242,6 +270,38 @@ namespace PixelOcean
             }
         }
 
+        public void TakeSodaCanHit(Vector2 hitPosition)
+        {
+            if (!CanBeHit)
+                return;
+
+            // Any successful upward can shot interrupts the current abduction
+            // sequence, clears its timer and forces the ship out of the scene.
+            SetBeamVisible(false);
+            beamTimer = 0f;
+            hitFlashUntil = Time.time + Mathf.Max(0.05f, hitFlashDuration);
+            forcedRetreatFromHit = true;
+            waitingOffscreen = false;
+            returnAfterTime = Time.time + Random.Range(
+                hitRetreatCooldownRange.x,
+                hitRetreatCooldownRange.y);
+
+            Vector2 away = ((Vector2)transform.position - hitPosition).normalized;
+            if (away.sqrMagnitude < 0.01f)
+                away = Vector2.up;
+            velocity = away * hitKickSpeed;
+
+            float exitSide = transform.position.x < worldCamera.transform.position.x
+                ? -0.3f
+                : 1.3f;
+            desiredPosition = new Vector3(
+                ViewportWorldX(exitSide),
+                ViewportWorldY(1.08f),
+                0f);
+            currentMoveSpeed = Mathf.Max(currentMoveSpeed, trackingSpeed * 1.35f);
+            state = UfoState.Retreat;
+        }
+
         private void EndBeam(bool successful)
         {
             SetBeamVisible(false);
@@ -253,13 +313,43 @@ namespace PixelOcean
 
         private void UpdateRetreat()
         {
-            float side = transform.position.x < worldCamera.transform.position.x ? -0.2f : 1.2f;
+            if (waitingOffscreen)
+            {
+                if (Time.time < returnAfterTime)
+                    return;
+
+                waitingOffscreen = false;
+                forcedRetreatFromHit = false;
+                spriteRenderer.enabled = true;
+                GetComponent<BoxCollider2D>().enabled = true;
+                PlaceForArrival();
+                nextAttackTime = Time.time + Random.Range(
+                    firstAttackDelayRange.x,
+                    firstAttackDelayRange.y);
+                state = UfoState.Arrival;
+                return;
+            }
+
+            float side = transform.position.x < worldCamera.transform.position.x ? -0.3f : 1.3f;
             desiredPosition = new Vector3(ViewportWorldX(side), ViewportWorldY(1.12f), 0f);
+
             if (!spriteRenderer.isVisible)
             {
-                PlaceForArrival();
-                nextAttackTime = Time.time + Random.Range(firstAttackDelayRange.x, firstAttackDelayRange.y);
-                state = UfoState.Arrival;
+                if (forcedRetreatFromHit)
+                {
+                    waitingOffscreen = true;
+                    spriteRenderer.enabled = false;
+                    GetComponent<BoxCollider2D>().enabled = false;
+                    velocity = Vector3.zero;
+                }
+                else
+                {
+                    PlaceForArrival();
+                    nextAttackTime = Time.time + Random.Range(
+                        firstAttackDelayRange.x,
+                        firstAttackDelayRange.y);
+                    state = UfoState.Arrival;
+                }
             }
         }
 
@@ -296,6 +386,9 @@ namespace PixelOcean
             float hoverPulse = 1f + Mathf.Sin(Time.time * 3.2f) * 0.018f;
             transform.localScale = baseScale * beamPulse * hoverPulse;
             transform.rotation = Quaternion.Euler(0f, 0f, bank);
+            spriteRenderer.color = Time.time < hitFlashUntil
+                ? Color.white * 1.35f
+                : Color.white;
         }
 
         private void KeepShipInSkyBand()

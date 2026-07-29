@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace PixelOcean
 {
-    [RequireComponent(typeof(SpriteRenderer), typeof(CircleCollider2D))]
+    [RequireComponent(typeof(SpriteRenderer), typeof(CircleCollider2D), typeof(Rigidbody2D))]
     public sealed class SodaCanProjectile : MonoBehaviour
     {
         private static AudioClip canThrowClip;
@@ -17,7 +17,8 @@ namespace PixelOcean
             Vector2 start,
             Transform target,
             Sprite sprite,
-            float direction)
+            float direction,
+            bool precisionShot = false)
         {
             transform.position = start;
             GetComponent<SpriteRenderer>().sprite = sprite;
@@ -27,6 +28,11 @@ namespace PixelOcean
             canCollider.isTrigger = true;
             canCollider.radius = 0.12f;
 
+            Rigidbody2D body = GetComponent<Rigidbody2D>();
+            body.bodyType = RigidbodyType2D.Kinematic;
+            body.gravityScale = 0f;
+            body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+
             LoadSfx();
             PlaySfx(canThrowClip, 0.9f);
 
@@ -34,18 +40,21 @@ namespace PixelOcean
                 ? (Vector2)target.position
                 : start + Vector2.right * direction * 4f;
 
-            float miss = Random.value < 0.28f
-                ? Random.Range(-0.85f, 0.85f)
-                : Random.Range(-0.16f, 0.16f);
+            float miss = precisionShot
+                ? 0f
+                : (Random.value < 0.28f
+                    ? Random.Range(-0.85f, 0.85f)
+                    : Random.Range(-0.16f, 0.16f));
 
-            aim += new Vector2(
-                miss,
-                Random.Range(-0.12f, 0.18f));
+            aim += precisionShot
+                ? Vector2.zero
+                : new Vector2(miss, Random.Range(-0.12f, 0.18f));
 
+            float shotSpeed = precisionShot ? 8.5f : 5.5f;
             float travelTime = Mathf.Clamp(
-                Vector2.Distance(start, aim) / 5.5f,
-                0.38f,
-                0.85f);
+                Vector2.Distance(start, aim) / shotSpeed,
+                precisionShot ? 0.32f : 0.38f,
+                precisionShot ? 1.35f : 0.85f);
 
             velocity = new Vector2(
                 (aim.x - start.x) / travelTime,
@@ -70,6 +79,18 @@ namespace PixelOcean
 
         private void OnTriggerEnter2D(Collider2D other)
         {
+            AlienUfoController ufo =
+                other.GetComponentInParent<AlienUfoController>();
+
+            if (ufo != null)
+            {
+                LoadSfx();
+                PlaySfx(sharkHitClip, 1f);
+                ufo.TakeSodaCanHit(transform.position);
+                Bounce(ufo.transform.position);
+                return;
+            }
+
             SharkLaneSwimmer shark =
                 other.GetComponentInParent<SharkLaneSwimmer>();
 
