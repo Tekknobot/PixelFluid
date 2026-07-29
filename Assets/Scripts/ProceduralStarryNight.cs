@@ -22,7 +22,7 @@ namespace PixelOcean
 
         [Header("Generated Texture")]
         [SerializeField, Range(64, 1024)] private int textureWidth = 512;
-        [SerializeField, Range(64, 1024)] private int textureHeight = 288;
+        [SerializeField, Range(64, 1024)] private int textureHeight = 512;
         [SerializeField, Range(10, 900)] private int starCount = 180;
         [SerializeField] private int randomSeed = 7421;
         [SerializeField, Range(0.04f, 0.5f)] private float textureRefreshInterval = 0.10f;
@@ -169,10 +169,7 @@ namespace PixelOcean
             spriteRenderer.sprite = generatedSprite;
             spriteRenderer.sortingOrder = sortingOrder;
 
-            transform.localScale = new Vector3(
-                worldSize.x / (generatedSprite.rect.width / generatedSprite.pixelsPerUnit),
-                worldSize.y / (generatedSprite.rect.height / generatedSprite.pixelsPerUnit),
-                1f);
+            transform.localScale = Vector3.one;
         }
 
         private void BuildProceduralObjects()
