@@ -2556,6 +2556,16 @@ namespace PixelOcean
         private static bool AnyControllerButtonPressed()
         {
     #if ENABLE_INPUT_SYSTEM
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard != null &&
+                (keyboard.fKey.wasPressedThisFrame ||
+                 keyboard.enterKey.wasPressedThisFrame ||
+                 keyboard.numpadEnterKey.wasPressedThisFrame ||
+                 keyboard.spaceKey.wasPressedThisFrame))
+            {
+                return true;
+            }
+
             Gamepad gamepad = Gamepad.current;
 
             if (gamepad == null)
@@ -2578,6 +2588,10 @@ namespace PixelOcean
                 gamepad.dpad.right.wasPressedThisFrame;
     #elif ENABLE_LEGACY_INPUT_MANAGER
             return
+                Input.GetKeyDown(KeyCode.F) ||
+                Input.GetKeyDown(KeyCode.Return) ||
+                Input.GetKeyDown(KeyCode.KeypadEnter) ||
+                Input.GetKeyDown(KeyCode.Space) ||
                 Input.GetKeyDown(KeyCode.JoystickButton0) ||
                 Input.GetKeyDown(KeyCode.JoystickButton1) ||
                 Input.GetKeyDown(KeyCode.JoystickButton2) ||
@@ -2594,6 +2608,16 @@ namespace PixelOcean
         private static bool AnyControllerButtonHeld()
         {
     #if ENABLE_INPUT_SYSTEM
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard != null &&
+                (keyboard.fKey.isPressed ||
+                 keyboard.enterKey.isPressed ||
+                 keyboard.numpadEnterKey.isPressed ||
+                 keyboard.spaceKey.isPressed))
+            {
+                return true;
+            }
+
             Gamepad gamepad = Gamepad.current;
 
             if (gamepad == null)
@@ -2616,6 +2640,10 @@ namespace PixelOcean
                 gamepad.dpad.right.isPressed;
     #elif ENABLE_LEGACY_INPUT_MANAGER
             return
+                Input.GetKey(KeyCode.F) ||
+                Input.GetKey(KeyCode.Return) ||
+                Input.GetKey(KeyCode.KeypadEnter) ||
+                Input.GetKey(KeyCode.Space) ||
                 Input.GetKey(KeyCode.JoystickButton0) ||
                 Input.GetKey(KeyCode.JoystickButton1) ||
                 Input.GetKey(KeyCode.JoystickButton2) ||
