@@ -586,7 +586,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PixelOcean.ProceduralStarryNight
   runCycle: 1
-  fullDayLengthMinutes: 5
+  fullDayLengthMinutes: 15
   startingTimeOfDay: 0.82
   editorFastForwardMultiplier: 1
   useUnscaledTime: 0
