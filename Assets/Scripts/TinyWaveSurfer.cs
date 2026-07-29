@@ -88,6 +88,20 @@ namespace PixelOcean
         [Tooltip("Smooths the jump arc at takeoff and landing.")]
         [SerializeField, Range(0.1f, 3f)] private float playerJumpArcPower = 1.35f;
 
+        [Header("Forward Obstacle Surf Jump")]
+        [Tooltip("Hold left/right and press Jump (controller A / keyboard Space) to launch forward over hazards.")]
+        [SerializeField] private bool enableForwardObstacleJump = true;
+        [SerializeField, Min(0.15f)] private float obstacleJumpDuration = 0.62f;
+        [SerializeField, Min(0.05f)] private float obstacleJumpHeight = 0.72f;
+        [SerializeField, Min(0.1f)] private float obstacleJumpDistance = 2.15f;
+        [Tooltip("Minimum directional input needed to choose the forward obstacle jump.")]
+        [SerializeField, Range(0.05f, 1f)] private float obstacleJumpInputThreshold = 0.25f;
+        [Tooltip("How strongly horizontal travel eases into the landing.")]
+        [SerializeField, Range(0.5f, 4f)] private float obstacleLandingEase = 2.2f;
+        [Tooltip("Portion of the jump where jellyfish contact is safely cleared.")]
+        [SerializeField, Range(0.1f, 0.9f)] private float obstacleClearanceStart = 0.16f;
+        [SerializeField, Range(0.1f, 0.95f)] private float obstacleClearanceEnd = 0.84f;
+
         [Header("Random Initial Ocean Spawn")]
         [Tooltip("When enabled, the player surfer starts on a random horizontal section and random wave layer after the endless ocean has finished building.")]
         [SerializeField] private bool randomizeInitialOceanSpawn;
@@ -317,6 +331,10 @@ namespace PixelOcean
         private float specialSkidTimer;
         private float specialSkidDuration;
         private float specialSkidSpeed;
+        private bool obstacleJumpActive;
+        private float obstacleJumpStartX;
+        private float obstacleJumpTargetX;
+        private float obstacleJumpProgress;
 
         public int CurrentWaveIndex => waveIndex;
         public PixelWaterGPU CurrentWave => currentWave;
@@ -327,6 +345,10 @@ namespace PixelOcean
         public int CurrentHealth => currentHealth;
         public int MaximumHealth => Mathf.Max(1, maximumHealth);
         public bool IsSwitchingWave => state == RiderState.SwitchingWave;
+        public bool IsObstacleJumping => obstacleJumpActive && state == RiderState.TurningTrick;
+        public bool HasObstacleClearance => IsObstacleJumping &&
+            obstacleJumpProgress >= obstacleClearanceStart &&
+            obstacleJumpProgress <= obstacleClearanceEnd;
         // Kept for compatibility with any UI or scripts that previously displayed cans.
         // It now represents every collected throwable ocean item.
         public int SodaCanCount => throwableItems.Count;
@@ -1451,7 +1473,8 @@ namespace PixelOcean
                     targetSpeed,
                     response * dt);
 
-                bool canMove = state == RiderState.Riding || state == RiderState.TurningTrick;
+                bool canMove = state == RiderState.Riding ||
+                    (state == RiderState.TurningTrick && !obstacleJumpActive);
                 if (canMove)
                 {
                     float control = state == RiderState.TurningTrick ? airControl : 1f;
@@ -1493,6 +1516,11 @@ namespace PixelOcean
                 {
                     BeginAdjacentWave(wantsUp ? +1 : -1);
                     layerSwitchInputLocked = true;
+                }
+                else if (enableForwardObstacleJump &&
+                    Mathf.Abs(horizontal) >= obstacleJumpInputThreshold)
+                {
+                    BeginForwardSurfJump(horizontal);
                 }
                 else
                 {
@@ -1951,24 +1979,60 @@ namespace PixelOcean
         private void BeginTurnTrick()
         {
             if (speechBubble != null) speechBubble.HideImmediate();
+            obstacleJumpActive = false;
+            obstacleJumpProgress = 0f;
             state = RiderState.TurningTrick;
             stateTimer = 0f;
             airStartY = currentWave.GetGameplaySurfaceHeight(localRideX) + surfaceOffset;
             flipTrick = Random.value < flipChance;
         }
 
+        private void BeginForwardSurfJump(float horizontalInput)
+        {
+            if (speechBubble != null) speechBubble.HideImmediate();
+
+            obstacleJumpActive = true;
+            obstacleJumpProgress = 0f;
+            state = RiderState.TurningTrick;
+            stateTimer = 0f;
+
+            float inputDirection = Mathf.Abs(horizontalInput) > obstacleJumpInputThreshold
+                ? Mathf.Sign(horizontalInput)
+                : direction;
+            direction = inputDirection == 0f ? 1f : inputDirection;
+
+            obstacleJumpStartX = localRideX;
+            obstacleJumpTargetX = ClampPlayerXToSandbox(
+                obstacleJumpStartX + direction * obstacleJumpDistance);
+            airStartY = currentWave.GetGameplaySurfaceHeight(localRideX) + surfaceOffset;
+            flipTrick = false;
+        }
+
         private void UpdateTurnTrick()
         {
+            float activeDuration = obstacleJumpActive
+                ? obstacleJumpDuration
+                : turnTrickDuration;
             float t = Mathf.Clamp01(
                 stateTimer /
-                Mathf.Max(0.01f, turnTrickDuration));
+                Mathf.Max(0.01f, activeDuration));
+            obstacleJumpProgress = obstacleJumpActive ? t : 0f;
+
+            if (obstacleJumpActive)
+            {
+                // Strong movement at takeoff, then a soft ease into landing.
+                float horizontalT = 1f - Mathf.Pow(1f - t, obstacleLandingEase);
+                localRideX = Mathf.Lerp(obstacleJumpStartX, obstacleJumpTargetX, horizontalT);
+                localRideX = ClampPlayerXToSandbox(localRideX);
+                RebindToNearestHorizontalSection();
+            }
 
             float surfaceY =
                 currentWave.GetGameplaySurfaceHeight(localRideX);
 
             float baseArc = Mathf.Sin(t * Mathf.PI);
             float arc = Mathf.Pow(Mathf.Max(0f, baseArc), playerJumpArcPower) *
-                turnJumpHeight;
+                (obstacleJumpActive ? obstacleJumpHeight : turnJumpHeight);
 
             transform.position = new Vector3(
                 localRideX,
@@ -1980,7 +2044,9 @@ namespace PixelOcean
             float spinDirection =
                 direction >= 0f ? -1f : 1f;
 
-            float automaticSpin = turnSpinDegrees * spinDirection * t;
+            float automaticSpin = obstacleJumpActive
+                ? spinDirection * Mathf.Sin(t * Mathf.PI) * 16f
+                : turnSpinDegrees * spinDirection * t;
             float controlledSpin = playerControlled
                 ? playerTrickInput * playerAirTrickDegrees * t
                 : 0f;
@@ -2017,6 +2083,14 @@ namespace PixelOcean
 
             if (!playerControlled)
                 direction *= -1f;
+
+            if (obstacleJumpActive)
+            {
+                localRideX = obstacleJumpTargetX;
+                playerHorizontalVelocity = direction * playerScrollSpeed * 0.48f;
+                obstacleJumpActive = false;
+                obstacleJumpProgress = 0f;
+            }
 
             state = RiderState.Riding;
             stateTimer = 0f;

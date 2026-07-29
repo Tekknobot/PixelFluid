@@ -112,7 +112,7 @@ namespace PixelOcean
         {
             if (Time.time < nextDamageTime || other == null) return;
             TinyWaveSurfer surfer = other.GetComponentInParent<TinyWaveSurfer>();
-            if (surfer == null || surfer.IsDead) return;
+            if (surfer == null || surfer.IsDead || surfer.HasObstacleClearance) return;
             if (Vector2.Distance(transform.position, surfer.transform.position) > contactRadius + 0.28f) return;
             if (surfer.TakeSharkHit(transform.position))
                 nextDamageTime = Time.time + damageCooldown;
