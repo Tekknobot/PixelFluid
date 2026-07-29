@@ -9,7 +9,7 @@ namespace PixelOcean
     [RequireComponent(typeof(InterWaveRenderItem))]
     public sealed class GiantSquidLaneSwimmer : MonoBehaviour
     {
-        private enum PredatorState { Patrol, Stalk, Attack, Search }
+        private enum PredatorState { Patrol, Stalk, Attack, Search, Retreat }
 
         [Header("Swimming")]
         [SerializeField, Min(0.05f)] private float horizontalSpeed = 0.48f;
@@ -28,6 +28,11 @@ namespace PixelOcean
         [Header("Attack Audio")]
         [SerializeField] private AudioClip squidAttackClip;
         [SerializeField, Range(0f, 1f)] private float squidAttackVolume = 1f;
+
+        [Header("Hit Retreat")]
+        [SerializeField, Min(0.1f)] private float hitRetreatDuration = 2.25f;
+        [SerializeField, Range(1f, 5f)] private float hitRetreatSpeedMultiplier = 2.4f;
+        [SerializeField, Min(0f)] private float hitRetreatRecovery = 1.1f;
 
         [Header("Lane Changes")]
         [SerializeField] private Vector2 laneChangeDelayRange = new(2.8f, 5.5f);
@@ -65,6 +70,8 @@ namespace PixelOcean
         private bool initialised;
         private AudioSource attackAudioSource;
         private Coroutine sodaHitRoutine;
+        private float retreatUntil;
+        private Color baseSpriteTint = Color.white;
 
         public void Initialise(int requestedLane)
         {
@@ -92,7 +99,28 @@ namespace PixelOcean
             initialised = true;
         }
 
-        private void Awake() => ResolveReferences();
+        private void Awake()
+        {
+            ResolveReferences();
+            CacheAndResetSpriteTint();
+        }
+
+        private void OnEnable()
+        {
+            CacheAndResetSpriteTint();
+        }
+
+        private void OnDisable()
+        {
+            if (sodaHitRoutine != null)
+            {
+                StopCoroutine(sodaHitRoutine);
+                sodaHitRoutine = null;
+            }
+
+            ResetHitVisuals();
+        }
+
         private void Start() { if (!initialised) Initialise(0); }
 
         private void ResolveReferences()
@@ -129,16 +157,34 @@ namespace PixelOcean
             if (gameplayCamera == null) gameplayCamera = Camera.main;
 
             Vector2 position = body != null ? body.position : (Vector2)transform.position;
-            UpdatePredatorBrain(position);
 
-            float speedMultiplier = predatorState == PredatorState.Stalk ? stalkSpeedMultiplier : 1f;
-            if (squidAnimation != null) speedMultiplier *= squidAnimation.MovementSpeedMultiplier;
+            bool retreating = Time.time < retreatUntil;
+            if (retreating)
+            {
+                predatorState = PredatorState.Retreat;
+                target = null;
+            }
+            else
+            {
+                if (predatorState == PredatorState.Retreat)
+                {
+                    predatorState = PredatorState.Search;
+                    searchUntil = Time.time + hitRetreatRecovery;
+                }
+
+                UpdatePredatorBrain(position);
+            }
+
+            float speedMultiplier = retreating
+                ? hitRetreatSpeedMultiplier
+                : predatorState == PredatorState.Stalk ? stalkSpeedMultiplier : 1f;
+            if (!retreating && squidAnimation != null) speedMultiplier *= squidAnimation.MovementSpeedMultiplier;
             Vector2 waterVelocity = GetLaneVelocity(currentLane, position.x);
             float swimSpeed = horizontalSpeed * speedMultiplier + waterVelocity.x * currentInfluence;
             position.x += direction * Mathf.Max(0.08f, swimSpeed) * Time.fixedDeltaTime;
             KeepInsideGameArea(ref position);
 
-            if (!changingLane && (squidAnimation == null || !squidAnimation.IsAttacking))
+            if (!retreating && !changingLane && (squidAnimation == null || !squidAnimation.IsAttacking))
             {
                 if (target != null && !target.IsDead && predatorState != PredatorState.Patrol)
                     BeginLaneChangeToward(GetTargetLane(target));
@@ -270,24 +316,69 @@ namespace PixelOcean
 
         public void TakeSodaCanHit(Vector2 hitPosition)
         {
-            if (sodaHitRoutine != null) StopCoroutine(sodaHitRoutine);
-            sodaHitRoutine = StartCoroutine(SodaHitReaction(hitPosition));
-            predatorState = PredatorState.Search; searchUntil = Time.time + 1.4f; target = null;
+            Vector2 away = (Vector2)transform.position - hitPosition;
+            if (Mathf.Abs(away.x) < 0.01f)
+                away.x = -direction;
+
+            direction = Mathf.Sign(away.x);
+            if (spriteRenderer != null)
+                spriteRenderer.flipX = direction < 0f;
+
+            retreatUntil = Time.time + hitRetreatDuration;
+            predatorState = PredatorState.Retreat;
+            target = null;
+            changingLane = false;
+            attackHitApplied = false;
+            nextAttackTime = retreatUntil + hitRetreatRecovery;
+
+            if (sodaHitRoutine != null)
+                StopCoroutine(sodaHitRoutine);
+
+            ResetHitVisuals();
+            sodaHitRoutine = StartCoroutine(SodaHitReaction());
         }
 
-        private System.Collections.IEnumerator SodaHitReaction(Vector2 hitPosition)
+        private System.Collections.IEnumerator SodaHitReaction()
         {
-            Color original = spriteRenderer != null ? spriteRenderer.color : Color.white;
-            Vector2 away = ((Vector2)transform.position - hitPosition).normalized;
-            if (away.sqrMagnitude < .01f) away = Vector2.right * -direction;
             for (int i = 0; i < 6; i++)
             {
-                if (spriteRenderer != null) spriteRenderer.color = (i % 2 == 0) ? new Color(1f,.05f,.05f,1f) : original;
-                Vector2 p = body != null ? body.position : (Vector2)transform.position; p += away * .045f + Vector2.up * .012f; SetPosition(p);
-                transform.rotation = Quaternion.Euler(0,0,(i%2==0?1f:-1f)*9f);
-                yield return new WaitForSeconds(.055f);
+                if (spriteRenderer != null)
+                    spriteRenderer.color = i % 2 == 0
+                        ? new Color(1f, 0.05f, 0.05f, baseSpriteTint.a)
+                        : baseSpriteTint;
+
+                transform.rotation = Quaternion.Euler(0f, 0f, (i % 2 == 0 ? 1f : -1f) * 9f);
+                yield return new WaitForSeconds(0.055f);
             }
-            if (spriteRenderer != null) spriteRenderer.color = original; transform.rotation = Quaternion.identity; sodaHitRoutine = null;
+
+            ResetHitVisuals();
+            sodaHitRoutine = null;
+        }
+
+        private void CacheAndResetSpriteTint()
+        {
+            if (spriteRenderer == null)
+                spriteRenderer = GetComponent<SpriteRenderer>();
+
+            if (spriteRenderer == null)
+                return;
+
+            // Do not cache the temporary blood-red flash as the permanent tint.
+            Color current = spriteRenderer.color;
+            bool looksLikeHitFlash = current.r > 0.85f && current.g < 0.25f && current.b < 0.25f;
+            if (!looksLikeHitFlash)
+                baseSpriteTint = current;
+
+            spriteRenderer.color = baseSpriteTint;
+            transform.rotation = Quaternion.identity;
+        }
+
+        private void ResetHitVisuals()
+        {
+            if (spriteRenderer != null)
+                spriteRenderer.color = baseSpriteTint;
+
+            transform.rotation = Quaternion.identity;
         }
 
         private int GetTargetLane(TinyWaveSurfer surfer)
