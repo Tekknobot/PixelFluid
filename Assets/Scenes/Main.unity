@@ -493,21 +493,46 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79ea541aecf26ab4ab688d3edd63e4ae, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PixelOcean.ProceduralStarryNight
+  runCycle: 1
+  fullDayLengthMinutes: 15
+  startingTimeOfDay: 0.82
+  editorFastForwardMultiplier: 1
+  useUnscaledTime: 0
   textureWidth: 1024
   textureHeight: 1024
   starCount: 600
   randomSeed: 7421
+  textureRefreshInterval: 0.1
   topSky: {r: 0.015, g: 0.025, b: 0.1, a: 1}
   horizonSky: {r: 0, g: 0, b: 0, a: 1}
+  dayTopSky: {r: 0.12, g: 0.5, b: 0.88, a: 1}
+  dayHorizonSky: {r: 0.58, g: 0.82, b: 0.96, a: 1}
+  dawnTopSky: {r: 0.18, g: 0.16, b: 0.38, a: 1}
+  dawnHorizonSky: {r: 1, g: 0.46, b: 0.25, a: 1}
+  sunsetTopSky: {r: 0.12, g: 0.08, b: 0.3, a: 1}
+  sunsetHorizonSky: {r: 1, g: 0.28, b: 0.16, a: 1}
   dimStar: {r: 0.62, g: 0.72, b: 1, a: 1}
   brightStar: {r: 1, g: 0.96, b: 0.78, a: 1}
   largeStarChance: 0.09
-  worldPosition: {x: 0, y: 0, z: 6}
-  worldSize: {x: 18, y: 10.125}
-  sortingOrder: -500
   animateTwinkle: 1
   twinkleSpeed: 1.8
   twinkleStrength: 0.28
+  sunColour: {r: 1, g: 0.86, b: 0.38, a: 1}
+  sunGlowColour: {r: 1, g: 0.48, b: 0.18, a: 1}
+  moonColour: {r: 0.82, g: 0.88, b: 1, a: 1}
+  sunRadiusPixels: 9
+  moonRadiusPixels: 7
+  celestialArcHeight: 0.72
+  drawClouds: 1
+  cloudCount: 7
+  cloudOpacity: 0.32
+  cloudSpeed: 0.018
+  dayCloudColour: {r: 1, g: 1, b: 1, a: 1}
+  nightCloudColour: {r: 0.18, g: 0.22, b: 0.38, a: 1}
+  worldPosition: {x: 0, y: 0, z: 6}
+  worldSize: {x: 18, y: 10.125}
+  sortingOrder: -500
+  updateCameraBackgroundColour: 1
 --- !u!4 &1424985332
 Transform:
   m_ObjectHideFlags: 0
