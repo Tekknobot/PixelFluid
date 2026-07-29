@@ -29,8 +29,8 @@ namespace PixelOcean
         [SerializeField, Range(0f, 0.45f)] private float laneDepthBias = 0.12f;
 
         [Header("Player Death Response")]
-        [SerializeField, Min(0.05f)] private float deathApproachSpeed = 7.82f;
-        [SerializeField, Min(0.05f)] private float deathArrivalDistance = 0.3f;
+        [SerializeField, Min(0.05f)] private float deathApproachSpeed = 6.82f;
+        [SerializeField, Min(0.05f)] private float deathArrivalDistance = 0.7f;
         [SerializeField, Min(0f)] private float deathPauseDuration = 2.5f;
 
         [Header("Water Response")]
@@ -39,6 +39,10 @@ namespace PixelOcean
         [SerializeField, Range(0f, 1f)] private float surfaceTilt = 0.2f;
         [SerializeField, Range(0f, 25f)] private float maximumTilt = 7f;
         [SerializeField, Range(0.05f, 0.8f)] private float slopeSampleDistance = 0.3f;
+
+        [Header("Facing Stability")]
+        [SerializeField, Min(0.05f)] private float facingDeadZone = 0.32f;
+        [SerializeField, Min(0f)] private float minimumFacingHoldTime = 0.18f;
 
         [Header("Attack Audio")]
         [SerializeField] private AudioClip attackClip;
@@ -62,6 +66,7 @@ namespace PixelOcean
         private float nextAttackTime;
         private float stateUntil;
         private float direction = 1f;
+        private float lastFacingChangeTime = -999f;
         private float depthOffset;
         private bool attackHitApplied;
         private bool initialised;
@@ -282,13 +287,7 @@ namespace PixelOcean
 
         private void FaceWorldX(Vector2 position, float worldX)
         {
-            float deltaX = worldX - position.x;
-            if (Mathf.Abs(deltaX) < 0.02f)
-                return;
-
-            direction = Mathf.Sign(deltaX);
-            if (spriteRenderer != null)
-                spriteRenderer.flipX = direction < 0f;
+            TryFaceHorizontalDelta(worldX - position.x);
         }
 
         private void UpdateBrain(Vector2 position)
@@ -376,11 +375,25 @@ namespace PixelOcean
             if (target == null)
                 return;
 
-            float deltaX = target.transform.position.x - position.x;
-            if (Mathf.Abs(deltaX) < 0.05f)
+            TryFaceHorizontalDelta(target.transform.position.x - position.x);
+        }
+
+        private void TryFaceHorizontalDelta(float deltaX)
+        {
+            // Preserve the last facing direction while the target is almost directly
+            // above/below this swimmer, and rate-limit genuine direction changes.
+            if (Mathf.Abs(deltaX) <= facingDeadZone)
                 return;
 
-            direction = Mathf.Sign(deltaX);
+            float desiredDirection = Mathf.Sign(deltaX);
+            if (Mathf.Approximately(desiredDirection, direction))
+                return;
+
+            if (Time.time - lastFacingChangeTime < minimumFacingHoldTime)
+                return;
+
+            direction = desiredDirection;
+            lastFacingChangeTime = Time.time;
             if (spriteRenderer != null)
                 spriteRenderer.flipX = direction < 0f;
         }

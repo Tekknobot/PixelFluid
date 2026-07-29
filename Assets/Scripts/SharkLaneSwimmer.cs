@@ -25,6 +25,10 @@ namespace PixelOcean
         [SerializeField, Min(0f)] private float attackRecovery = 2.2f;
         [SerializeField, Min(0f)] private float searchDuration = 3f;
 
+        [Header("Facing Stability")]
+        [SerializeField, Min(0.05f)] private float facingDeadZone = 0.32f;
+        [SerializeField, Min(0f)] private float minimumFacingHoldTime = 0.18f;
+
         [Header("Attack Audio")]
         [SerializeField] private AudioClip sharkAttackClip;
         [SerializeField, Range(0f, 1f)] private float sharkAttackVolume = 1f;
@@ -62,6 +66,7 @@ namespace PixelOcean
         private float laneChangeElapsed;
         private float nextLaneChangeTime;
         private float direction;
+        private float lastFacingChangeTime = -999f;
         private float depthOffset;
         private float nextAttackTime;
         private float searchUntil;
@@ -221,11 +226,7 @@ namespace PixelOcean
 
             predatorState = PredatorState.Stalk;
             float deltaX = target.transform.position.x - position.x;
-            if (Mathf.Abs(deltaX) > 0.08f)
-            {
-                direction = Mathf.Sign(deltaX);
-                if (spriteRenderer != null) spriteRenderer.flipX = direction < 0f;
-            }
+            TryFaceHorizontalDelta(deltaX);
 
             bool sameLane = Mathf.Abs(GetTargetLane(target) - currentLane) <= 0;
             if (sameLane && distance <= attackRange && Time.time >= nextAttackTime && sharkAnimation != null)
@@ -296,6 +297,26 @@ namespace PixelOcean
             }
         }
 
+
+        private void TryFaceHorizontalDelta(float deltaX)
+        {
+            // Keep the previous facing while nearly aligned with the target. This
+            // prevents tiny position changes from flipping the sprite every frame.
+            if (Mathf.Abs(deltaX) <= facingDeadZone)
+                return;
+
+            float desiredDirection = Mathf.Sign(deltaX);
+            if (Mathf.Approximately(desiredDirection, direction))
+                return;
+
+            if (Time.time - lastFacingChangeTime < minimumFacingHoldTime)
+                return;
+
+            direction = desiredDirection;
+            lastFacingChangeTime = Time.time;
+            if (spriteRenderer != null)
+                spriteRenderer.flipX = direction < 0f;
+        }
 
         public void TakeSodaCanHit(Vector2 hitPosition)
         {
