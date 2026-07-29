@@ -12,7 +12,7 @@ namespace PixelOcean
     {
         [Header("Placement")]
         [Tooltip("World-space height where the soft top of the fog begins.")]
-        [SerializeField] private float horizonY = 0.55f;
+        [SerializeField] private float horizonY = 1.65f;
         [Tooltip("Extra width beyond both camera edges.")]
         [SerializeField, Min(0f)] private float horizontalPadding = 3f;
         [Tooltip("Extra depth below the camera so the mask always covers the ocean.")]
@@ -23,11 +23,11 @@ namespace PixelOcean
         [Header("Pixel Fog")]
         [SerializeField, Range(32, 512)] private int textureWidth = 256;
         [SerializeField, Range(16, 256)] private int textureHeight = 96;
-        [SerializeField, Range(2, 32)] private int pixelBlockSize = 4;
+        [SerializeField, Range(2, 32)] private int pixelBlockSize = 2;
         [SerializeField] private int randomSeed = 8917;
         [SerializeField, Range(0.03f, 0.5f)] private float refreshInterval = 0.12f;
         [SerializeField, Range(0f, 2f)] private float driftSpeed = 0.20f;
-        [SerializeField, Range(0.05f, 0.8f)] private float softBandFraction = 0.34f;
+        [SerializeField, Range(0.02f, 0.8f)] private float softBandFraction = 0.41f;
         [SerializeField, Range(0f, 0.5f)] private float edgeNoise = 0.16f;
         [SerializeField, Range(0f, 1f)] private float mistStrength = 0.72f;
 
