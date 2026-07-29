@@ -48,6 +48,7 @@ namespace PixelOcean
                 return;
             }
 
+            school.Register(this);
             formationOffset = offset;
             frames = animationFrames;
             animationTime = animationOffset;
@@ -134,6 +135,28 @@ namespace PixelOcean
             spriteRenderer.color = Color.red;
             yield return new WaitForSeconds(0.12f);
             if (spriteRenderer != null) spriteRenderer.color = original;
+        }
+
+
+        public void ApplySectionShift(float horizontalDistance)
+        {
+            if (Mathf.Abs(horizontalDistance) <= Mathf.Epsilon)
+                return;
+
+            Vector2 shifted = new(
+                transform.position.x + horizontalDistance,
+                transform.position.y);
+
+            // This is an intentional endless-world recycle teleport, not normal
+            // swimming. Move both representations immediately so Rigidbody2D does
+            // not interpolate from the old section and create visible jitter.
+            transform.position = new Vector3(shifted.x, shifted.y, transform.position.z);
+            if (body != null)
+            {
+                body.position = shifted;
+                body.linearVelocity = Vector2.zero;
+                body.angularVelocity = 0f;
+            }
         }
 
         private void SetInitialPosition(Vector2 position)
