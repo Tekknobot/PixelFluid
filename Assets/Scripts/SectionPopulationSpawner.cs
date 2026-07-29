@@ -35,6 +35,7 @@ namespace PixelOcean
         [SerializeField] private bool includeSharks = true;
         [SerializeField] private bool includeGiantSquids = true;
         [SerializeField] private bool includeWhales = true;
+        [SerializeField] private bool includeGodzilla = true;
 
         [Header("Selection")]
         [Tooltip("Prevents the same type from being selected twice until every enabled type has been used.")]
@@ -123,6 +124,14 @@ namespace PixelOcean
                 }
             }
 
+            if (includeGodzilla && FindFirstObjectByType<GodzillaLaneSwimmer>() == null)
+            {
+                GameObject godzillaHolder = new("Unique Godzilla Spawner");
+                godzillaHolder.transform.SetParent(transform, false);
+                godzillaHolder.AddComponent<GodzillaLaneSpawner>().SpawnGodzilla();
+                sectionSpawners.Add(godzillaHolder);
+            }
+
             if (FindFirstObjectByType<OceanItemSpawner>() == null)
             {
                 GameObject oceanItems = new("All Ocean Items");
@@ -196,6 +205,7 @@ namespace PixelOcean
             DisableAll<SodaCanSpawner>();
             DisableAll<StrugglingSwimmerSpawner>();
             DisableAll<WhaleLaneSpawner>();
+            DisableAll<GodzillaLaneSpawner>();
         }
 
         private static void DisableAll<T>() where T : Behaviour

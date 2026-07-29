@@ -2368,59 +2368,168 @@ namespace PixelOcean
 
     public static class TinyWaveSurferBootstrap
     {
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        private static void CreateTinySurfers()
+        private static bool surferSpawned;
+
+        [RuntimeInitializeOnLoadMethod(
+            RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void PrepareSurferSpawn()
         {
+            surferSpawned = false;
+
             if (Object.FindFirstObjectByType<PixelWaterGPU>() == null)
                 return;
 
             if (Object.FindObjectsByType<TinyWaveSurfer>(
                     FindObjectsInactive.Exclude,
                     FindObjectsSortMode.None).Length > 0)
+            {
+                return;
+            }
+
+            GameObject listenerObject =
+                new GameObject("Player Surfer Spawn Listener");
+
+            listenerObject.AddComponent<TinyWaveSurferSpawnListener>();
+        }
+
+        public static void SpawnPlayerSurfer()
+        {
+            if (surferSpawned)
                 return;
 
-            Color[] shirts =
-            {
-                new(0.95f, 0.30f, 0.12f, 1f),
-                new(0.12f, 0.68f, 0.95f, 1f),
-                new(0.66f, 0.20f, 0.90f, 1f),
-                new(0.15f, 0.85f, 0.42f, 1f),
-                new(0.95f, 0.75f, 0.12f, 1f),
-                new(0.95f, 0.25f, 0.62f, 1f)
-            };
+            PixelWaterGPU master =
+                Object.FindFirstObjectByType<PixelWaterGPU>();
 
-            Color[] boards =
-            {
-                new(1f, 0.88f, 0.24f, 1f),
-                new(0.95f, 0.95f, 1f, 1f),
-                new(0.20f, 0.95f, 0.85f, 1f),
-                new(1f, 0.42f, 0.18f, 1f),
-                new(0.45f, 0.85f, 1f, 1f),
-                new(0.85f, 0.95f, 0.28f, 1f)
-            };
+            if (master == null || !master.SinglePlayerModeEnabled)
+                return;
 
-            PixelWaterGPU master = Object.FindFirstObjectByType<PixelWaterGPU>();
-            bool singlePlayer = master != null && master.SinglePlayerModeEnabled;
-            int surferCount = singlePlayer ? 1 : 6;
-            for (int i = 0; i < surferCount; i++)
+            if (Object.FindObjectsByType<TinyWaveSurfer>(
+                    FindObjectsInactive.Exclude,
+                    FindObjectsSortMode.None).Length > 0)
             {
-                GameObject go = new($"Tiny 8x8 Surfer {i + 1}");
-                TinyWaveSurfer surfer = go.AddComponent<TinyWaveSurfer>();
-                surfer.ConfigureGeneratedSurfer(
-                    i,
-                    (i & 1) == 0,
-                    0.95f + i * 0.11f,
-                    shirts[i],
-                    boards[i],
-                    100 + i,
-                    1.25f + i * 1.85f,
-                    (i - 2.5f) * 0.55f);
-
-                if (singlePlayer)
-                    surfer.ConfigureSinglePlayer(
-                        master.SinglePlayerScrollSpeed,
-                        master.SinglePlayerBoostMultiplier);
+                surferSpawned = true;
+                return;
             }
+
+            surferSpawned = true;
+
+            GameObject go =
+                new GameObject("Tiny 8x8 Surfer 1");
+
+            TinyWaveSurfer surfer =
+                go.AddComponent<TinyWaveSurfer>();
+
+            surfer.ConfigureGeneratedSurfer(
+                0,
+                true,
+                0.95f,
+                new Color(0.95f, 0.30f, 0.12f, 1f),
+                new Color(1f, 0.88f, 0.24f, 1f),
+                100,
+                1.25f,
+                0f);
+
+            surfer.ConfigureSinglePlayer(
+                master.SinglePlayerScrollSpeed,
+                master.SinglePlayerBoostMultiplier);
         }
     }
+
+    public sealed class TinyWaveSurferSpawnListener : MonoBehaviour
+    {
+        private bool inputReleasedOnce;
+
+        private void Update()
+        {
+            if (!inputReleasedOnce)
+            {
+                if (!AnyControllerButtonHeld())
+                    inputReleasedOnce = true;
+
+                return;
+            }
+
+            if (!AnyControllerButtonPressed())
+                return;
+
+            TinyWaveSurferBootstrap.SpawnPlayerSurfer();
+            Destroy(gameObject);
+        }
+
+        private static bool AnyControllerButtonPressed()
+        {
+    #if ENABLE_INPUT_SYSTEM
+            Gamepad gamepad = Gamepad.current;
+
+            if (gamepad == null)
+                return false;
+
+            return
+                gamepad.buttonSouth.wasPressedThisFrame ||
+                gamepad.buttonNorth.wasPressedThisFrame ||
+                gamepad.buttonEast.wasPressedThisFrame ||
+                gamepad.buttonWest.wasPressedThisFrame ||
+                gamepad.leftShoulder.wasPressedThisFrame ||
+                gamepad.rightShoulder.wasPressedThisFrame ||
+                gamepad.leftStickButton.wasPressedThisFrame ||
+                gamepad.rightStickButton.wasPressedThisFrame ||
+                gamepad.startButton.wasPressedThisFrame ||
+                gamepad.selectButton.wasPressedThisFrame ||
+                gamepad.dpad.up.wasPressedThisFrame ||
+                gamepad.dpad.down.wasPressedThisFrame ||
+                gamepad.dpad.left.wasPressedThisFrame ||
+                gamepad.dpad.right.wasPressedThisFrame;
+    #elif ENABLE_LEGACY_INPUT_MANAGER
+            return
+                Input.GetKeyDown(KeyCode.JoystickButton0) ||
+                Input.GetKeyDown(KeyCode.JoystickButton1) ||
+                Input.GetKeyDown(KeyCode.JoystickButton2) ||
+                Input.GetKeyDown(KeyCode.JoystickButton3) ||
+                Input.GetKeyDown(KeyCode.JoystickButton4) ||
+                Input.GetKeyDown(KeyCode.JoystickButton5) ||
+                Input.GetKeyDown(KeyCode.JoystickButton6) ||
+                Input.GetKeyDown(KeyCode.JoystickButton7);
+    #else
+            return false;
+    #endif
+        }
+
+        private static bool AnyControllerButtonHeld()
+        {
+    #if ENABLE_INPUT_SYSTEM
+            Gamepad gamepad = Gamepad.current;
+
+            if (gamepad == null)
+                return false;
+
+            return
+                gamepad.buttonSouth.isPressed ||
+                gamepad.buttonNorth.isPressed ||
+                gamepad.buttonEast.isPressed ||
+                gamepad.buttonWest.isPressed ||
+                gamepad.leftShoulder.isPressed ||
+                gamepad.rightShoulder.isPressed ||
+                gamepad.leftStickButton.isPressed ||
+                gamepad.rightStickButton.isPressed ||
+                gamepad.startButton.isPressed ||
+                gamepad.selectButton.isPressed ||
+                gamepad.dpad.up.isPressed ||
+                gamepad.dpad.down.isPressed ||
+                gamepad.dpad.left.isPressed ||
+                gamepad.dpad.right.isPressed;
+    #elif ENABLE_LEGACY_INPUT_MANAGER
+            return
+                Input.GetKey(KeyCode.JoystickButton0) ||
+                Input.GetKey(KeyCode.JoystickButton1) ||
+                Input.GetKey(KeyCode.JoystickButton2) ||
+                Input.GetKey(KeyCode.JoystickButton3) ||
+                Input.GetKey(KeyCode.JoystickButton4) ||
+                Input.GetKey(KeyCode.JoystickButton5) ||
+                Input.GetKey(KeyCode.JoystickButton6) ||
+                Input.GetKey(KeyCode.JoystickButton7);
+    #else
+            return false;
+    #endif
+        }
+    }    
 }

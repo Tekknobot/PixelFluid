@@ -1,0 +1,415 @@
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
+
+namespace PixelOcean
+{
+    [DisallowMultipleComponent]
+    [RequireComponent(typeof(SpriteRenderer))]
+    [RequireComponent(typeof(InterWaveRenderItem))]
+    public sealed class GodzillaLaneSwimmer : MonoBehaviour
+    {
+        private enum CreatureState { Roam, Pursue, WindUp, Lunge, Recover }
+
+        [Header("Movement")]
+        [SerializeField, Min(0.05f)] private float cruiseSpeed = 0.42f;
+        [SerializeField, Min(0.05f)] private float pursuitSpeed = 0.68f;
+        [SerializeField, Min(0.1f)] private float lungeSpeed = 1.65f;
+        [SerializeField, Range(0f, 0.35f)] private float currentInfluence = 0.04f;
+
+        [Header("Unique Behaviour")]
+        [SerializeField, Min(0.5f)] private float detectionRange = 4.5f;
+        [SerializeField, Min(0.5f)] private float abandonRange = 7f;
+        [SerializeField, Min(0.1f)] private float attackRange = 1.9f;
+        [SerializeField, Min(0.05f)] private float hitRange = 0.82f;
+        [SerializeField, Min(0f)] private float windUpDuration = 0.55f;
+        [SerializeField, Min(0f)] private float attackRecovery = 3.5f;
+        [SerializeField] private Vector2 laneShiftDelayRange = new(4.5f, 8f);
+        [SerializeField, Min(0.2f)] private float laneChangeDuration = 1.6f;
+        [SerializeField, Range(0f, 0.45f)] private float laneDepthBias = 0.12f;
+
+        [Header("Water Response")]
+        [SerializeField, Range(0f, 1f)] private float waveFollow = 0.88f;
+        [SerializeField, Range(1f, 20f)] private float verticalResponsiveness = 7f;
+        [SerializeField, Range(0f, 1f)] private float surfaceTilt = 0.2f;
+        [SerializeField, Range(0f, 25f)] private float maximumTilt = 7f;
+        [SerializeField, Range(0.05f, 0.8f)] private float slopeSampleDistance = 0.3f;
+
+        [Header("Attack Audio")]
+        [SerializeField] private AudioClip attackClip;
+        [SerializeField, Range(0f, 1f)] private float attackVolume = 1f;
+
+        private readonly List<PixelWaterGPU> waterLayers = new();
+        private SpriteRenderer spriteRenderer;
+        private InterWaveRenderItem renderItem;
+        private Rigidbody2D body;
+        private Camera gameplayCamera;
+        private GodzillaSpriteAnimation animation;
+        private TinyWaveSurfer target;
+        private AudioSource audioSource;
+
+        private CreatureState state;
+        private int currentLane;
+        private int targetLane;
+        private bool changingLane;
+        private float laneChangeElapsed;
+        private float nextLaneShiftTime;
+        private float nextAttackTime;
+        private float stateUntil;
+        private float direction = 1f;
+        private float depthOffset;
+        private bool attackHitApplied;
+        private bool initialised;
+
+        public void Initialise(int requestedLane)
+        {
+            ResolveReferences();
+            if (waterLayers.Count < 2)
+            {
+                Debug.LogError("GodzillaLaneSwimmer requires at least two water layers.", this);
+                enabled = false;
+                return;
+            }
+
+            currentLane = Mathf.Clamp(requestedLane, 0, waterLayers.Count - 2);
+            targetLane = currentLane;
+            renderItem.SetLane(currentLane);
+            depthOffset = -Mathf.Abs(laneDepthBias);
+            direction = Random.value < 0.5f ? -1f : 1f;
+
+            Vector2 position = transform.position;
+            float minX = waterLayers[0].TankMinimum.x;
+            float maxX = waterLayers[0].TankMaximum.x;
+            position.x = direction > 0f ? minX + 0.8f : maxX - 0.8f;
+            position.y = GetLaneCentreY(currentLane, position.x) + depthOffset;
+            SetPosition(position);
+
+            state = CreatureState.Roam;
+            ScheduleLaneShift();
+            initialised = true;
+        }
+
+        private void Awake()
+        {
+            ResolveReferences();
+        }
+
+        private void Start()
+        {
+            if (!initialised)
+                Initialise(2);
+        }
+
+        private void ResolveReferences()
+        {
+            spriteRenderer = GetComponent<SpriteRenderer>();
+            renderItem = GetComponent<InterWaveRenderItem>();
+            animation = GetComponent<GodzillaSpriteAnimation>();
+            gameplayCamera = Camera.main;
+
+            body = GetComponent<Rigidbody2D>();
+            if (body == null)
+                body = gameObject.AddComponent<Rigidbody2D>();
+            body.bodyType = RigidbodyType2D.Kinematic;
+            body.gravityScale = 0f;
+            body.freezeRotation = true;
+
+            Collider2D collider = GetComponent<Collider2D>();
+            if (collider == null)
+            {
+                BoxCollider2D box = gameObject.AddComponent<BoxCollider2D>();
+                box.isTrigger = true;
+                box.size = spriteRenderer != null && spriteRenderer.sprite != null
+                    ? spriteRenderer.sprite.bounds.size * 0.42f
+                    : new Vector2(1.4f, 1f);
+            }
+
+            audioSource = GetComponent<AudioSource>();
+            if (audioSource == null)
+                audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.playOnAwake = false;
+            audioSource.loop = false;
+            audioSource.spatialBlend = 0f;
+            if (attackClip == null)
+                attackClip = Resources.Load<AudioClip>("Audio/SFX/shark_attack");
+
+            waterLayers.Clear();
+            waterLayers.AddRange(EndlessWaveSections.LayersNearest(transform.position.x));
+        }
+
+        private void FixedUpdate()
+        {
+            if (!initialised || waterLayers.Count < 2)
+                return;
+
+            Vector2 position = body != null ? body.position : (Vector2)transform.position;
+            UpdateBrain(position);
+
+            Vector2 waterVelocity = GetLaneVelocity(currentLane, position.x);
+            float speed = state switch
+            {
+                CreatureState.Pursue => pursuitSpeed,
+                CreatureState.Lunge => lungeSpeed,
+                CreatureState.WindUp => cruiseSpeed * 0.15f,
+                CreatureState.Recover => cruiseSpeed * 0.55f,
+                _ => cruiseSpeed
+            };
+
+            position.x += direction * Mathf.Max(0.05f, speed + waterVelocity.x * currentInfluence) * Time.fixedDeltaTime;
+            KeepInsideGameArea(ref position);
+
+            if (!changingLane && state != CreatureState.WindUp && state != CreatureState.Lunge)
+            {
+                if (target != null && !target.IsDead && state == CreatureState.Pursue)
+                    BeginLaneChangeToward(GetTargetLane(target));
+                else if (Time.time >= nextLaneShiftTime)
+                    BeginDistinctLaneShift();
+            }
+
+            float desiredY = UpdateLaneTransition(position.x);
+            float follow = 1f - Mathf.Exp(-verticalResponsiveness * Time.fixedDeltaTime);
+            position.y = Mathf.Lerp(position.y, desiredY, follow * waveFollow);
+            SetPosition(position);
+            ApplyWaterTilt(position.x, follow);
+            ApplyAttackHit(position);
+        }
+
+        private void UpdateBrain(Vector2 position)
+        {
+            if (state == CreatureState.WindUp)
+            {
+                if (target == null || target.IsDead)
+                {
+                    state = CreatureState.Roam;
+                    return;
+                }
+
+                FaceTarget(position);
+                if (Time.time >= stateUntil)
+                {
+                    animation?.Attack();
+                    attackHitApplied = false;
+                    state = CreatureState.Lunge;
+                }
+                return;
+            }
+
+            if (state == CreatureState.Lunge)
+            {
+                if (animation == null || !animation.IsAttacking)
+                {
+                    state = CreatureState.Recover;
+                    stateUntil = Time.time + 1f;
+                    nextAttackTime = Time.time + attackRecovery;
+                    target = null;
+                }
+                return;
+            }
+
+            if (state == CreatureState.Recover)
+            {
+                if (Time.time >= stateUntil)
+                    state = CreatureState.Roam;
+                return;
+            }
+
+            if (target == null || target.IsDead)
+                target = FindBestTarget(position);
+
+            if (target == null)
+            {
+                state = CreatureState.Roam;
+                return;
+            }
+
+            float distance = Vector2.Distance(position, target.transform.position);
+            if (distance > abandonRange)
+            {
+                target = null;
+                state = CreatureState.Roam;
+                return;
+            }
+
+            state = CreatureState.Pursue;
+            FaceTarget(position);
+
+            bool sameLane = GetTargetLane(target) == currentLane;
+            if (sameLane && distance <= attackRange && Time.time >= nextAttackTime)
+            {
+                state = CreatureState.WindUp;
+                stateUntil = Time.time + windUpDuration;
+            }
+        }
+
+        private TinyWaveSurfer FindBestTarget(Vector2 position)
+        {
+            TinyWaveSurfer player = FindObjectsByType<TinyWaveSurfer>(FindObjectsSortMode.None)
+                .Where(surfer => surfer != null && !surfer.IsDead)
+                .OrderByDescending(surfer => surfer.IsPlayerControlled)
+                .ThenBy(surfer => Vector2.Distance(position, surfer.transform.position))
+                .FirstOrDefault();
+
+            return player != null && Vector2.Distance(position, player.transform.position) <= detectionRange
+                ? player
+                : null;
+        }
+
+        private void FaceTarget(Vector2 position)
+        {
+            if (target == null)
+                return;
+
+            float deltaX = target.transform.position.x - position.x;
+            if (Mathf.Abs(deltaX) < 0.05f)
+                return;
+
+            direction = Mathf.Sign(deltaX);
+            if (spriteRenderer != null)
+                spriteRenderer.flipX = direction < 0f;
+        }
+
+        private void ApplyAttackHit(Vector2 position)
+        {
+            if (state != CreatureState.Lunge || animation == null || !animation.IsAttacking)
+            {
+                attackHitApplied = false;
+                return;
+            }
+
+            if (attackHitApplied || target == null || target.IsDead || !animation.IsInHitWindow)
+                return;
+            if (Vector2.Distance(position, target.transform.position) > hitRange)
+                return;
+
+            attackHitApplied = target.TakeSharkHit(position);
+            if (attackHitApplied && attackClip != null && audioSource != null)
+                audioSource.PlayOneShot(attackClip, attackVolume);
+        }
+
+        private int GetTargetLane(TinyWaveSurfer surfer)
+        {
+            return Mathf.Clamp(surfer.CurrentWaveIndex, 0, waterLayers.Count - 2);
+        }
+
+        private void BeginLaneChangeToward(int desiredLane)
+        {
+            desiredLane = Mathf.Clamp(desiredLane, 0, waterLayers.Count - 2);
+            if (desiredLane == currentLane)
+                return;
+
+            targetLane = currentLane + (desiredLane > currentLane ? 1 : -1);
+            changingLane = true;
+            laneChangeElapsed = 0f;
+        }
+
+        private void BeginDistinctLaneShift()
+        {
+            int laneCount = waterLayers.Count - 1;
+            if (laneCount <= 1)
+                return;
+
+            // Godzilla moves in two-lane sweeps when possible, unlike the shark's
+            // frequent single-lane wandering.
+            int step = Random.value < 0.7f ? 2 : 1;
+            int sign = Random.value < 0.5f ? -1 : 1;
+            targetLane = Mathf.Clamp(currentLane + sign * step, 0, laneCount - 1);
+            if (targetLane == currentLane)
+                targetLane = currentLane == 0 ? Mathf.Min(step, laneCount - 1) : Mathf.Max(0, currentLane - step);
+
+            changingLane = targetLane != currentLane;
+            laneChangeElapsed = 0f;
+        }
+
+        private float UpdateLaneTransition(float worldX)
+        {
+            if (!changingLane)
+                return GetLaneCentreY(currentLane, worldX) + depthOffset;
+
+            laneChangeElapsed += Time.fixedDeltaTime;
+            float t = Mathf.Clamp01(laneChangeElapsed / laneChangeDuration);
+            float eased = t * t * (3f - 2f * t);
+            float desired = Mathf.Lerp(
+                GetLaneCentreY(currentLane, worldX),
+                GetLaneCentreY(targetLane, worldX),
+                eased) + depthOffset;
+
+            if (t >= 0.5f)
+                renderItem.SetLane(targetLane);
+            if (t >= 1f)
+            {
+                currentLane = targetLane;
+                changingLane = false;
+                laneChangeElapsed = 0f;
+                renderItem.SetLane(currentLane);
+                ScheduleLaneShift();
+            }
+
+            return desired;
+        }
+
+        private float GetLaneCentreY(int lane, float worldX)
+        {
+            int clamped = Mathf.Clamp(lane, 0, waterLayers.Count - 2);
+            return Mathf.Lerp(
+                waterLayers[clamped].GetGameplaySurfaceHeight(worldX),
+                waterLayers[clamped + 1].GetGameplaySurfaceHeight(worldX),
+                0.5f);
+        }
+
+        private Vector2 GetLaneVelocity(int lane, float worldX)
+        {
+            int clamped = Mathf.Clamp(lane, 0, waterLayers.Count - 2);
+            return Vector2.Lerp(
+                waterLayers[clamped].GetGameplayWaveVelocity(worldX),
+                waterLayers[clamped + 1].GetGameplayWaveVelocity(worldX),
+                0.5f);
+        }
+
+        private void KeepInsideGameArea(ref Vector2 position)
+        {
+            float halfWidth = spriteRenderer != null ? spriteRenderer.bounds.extents.x : 0.8f;
+            float minX = waterLayers[0].TankMinimum.x + halfWidth;
+            float maxX = waterLayers[0].TankMaximum.x - halfWidth;
+
+            if (position.x >= maxX)
+            {
+                position.x = maxX;
+                direction = -1f;
+                if (spriteRenderer != null) spriteRenderer.flipX = true;
+            }
+            else if (position.x <= minX)
+            {
+                position.x = minX;
+                direction = 1f;
+                if (spriteRenderer != null) spriteRenderer.flipX = false;
+            }
+        }
+
+        private void ApplyWaterTilt(float worldX, float follow)
+        {
+            float left = GetLaneCentreY(currentLane, worldX - slopeSampleDistance);
+            float right = GetLaneCentreY(currentLane, worldX + slopeSampleDistance);
+            float slope = Mathf.Atan2(right - left, slopeSampleDistance * 2f) * Mathf.Rad2Deg;
+            float angle = Mathf.Clamp(slope * surfaceTilt, -maximumTilt, maximumTilt);
+            transform.rotation = Quaternion.Slerp(
+                transform.rotation,
+                Quaternion.Euler(0f, 0f, angle),
+                follow);
+        }
+
+        private void SetPosition(Vector2 position)
+        {
+            if (body != null)
+                body.position = position;
+            else
+                transform.position = new Vector3(position.x, position.y, transform.position.z);
+        }
+
+        private void ScheduleLaneShift()
+        {
+            float minimum = Mathf.Min(laneShiftDelayRange.x, laneShiftDelayRange.y);
+            float maximum = Mathf.Max(laneShiftDelayRange.x, laneShiftDelayRange.y);
+            nextLaneShiftTime = Time.time + Random.Range(minimum, maximum);
+        }
+    }
+}
