@@ -1384,22 +1384,35 @@ namespace PixelOcean
             UpdateAnimation(moving);
             localRideX = ClampPlayerXToSandbox(localRideX);
 
-            if (jumpHeld && !previousJumpHeld && state == RiderState.Riding)
-                BeginTurnTrick();
-
-            if (!layerUpHeld && !layerDownHeld)
-                layerSwitchInputLocked = false;
-
-            if (!layerSwitchInputLocked && state == RiderState.Riding)
+            // Jump is now the required commit button for player wave changes.
+            // Hold a vertical direction, then press Jump:
+            //   Up + Space / controller A   -> trick-jump one wave upward
+            //   Down + Space / controller A -> trick-jump one wave downward
+            // Pressing Jump without a vertical direction performs a normal trick
+            // jump and remains on the current wave. Up/Down by themselves do not
+            // switch waves anymore.
+            bool jumpPressed = jumpHeld && !previousJumpHeld;
+            if (jumpPressed && state == RiderState.Riding)
             {
-                bool upPressed = layerUpHeld && !previousLayerUpHeld;
-                bool downPressed = layerDownHeld && !previousLayerDownHeld;
-                if (upPressed != downPressed)
+                bool wantsUp = layerUpHeld && !layerDownHeld;
+                bool wantsDown = layerDownHeld && !layerUpHeld;
+
+                if (wantsUp || wantsDown)
                 {
-                    BeginAdjacentWave(upPressed ? +1 : -1);
+                    BeginAdjacentWave(wantsUp ? +1 : -1);
                     layerSwitchInputLocked = true;
                 }
+                else
+                {
+                    BeginTurnTrick();
+                }
             }
+
+            // Release Jump before another normal jump or wave-switch jump can
+            // begin. The direction may remain held, which makes the combination
+            // responsive without allowing repeated automatic layer changes.
+            if (!jumpHeld)
+                layerSwitchInputLocked = false;
 
             previousJumpHeld = jumpHeld;
             previousLayerUpHeld = layerUpHeld;
@@ -1553,8 +1566,15 @@ namespace PixelOcean
                     horizontal = 1f;
 
                 jump |= gamepad.buttonSouth.isPressed;          // Xbox A
-                layerUp |= gamepad.dpad.up.isPressed || gamepad.leftShoulder.isPressed;
-                layerDown |= gamepad.dpad.down.isPressed || gamepad.rightShoulder.isPressed;
+
+                // D-pad Up/Down and the left stick vertical axis are wave-jump
+                // modifiers. They only cause a layer change when controller A
+                // is newly pressed, so vertical stick input never switches waves
+                // by itself.
+                float stickY = gamepad.leftStick.y.ReadValue();
+                layerUp |= gamepad.dpad.up.isPressed || stickY >= gamepadDeadZone;
+                layerDown |= gamepad.dpad.down.isPressed || stickY <= -gamepadDeadZone;
+
                 boost |= gamepad.rightTrigger.ReadValue() > 0.2f;
 
                 float rightX = gamepad.rightStick.x.ReadValue();
