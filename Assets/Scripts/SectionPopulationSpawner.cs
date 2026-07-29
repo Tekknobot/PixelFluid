@@ -21,7 +21,8 @@ namespace PixelOcean
             StrugglingSwimmer,
             Shark,
             GiantSquid,
-            Whale
+            Whale,
+            JellyfishSchool
         }
 
         [Header("Startup")]
@@ -35,6 +36,7 @@ namespace PixelOcean
         [SerializeField] private bool includeSharks = true;
         [SerializeField] private bool includeGiantSquids = true;
         [SerializeField] private bool includeWhales = true;
+        [SerializeField] private bool includeJellyfishSchools = true;
         [SerializeField] private bool includeGodzilla = true;
 
         [Header("Selection")]
@@ -110,13 +112,19 @@ namespace PixelOcean
                 return;
             }
 
-            // Spawn every enabled type once inside every section.
+            // Spawn ordinary types once inside every section. Jellyfish are a
+            // single rare school, so they are placed in only one random section.
+            int jellyfishSectionIndex = Random.Range(0, centres.Count);
             for (int sectionIndex = 0; sectionIndex < centres.Count; sectionIndex++)
             {
                 float sectionCentreX = centres[sectionIndex];
 
                 foreach (SpawnKind kind in enabledKinds)
                 {
+                    if (kind == SpawnKind.JellyfishSchool &&
+                        sectionIndex != jellyfishSectionIndex)
+                        continue;
+
                     CreateSectionSpawner(
                         sectionIndex,
                         sectionCentreX,
@@ -141,11 +149,14 @@ namespace PixelOcean
 
             hasSpawned = true;
 
-            int totalSpawned = centres.Count * enabledKinds.Count;
+            int ordinaryKindCount = enabledKinds.Count -
+                (enabledKinds.Contains(SpawnKind.JellyfishSchool) ? 1 : 0);
+            int totalSpawned = centres.Count * ordinaryKindCount +
+                (enabledKinds.Contains(SpawnKind.JellyfishSchool) ? 1 : 0);
 
             Debug.Log(
-                $"Spawned {enabledKinds.Count} objects in each of " +
-                $"{centres.Count} sections. Total: {totalSpawned}.",
+                $"Spawned the section population with one jellyfish school total. " +
+                $"Spawner count: {totalSpawned}.",
                 this);
         }
 
@@ -181,6 +192,10 @@ namespace PixelOcean
                 case SpawnKind.Whale:
                     holder.AddComponent<WhaleLaneSpawner>().SpawnWhale();
                     break;
+
+                case SpawnKind.JellyfishSchool:
+                    holder.AddComponent<JellyfishSchoolSpawner>().SpawnSchool();
+                    break;
             }
         }
 
@@ -193,6 +208,7 @@ namespace PixelOcean
             if (includeSharks) pool.Add(SpawnKind.Shark);
             if (includeGiantSquids) pool.Add(SpawnKind.GiantSquid);
             if (includeWhales) pool.Add(SpawnKind.Whale);
+            if (includeJellyfishSchools) pool.Add(SpawnKind.JellyfishSchool);
             return pool;
         }
 
@@ -206,6 +222,7 @@ namespace PixelOcean
             DisableAll<StrugglingSwimmerSpawner>();
             DisableAll<WhaleLaneSpawner>();
             DisableAll<GodzillaLaneSpawner>();
+            DisableAll<JellyfishSchoolSpawner>();
         }
 
         private static void DisableAll<T>() where T : Behaviour

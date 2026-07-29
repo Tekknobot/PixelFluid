@@ -679,6 +679,13 @@ namespace PixelOcean
                     float d = Vector2.Distance(transform.position, squid.transform.position);
                     if (d < best) { best = d; nearest = squid.transform; }
                 }
+
+                foreach (JellyfishSwimmer jellyfish in FindObjectsByType<JellyfishSwimmer>(FindObjectsSortMode.None))
+                {
+                    if (jellyfish == null) continue;
+                    float d = Vector2.Distance(transform.position, jellyfish.transform.position);
+                    if (d < best) { best = d; nearest = jellyfish.transform; }
+                }
             }
 
             Sprite sprite = throwableItems.Dequeue();

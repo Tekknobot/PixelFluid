@@ -154,6 +154,18 @@ namespace PixelOcean
                 Bounce(squid.transform.position);
             }
 
+            JellyfishSwimmer jellyfish =
+                hitTransform.GetComponentInParent<JellyfishSwimmer>();
+
+            if (jellyfish != null)
+            {
+                LoadSfx();
+                PlaySfx(sharkHitClip, 0.85f);
+                jellyfish.TakeThrownItemHit(transform.position);
+                Bounce(jellyfish.transform.position);
+                return;
+            }
+
             // Ignore every unrelated collider. Only valid combat targets can
             // interrupt the projectile's trajectory.
         }
