@@ -903,6 +903,7 @@ namespace PixelOcean
 
             state = RiderState.Dead;
             playerIdleTimer = 0f;
+            GodzillaLaneSwimmer.NotifyPlayerDeath(transform.position);
             if (speechBubble != null) speechBubble.HideImmediate();
             PlayDeathAnimation();
             EmitDeathBlood();
@@ -928,6 +929,7 @@ namespace PixelOcean
 
             state = RiderState.Dead;
             playerIdleTimer = 0f;
+            GodzillaLaneSwimmer.NotifyPlayerDeath(transform.position);
             if (speechBubble != null) speechBubble.HideImmediate();
             PlayDeathAnimation();
             if (humanDeathClip != null && deathAudioSource != null)

@@ -9,7 +9,7 @@ namespace PixelOcean
     [RequireComponent(typeof(InterWaveRenderItem))]
     public sealed class GodzillaLaneSwimmer : MonoBehaviour
     {
-        private enum CreatureState { Roam, Pursue, WindUp, Lunge, Recover }
+        private enum CreatureState { Roam, Pursue, WindUp, Lunge, Recover, InvestigateDeath, MournDeath }
 
         [Header("Movement")]
         [SerializeField, Min(0.05f)] private float cruiseSpeed = 0.42f;
@@ -27,6 +27,11 @@ namespace PixelOcean
         [SerializeField] private Vector2 laneShiftDelayRange = new(4.5f, 8f);
         [SerializeField, Min(0.2f)] private float laneChangeDuration = 1.6f;
         [SerializeField, Range(0f, 0.45f)] private float laneDepthBias = 0.12f;
+
+        [Header("Player Death Response")]
+        [SerializeField, Min(0.05f)] private float deathApproachSpeed = 7.82f;
+        [SerializeField, Min(0.05f)] private float deathArrivalDistance = 0.3f;
+        [SerializeField, Min(0f)] private float deathPauseDuration = 2.5f;
 
         [Header("Water Response")]
         [SerializeField, Range(0f, 1f)] private float waveFollow = 0.88f;
@@ -60,6 +65,50 @@ namespace PixelOcean
         private float depthOffset;
         private bool attackHitApplied;
         private bool initialised;
+        private bool respondingToDeath;
+        private Vector2 deathLocation;
+        private int deathLane;
+        private float deathPauseUntil;
+
+
+        /// <summary>
+        /// Sends every active Godzilla-based Death swimmer to the player's death location.
+        /// The swimmer temporarily interrupts combat and roaming, visits the location,
+        /// pauses there, then resumes its normal behaviour.
+        /// </summary>
+        public static void NotifyPlayerDeath(Vector2 worldPosition)
+        {
+            GodzillaLaneSwimmer[] swimmers = FindObjectsByType<GodzillaLaneSwimmer>(
+                FindObjectsInactive.Exclude,
+                FindObjectsSortMode.None);
+
+            foreach (GodzillaLaneSwimmer swimmer in swimmers)
+            {
+                if (swimmer != null && swimmer.isActiveAndEnabled)
+                    swimmer.GoToDeathLocation(worldPosition);
+            }
+        }
+
+        public void GoToDeathLocation(Vector2 worldPosition)
+        {
+            ResolveReferences();
+            if (waterLayers.Count < 2)
+                return;
+
+            respondingToDeath = true;
+            deathLocation = worldPosition;
+            deathLane = FindClosestLane(worldPosition);
+            target = null;
+            attackHitApplied = false;
+            changingLane = false;
+            currentLane = Mathf.Clamp(currentLane, 0, waterLayers.Count - 2);
+            targetLane = currentLane;
+            state = CreatureState.InvestigateDeath;
+
+            Vector2 position = body != null ? body.position : (Vector2)transform.position;
+            FaceWorldX(position, deathLocation.x);
+            BeginLaneChangeToward(deathLane);
+        }
 
         public void Initialise(int requestedLane)
         {
@@ -143,7 +192,10 @@ namespace PixelOcean
                 return;
 
             Vector2 position = body != null ? body.position : (Vector2)transform.position;
-            UpdateBrain(position);
+            if (respondingToDeath)
+                UpdateDeathInvestigation(position);
+            else
+                UpdateBrain(position);
 
             Vector2 waterVelocity = GetLaneVelocity(currentLane, position.x);
             float speed = state switch
@@ -152,13 +204,19 @@ namespace PixelOcean
                 CreatureState.Lunge => lungeSpeed,
                 CreatureState.WindUp => cruiseSpeed * 0.15f,
                 CreatureState.Recover => cruiseSpeed * 0.55f,
+                CreatureState.InvestigateDeath => deathApproachSpeed,
+                CreatureState.MournDeath => 0f,
                 _ => cruiseSpeed
             };
 
-            position.x += direction * Mathf.Max(0.05f, speed + waterVelocity.x * currentInfluence) * Time.fixedDeltaTime;
+            if (state == CreatureState.InvestigateDeath)
+                FaceWorldX(position, deathLocation.x);
+
+            if (state != CreatureState.MournDeath)
+                position.x += direction * Mathf.Max(0.05f, speed + waterVelocity.x * currentInfluence) * Time.fixedDeltaTime;
             KeepInsideGameArea(ref position);
 
-            if (!changingLane && state != CreatureState.WindUp && state != CreatureState.Lunge)
+            if (!respondingToDeath && !changingLane && state != CreatureState.WindUp && state != CreatureState.Lunge)
             {
                 if (target != null && !target.IsDead && state == CreatureState.Pursue)
                     BeginLaneChangeToward(GetTargetLane(target));
@@ -172,6 +230,65 @@ namespace PixelOcean
             SetPosition(position);
             ApplyWaterTilt(position.x, follow);
             ApplyAttackHit(position);
+        }
+
+        private void UpdateDeathInvestigation(Vector2 position)
+        {
+            if (state == CreatureState.MournDeath)
+            {
+                if (Time.time >= deathPauseUntil)
+                {
+                    respondingToDeath = false;
+                    state = CreatureState.Roam;
+                    ScheduleLaneShift();
+                }
+                return;
+            }
+
+            state = CreatureState.InvestigateDeath;
+            FaceWorldX(position, deathLocation.x);
+
+            if (!changingLane && currentLane != deathLane)
+                BeginLaneChangeToward(deathLane);
+
+            float horizontalDistance = Mathf.Abs(position.x - deathLocation.x);
+            if (horizontalDistance <= deathArrivalDistance &&
+                !changingLane && currentLane == deathLane)
+            {
+                state = CreatureState.MournDeath;
+                deathPauseUntil = Time.time + deathPauseDuration;
+            }
+        }
+
+        private int FindClosestLane(Vector2 worldPosition)
+        {
+            int bestLane = 0;
+            float bestDistance = float.PositiveInfinity;
+            int laneCount = Mathf.Max(1, waterLayers.Count - 1);
+
+            for (int lane = 0; lane < laneCount; lane++)
+            {
+                float laneY = GetLaneCentreY(lane, worldPosition.x) + depthOffset;
+                float distance = Mathf.Abs(worldPosition.y - laneY);
+                if (distance < bestDistance)
+                {
+                    bestDistance = distance;
+                    bestLane = lane;
+                }
+            }
+
+            return bestLane;
+        }
+
+        private void FaceWorldX(Vector2 position, float worldX)
+        {
+            float deltaX = worldX - position.x;
+            if (Mathf.Abs(deltaX) < 0.02f)
+                return;
+
+            direction = Mathf.Sign(deltaX);
+            if (spriteRenderer != null)
+                spriteRenderer.flipX = direction < 0f;
         }
 
         private void UpdateBrain(Vector2 position)
