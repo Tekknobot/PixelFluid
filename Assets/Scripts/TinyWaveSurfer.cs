@@ -265,6 +265,8 @@ namespace PixelOcean
             Animator.StringToHash("chuck_handstand");
         private static readonly int FlipStateHash =
             Animator.StringToHash("chuck_flip");
+        private static readonly int RotationStateHash =
+            Animator.StringToHash("chuck_rotation");
         private static readonly int DeathStateHash =
             Animator.StringToHash("chuck_death");
         private static readonly int ProneStateHash =
@@ -1500,7 +1502,7 @@ namespace PixelOcean
             if (attackHeld && !previousAttackHeld)
             {
                 if (obstacleJumpActive && state == RiderState.TurningTrick)
-                    TriggerRandomAirTrick();
+                    TriggerAirTrick(FlipStateHash); // Xbox X / keyboard F or X
                 else
                     PerformAction(layerUpHeld);
             }
@@ -1510,10 +1512,13 @@ namespace PixelOcean
             bool specialPressed = specialHeld && !previousSpecialHeld;
             UpdateChargedWaterSkid(specialHeld, horizontal, dt);
 
-            // During an active charged glide, press B again while holding Up or
-            // Down to carve into the adjacent wave without discarding the push.
-            // Keyboard mirrors this with E/B plus W/S or the arrow keys.
-            if (specialPressed && specialSkidding && state == RiderState.Riding &&
+            // B/E has its own deterministic airborne trick. On the water it
+            // retains the charged-skid and glide-wave-switch behaviour.
+            if (specialPressed && obstacleJumpActive && state == RiderState.TurningTrick)
+            {
+                TriggerAirTrick(RotationStateHash); // Xbox B / keyboard E or B
+            }
+            else if (specialPressed && specialSkidding && state == RiderState.Riding &&
                 !layerSwitchInputLocked)
             {
                 bool glideUp = layerUpHeld && !layerDownHeld;
@@ -1578,7 +1583,7 @@ namespace PixelOcean
             // again during the same forward surf jump performs the handstand trick.
             if (jumpPressed && obstacleJumpActive && state == RiderState.TurningTrick)
             {
-                TriggerRandomAirTrick();
+                TriggerAirTrick(HandstandStateHash); // Xbox A / keyboard Space
             }
             else if (jumpPressed && state == RiderState.Riding && !specialCharging)
             {
@@ -2139,22 +2144,19 @@ namespace PixelOcean
             UpdateAnimation(true, true);
         }
 
-        private void TriggerRandomAirTrick()
+        private void TriggerAirTrick(int animationStateHash)
         {
             if (!obstacleJumpActive || state != RiderState.TurningTrick || airTrickActive)
                 return;
 
             airTrickActive = true;
             airTrickTimer = 0f;
-            currentAirTrickStateHash = Random.value < 0.5f
-                ? HandstandStateHash
-                : FlipStateHash;
+            currentAirTrickStateHash = animationStateHash;
 
             if (speechBubble != null)
                 speechBubble.HideImmediate();
 
-            // Force the selected one-shot state now. The normal animation update
-            // keeps it from being replaced by move/idle while the trick is active.
+            // Every input owns one animation; no random trick selection remains.
             UpdateAnimation(true, true);
         }
 
