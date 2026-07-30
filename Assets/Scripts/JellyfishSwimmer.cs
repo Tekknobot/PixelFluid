@@ -14,7 +14,7 @@ namespace PixelOcean
         [SerializeField, Min(0f)] private float bobHeight = 0.16f;
 
         [Header("Combat")]
-        [SerializeField, Min(0.1f)] private float contactRadius = 0.34f;
+        [SerializeField, Min(0.1f)] private float contactRadius = 0.14f;
         [SerializeField, Min(0.1f)] private float damageCooldown = 1.1f;
         [SerializeField, Min(1)] private int hitsToDefeat = 1;
 

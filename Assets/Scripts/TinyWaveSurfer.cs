@@ -35,6 +35,9 @@ namespace PixelOcean
         [SerializeField] private bool sortWavesBackToFront = true;
         [SerializeField, Min(0)] private int startingWaveIndex;
 
+        [SerializeField, Range(0f, 2f)]
+        private float glideWaveSwitchDistanceMultiplier = 0.5f;
+
         [Header("Back-and-Forth Ride")]
         [SerializeField, Min(0.1f)] private float horizontalRideSpeed = 1.2f;
         [SerializeField, Range(0.02f, 0.35f)] private float edgePadding = 0.12f;
@@ -341,6 +344,8 @@ namespace PixelOcean
         private float specialSkidDuration;
         private float specialSkidSpeed;
         private float specialSkidCurrentSpeed;
+        private bool glideWaveSwitchActive;
+        private float glideWaveSwitchSpeed;
         private bool obstacleJumpActive;
         private bool airTrickActive;
         private float airTrickTimer;
@@ -1502,7 +1507,24 @@ namespace PixelOcean
             previousAttackHeld = attackHeld;
 
             bool specialHeld = aiControlled ? aiSpecialHold > 0f : ReadSpecialInput();
+            bool specialPressed = specialHeld && !previousSpecialHeld;
             UpdateChargedWaterSkid(specialHeld, horizontal, dt);
+
+            // During an active charged glide, press B again while holding Up or
+            // Down to carve into the adjacent wave without discarding the push.
+            // Keyboard mirrors this with E/B plus W/S or the arrow keys.
+            if (specialPressed && specialSkidding && state == RiderState.Riding &&
+                !layerSwitchInputLocked)
+            {
+                bool glideUp = layerUpHeld && !layerDownHeld;
+                bool glideDown = layerDownHeld && !layerUpHeld;
+                if (glideUp || glideDown)
+                {
+                    BeginAdjacentWave(glideUp ? +1 : -1, true);
+                    layerSwitchInputLocked = true;
+                }
+            }
+
             previousSpecialHeld = specialHeld;
 
             if (!specialCharging && !specialSkidding)
@@ -1615,11 +1637,13 @@ namespace PixelOcean
         private bool ReadSpecialInput()
         {
 #if ENABLE_INPUT_SYSTEM
-            bool keyboardHeld = Keyboard.current != null && Keyboard.current.eKey.isPressed;
+            bool keyboardHeld = Keyboard.current != null &&
+                (Keyboard.current.eKey.isPressed || Keyboard.current.bKey.isPressed);
             bool gamepadHeld = Gamepad.current != null && Gamepad.current.buttonEast.isPressed;
             return keyboardHeld || gamepadHeld;
 #elif ENABLE_LEGACY_INPUT_MANAGER
-            return Input.GetKey(KeyCode.E) || Input.GetKey(KeyCode.JoystickButton1);
+            return Input.GetKey(KeyCode.E) || Input.GetKey(KeyCode.B) ||
+                Input.GetKey(KeyCode.JoystickButton1);
 #else
             return false;
 #endif
@@ -1685,7 +1709,7 @@ namespace PixelOcean
             }
         }
 
-        private void BeginAdjacentWave(int step)
+        private void BeginAdjacentWave(int step, bool preserveGlidePush = false)
         {
             if (state != RiderState.Riding)
                 return;
@@ -1733,7 +1757,22 @@ namespace PixelOcean
 
             switchStart = transform.position;
             switchTarget = GetStartingPosition(currentWave);
-            switchTarget.x = ClampPlayerXToSandbox(localRideX);
+
+            glideWaveSwitchActive = preserveGlidePush && specialSkidding;
+            glideWaveSwitchSpeed = glideWaveSwitchActive
+                ? Mathf.Max(specialSkidCurrentSpeed,
+                    Mathf.Abs(playerHorizontalVelocity),
+                    specialSkidSpeed * 0.15f)
+                : 0f;
+
+            // Project the surfer forward during a glide transfer. The charged
+            // push remains active after landing instead of being converted into
+            // an ordinary wave-switch hop.
+            float projectedX = localRideX;
+            if (glideWaveSwitchActive && !lockPlayerToScreenX)
+                projectedX += direction * glideWaveSwitchSpeed * switchDuration * glideWaveSwitchDistanceMultiplier;
+
+            switchTarget.x = ClampPlayerXToSandbox(projectedX);
             switchTarget.z = renderDepth;
 
             transform.rotation = Quaternion.identity;
@@ -2293,15 +2332,22 @@ namespace PixelOcean
                     switchTarget.y -
                     switchStart.y);
 
-            // Wave changes use a light hop. The dedicated sprite animation
-            // supplies the visual action, so the transform never spins or tucks.
-            float jump =
-                layerJumpHeight * 0.45f +
-                layerDistance * 0.12f;
+            // Normal changes use a light hop. Glide transfers stay much
+            // flatter, reading as a carve carried by the active water push.
+            float jump = glideWaveSwitchActive
+                ? layerJumpHeight * 0.10f + layerDistance * 0.035f
+                : layerJumpHeight * 0.45f + layerDistance * 0.12f;
 
-            p.y +=
-                Mathf.Sin(t * Mathf.PI) *
-                jump;
+            p.y += Mathf.Sin(t * Mathf.PI) * jump;
+
+            if (glideWaveSwitchActive && specialSkidding)
+            {
+                specialSkidTimer = Mathf.Max(0f, specialSkidTimer - Time.deltaTime);
+                float skid01 = Mathf.Clamp01(
+                    specialSkidTimer / Mathf.Max(0.01f, specialSkidDuration));
+                specialSkidCurrentSpeed = specialSkidSpeed *
+                    Mathf.SmoothStep(0.15f, 1f, skid01);
+            }
 
             transform.position = p;
             transform.rotation = Quaternion.identity;
@@ -2326,6 +2372,26 @@ namespace PixelOcean
 
             state = RiderState.Riding;
             stateTimer = 0f;
+
+            if (glideWaveSwitchActive)
+            {
+                if (specialSkidTimer <= 0f)
+                {
+                    specialSkidding = false;
+                    specialSkidCurrentSpeed = 0f;
+                    playerHorizontalVelocity = direction *
+                        Mathf.Min(playerScrollSpeed, glideWaveSwitchSpeed * 0.2f);
+                }
+                else
+                {
+                    // Keep the same push direction and remaining force on the
+                    // destination wave.
+                    playerHorizontalVelocity = direction * glideWaveSwitchSpeed;
+                }
+            }
+
+            glideWaveSwitchActive = false;
+            glideWaveSwitchSpeed = 0f;
 
             ApplyFacing(
                 spriteWorldScale,
