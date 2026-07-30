@@ -76,6 +76,8 @@ namespace PixelOcean
             rain = FindFirstObjectByType<ProceduralRainSystem>();
             BeginChapter(Chapter.Dawn, "DAWN PATROL", "SURF. STAY ALIVE. LEARN THE WATER.");
             SpawnPickupSet();
+            SpawnOceanItems(12);
+            SpawnJellyfishEncounter("Dawn Jellyfish", 1);
             SpawnMajor<SharkLaneSpawner>("Early Shark", spawner => spawner.SpawnShark(true));
         }
 
@@ -110,6 +112,7 @@ namespace PixelOcean
                 BeginChapter(Chapter.Storm, "STORM FRONT", "KEEP MOVING. RESCUE ANYONE LEFT OUT THERE.");
                 EnsureRain().SetSituation(ProceduralRainSystem.RainSituation.HeavyRain);
                 SpawnMajor<GiantSquidLaneSpawner>("Storm Squid", spawner => spawner.SpawnSquid(true));
+                SpawnJellyfishEncounter("Storm Jellyfish", 3);
                 return;
             }
 
@@ -118,6 +121,7 @@ namespace PixelOcean
                 BeginChapter(Chapter.StrangeTide, "STRANGE TIDE", "SOMETHING IS WATCHING THE WATER.");
                 SpawnBoombox();
                 SpawnUfo();
+                SpawnJellyfishEncounter("Strange Tide Jellyfish", 2);
                 SpawnMajor<WhaleLaneSpawner>("Strange Tide Whale", spawner => spawner.SpawnWhale(true));
                 return;
             }
@@ -203,6 +207,39 @@ namespace PixelOcean
             if (component is Behaviour behaviour) behaviour.enabled = true;
             spawn(component);
             progressionSpawners.Add(holder);
+        }
+
+
+        private void SpawnOceanItems(int count)
+        {
+            if (FindFirstObjectByType<OceanItemSpawner>() is OceanItemSpawner existing)
+            {
+                existing.SpawnProgressionItems(count);
+                return;
+            }
+
+            GameObject holder = new("Progression Ocean Items");
+            holder.transform.SetParent(transform, false);
+            OceanItemSpawner spawner = holder.AddComponent<OceanItemSpawner>();
+            spawner.SpawnProgressionItems(count);
+            progressionSpawners.Add(holder);
+        }
+
+        private void SpawnJellyfishEncounter(string name, int schools)
+        {
+            IReadOnlyList<float> centres = GetCentres();
+            if (centres.Count == 0) return;
+
+            for (int i = 0; i < schools; i++)
+            {
+                float x = centres[(i + Random.Range(0, centres.Count)) % centres.Count];
+                GameObject holder = new(name + " " + (i + 1));
+                holder.transform.SetParent(transform, false);
+                holder.transform.position = new Vector3(x, 0f, 0f);
+                JellyfishSchoolSpawner spawner = holder.AddComponent<JellyfishSchoolSpawner>();
+                spawner.SpawnSchool();
+                progressionSpawners.Add(holder);
+            }
         }
 
         private void SpawnBoombox()

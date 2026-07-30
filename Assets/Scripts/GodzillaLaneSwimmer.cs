@@ -12,20 +12,20 @@ namespace PixelOcean
         private enum CreatureState { Roam, Pursue, WindUp, Lunge, Recover, InvestigateDeath, MournDeath }
 
         [Header("Movement")]
-        [SerializeField, Min(0.05f)] private float cruiseSpeed = 0.42f;
-        [SerializeField, Min(0.05f)] private float pursuitSpeed = 0.68f;
-        [SerializeField, Min(0.1f)] private float lungeSpeed = 1.65f;
+        [SerializeField, Min(0.05f)] private float cruiseSpeed = 0.62f;
+        [SerializeField, Min(0.05f)] private float pursuitSpeed = 1.15f;
+        [SerializeField, Min(0.1f)] private float lungeSpeed = 2.35f;
         [SerializeField, Range(0f, 0.35f)] private float currentInfluence = 0.04f;
 
         [Header("Unique Behaviour")]
-        [SerializeField, Min(0.5f)] private float detectionRange = 4.5f;
-        [SerializeField, Min(0.5f)] private float abandonRange = 7f;
-        [SerializeField, Min(0.1f)] private float attackRange = 1.9f;
+        [SerializeField, Min(0.5f)] private float detectionRange = 9f;
+        [SerializeField, Min(0.5f)] private float abandonRange = 12f;
+        [SerializeField, Min(0.1f)] private float attackRange = 2.35f;
         [SerializeField, Min(0.05f)] private float hitRange = 0.82f;
-        [SerializeField, Min(0f)] private float windUpDuration = 0.55f;
-        [SerializeField, Min(0f)] private float attackRecovery = 3.5f;
-        [SerializeField] private Vector2 laneShiftDelayRange = new(4.5f, 8f);
-        [SerializeField, Min(0.2f)] private float laneChangeDuration = 1.6f;
+        [SerializeField, Min(0f)] private float windUpDuration = 0.28f;
+        [SerializeField, Min(0f)] private float attackRecovery = 1.65f;
+        [SerializeField] private Vector2 laneShiftDelayRange = new(1.5f, 3.2f);
+        [SerializeField, Min(0.2f)] private float laneChangeDuration = 0.85f;
         [SerializeField, Range(0f, 0.45f)] private float laneDepthBias = 0.12f;
 
         [Header("Player Death Response")]
@@ -76,6 +76,7 @@ namespace PixelOcean
         private float deathPauseUntil;
         private float trackedSectionCentreX;
         private bool hasTrackedSectionCentre;
+        private float nextWaterRefreshTime;
 
 
         /// <summary>
@@ -199,6 +200,7 @@ namespace PixelOcean
             if (!initialised || waterLayers.Count < 2)
                 return;
 
+            RefreshWaterLayersIfNeeded();
             FollowRecycledSection();
             Vector2 position = body != null ? body.position : (Vector2)transform.position;
             if (respondingToDeath)
@@ -228,7 +230,11 @@ namespace PixelOcean
             if (!respondingToDeath && !changingLane && state != CreatureState.WindUp && state != CreatureState.Lunge)
             {
                 if (target != null && !target.IsDead && state == CreatureState.Pursue)
-                    BeginLaneChangeToward(GetTargetLane(target));
+                {
+                    int desiredLane = GetTargetLane(target);
+                    if (desiredLane != currentLane)
+                        BeginLaneChangeToward(desiredLane);
+                }
                 else if (Time.time >= nextLaneShiftTime)
                     BeginDistinctLaneShift();
             }
@@ -241,6 +247,30 @@ namespace PixelOcean
             ApplyAttackHit(position);
         }
 
+
+        private void RefreshWaterLayersIfNeeded()
+        {
+            if (Time.time < nextWaterRefreshTime)
+                return;
+
+            nextWaterRefreshTime = Time.time + 1f;
+            if (waterLayers.Count >= 2 && waterLayers.All(layer => layer != null && layer.isActiveAndEnabled))
+                return;
+
+            Vector2 position = body != null ? body.position : (Vector2)transform.position;
+            waterLayers.Clear();
+            waterLayers.AddRange(EndlessWaveSections.LayersNearest(position.x));
+            waterLayers.RemoveAll(layer => layer == null || !layer.isActiveAndEnabled);
+            waterLayers.Sort((a, b) => a.IndependentLayerIndex.CompareTo(b.IndependentLayerIndex));
+
+            if (waterLayers.Count >= 2)
+            {
+                currentLane = Mathf.Clamp(currentLane, 0, waterLayers.Count - 2);
+                targetLane = Mathf.Clamp(targetLane, 0, waterLayers.Count - 2);
+                renderItem?.SetLane(currentLane);
+                CaptureTrackedSectionCentre();
+            }
+        }
 
         /// <summary>
         /// EndlessWaveSections recycles a complete water section by shifting its
@@ -422,9 +452,9 @@ namespace PixelOcean
                 .ThenBy(surfer => Vector2.Distance(position, surfer.transform.position))
                 .FirstOrDefault();
 
-            return player != null && Vector2.Distance(position, player.transform.position) <= detectionRange
-                ? player
-                : null;
+            if (player == null) return null;
+            float distance = Vector2.Distance(position, player.transform.position);
+            return distance <= detectionRange ? player : null;
         }
 
         private void FaceTarget(Vector2 position)
@@ -562,12 +592,14 @@ namespace PixelOcean
             {
                 position.x = maxX;
                 direction = -1f;
+                lastFacingChangeTime = Time.time;
                 if (spriteRenderer != null) spriteRenderer.flipX = true;
             }
             else if (position.x <= minX)
             {
                 position.x = minX;
                 direction = 1f;
+                lastFacingChangeTime = Time.time;
                 if (spriteRenderer != null) spriteRenderer.flipX = false;
             }
         }

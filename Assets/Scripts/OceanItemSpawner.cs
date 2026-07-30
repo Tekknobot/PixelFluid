@@ -35,8 +35,31 @@ namespace PixelOcean
             yield return null;
             yield return null;
             ResolveWaters();
-            if (spawnOnStart)
+            if (spawnOnStart && FindFirstObjectByType<SurfDayProgressionDirector>() == null)
                 SpawnAllItems();
+        }
+
+        public void SpawnProgressionItems(int requestedCount)
+        {
+            ResolveWaters();
+            itemSprites = Resources.LoadAll<Sprite>("OceanItems")
+                .OrderBy(sprite => ExtractNumber(sprite.name))
+                .ToArray();
+
+            if (itemSprites.Length == 0)
+            {
+                Debug.LogWarning("No sprites were found in Resources/OceanItems.", this);
+                return;
+            }
+
+            int count = Mathf.Clamp(requestedCount, 1, itemSprites.Length);
+            for (int slot = 0; slot < count; slot++)
+            {
+                int index = Mathf.Min(itemSprites.Length - 1,
+                    Mathf.FloorToInt(slot * itemSprites.Length / (float)count));
+                if (!liveItems.ContainsKey(index) || liveItems[index] == null)
+                    SpawnItem(index);
+            }
         }
 
         [ContextMenu("Spawn All Ocean Items")]
