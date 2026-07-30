@@ -258,9 +258,11 @@ namespace PixelOcean
         private static readonly int MoveStateHash =
             Animator.StringToHash("chuck_move");
         private static readonly int SurfJumpStateHash =
-            Animator.StringToHash("chuck_surf_jump");
+            Animator.StringToHash("chuck_jump");
         private static readonly int WaveSwitchStateHash =
             Animator.StringToHash("chuck_wave_switch");
+        private static readonly int PushStateHash =
+            Animator.StringToHash("chuck_surf_jump");            
         private static readonly int HandstandStateHash =
             Animator.StringToHash("chuck_handstand");
         private static readonly int FlipStateHash =
@@ -924,21 +926,36 @@ namespace PixelOcean
 
             int desiredStateHash = state == RiderState.SwitchingWave
                 ? WaveSwitchStateHash
-                : airTrickActive && obstacleJumpActive && state == RiderState.TurningTrick
-                    ? (currentAirTrickStateHash != 0 ? currentAirTrickStateHash : HandstandStateHash)
-                    : obstacleJumpActive && state == RiderState.TurningTrick
-                        ? SurfJumpStateHash
-                        : playerControlled && state == RiderState.TurningTrick
-                            ? RotationStateHash
-                            : useProne
-                    ? ProneStateHash
-                    : moving ? MoveStateHash : IdleStateHash;
+                : specialSkidding && state == RiderState.Riding
+                    ? PushStateHash
+                    : airTrickActive && obstacleJumpActive && state == RiderState.TurningTrick
+                        ? (currentAirTrickStateHash != 0
+                            ? currentAirTrickStateHash
+                            : HandstandStateHash)
+                        : obstacleJumpActive && state == RiderState.TurningTrick
+                            ? SurfJumpStateHash
+                            : playerControlled && state == RiderState.TurningTrick
+                                ? RotationStateHash
+                                : useProne
+                                    ? ProneStateHash
+                                    : moving
+                                        ? MoveStateHash
+                                        : IdleStateHash;
 
             if (!force && currentAnimationStateHash == desiredStateHash)
                 return;
 
+            if (!surferAnimator.HasState(0, desiredStateHash))
+            {
+                Debug.LogWarning(
+                    $"Animator state does not exist on layer 0. Hash: {desiredStateHash}",
+                    this);
+
+                return;
+            }
+
             currentAnimationStateHash = desiredStateHash;
-            surferAnimator.Play(desiredStateHash, 0, 0f);
+            surferAnimator.CrossFade(desiredStateHash, 0.02f, 0, 0f);
         }
 
         private void PlayDeathAnimation()
@@ -1692,6 +1709,10 @@ namespace PixelOcean
                     specialSkidTimer = specialSkidDuration;
                     specialSkidding = true;
                     playerHorizontalVelocity = 0f;
+
+                    // Immediately enter the push animation when propulsion begins.
+                    currentAnimationStateHash = 0;
+                    UpdateAnimation(false, true);
                     if (speechBubble != null) speechBubble.HideImmediate();
                 }
             }
