@@ -24,6 +24,9 @@ namespace PixelOcean
 
         private IEnumerator Start()
         {
+            if (FindFirstObjectByType<SurfDayProgressionDirector>() != null)
+                yield break;
+
             float deadline = Time.realtimeSinceStartup + 12f;
             while (EndlessWaveSections.LayersNearest(0f).Count < 2 && Time.realtimeSinceStartup < deadline)
                 yield return null;

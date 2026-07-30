@@ -8,6 +8,7 @@ namespace PixelOcean
     [RequireComponent(typeof(SpriteRenderer), typeof(Rigidbody2D), typeof(InterWaveRenderItem))]
     public sealed class StrugglingSwimmerDrifter : MonoBehaviour
     {
+        public static event System.Action SwimmerSaved;
         private static AudioClip swimmerSavedClip;
         [Header("Natural Entry")]
         [SerializeField, Min(0.1f)] private float offscreenDistance = 1.25f;
@@ -265,6 +266,7 @@ namespace PixelOcean
                 return;
 
             saved = true;
+            SwimmerSaved?.Invoke();
             PlaySwimmerSavedSfx();
 
             // Replace the rescued swimmer with a temporary animated surfer who

@@ -69,7 +69,7 @@ namespace PixelOcean
             // normal-priority Start methods can run.
             DisableLegacyStartupSpawners();
 
-            if (!spawnOnStart)
+            if (!spawnOnStart || FindFirstObjectByType<SurfDayProgressionDirector>() != null)
                 yield break;
 
             float deadline = Time.realtimeSinceStartup + sectionReadyTimeout;

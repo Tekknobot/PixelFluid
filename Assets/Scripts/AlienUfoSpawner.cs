@@ -19,6 +19,7 @@ namespace PixelOcean
 
         private void Update()
         {
+            if (FindFirstObjectByType<SurfDayProgressionDirector>() != null) return;
             if (spawned) return;
             spawnDelay -= Time.deltaTime;
             if (spawnDelay > 0f || Camera.main == null) return;
