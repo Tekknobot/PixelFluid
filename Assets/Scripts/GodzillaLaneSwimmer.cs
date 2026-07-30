@@ -74,6 +74,8 @@ namespace PixelOcean
         private Vector2 deathLocation;
         private int deathLane;
         private float deathPauseUntil;
+        private float trackedSectionCentreX;
+        private bool hasTrackedSectionCentre;
 
 
         /// <summary>
@@ -189,6 +191,7 @@ namespace PixelOcean
 
             waterLayers.Clear();
             waterLayers.AddRange(EndlessWaveSections.LayersNearest(transform.position.x));
+            CaptureTrackedSectionCentre();
         }
 
         private void FixedUpdate()
@@ -196,6 +199,7 @@ namespace PixelOcean
             if (!initialised || waterLayers.Count < 2)
                 return;
 
+            FollowRecycledSection();
             Vector2 position = body != null ? body.position : (Vector2)transform.position;
             if (respondingToDeath)
                 UpdateDeathInvestigation(position);
@@ -235,6 +239,59 @@ namespace PixelOcean
             SetPosition(position);
             ApplyWaterTilt(position.x, follow);
             ApplyAttackHit(position);
+        }
+
+
+        /// <summary>
+        /// EndlessWaveSections recycles a complete water section by shifting its
+        /// existing PixelWaterGPU objects several section widths. Godzilla is not
+        /// parented to those water objects, so it must receive the same translation
+        /// or its old clamp bounds will pin it to an edge and repeatedly reverse it.
+        /// </summary>
+        private void FollowRecycledSection()
+        {
+            if (waterLayers.Count == 0 || waterLayers[0] == null)
+                return;
+
+            float sectionCentre = GetCurrentSectionCentreX();
+            if (!hasTrackedSectionCentre)
+            {
+                trackedSectionCentreX = sectionCentre;
+                hasTrackedSectionCentre = true;
+                return;
+            }
+
+            float shift = sectionCentre - trackedSectionCentreX;
+            trackedSectionCentreX = sectionCentre;
+
+            // Ignore ordinary floating-point movement. A recycled section moves by
+            // roughly three whole section widths in one frame.
+            if (Mathf.Abs(shift) < 0.25f)
+                return;
+
+            Vector2 position = body != null ? body.position : (Vector2)transform.position;
+            position.x += shift;
+            SetPosition(position);
+
+            // A death-investigation destination belongs to the same recycled world
+            // space while Godzilla is travelling toward or pausing at it.
+            if (respondingToDeath)
+                deathLocation.x += shift;
+        }
+
+        private void CaptureTrackedSectionCentre()
+        {
+            if (waterLayers.Count == 0 || waterLayers[0] == null)
+                return;
+
+            trackedSectionCentreX = GetCurrentSectionCentreX();
+            hasTrackedSectionCentre = true;
+        }
+
+        private float GetCurrentSectionCentreX()
+        {
+            PixelWaterGPU layer = waterLayers[0];
+            return (layer.TankMinimum.x + layer.TankMaximum.x) * 0.5f;
         }
 
         private void UpdateDeathInvestigation(Vector2 position)

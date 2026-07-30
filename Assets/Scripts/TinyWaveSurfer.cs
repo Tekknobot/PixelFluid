@@ -92,8 +92,8 @@ namespace PixelOcean
         [Tooltip("Hold left/right and press Jump (controller A / keyboard Space) to launch forward over hazards.")]
         [SerializeField] private bool enableForwardObstacleJump = true;
         [SerializeField, Min(0.15f)] private float obstacleJumpDuration = 1.62f;
-        [SerializeField, Min(0.05f)] private float obstacleJumpHeight = 0.72f;
-        [SerializeField, Min(0.1f)] private float obstacleJumpDistance = 3.15f;
+        [SerializeField, Min(0.05f)] private float obstacleJumpHeight = 0.92f;
+        [SerializeField, Min(0.1f)] private float obstacleJumpDistance = 2.15f;
         [Tooltip("Minimum directional input needed to choose the forward obstacle jump.")]
         [SerializeField, Range(0.05f, 1f)] private float obstacleJumpInputThreshold = 0.25f;
         [Tooltip("How strongly horizontal travel eases into the landing.")]
