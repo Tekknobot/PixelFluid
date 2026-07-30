@@ -258,6 +258,8 @@ namespace PixelOcean
             Animator.StringToHash("chuck_surf_jump");
         private static readonly int HandstandStateHash =
             Animator.StringToHash("chuck_handstand");
+        private static readonly int FlipStateHash =
+            Animator.StringToHash("chuck_flip");
         private static readonly int DeathStateHash =
             Animator.StringToHash("chuck_death");
         private static readonly int ProneStateHash =
@@ -335,10 +337,12 @@ namespace PixelOcean
         private float specialSkidTimer;
         private float specialSkidDuration;
         private float specialSkidSpeed;
+        private float specialSkidCurrentSpeed;
         private bool obstacleJumpActive;
-        private bool airHandstandActive;
-        private float airHandstandTimer;
-        [SerializeField, Min(0.1f)] private float airHandstandDuration = 1.33f;
+        private bool airTrickActive;
+        private float airTrickTimer;
+        private int currentAirTrickStateHash;
+        [SerializeField, Min(0.1f)] private float airTrickDuration = 1.25f;
         private float obstacleJumpStartX;
         private float obstacleJumpTargetX;
         private float obstacleJumpProgress;
@@ -908,8 +912,8 @@ namespace PixelOcean
                 state == RiderState.Riding &&
                 playerIdleTimer >= proneIdleDelay;
 
-            int desiredStateHash = airHandstandActive && obstacleJumpActive && state == RiderState.TurningTrick
-                ? HandstandStateHash
+            int desiredStateHash = airTrickActive && obstacleJumpActive && state == RiderState.TurningTrick
+                ? (currentAirTrickStateHash != 0 ? currentAirTrickStateHash : HandstandStateHash)
                 : obstacleJumpActive && state == RiderState.TurningTrick
                     ? SurfJumpStateHash
                     : useProne
@@ -1468,7 +1472,7 @@ namespace PixelOcean
             if (attackHeld && !previousAttackHeld)
             {
                 if (obstacleJumpActive && state == RiderState.TurningTrick)
-                    TriggerAirHandstand();
+                    TriggerRandomAirTrick();
                 else
                     PerformAction(layerUpHeld);
             }
@@ -1529,9 +1533,9 @@ namespace PixelOcean
             // again during the same forward surf jump performs the handstand trick.
             if (jumpPressed && obstacleJumpActive && state == RiderState.TurningTrick)
             {
-                TriggerAirHandstand();
+                TriggerRandomAirTrick();
             }
-            else if (jumpPressed && state == RiderState.Riding && !specialCharging && !specialSkidding)
+            else if (jumpPressed && state == RiderState.Riding && !specialCharging)
             {
                 bool wantsUp = layerUpHeld && !layerDownHeld;
                 bool wantsDown = layerDownHeld && !layerUpHeld;
@@ -1633,6 +1637,7 @@ namespace PixelOcean
             specialSkidTimer -= dt;
             float skid01 = Mathf.Clamp01(specialSkidTimer / Mathf.Max(0.01f, specialSkidDuration));
             float easedSpeed = specialSkidSpeed * Mathf.SmoothStep(0.15f, 1f, skid01);
+            specialSkidCurrentSpeed = easedSpeed;
             localRideX += direction * easedSpeed * dt;
             localRideX = ClampPlayerXToSandbox(localRideX);
             RebindToNearestHorizontalSection();
@@ -1641,6 +1646,7 @@ namespace PixelOcean
             {
                 specialSkidding = false;
                 specialSkidTimer = 0f;
+                specialSkidCurrentSpeed = 0f;
                 playerHorizontalVelocity = direction * Mathf.Min(playerScrollSpeed, specialSkidSpeed * 0.2f);
             }
         }
@@ -2004,8 +2010,9 @@ namespace PixelOcean
         {
             if (speechBubble != null) speechBubble.HideImmediate();
             obstacleJumpActive = false;
-            airHandstandActive = false;
-            airHandstandTimer = 0f;
+            airTrickActive = false;
+            airTrickTimer = 0f;
+            currentAirTrickStateHash = 0;
             obstacleJumpProgress = 0f;
             state = RiderState.TurningTrick;
             stateTimer = 0f;
@@ -2017,9 +2024,21 @@ namespace PixelOcean
         {
             if (speechBubble != null) speechBubble.HideImmediate();
 
+            // Convert the active charged-skid push into a one-time launch impulse.
+            // The skid itself stops immediately; only its current momentum affects
+            // the jump distance and takeoff velocity.
+            float carriedSkidSpeed = specialSkidding
+                ? Mathf.Max(specialSkidCurrentSpeed, Mathf.Abs(playerHorizontalVelocity))
+                : 0f;
+
+            specialSkidding = false;
+            specialSkidTimer = 0f;
+            specialSkidCurrentSpeed = 0f;
+
             obstacleJumpActive = true;
-            airHandstandActive = false;
-            airHandstandTimer = 0f;
+            airTrickActive = false;
+            airTrickTimer = 0f;
+            currentAirTrickStateHash = 0;
             obstacleJumpProgress = 0f;
             state = RiderState.TurningTrick;
             stateTimer = 0f;
@@ -2029,9 +2048,12 @@ namespace PixelOcean
                 : direction;
             direction = inputDirection == 0f ? 1f : inputDirection;
 
+            playerHorizontalVelocity = direction * carriedSkidSpeed;
+            float carriedDistance = carriedSkidSpeed * 0.22f;
+
             obstacleJumpStartX = localRideX;
             obstacleJumpTargetX = ClampPlayerXToSandbox(
-                obstacleJumpStartX + direction * obstacleJumpDistance);
+                obstacleJumpStartX + direction * (obstacleJumpDistance + carriedDistance));
             airStartY = currentWave.GetGameplaySurfaceHeight(localRideX) + surfaceOffset;
             flipTrick = false;
 
@@ -2041,16 +2063,22 @@ namespace PixelOcean
             UpdateAnimation(true, true);
         }
 
-        private void TriggerAirHandstand()
+        private void TriggerRandomAirTrick()
         {
-            if (!obstacleJumpActive || state != RiderState.TurningTrick || airHandstandActive)
+            if (!obstacleJumpActive || state != RiderState.TurningTrick || airTrickActive)
                 return;
 
-            airHandstandActive = true;
-            airHandstandTimer = 0f;
+            airTrickActive = true;
+            airTrickTimer = 0f;
+            currentAirTrickStateHash = Random.value < 0.5f
+                ? HandstandStateHash
+                : FlipStateHash;
+
             if (speechBubble != null)
                 speechBubble.HideImmediate();
 
+            // Force the selected one-shot state now. The normal animation update
+            // keeps it from being replaced by move/idle while the trick is active.
             UpdateAnimation(true, true);
         }
 
@@ -2064,13 +2092,14 @@ namespace PixelOcean
                 Mathf.Max(0.01f, activeDuration));
             obstacleJumpProgress = obstacleJumpActive ? t : 0f;
 
-            if (airHandstandActive)
+            if (airTrickActive)
             {
-                airHandstandTimer += Time.deltaTime;
-                if (airHandstandTimer >= airHandstandDuration)
+                airTrickTimer += Time.deltaTime;
+                if (airTrickTimer >= airTrickDuration)
                 {
-                    airHandstandActive = false;
-                    airHandstandTimer = 0f;
+                    airTrickActive = false;
+                    airTrickTimer = 0f;
+                    currentAirTrickStateHash = 0;
                     if (t < 1f)
                         UpdateAnimation(true, true);
                 }
@@ -2147,8 +2176,8 @@ namespace PixelOcean
                 localRideX = obstacleJumpTargetX;
                 playerHorizontalVelocity = direction * playerScrollSpeed * 0.48f;
                 obstacleJumpActive = false;
-                airHandstandActive = false;
-                airHandstandTimer = 0f;
+                airTrickActive = false;
+                airTrickTimer = 0f;
                 obstacleJumpProgress = 0f;
             }
 
