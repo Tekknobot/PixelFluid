@@ -928,7 +928,9 @@ namespace PixelOcean
                     ? (currentAirTrickStateHash != 0 ? currentAirTrickStateHash : HandstandStateHash)
                     : obstacleJumpActive && state == RiderState.TurningTrick
                         ? SurfJumpStateHash
-                        : useProne
+                        : playerControlled && state == RiderState.TurningTrick
+                            ? RotationStateHash
+                            : useProne
                     ? ProneStateHash
                     : moving ? MoveStateHash : IdleStateHash;
 
@@ -2206,41 +2208,53 @@ namespace PixelOcean
                     airStartY + arc),
                 renderDepth);
 
-            float spinDirection =
-                direction >= 0f ? -1f : 1f;
-
-            float automaticSpin = obstacleJumpActive
-                ? spinDirection * Mathf.Sin(t * Mathf.PI) * 16f
-                : turnSpinDegrees * spinDirection * t;
-            float controlledSpin = playerControlled
-                ? playerTrickInput * playerAirTrickDegrees * t
-                : 0f;
-            transform.rotation = Quaternion.Euler(
-                0f,
-                0f,
-                automaticSpin + controlledSpin);
-
-            float flipAmount = flipTrick
-                ? Mathf.Cos(t * Mathf.PI * 2f)
-                : 1f;
-
-            float trickScale =
-                spriteWorldScale *
-                Mathf.Max(
-                    0.18f,
-                    Mathf.Abs(flipAmount));
-
-            ApplyFacing(
-                trickScale,
-                spriteWorldScale);
-
-            // Temporarily reverse the visual during the middle of a flip trick.
-            if (flipTrick &&
-                spriteRenderer != null &&
-                flipAmount < 0f)
+            // The player's basic motionless jump is animated entirely by
+            // chuck_rotation. Do not rotate, squash, or flip the rendered surfer
+            // in code, otherwise the sprite-sheet rotation is applied twice.
+            bool basicPlayerJump = playerControlled && !obstacleJumpActive;
+            if (basicPlayerJump)
             {
-                spriteRenderer.flipX =
-                    !spriteRenderer.flipX;
+                transform.rotation = Quaternion.identity;
+                ApplyFacing(spriteWorldScale, spriteWorldScale);
+            }
+            else
+            {
+                float spinDirection =
+                    direction >= 0f ? -1f : 1f;
+
+                float automaticSpin = obstacleJumpActive
+                    ? spinDirection * Mathf.Sin(t * Mathf.PI) * 16f
+                    : turnSpinDegrees * spinDirection * t;
+                float controlledSpin = playerControlled
+                    ? playerTrickInput * playerAirTrickDegrees * t
+                    : 0f;
+                transform.rotation = Quaternion.Euler(
+                    0f,
+                    0f,
+                    automaticSpin + controlledSpin);
+
+                float flipAmount = flipTrick
+                    ? Mathf.Cos(t * Mathf.PI * 2f)
+                    : 1f;
+
+                float trickScale =
+                    spriteWorldScale *
+                    Mathf.Max(
+                        0.18f,
+                        Mathf.Abs(flipAmount));
+
+                ApplyFacing(
+                    trickScale,
+                    spriteWorldScale);
+
+                // Temporarily reverse the visual during the middle of a flip trick.
+                if (flipTrick &&
+                    spriteRenderer != null &&
+                    flipAmount < 0f)
+                {
+                    spriteRenderer.flipX =
+                        !spriteRenderer.flipX;
+                }
             }
 
             if (t < 1f)
