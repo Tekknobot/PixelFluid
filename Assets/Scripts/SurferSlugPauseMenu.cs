@@ -283,7 +283,6 @@ namespace PixelOcean
             settingsButton = CreateSpriteButton(panel.transform, "settings_button", ShowSettings);
             quitButton = CreateSpriteButton(panel.transform, "quit_button", QuitGame);
 
-            controlsButton.gameObject.SetActive(false);
             settingsButton.gameObject.SetActive(false);
         }
 
@@ -315,11 +314,22 @@ namespace PixelOcean
         private void BuildControls(Transform parent)
         {
             controlsPanel = CreateSubPanel(parent, "Controls Panel");
-            AddText(controlsPanel.transform, "CONTROLS", 44, 90f);
-            AddText(controlsPanel.transform,
-                "MOVE     A / D  •  LEFT STICK\n\nCHANGE WAVE     UP / DOWN  •  D-PAD\n\nJUMP     SPACE  •  A\n\nACTION / TRICK     F / X  •  X\n\nCAMERA     Z  •  Y\n\nPAUSE     ESC  •  START",
-                25, 420f);
-            Button back = CreatePlainButton(controlsPanel.transform, "BACK", ShowMainLayout);
+
+            GameObject imageObject = CreateUIObject(controlsPanel.transform, "Controls Diagram");
+
+            LayoutElement layout = imageObject.AddComponent<LayoutElement>();
+            layout.preferredWidth = 420f;
+            layout.preferredHeight = 420f;
+            layout.flexibleWidth = 0f;
+            layout.flexibleHeight = 0f;
+
+            Image image = imageObject.AddComponent<Image>();
+            image.preserveAspect = true;
+            image.raycastTarget = false;
+            image.sprite = Resources.Load<Sprite>("SurferSlugUI/controls_diagram");
+
+            CreatePlainButton(controlsPanel.transform, "BACK", ShowMainLayout);
+
             controlsPanel.SetActive(false);
         }
 
