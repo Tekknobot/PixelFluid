@@ -430,9 +430,21 @@ namespace PixelOcean
             pixels[y * textureWidth + x] = colour;
         }
 
+        /// <summary>
+        /// Restores the cycle to the configured starting time. This is used by
+        /// the in-place game-over restart because the scene is not reloaded.
+        /// </summary>
+        public void ResetDayNightCycle()
+        {
+            timeOfDay = Mathf.Repeat(startingTimeOfDay, 1f);
+            updateTimer = 0f;
+            RenderSky(Time.time);
+        }
+
         public void SetTimeOfDay(float normalizedTime)
         {
             timeOfDay = Mathf.Repeat(normalizedTime, 1f);
+            updateTimer = 0f;
             RenderSky(Time.time);
         }
 

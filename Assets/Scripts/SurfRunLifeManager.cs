@@ -91,6 +91,13 @@ namespace PixelOcean
                 if (director != null)
                     yield return director.RestartRunInPlace();
 
+                // The scene stays loaded after game over, so Awake() is not run
+                // again on the procedural sky. Explicitly restore its configured
+                // starting time while the screen is still black.
+                ProceduralStarryNight dayNight = FindFirstObjectByType<ProceduralStarryNight>();
+                if (dayNight != null)
+                    dayNight.ResetDayNightCycle();
+
                 livesRemaining = Mathf.Max(1, startingLives);
 
                 if (surfer == null)
