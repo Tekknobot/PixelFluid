@@ -8,6 +8,7 @@ namespace PixelOcean
     /// naturally through dawn, day, sunset and night while a sun, moon and thin
     /// clouds travel across the sky.
     /// </summary>
+    [DefaultExecutionOrder(10000)]
     [DisallowMultipleComponent]
     public sealed class ProceduralStarryNight : MonoBehaviour
     {
@@ -111,15 +112,6 @@ namespace PixelOcean
 
         private void Update()
         {
-            if (gameplayCamera == null)
-                gameplayCamera = Camera.main;
-
-            if (gameplayCamera != null)
-            {
-                Vector3 position = transform.position;
-                position.x = gameplayCamera.transform.position.x;
-                transform.position = position;
-            }
 
             float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
             if (runCycle)
@@ -134,6 +126,19 @@ namespace PixelOcean
 
             updateTimer = 0f;
             RenderSky(Time.time);
+        }
+
+        private void LateUpdate()
+        {
+            if (gameplayCamera == null)
+                gameplayCamera = Camera.main;
+
+            if (gameplayCamera == null)
+                return;
+
+            Vector3 position = transform.position;
+            position.x = gameplayCamera.transform.position.x;
+            transform.position = position;
         }
 
         [ContextMenu("Rebuild Procedural Day Night Sky")]
