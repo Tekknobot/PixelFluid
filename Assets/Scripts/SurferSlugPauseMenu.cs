@@ -39,13 +39,15 @@ namespace PixelOcean
         [SerializeField] private Color textColor = new(0.94f, 0.98f, 0.95f, 1f);
 
         private readonly List<MonoBehaviour> disabledGameplayBehaviours = new();
-        private Canvas canvas;
-        private GameObject pauseRoot;
-        private GameObject mainPanel;
-        private GameObject controlsPanel;
-        private Button resumeButton;
-        private Button controlsButton;
-        private Button controlsBackButton;
+        [Header("Prefab / Baked Hierarchy")]
+        [Tooltip("These references are filled automatically when the live menu is saved as a prefab.")]
+        [SerializeField] private Canvas canvas;
+        [SerializeField] private GameObject pauseRoot;
+        [SerializeField] private GameObject mainPanel;
+        [SerializeField] private GameObject controlsPanel;
+        [SerializeField] private Button resumeButton;
+        [SerializeField] private Button controlsButton;
+        [SerializeField] private Button controlsBackButton;
         private float inputReadyTime;
 
         private static readonly HashSet<string> SimulationTypeNames = new(StringComparer.Ordinal)
@@ -76,7 +78,12 @@ namespace PixelOcean
             }
 
             Instance = this;
-            BuildMenu();
+
+            if (HasBakedHierarchy())
+                EnsureEventSystem();
+            else
+                BuildMenu();
+
             SetMenuVisible(false);
         }
 
@@ -101,6 +108,7 @@ namespace PixelOcean
 
             RestoreGameplayBehaviours();
             GameplayPaused = false;
+
             Instance = null;
         }
 
@@ -339,6 +347,11 @@ namespace PixelOcean
             Image image = buttonObject.AddComponent<Image>();
             image.color = normalButtonColor;
 
+            Outline outline = buttonObject.AddComponent<Outline>();
+            outline.effectColor = new Color(selectedButtonColor.r,
+                selectedButtonColor.g, selectedButtonColor.b, 0.45f);
+            outline.effectDistance = new Vector2(1f, -1f);
+
             Button button = buttonObject.AddComponent<Button>();
             ColorBlock colors = button.colors;
             colors.normalColor = normalButtonColor;
@@ -351,6 +364,17 @@ namespace PixelOcean
             Text text = CreateText(buttonObject.transform, label, 27, TextAnchor.MiddleCenter);
             Stretch(text.rectTransform);
             return button;
+        }
+
+
+        private bool HasBakedHierarchy()
+        {
+            return canvas != null &&
+                   pauseRoot != null &&
+                   mainPanel != null &&
+                   controlsPanel != null &&
+                   resumeButton != null &&
+                   controlsBackButton != null;
         }
 
         private static void AddVerticalLayout(GameObject target, float spacing, RectOffset padding)
