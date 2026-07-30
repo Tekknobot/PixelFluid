@@ -1,0 +1,546 @@
+fileFormatVersion: 2
+guid: f409d7be271cad84aa83f7e9ef6e51bd
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 8823162415137261163
+    second: chuck_rotation_0
+  - first:
+      213: 1485598561602081040
+    second: chuck_rotation_1
+  - first:
+      213: 7831200914575479122
+    second: chuck_rotation_2
+  - first:
+      213: 6546302164203354239
+    second: chuck_rotation_3
+  - first:
+      213: -6136541461118435365
+    second: chuck_rotation_4
+  - first:
+      213: -36770644380882779
+    second: chuck_rotation_5
+  - first:
+      213: -7312782179668155552
+    second: chuck_rotation_6
+  - first:
+      213: 5144414827812346508
+    second: chuck_rotation_7
+  - first:
+      213: -8128014048008918095
+    second: chuck_rotation_8
+  - first:
+      213: -4854809743982857159
+    second: chuck_rotation_9
+  - first:
+      213: -7660138996586728640
+    second: chuck_rotation_10
+  - first:
+      213: -2064848523678631586
+    second: chuck_rotation_11
+  - first:
+      213: 8513777371660670109
+    second: chuck_rotation_12
+  - first:
+      213: -8298499187404057825
+    second: chuck_rotation_13
+  - first:
+      213: 5622119527151544487
+    second: chuck_rotation_14
+  - first:
+      213: -1342157500972204553
+    second: chuck_rotation_15
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 1
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: chuck_rotation_0
+      rect:
+        serializedVersion: 2
+        x: 3
+        y: 2
+        width: 29
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b6685dd287b227a70800000000000000
+      internalID: 8823162415137261163
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_rotation_1
+      rect:
+        serializedVersion: 2
+        x: 34
+        y: 2
+        width: 29
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0119f1f4508ed9410800000000000000
+      internalID: 1485598561602081040
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_rotation_2
+      rect:
+        serializedVersion: 2
+        x: 67
+        y: 3
+        width: 27
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2515cf58db30eac60800000000000000
+      internalID: 7831200914575479122
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_rotation_3
+      rect:
+        serializedVersion: 2
+        x: 101
+        y: 3
+        width: 23
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f7836b1722329da50800000000000000
+      internalID: 6546302164203354239
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_rotation_4
+      rect:
+        serializedVersion: 2
+        x: 133
+        y: 3
+        width: 19
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bdf349ccd00a6daa0800000000000000
+      internalID: -6136541461118435365
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_rotation_5
+      rect:
+        serializedVersion: 2
+        x: 165
+        y: 3
+        width: 18
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5a8e3833b4d5d7ff0800000000000000
+      internalID: -36770644380882779
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_rotation_6
+      rect:
+        serializedVersion: 2
+        x: 197
+        y: 3
+        width: 17
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 063a2153a57c38a90800000000000000
+      internalID: -7312782179668155552
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_rotation_7
+      rect:
+        serializedVersion: 2
+        x: 228
+        y: 2
+        width: 17
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c8ad1059702a46740800000000000000
+      internalID: 5144414827812346508
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_rotation_8
+      rect:
+        serializedVersion: 2
+        x: 260
+        y: 3
+        width: 18
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1bb2b03994e733f80800000000000000
+      internalID: -8128014048008918095
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_rotation_9
+      rect:
+        serializedVersion: 2
+        x: 291
+        y: 3
+        width: 19
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 934fbcd724040acb0800000000000000
+      internalID: -4854809743982857159
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_rotation_10
+      rect:
+        serializedVersion: 2
+        x: 321
+        y: 3
+        width: 21
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 043b452fa28b1b590800000000000000
+      internalID: -7660138996586728640
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_rotation_11
+      rect:
+        serializedVersion: 2
+        x: 352
+        y: 3
+        width: 23
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e59352f253f2853e0800000000000000
+      internalID: -2064848523678631586
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_rotation_12
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 3
+        width: 25
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d94d79e5963072670800000000000000
+      internalID: 8513777371660670109
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_rotation_13
+      rect:
+        serializedVersion: 2
+        x: 417
+        y: 2
+        width: 26
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f13d9e5d4fec5dc80800000000000000
+      internalID: -8298499187404057825
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_rotation_14
+      rect:
+        serializedVersion: 2
+        x: 451
+        y: 2
+        width: 24
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a8a7a43ce7c50e40800000000000000
+      internalID: 5622119527151544487
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_rotation_15
+      rect:
+        serializedVersion: 2
+        x: 484
+        y: 3
+        width: 24
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7fdfce92dd2bf5de0800000000000000
+      internalID: -1342157500972204553
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      chuck_rotation_0: 8823162415137261163
+      chuck_rotation_1: 1485598561602081040
+      chuck_rotation_10: -7660138996586728640
+      chuck_rotation_11: -2064848523678631586
+      chuck_rotation_12: 8513777371660670109
+      chuck_rotation_13: -8298499187404057825
+      chuck_rotation_14: 5622119527151544487
+      chuck_rotation_15: -1342157500972204553
+      chuck_rotation_2: 7831200914575479122
+      chuck_rotation_3: 6546302164203354239
+      chuck_rotation_4: -6136541461118435365
+      chuck_rotation_5: -36770644380882779
+      chuck_rotation_6: -7312782179668155552
+      chuck_rotation_7: 5144414827812346508
+      chuck_rotation_8: -8128014048008918095
+      chuck_rotation_9: -4854809743982857159
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
