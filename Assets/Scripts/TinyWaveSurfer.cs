@@ -256,6 +256,8 @@ namespace PixelOcean
             Animator.StringToHash("chuck_move");
         private static readonly int SurfJumpStateHash =
             Animator.StringToHash("chuck_surf_jump");
+        private static readonly int WaveSwitchStateHash =
+            Animator.StringToHash("chuck_wave_switch");
         private static readonly int HandstandStateHash =
             Animator.StringToHash("chuck_handstand");
         private static readonly int FlipStateHash =
@@ -912,11 +914,13 @@ namespace PixelOcean
                 state == RiderState.Riding &&
                 playerIdleTimer >= proneIdleDelay;
 
-            int desiredStateHash = airTrickActive && obstacleJumpActive && state == RiderState.TurningTrick
-                ? (currentAirTrickStateHash != 0 ? currentAirTrickStateHash : HandstandStateHash)
-                : obstacleJumpActive && state == RiderState.TurningTrick
-                    ? SurfJumpStateHash
-                    : useProne
+            int desiredStateHash = state == RiderState.SwitchingWave
+                ? WaveSwitchStateHash
+                : airTrickActive && obstacleJumpActive && state == RiderState.TurningTrick
+                    ? (currentAirTrickStateHash != 0 ? currentAirTrickStateHash : HandstandStateHash)
+                    : obstacleJumpActive && state == RiderState.TurningTrick
+                        ? SurfJumpStateHash
+                        : useProne
                     ? ProneStateHash
                     : moving ? MoveStateHash : IdleStateHash;
 
@@ -1537,22 +1541,33 @@ namespace PixelOcean
             }
             else if (jumpPressed && state == RiderState.Riding && !specialCharging)
             {
-                bool wantsUp = layerUpHeld && !layerDownHeld;
-                bool wantsDown = layerDownHeld && !layerUpHeld;
-
-                if (wantsUp || wantsDown)
+                // A released charged push owns the jump input. It can only launch
+                // the forward surf jump: no standing trick jump and no wave switch.
+                // The push direction supplies takeoff direction, so forward input
+                // is not required while the surfer is already being propelled.
+                if (specialSkidding && enableForwardObstacleJump)
                 {
-                    BeginAdjacentWave(wantsUp ? +1 : -1);
-                    layerSwitchInputLocked = true;
-                }
-                else if (enableForwardObstacleJump &&
-                    Mathf.Abs(horizontal) >= obstacleJumpInputThreshold)
-                {
-                    BeginForwardSurfJump(horizontal);
+                    BeginForwardSurfJump(direction);
                 }
                 else
                 {
-                    BeginTurnTrick();
+                    bool wantsUp = layerUpHeld && !layerDownHeld;
+                    bool wantsDown = layerDownHeld && !layerUpHeld;
+
+                    if (wantsUp || wantsDown)
+                    {
+                        BeginAdjacentWave(wantsUp ? +1 : -1);
+                        layerSwitchInputLocked = true;
+                    }
+                    else if (enableForwardObstacleJump &&
+                        Mathf.Abs(horizontal) >= obstacleJumpInputThreshold)
+                    {
+                        BeginForwardSurfJump(horizontal);
+                    }
+                    else
+                    {
+                        BeginTurnTrick();
+                    }
                 }
             }
 
@@ -1701,6 +1716,9 @@ namespace PixelOcean
             switchTarget = GetStartingPosition(currentWave);
             switchTarget.x = ClampPlayerXToSandbox(localRideX);
             switchTarget.z = renderDepth;
+
+            transform.rotation = Quaternion.identity;
+            UpdateAnimation(false, true);
         }
 
         private void RebindToNearestHorizontalSection()
@@ -2232,6 +2250,9 @@ namespace PixelOcean
             switchStart = transform.position;
             switchTarget = GetStartingPosition(currentWave);
             switchTarget.z = renderDepth;
+
+            transform.rotation = Quaternion.identity;
+            UpdateAnimation(false, true);
         }
 
         private void UpdateWaveSwitch()
@@ -2253,32 +2274,22 @@ namespace PixelOcean
                     switchTarget.y -
                     switchStart.y);
 
+            // Wave changes use a light hop. The dedicated sprite animation
+            // supplies the visual action, so the transform never spins or tucks.
             float jump =
-                layerJumpHeight +
-                layerDistance * 0.35f;
+                layerJumpHeight * 0.45f +
+                layerDistance * 0.12f;
 
             p.y +=
                 Mathf.Sin(t * Mathf.PI) *
                 jump;
 
             transform.position = p;
-
-            float spinDirection =
-                direction >= 0f ? -1f : 1f;
-
-            transform.rotation = Quaternion.Euler(
-                0f,
-                0f,
-                540f * spinDirection * eased);
-
-            float tuck =
-                1f -
-                Mathf.Sin(t * Mathf.PI) *
-                0.35f;
+            transform.rotation = Quaternion.identity;
 
             ApplyFacing(
-                spriteWorldScale * tuck,
-                spriteWorldScale * tuck);
+                spriteWorldScale,
+                spriteWorldScale);
 
             if (t < 1f)
                 return;
@@ -2300,6 +2311,10 @@ namespace PixelOcean
             ApplyFacing(
                 spriteWorldScale,
                 spriteWorldScale);
+
+            UpdateAnimation(
+                Mathf.Abs(playerHorizontalVelocity) > 0.03f,
+                true);
         }
 
         private void ScheduleNextLayerJump(float initialDelay)
