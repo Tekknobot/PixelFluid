@@ -1,0 +1,546 @@
+fileFormatVersion: 2
+guid: b9814e71688986c42b4d3ddb45db4194
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -1363115693247362480
+    second: chuck_wave_switch_0
+  - first:
+      213: 3856229318320923594
+    second: chuck_wave_switch_1
+  - first:
+      213: -3594290616789106819
+    second: chuck_wave_switch_2
+  - first:
+      213: -3985057096292783545
+    second: chuck_wave_switch_3
+  - first:
+      213: 1365965278575979411
+    second: chuck_wave_switch_4
+  - first:
+      213: -4891825246823486683
+    second: chuck_wave_switch_5
+  - first:
+      213: -6006643237613972740
+    second: chuck_wave_switch_6
+  - first:
+      213: -36853776317071063
+    second: chuck_wave_switch_7
+  - first:
+      213: 5633139057022639940
+    second: chuck_wave_switch_8
+  - first:
+      213: 1884367203636630719
+    second: chuck_wave_switch_9
+  - first:
+      213: 1109985735041242189
+    second: chuck_wave_switch_10
+  - first:
+      213: 7283763442862418216
+    second: chuck_wave_switch_11
+  - first:
+      213: -8979573275601162008
+    second: chuck_wave_switch_12
+  - first:
+      213: -4704583734206830225
+    second: chuck_wave_switch_13
+  - first:
+      213: 9083168691238501090
+    second: chuck_wave_switch_14
+  - first:
+      213: -3030607072665381924
+    second: chuck_wave_switch_15
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 1
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: chuck_wave_switch_0
+      rect:
+        serializedVersion: 2
+        x: 5
+        y: 2
+        width: 27
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 05a0b34cf7d351de0800000000000000
+      internalID: -1363115693247362480
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_wave_switch_1
+      rect:
+        serializedVersion: 2
+        x: 38
+        y: 2
+        width: 25
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ac327f24224148530800000000000000
+      internalID: 3856229318320923594
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_wave_switch_2
+      rect:
+        serializedVersion: 2
+        x: 70
+        y: 3
+        width: 25
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d7ff3c63ab38e1ec0800000000000000
+      internalID: -3594290616789106819
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_wave_switch_3
+      rect:
+        serializedVersion: 2
+        x: 101
+        y: 3
+        width: 26
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 74aa1d54fab32b8c0800000000000000
+      internalID: -3985057096292783545
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_wave_switch_4
+      rect:
+        serializedVersion: 2
+        x: 134
+        y: 2
+        width: 25
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 39be9050f22e4f210800000000000000
+      internalID: 1365965278575979411
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_wave_switch_5
+      rect:
+        serializedVersion: 2
+        x: 166
+        y: 2
+        width: 23
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 52b6cc32bdebc1cb0800000000000000
+      internalID: -4891825246823486683
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_wave_switch_6
+      rect:
+        serializedVersion: 2
+        x: 198
+        y: 2
+        width: 23
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cf25489cccd14aca0800000000000000
+      internalID: -6006643237613972740
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_wave_switch_7
+      rect:
+        serializedVersion: 2
+        x: 231
+        y: 2
+        width: 20
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9214df98fa11d7ff0800000000000000
+      internalID: -36853776317071063
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_wave_switch_8
+      rect:
+        serializedVersion: 2
+        x: 263
+        y: 2
+        width: 20
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 44f9630702eec2e40800000000000000
+      internalID: 5633139057022639940
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_wave_switch_9
+      rect:
+        serializedVersion: 2
+        x: 295
+        y: 2
+        width: 21
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fb45827ecfd962a10800000000000000
+      internalID: 1884367203636630719
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_wave_switch_10
+      rect:
+        serializedVersion: 2
+        x: 327
+        y: 2
+        width: 21
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d4452e22526776f00800000000000000
+      internalID: 1109985735041242189
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_wave_switch_11
+      rect:
+        serializedVersion: 2
+        x: 359
+        y: 2
+        width: 21
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8296acf9240251560800000000000000
+      internalID: 7283763442862418216
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_wave_switch_12
+      rect:
+        serializedVersion: 2
+        x: 390
+        y: 2
+        width: 22
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8e0b3318ea5226380800000000000000
+      internalID: -8979573275601162008
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_wave_switch_13
+      rect:
+        serializedVersion: 2
+        x: 422
+        y: 2
+        width: 23
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f69658a0506f5beb0800000000000000
+      internalID: -4704583734206830225
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_wave_switch_14
+      rect:
+        serializedVersion: 2
+        x: 454
+        y: 2
+        width: 24
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2ea783cccc5ed0e70800000000000000
+      internalID: 9083168691238501090
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chuck_wave_switch_15
+      rect:
+        serializedVersion: 2
+        x: 487
+        y: 2
+        width: 23
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cd35efb9cee11f5d0800000000000000
+      internalID: -3030607072665381924
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      chuck_wave_switch_0: -1363115693247362480
+      chuck_wave_switch_1: 3856229318320923594
+      chuck_wave_switch_10: 1109985735041242189
+      chuck_wave_switch_11: 7283763442862418216
+      chuck_wave_switch_12: -8979573275601162008
+      chuck_wave_switch_13: -4704583734206830225
+      chuck_wave_switch_14: 9083168691238501090
+      chuck_wave_switch_15: -3030607072665381924
+      chuck_wave_switch_2: -3594290616789106819
+      chuck_wave_switch_3: -3985057096292783545
+      chuck_wave_switch_4: 1365965278575979411
+      chuck_wave_switch_5: -4891825246823486683
+      chuck_wave_switch_6: -6006643237613972740
+      chuck_wave_switch_7: -36853776317071063
+      chuck_wave_switch_8: 5633139057022639940
+      chuck_wave_switch_9: 1884367203636630719
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
