@@ -125,7 +125,7 @@ namespace PixelOcean
                 return;
 
             updateTimer = 0f;
-            RenderSky(Time.time);
+            RenderSky(useUnscaledTime ? Time.unscaledTime : Time.time);
         }
 
         private void LateUpdate()
@@ -443,14 +443,14 @@ namespace PixelOcean
         {
             timeOfDay = Mathf.Repeat(startingTimeOfDay, 1f);
             updateTimer = 0f;
-            RenderSky(Time.time);
+            RenderSky(useUnscaledTime ? Time.unscaledTime : Time.time);
         }
 
         public void SetTimeOfDay(float normalizedTime)
         {
             timeOfDay = Mathf.Repeat(normalizedTime, 1f);
             updateTimer = 0f;
-            RenderSky(Time.time);
+            RenderSky(useUnscaledTime ? Time.unscaledTime : Time.time);
         }
 
         [ContextMenu("Set Time: Dawn")]
