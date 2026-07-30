@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System;
 using System.Linq;
 using UnityEngine;
 
@@ -43,6 +44,9 @@ namespace PixelOcean
         public static EndlessWaveSections Instance { get; private set; }
 
         public bool IsReady => ready;
+
+        /// <summary>Raised immediately after a physical ocean section is recycled.</summary>
+        public static event Action<IReadOnlyList<PixelWaterGPU>, float> SectionRecycled;
 
         public float MinimumWorldX =>
             sections.Count == 0
@@ -154,7 +158,9 @@ namespace PixelOcean
             // three strides to the right.
             if (leftSection.MaximumX < cameraLeft - recyclePadding)
             {
-                leftSection.Shift(sectionStride * 3f);
+                float recycleDistance = sectionStride * 3f;
+                leftSection.Shift(recycleDistance);
+                SectionRecycled?.Invoke(leftSection.Layers, recycleDistance);
 
                 if (logRecycling)
                 {
@@ -168,7 +174,9 @@ namespace PixelOcean
             // three strides to the left.
             else if (rightSection.MinimumX > cameraRight + recyclePadding)
             {
-                rightSection.Shift(-sectionStride * 3f);
+                float recycleDistance = -sectionStride * 3f;
+                rightSection.Shift(recycleDistance);
+                SectionRecycled?.Invoke(rightSection.Layers, recycleDistance);
 
                 if (logRecycling)
                 {

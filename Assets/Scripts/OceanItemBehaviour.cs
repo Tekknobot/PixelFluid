@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace PixelOcean
@@ -29,6 +30,34 @@ namespace PixelOcean
         private bool collected;
 
         public int ItemIndex => itemIndex;
+
+        public bool UsesAnyWater(IReadOnlyList<PixelWaterGPU> layers)
+        {
+            if (layers == null) return false;
+            for (int i = 0; i < layers.Count; i++)
+            {
+                if (layers[i] == foregroundWater || layers[i] == backgroundWater)
+                    return true;
+            }
+            return false;
+        }
+
+        public void ApplySectionShift(float horizontalDistance)
+        {
+            if (collected || Mathf.Abs(horizontalDistance) <= Mathf.Epsilon) return;
+
+            minX += horizontalDistance;
+            maxX += horizontalDistance;
+
+            Vector2 shifted = new(transform.position.x + horizontalDistance, transform.position.y);
+            transform.position = new Vector3(shifted.x, shifted.y, transform.position.z);
+            if (body != null)
+            {
+                body.position = shifted;
+                body.linearVelocity = Vector2.zero;
+                body.angularVelocity = 0f;
+            }
+        }
 
         public void Initialise(
             OceanItemSpawner newOwner,

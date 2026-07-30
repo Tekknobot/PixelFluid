@@ -27,6 +27,38 @@ namespace PixelOcean
         private readonly List<PixelWaterGPU> waters = new();
         private Sprite[] itemSprites;
 
+
+        private void OnEnable()
+        {
+            EndlessWaveSections.SectionRecycled += HandleSectionRecycled;
+        }
+
+        private void OnDisable()
+        {
+            EndlessWaveSections.SectionRecycled -= HandleSectionRecycled;
+        }
+
+        private void HandleSectionRecycled(IReadOnlyList<PixelWaterGPU> recycledLayers, float horizontalDistance)
+        {
+            List<int> missing = null;
+            foreach (KeyValuePair<int, OceanItemBehaviour> pair in liveItems.ToArray())
+            {
+                OceanItemBehaviour item = pair.Value;
+                if (item == null)
+                {
+                    missing ??= new List<int>();
+                    missing.Add(pair.Key);
+                    continue;
+                }
+
+                if (item.UsesAnyWater(recycledLayers))
+                    item.ApplySectionShift(horizontalDistance);
+            }
+
+            if (missing != null)
+                foreach (int index in missing) liveItems.Remove(index);
+        }
+
         private IEnumerator Start()
         {
             if (oceanItemPickupClip == null)

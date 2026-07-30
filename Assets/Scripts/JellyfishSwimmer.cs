@@ -34,6 +34,21 @@ namespace PixelOcean
         private bool initialised;
         private float lastFacingDirection = 1f;
 
+        private bool removalReported;
+
+        private void OnDestroy()
+        {
+            if (removalReported)
+                return;
+
+            removalReported = true;
+            JellyfishSchoolSpawner owner = school != null
+                ? school.GetComponent<JellyfishSchoolSpawner>()
+                : GetComponentInParent<JellyfishSchoolSpawner>();
+            if (owner != null)
+                owner.NotifyJellyfishRemoved(gameObject);
+        }
+
         public void Initialise(
             JellyfishSchoolController schoolController,
             Vector2 offset,
