@@ -328,7 +328,7 @@ namespace PixelOcean
             image.raycastTarget = false;
             image.sprite = Resources.Load<Sprite>("SurferSlugUI/controls_diagram");
 
-            CreatePlainButton(controlsPanel.transform, "BACK", ShowMainLayout);
+            CreateSpriteButton(controlsPanel.transform, "back_button", ShowMainLayout);
 
             controlsPanel.SetActive(false);
         }
@@ -341,7 +341,7 @@ namespace PixelOcean
             CreateToggleRow(settingsPanel.transform, "FULLSCREEN", Screen.fullScreen,
                 value => Screen.fullScreen = value);
             CreateToggleRow(settingsPanel.transform, "DIALOGUE BUBBLES", true, _ => { });
-            Button back = CreatePlainButton(settingsPanel.transform, "BACK", ShowMainLayout);
+            Button back = CreateSpriteButton(settingsPanel.transform, "back_button", ShowMainLayout);
             settingsPanel.SetActive(false);
         }
 
