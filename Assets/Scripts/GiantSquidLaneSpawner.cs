@@ -21,7 +21,7 @@ namespace PixelOcean
         }
 
         [ContextMenu("Spawn Giant Squid")]
-        public void SpawnSquid()
+        public void SpawnSquid(bool spawnAtSectionEdge = false)
         {
             if (spawnedSquid != null)
                 return;
@@ -43,7 +43,7 @@ namespace PixelOcean
             spawnedSquid.AddComponent<InterWaveRenderItem>();
             spawnedSquid.AddComponent<GiantSquidSpriteAnimation>();
             GiantSquidLaneSwimmer swimmer = spawnedSquid.AddComponent<GiantSquidLaneSwimmer>();
-            swimmer.Initialise(startingLane);
+            swimmer.Initialise(startingLane, spawnAtSectionEdge);
         }
     }
 }

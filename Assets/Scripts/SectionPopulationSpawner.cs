@@ -112,23 +112,36 @@ namespace PixelOcean
                 return;
             }
 
-            // Spawn ordinary types once inside every section. Jellyfish are a
-            // single rare school, so they are placed in only one random section.
+            // Ordinary pickups/NPCs still appear in every section. The three
+            // major sea creatures are shuffled and distributed exactly one per
+            // section, so no section receives a shark, squid and whale together.
             int jellyfishSectionIndex = Random.Range(0, centres.Count);
+            List<SpawnKind> majorCreatures = BuildMajorCreaturePool();
+            Shuffle(majorCreatures);
+
             for (int sectionIndex = 0; sectionIndex < centres.Count; sectionIndex++)
             {
                 float sectionCentreX = centres[sectionIndex];
 
                 foreach (SpawnKind kind in enabledKinds)
                 {
+                    if (IsMajorCreature(kind))
+                        continue;
+
                     if (kind == SpawnKind.JellyfishSchool &&
                         sectionIndex != jellyfishSectionIndex)
                         continue;
 
+                    CreateSectionSpawner(sectionIndex, sectionCentreX, kind);
+                }
+
+                if (sectionIndex < majorCreatures.Count)
+                {
                     CreateSectionSpawner(
                         sectionIndex,
                         sectionCentreX,
-                        kind);
+                        majorCreatures[sectionIndex],
+                        spawnAtSectionEdge: true);
                 }
             }
 
@@ -160,7 +173,7 @@ namespace PixelOcean
                 this);
         }
 
-        private void CreateSectionSpawner(int sectionIndex, float sectionCentreX, SpawnKind kind)
+        private void CreateSectionSpawner(int sectionIndex, float sectionCentreX, SpawnKind kind, bool spawnAtSectionEdge = false)
         {
             GameObject holder = new($"Section {sectionIndex + 1} Population - {kind}");
             holder.transform.SetParent(transform, false);
@@ -182,20 +195,44 @@ namespace PixelOcean
                     break;
 
                 case SpawnKind.Shark:
-                    holder.AddComponent<SharkLaneSpawner>().SpawnShark();
+                    holder.AddComponent<SharkLaneSpawner>().SpawnShark(spawnAtSectionEdge);
                     break;
 
                 case SpawnKind.GiantSquid:
-                    holder.AddComponent<GiantSquidLaneSpawner>().SpawnSquid();
+                    holder.AddComponent<GiantSquidLaneSpawner>().SpawnSquid(spawnAtSectionEdge);
                     break;
 
                 case SpawnKind.Whale:
-                    holder.AddComponent<WhaleLaneSpawner>().SpawnWhale();
+                    holder.AddComponent<WhaleLaneSpawner>().SpawnWhale(spawnAtSectionEdge);
                     break;
 
                 case SpawnKind.JellyfishSchool:
                     holder.AddComponent<JellyfishSchoolSpawner>().SpawnSchool();
                     break;
+            }
+        }
+
+
+        private List<SpawnKind> BuildMajorCreaturePool()
+        {
+            List<SpawnKind> pool = new();
+            if (includeSharks) pool.Add(SpawnKind.Shark);
+            if (includeGiantSquids) pool.Add(SpawnKind.GiantSquid);
+            if (includeWhales) pool.Add(SpawnKind.Whale);
+            return pool;
+        }
+
+        private static bool IsMajorCreature(SpawnKind kind) =>
+            kind == SpawnKind.Shark ||
+            kind == SpawnKind.GiantSquid ||
+            kind == SpawnKind.Whale;
+
+        private static void Shuffle<T>(IList<T> values)
+        {
+            for (int i = values.Count - 1; i > 0; i--)
+            {
+                int swapIndex = Random.Range(0, i + 1);
+                (values[i], values[swapIndex]) = (values[swapIndex], values[i]);
             }
         }
 

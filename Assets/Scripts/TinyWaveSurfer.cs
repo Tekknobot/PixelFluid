@@ -75,7 +75,7 @@ namespace PixelOcean
         [SerializeField, Min(0.1f)] private float maximumSkidChargeTime = 1.5f;
         [SerializeField, Min(0.05f)] private float minimumSkidChargeTime = 0.12f;
         [SerializeField, Min(0.1f)] private float minimumSkidDuration = 0.35f;
-        [SerializeField, Min(0.1f)] private float maximumSkidDuration = 1.35f;
+        [SerializeField, Min(0.1f)] private float maximumSkidDuration = 3.35f;
         [SerializeField, Min(0.1f)] private float minimumSkidSpeed = 3.5f;
         [SerializeField, Min(0.1f)] private float maximumSkidSpeed = 9f;
         [SerializeField, Range(0f, 0.2f)] private float chargeShakeAmount = 0.035f;
@@ -91,9 +91,9 @@ namespace PixelOcean
         [Header("Forward Obstacle Surf Jump")]
         [Tooltip("Hold left/right and press Jump (controller A / keyboard Space) to launch forward over hazards.")]
         [SerializeField] private bool enableForwardObstacleJump = true;
-        [SerializeField, Min(0.15f)] private float obstacleJumpDuration = 0.62f;
+        [SerializeField, Min(0.15f)] private float obstacleJumpDuration = 1.62f;
         [SerializeField, Min(0.05f)] private float obstacleJumpHeight = 0.72f;
-        [SerializeField, Min(0.1f)] private float obstacleJumpDistance = 2.15f;
+        [SerializeField, Min(0.1f)] private float obstacleJumpDistance = 3.15f;
         [Tooltip("Minimum directional input needed to choose the forward obstacle jump.")]
         [SerializeField, Range(0.05f, 1f)] private float obstacleJumpInputThreshold = 0.25f;
         [Tooltip("How strongly horizontal travel eases into the landing.")]
@@ -254,6 +254,8 @@ namespace PixelOcean
             Animator.StringToHash("Idle");
         private static readonly int MoveStateHash =
             Animator.StringToHash("chuck_move");
+        private static readonly int SurfJumpStateHash =
+            Animator.StringToHash("chuck_surf_jump");
         private static readonly int DeathStateHash =
             Animator.StringToHash("chuck_death");
         private static readonly int ProneStateHash =
@@ -901,9 +903,11 @@ namespace PixelOcean
                 state == RiderState.Riding &&
                 playerIdleTimer >= proneIdleDelay;
 
-            int desiredStateHash = useProne
-                ? ProneStateHash
-                : moving ? MoveStateHash : IdleStateHash;
+            int desiredStateHash = obstacleJumpActive && state == RiderState.TurningTrick
+                ? SurfJumpStateHash
+                : useProne
+                    ? ProneStateHash
+                    : moving ? MoveStateHash : IdleStateHash;
 
             if (!force && currentAnimationStateHash == desiredStateHash)
                 return;
@@ -2006,6 +2010,11 @@ namespace PixelOcean
                 obstacleJumpStartX + direction * obstacleJumpDistance);
             airStartY = currentWave.GetGameplaySurfaceHeight(localRideX) + surfaceOffset;
             flipTrick = false;
+
+            // Start the dedicated surf-jump clip immediately. UpdateAnimation()
+            // keeps this state active for the full obstacle jump and will not let
+            // the ordinary move/idle animation replace it while airborne.
+            UpdateAnimation(true, true);
         }
 
         private void UpdateTurnTrick()
@@ -2100,6 +2109,12 @@ namespace PixelOcean
             ApplyFacing(
                 spriteWorldScale,
                 spriteWorldScale);
+
+            // Restore the appropriate riding animation as soon as the board
+            // touches the wave again.
+            UpdateAnimation(
+                Mathf.Abs(playerHorizontalVelocity) > 0.03f,
+                true);
         }
 
         [ContextMenu("Ride Next Wave")]

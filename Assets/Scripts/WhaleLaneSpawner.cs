@@ -22,7 +22,7 @@ namespace PixelOcean
         }
 
         [ContextMenu("Spawn Whale")]
-        public void SpawnWhale()
+        public void SpawnWhale(bool spawnAtSectionEdge = false)
         {
             if (spawnedWhale != null)
                 return;
@@ -49,7 +49,7 @@ namespace PixelOcean
             animation.SetFrames(frames);
 
             WhaleLaneSwimmer swimmer = spawnedWhale.AddComponent<WhaleLaneSwimmer>();
-            swimmer.Initialise(startingLane);
+            swimmer.Initialise(startingLane, spawnAtSectionEdge);
         }
     }
 }

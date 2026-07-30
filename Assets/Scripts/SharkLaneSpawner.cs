@@ -27,7 +27,7 @@ namespace PixelOcean
         }
 
         [ContextMenu("Spawn Shark")]
-        public void SpawnShark()
+        public void SpawnShark(bool spawnAtSectionEdge = false)
         {
             if (spawnedShark != null)
                 return;
@@ -51,7 +51,7 @@ namespace PixelOcean
             if (swimmer == null)
                 swimmer = spawnedShark.AddComponent<SharkLaneSwimmer>();
 
-            swimmer.Initialise(startingLane);
+            swimmer.Initialise(startingLane, spawnAtSectionEdge);
         }
     }
 }

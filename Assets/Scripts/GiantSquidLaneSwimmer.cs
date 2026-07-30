@@ -78,7 +78,7 @@ namespace PixelOcean
         private float retreatUntil;
         private Color baseSpriteTint = Color.white;
 
-        public void Initialise(int requestedLane)
+        public void Initialise(int requestedLane, bool spawnAtSectionEdge = false)
         {
             ResolveReferences();
             EnsureAttackAudio();
@@ -95,7 +95,22 @@ namespace PixelOcean
             renderItem.SetLane(currentLane);
 
             Vector2 position = transform.position;
-            position.x = GetVisibleHorizontalCentre();
+            if (spawnAtSectionEdge)
+            {
+                float minX = waterLayers[0].TankMinimum.x;
+                float maxX = waterLayers[0].TankMaximum.x;
+                float halfWidth = spriteRenderer != null ? spriteRenderer.bounds.extents.x : 0.45f;
+                float clearance = Mathf.Max(0.75f, halfWidth + 0.35f);
+                bool enterFromLeft = Random.value < 0.5f;
+                position.x = enterFromLeft ? minX + clearance : maxX - clearance;
+                direction = enterFromLeft ? 1f : -1f;
+                if (spriteRenderer != null)
+                    spriteRenderer.flipX = !enterFromLeft;
+            }
+            else
+            {
+                position.x = GetVisibleHorizontalCentre();
+            }
             depthOffset = -Mathf.Abs(laneDepthBias);
             position.y = GetLaneCentreY(currentLane, position.x) + depthOffset;
             SetPosition(position);
