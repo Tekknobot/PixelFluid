@@ -320,6 +320,7 @@ namespace PixelOcean
         private float aiTrick;
         private float deathTimer;
         private float respawnTimer;
+        private bool managedDeathReported;
         private Vector2 deathVelocity;
         private Vector3 livingScale;
         private Color livingColor = Color.white;
@@ -959,6 +960,7 @@ namespace PixelOcean
                 deathAudioSource.PlayOneShot(humanDeathClip);
             deathTimer = 0f;
             respawnTimer = 0f;
+            managedDeathReported = false;
             float away = transform.position.x >= sharkPosition.x ? 1f : -1f;
             deathVelocity = new Vector2(away * 0.8f, deathKnockUp);
             livingScale = transform.localScale;
@@ -984,6 +986,7 @@ namespace PixelOcean
                 deathAudioSource.PlayOneShot(humanDeathClip);
             deathTimer = 0f;
             respawnTimer = 0f;
+            managedDeathReported = false;
             deathVelocity = new Vector2((ufoPosition.x - transform.position.x) * 0.35f, deathKnockUp * 1.55f);
             livingScale = transform.localScale;
             if (spriteRenderer != null)
@@ -1287,6 +1290,16 @@ namespace PixelOcean
             if (deathTimer < deathDuration)
                 return;
 
+            if (IsPlayerControlled && SurfRunLifeManager.Instance != null)
+            {
+                if (!managedDeathReported)
+                {
+                    managedDeathReported = true;
+                    SurfRunLifeManager.Instance.HandleFinishedPlayerDeath(this);
+                }
+                return;
+            }
+
             if (!respawnAfterDeath)
             {
                 gameObject.SetActive(false);
@@ -1296,6 +1309,11 @@ namespace PixelOcean
             respawnTimer += dt;
             if (respawnTimer >= respawnDelay)
                 RespawnAfterShark();
+        }
+
+        public void RespawnForManagedRun()
+        {
+            RespawnAfterShark();
         }
 
         private void RespawnAfterShark()
@@ -1318,6 +1336,7 @@ namespace PixelOcean
             UpdateAnimation(false, true);
             deathTimer = 0f;
             respawnTimer = 0f;
+            managedDeathReported = false;
             currentHealth = MaximumHealth;
             healthBar?.SetHealth(currentHealth, MaximumHealth);
             if (spriteRenderer != null) spriteRenderer.color = livingColor;

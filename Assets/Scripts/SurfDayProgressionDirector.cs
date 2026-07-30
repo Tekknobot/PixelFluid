@@ -68,17 +68,70 @@ namespace PixelOcean
 
         private IEnumerator Start()
         {
+            yield return BeginRun(false);
+        }
+
+        public IEnumerator RestartRunInPlace()
+        {
+            yield return BeginRun(true);
+        }
+
+        private IEnumerator BeginRun(bool clearPreviousRun)
+        {
+            if (clearPreviousRun)
+            {
+                ClearRunObjects();
+                yield return null; // allow deferred Destroy calls to finish
+            }
+
             float deadline = Time.realtimeSinceStartup + 12f;
             while ((EndlessWaveSections.Instance == null || !EndlessWaveSections.Instance.IsReady) &&
                    Time.realtimeSinceStartup < deadline)
                 yield return null;
 
+            runTime = 0f;
+            rescues = 0;
+            finalWaveStarted = false;
+            chapter = Chapter.Dawn;
+            banner = string.Empty;
+            objective = string.Empty;
+            bannerUntil = 0f;
+
             rain = FindFirstObjectByType<ProceduralRainSystem>();
+            rain?.ClearRain();
             BeginChapter(Chapter.Dawn, "DAWN PATROL", "SURF. STAY ALIVE. LEARN THE WATER.");
             SpawnPickupSet();
             SpawnOceanItems(12);
             SpawnJellyfishEncounter("Dawn Jellyfish", 1);
             SpawnMajor<SharkLaneSpawner>("Early Shark", spawner => spawner.SpawnShark(true));
+        }
+
+        private void ClearRunObjects()
+        {
+            foreach (GameObject holder in progressionSpawners)
+                if (holder != null) Destroy(holder);
+            progressionSpawners.Clear();
+
+            DestroyAll<SharkLaneSwimmer>();
+            DestroyAll<GiantSquidLaneSwimmer>();
+            DestroyAll<GodzillaLaneSwimmer>();
+            DestroyAll<JellyfishSwimmer>();
+            DestroyAll<WhaleLaneSwimmer>();
+            DestroyAll<StrugglingSwimmerDrifter>();
+            DestroyAll<RescuedSurferExit>();
+            DestroyAll<OceanItemBehaviour>();
+            DestroyAll<SodaCanPickup>();
+            DestroyAll<SodaCanProjectile>();
+            DestroyAll<AlienUfoController>();
+            DestroyAll<BoomboxSurferSwimmer>();
+        }
+
+        private static void DestroyAll<T>() where T : Component
+        {
+            foreach (T item in FindObjectsByType<T>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                if (item != null) Destroy(item.gameObject);
+            }
         }
 
         private void Update()
