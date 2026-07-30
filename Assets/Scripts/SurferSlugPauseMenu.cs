@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -10,12 +11,6 @@ using UnityEngine.InputSystem.UI;
 
 namespace PixelOcean
 {
-    /// <summary>
-    /// Minimal in-scene pause panel for Surfer Slug.
-    /// Start/Escape pauses gameplay scripts without changing Time.timeScale,
-    /// allowing waves, particles, weather, lighting, audio, and other visual
-    /// simulations to keep running behind the menu.
-    /// </summary>
     [DefaultExecutionOrder(-30000)]
     [DisallowMultipleComponent]
     public sealed class SurferSlugPauseMenu : MonoBehaviour
@@ -23,50 +18,38 @@ namespace PixelOcean
         public static SurferSlugPauseMenu Instance { get; private set; }
         public static bool GameplayPaused { get; private set; }
 
-        [Header("Input")]
-        [SerializeField] private KeyCode keyboardPauseKey = KeyCode.Escape;
-        [SerializeField, Min(0.05f)] private float reopenDelay = 0.18f;
-
-        [Header("Visuals")]
-        [SerializeField] private string title = "PAUSED";
-        [SerializeField] private string resumeLabel = "RESUME";
-        [SerializeField] private string controlsLabel = "CONTROLS";
-        [SerializeField] private string quitLabel = "QUIT";
-        [SerializeField] private Color screenDim = new(0f, 0.015f, 0.03f, 0.34f);
-        [SerializeField] private Color panelColor = new(0.018f, 0.065f, 0.09f, 0.94f);
-        [SerializeField] private Color normalButtonColor = new(0.035f, 0.14f, 0.18f, 1f);
-        [SerializeField] private Color selectedButtonColor = new(0.18f, 0.68f, 0.70f, 1f);
-        [SerializeField] private Color textColor = new(0.94f, 0.98f, 0.95f, 1f);
+        [Header("Startup")]
+        [SerializeField] private bool showAsMainMenuOnStart = true;
+        [SerializeField, Min(0.1f)] private float motionDuration = 0.42f;
+        [SerializeField, Min(0.05f)] private float buttonStagger = 0.055f;
+        [SerializeField] private Color screenDim = new(0f, 0f, 0f, 0.16f);
 
         private readonly List<MonoBehaviour> disabledGameplayBehaviours = new();
-        [Header("Prefab / Baked Hierarchy")]
-        [Tooltip("These references are filled automatically when the live menu is saved as a prefab.")]
-        [SerializeField] private Canvas canvas;
-        [SerializeField] private GameObject pauseRoot;
-        [SerializeField] private GameObject mainPanel;
-        [SerializeField] private GameObject controlsPanel;
-        [SerializeField] private Button resumeButton;
-        [SerializeField] private Button controlsButton;
-        [SerializeField] private Button controlsBackButton;
+        private Canvas canvas;
+        private GameObject menuRoot;
+        private RectTransform logoPanel;
+        private RectTransform buttonPanel;
+        private GameObject controlsPanel;
+        private GameObject settingsPanel;
+        private Button playButton;
+        private Button controlsButton;
+        private Button settingsButton;
+        private Button quitButton;
+        private Image logoImage;
+        private Sprite[] logoFrames;
+        private Coroutine motionRoutine;
+        private Coroutine logoRoutine;
+        private bool firstMenu = true;
+        private bool menuVisible;
         private float inputReadyTime;
 
         private static readonly HashSet<string> SimulationTypeNames = new(StringComparer.Ordinal)
         {
-            nameof(PixelWaterGPU),
-            nameof(PixelWaterSimulation),
-            nameof(PixelWaterRenderer),
-            nameof(EndlessWaveSections),
-            nameof(ProceduralWaveAudio),
-            nameof(ProceduralStarryNight),
-            "ProceduralDayNightSystem",
-            nameof(ProceduralRainSystem),
-            nameof(ProceduralHorizonFog),
-            nameof(TropicalSeabed),
-            nameof(SceneFadeIn),
-            "InterWaveLaneSystem",
-            "InterWaveLane",
-            "InterWaveRenderItem",
-            "InterWaveWorldItem"
+            nameof(PixelWaterGPU), nameof(PixelWaterSimulation), nameof(PixelWaterRenderer),
+            nameof(EndlessWaveSections), nameof(ProceduralWaveAudio), nameof(ProceduralStarryNight),
+            "ProceduralDayNightSystem", nameof(ProceduralRainSystem), nameof(ProceduralHorizonFog),
+            nameof(TropicalSeabed), nameof(SceneFadeIn), "InterWaveLaneSystem", "InterWaveLane",
+            "InterWaveRenderItem", "InterWaveWorldItem"
         };
 
         private void Awake()
@@ -78,13 +61,22 @@ namespace PixelOcean
             }
 
             Instance = this;
+            BuildMenu();
+        }
 
-            if (HasBakedHierarchy())
-                EnsureEventSystem();
+        private void Start()
+        {
+            if (showAsMainMenuOnStart)
+            {
+                GameplayPaused = true;
+                DisableGameplayBehaviours();
+                ShowMenu(true);
+            }
             else
-                BuildMenu();
-
-            SetMenuVisible(false);
+            {
+                menuRoot.SetActive(false);
+                firstMenu = false;
+            }
         }
 
         private void Update()
@@ -95,10 +87,15 @@ namespace PixelOcean
             if (!PausePressed())
                 return;
 
-            if (GameplayPaused)
-                ResumeGame();
+            if (menuVisible)
+            {
+                if (!firstMenu)
+                    ResumeGame();
+            }
             else
+            {
                 PauseGame();
+            }
         }
 
         private void OnDestroy()
@@ -108,95 +105,104 @@ namespace PixelOcean
 
             RestoreGameplayBehaviours();
             GameplayPaused = false;
-
             Instance = null;
         }
 
         public void PauseGame()
         {
-            if (GameplayPaused)
+            if (menuVisible)
                 return;
 
             GameplayPaused = true;
             DisableGameplayBehaviours();
-            ShowMainPanel();
-            SetMenuVisible(true);
-            inputReadyTime = Time.unscaledTime + reopenDelay;
-            Select(resumeButton);
+            ShowMenu(false);
         }
 
         public void ResumeGame()
         {
-            if (!GameplayPaused)
+            if (!menuVisible)
                 return;
 
-            RestoreGameplayBehaviours();
+            firstMenu = false;
+            if (motionRoutine != null)
+                StopCoroutine(motionRoutine);
+            motionRoutine = StartCoroutine(HideAnimated());
+        }
+
+        private void ShowMenu(bool isMainMenu)
+        {
+            firstMenu = isMainMenu;
+            menuVisible = true;
+            menuRoot.SetActive(true);
+            controlsPanel.SetActive(false);
+            settingsPanel.SetActive(false);
+            logoPanel.gameObject.SetActive(true);
+            buttonPanel.gameObject.SetActive(true);
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+
+            if (motionRoutine != null)
+                StopCoroutine(motionRoutine);
+            motionRoutine = StartCoroutine(ShowAnimated());
+            inputReadyTime = Time.unscaledTime + motionDuration + 0.12f;
+        }
+
+        private IEnumerator ShowAnimated()
+        {
+            Vector2 logoTarget = new(-390f, 0f);
+            Vector2 buttonsTarget = new(560f, 0f);
+            Vector2 logoStart = new(-1450f, 0f);
+            Vector2 buttonsStart = new(1500f, 0f);
+
+            logoPanel.anchoredPosition = logoStart;
+            buttonPanel.anchoredPosition = buttonsStart;
+
+            float elapsed = 0f;
+            while (elapsed < motionDuration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = EaseOutBack(Mathf.Clamp01(elapsed / motionDuration));
+                logoPanel.anchoredPosition = Vector2.LerpUnclamped(logoStart, logoTarget, t);
+                buttonPanel.anchoredPosition = Vector2.LerpUnclamped(buttonsStart, buttonsTarget, t);
+                yield return null;
+            }
+
+            logoPanel.anchoredPosition = logoTarget;
+            buttonPanel.anchoredPosition = buttonsTarget;
+            Select(playButton);
+        }
+
+        private IEnumerator HideAnimated()
+        {
+            Vector2 logoStart = logoPanel.anchoredPosition;
+            Vector2 buttonStart = buttonPanel.anchoredPosition;
+            Vector2 logoEnd = new(-1450f, 0f);
+            Vector2 buttonEnd = new(1500f, 0f);
+
+            float elapsed = 0f;
+            while (elapsed < motionDuration * 0.72f)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = EaseInCubic(Mathf.Clamp01(elapsed / (motionDuration * 0.72f)));
+                logoPanel.anchoredPosition = Vector2.LerpUnclamped(logoStart, logoEnd, t);
+                buttonPanel.anchoredPosition = Vector2.LerpUnclamped(buttonStart, buttonEnd, t);
+                yield return null;
+            }
+
+            menuRoot.SetActive(false);
+            menuVisible = false;
             GameplayPaused = false;
-            SetMenuVisible(false);
-            inputReadyTime = Time.unscaledTime + reopenDelay;
+            RestoreGameplayBehaviours();
             EventSystem.current?.SetSelectedGameObject(null);
-        }
-
-        private void DisableGameplayBehaviours()
-        {
-            disabledGameplayBehaviours.Clear();
-
-            MonoBehaviour[] behaviours = FindObjectsByType<MonoBehaviour>(
-                FindObjectsInactive.Exclude,
-                FindObjectsSortMode.None);
-
-            foreach (MonoBehaviour behaviour in behaviours)
-            {
-                if (behaviour == null || !behaviour.enabled)
-                    continue;
-
-                if (behaviour == this || behaviour.transform.IsChildOf(transform))
-                    continue;
-
-                Type type = behaviour.GetType();
-                if (type.Namespace != typeof(SurferSlugPauseMenu).Namespace)
-                    continue;
-
-                if (SimulationTypeNames.Contains(type.Name))
-                    continue;
-
-                behaviour.enabled = false;
-                disabledGameplayBehaviours.Add(behaviour);
-            }
-        }
-
-        private void RestoreGameplayBehaviours()
-        {
-            foreach (MonoBehaviour behaviour in disabledGameplayBehaviours)
-            {
-                if (behaviour != null)
-                    behaviour.enabled = true;
-            }
-
-            disabledGameplayBehaviours.Clear();
-        }
-
-        private bool PausePressed()
-        {
-#if ENABLE_INPUT_SYSTEM
-            bool keyboard = Keyboard.current != null &&
-                Keyboard.current.escapeKey.wasPressedThisFrame;
-            bool gamepad = Gamepad.current != null &&
-                Gamepad.current.startButton.wasPressedThisFrame;
-            return keyboard || gamepad;
-#else
-            return Input.GetKeyDown(keyboardPauseKey) ||
-                   Input.GetKeyDown(KeyCode.JoystickButton7);
-#endif
+            inputReadyTime = Time.unscaledTime + 0.16f;
         }
 
         private void BuildMenu()
         {
             EnsureEventSystem();
 
-            GameObject canvasObject = new("Pause Menu Canvas");
+            GameObject canvasObject = new("Surfer Slug Front End Canvas");
             canvasObject.transform.SetParent(transform, false);
-
             canvas = canvasObject.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 32000;
@@ -208,74 +214,271 @@ namespace PixelOcean
             scaler.matchWidthOrHeight = 0.5f;
             canvasObject.AddComponent<GraphicRaycaster>();
 
-            pauseRoot = CreateObject(canvasObject.transform, "Pause Root");
-            Stretch(pauseRoot.GetComponent<RectTransform>());
-            Image dim = pauseRoot.AddComponent<Image>();
+            menuRoot = CreateUIObject(canvasObject.transform, "Menu Root");
+            Stretch(menuRoot.GetComponent<RectTransform>());
+            Image dim = menuRoot.AddComponent<Image>();
             dim.color = screenDim;
 
-            mainPanel = CreatePanel(pauseRoot.transform, "Main Panel");
-            SetRect(mainPanel.GetComponent<RectTransform>(),
-                new Vector2(0.38f, 0.22f), new Vector2(0.62f, 0.78f));
-            AddVerticalLayout(mainPanel, 16f, new RectOffset(38, 38, 36, 36));
-
-            Text heading = CreateText(mainPanel.transform, title, 44, TextAnchor.MiddleCenter);
-            heading.gameObject.AddComponent<LayoutElement>().preferredHeight = 96f;
-
-            resumeButton = CreateButton(mainPanel.transform, resumeLabel, ResumeGame);
-            controlsButton = CreateButton(mainPanel.transform, controlsLabel, ShowControlsPanel);
-            CreateButton(mainPanel.transform, quitLabel, QuitGame);
-
-            Text hint = CreateText(mainPanel.transform,
-                "START / ESC TO RESUME", 18, TextAnchor.MiddleCenter);
-            hint.color = new Color(textColor.r, textColor.g, textColor.b, 0.62f);
-            hint.gameObject.AddComponent<LayoutElement>().preferredHeight = 46f;
-
-            controlsPanel = CreatePanel(pauseRoot.transform, "Controls Panel");
-            SetRect(controlsPanel.GetComponent<RectTransform>(),
-                new Vector2(0.27f, 0.15f), new Vector2(0.73f, 0.85f));
-            AddVerticalLayout(controlsPanel, 12f, new RectOffset(46, 46, 36, 36));
-
-            Text controlsHeading = CreateText(
-                controlsPanel.transform, "CONTROLS", 40, TextAnchor.MiddleCenter);
-            controlsHeading.gameObject.AddComponent<LayoutElement>().preferredHeight = 82f;
-
-            Text controls = CreateText(controlsPanel.transform,
-                "MOVE                 A / D  •  LEFT STICK\n\n" +
-                "CHANGE WAVE          UP / DOWN  •  D-PAD\n\n" +
-                "JUMP                 SPACE  •  A\n\n" +
-                "ACTION / TRICK       F / X  •  X\n\n" +
-                "CAMERA               Z  •  Y\n\n" +
-                "PAUSE                ESC  •  START",
-                25,
-                TextAnchor.MiddleLeft);
-            controls.gameObject.AddComponent<LayoutElement>().preferredHeight = 430f;
-
-            controlsBackButton = CreateButton(
-                controlsPanel.transform, "BACK", ShowMainPanel);
-
-            ShowMainPanel();
+            BuildLogo(menuRoot.transform);
+            BuildButtons(menuRoot.transform);
+            BuildControls(menuRoot.transform);
+            BuildSettings(menuRoot.transform);
         }
 
-        private void ShowMainPanel()
+        private void BuildLogo(Transform parent)
         {
-            mainPanel.SetActive(true);
+            GameObject logoObject = CreateUIObject(parent, "Animated Logotype");
+            logoPanel = logoObject.GetComponent<RectTransform>();
+            logoPanel.anchorMin = logoPanel.anchorMax = new Vector2(0.5f, 0.55f);
+            logoPanel.pivot = new Vector2(0.5f, 0.5f);
+            logoPanel.sizeDelta = Vector2.zero;
+
+            logoImage = logoObject.AddComponent<Image>();
+            logoImage.preserveAspect = true;
+            logoImage.raycastTarget = false;
+
+            logoFrames = Resources.LoadAll<Sprite>("SurferSlugUI/surfer_slug_logotype-sheet");
+            Array.Sort(logoFrames, (a, b) => string.CompareOrdinal(a.name, b.name));
+            if (logoFrames.Length > 0)
+            {
+                logoImage.sprite = logoFrames[0];
+                logoImage.SetNativeSize();
+                logoRoutine = StartCoroutine(AnimateLogo());
+            }
+        }
+
+        private IEnumerator AnimateLogo()
+        {
+            int frame = 0;
+            while (true)
+            {
+                if (logoFrames.Length > 0 && logoImage != null)
+                {
+                    logoImage.sprite = logoFrames[frame % logoFrames.Length];
+                    frame++;
+                }
+                yield return new WaitForSecondsRealtime(0.10f);
+            }
+        }
+
+        private void BuildButtons(Transform parent)
+        {
+            GameObject panel = CreateUIObject(parent, "Button Column");
+            buttonPanel = panel.GetComponent<RectTransform>();
+            buttonPanel.anchorMin = buttonPanel.anchorMax = new Vector2(0.5f, 0.5f);
+            buttonPanel.pivot = new Vector2(0.5f, 0.5f);
+            buttonPanel.sizeDelta = new Vector2(430f, 590f);
+
+            VerticalLayoutGroup layout = panel.AddComponent<VerticalLayoutGroup>();
+            layout.spacing = 26f;
+            layout.padding = new RectOffset(0, 0, 0, 0);
+            layout.childAlignment = TextAnchor.MiddleCenter;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+
+            playButton = CreateSpriteButton(panel.transform, "play_button", PlayPressed);
+            controlsButton = CreateSpriteButton(panel.transform, "controls_button", ShowControls);
+            settingsButton = CreateSpriteButton(panel.transform, "settings_button", ShowSettings);
+            quitButton = CreateSpriteButton(panel.transform, "quit_button", QuitGame);
+
+            controlsButton.gameObject.SetActive(false);
+            settingsButton.gameObject.SetActive(false);
+        }
+
+        private Button CreateSpriteButton(Transform parent, string resourceName, UnityEngine.Events.UnityAction action)
+        {
+            GameObject go = CreateUIObject(parent, resourceName);
+            LayoutElement le = go.AddComponent<LayoutElement>();
+            le.preferredHeight = 112f;
+            le.preferredWidth = 400f;
+
+            Image image = go.AddComponent<Image>();
+            Sprite[] sprites = Resources.LoadAll<Sprite>("SurferSlugUI/Buttons/" + resourceName);
+            image.sprite = sprites.Length > 0 ? sprites[0] : null;
+            image.preserveAspect = true;
+
+            Button button = go.AddComponent<Button>();
+            button.transition = Selectable.Transition.ColorTint;
+            ColorBlock colors = button.colors;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(1f, 0.86f, 0.50f, 1f);
+            colors.selectedColor = new Color(1f, 0.86f, 0.50f, 1f);
+            colors.pressedColor = new Color(0.72f, 0.82f, 1f, 1f);
+            colors.fadeDuration = 0.08f;
+            button.colors = colors;
+            button.onClick.AddListener(action);
+            return button;
+        }
+
+        private void BuildControls(Transform parent)
+        {
+            controlsPanel = CreateSubPanel(parent, "Controls Panel");
+            AddText(controlsPanel.transform, "CONTROLS", 44, 90f);
+            AddText(controlsPanel.transform,
+                "MOVE     A / D  •  LEFT STICK\n\nCHANGE WAVE     UP / DOWN  •  D-PAD\n\nJUMP     SPACE  •  A\n\nACTION / TRICK     F / X  •  X\n\nCAMERA     Z  •  Y\n\nPAUSE     ESC  •  START",
+                25, 420f);
+            Button back = CreatePlainButton(controlsPanel.transform, "BACK", ShowMainLayout);
             controlsPanel.SetActive(false);
-            Select(resumeButton);
         }
 
-        private void ShowControlsPanel()
+        private void BuildSettings(Transform parent)
         {
-            mainPanel.SetActive(false);
+            settingsPanel = CreateSubPanel(parent, "Settings Panel");
+            AddText(settingsPanel.transform, "SETTINGS", 44, 90f);
+            CreateVolumeRow(settingsPanel.transform, "MASTER VOLUME");
+            CreateToggleRow(settingsPanel.transform, "FULLSCREEN", Screen.fullScreen,
+                value => Screen.fullScreen = value);
+            CreateToggleRow(settingsPanel.transform, "DIALOGUE BUBBLES", true, _ => { });
+            Button back = CreatePlainButton(settingsPanel.transform, "BACK", ShowMainLayout);
+            settingsPanel.SetActive(false);
+        }
+
+        private GameObject CreateSubPanel(Transform parent, string name)
+        {
+            GameObject panel = CreateUIObject(parent, name);
+            RectTransform rect = panel.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = new Vector2(720f, 700f);
+            rect.anchoredPosition = Vector2.zero;
+            Image image = panel.AddComponent<Image>();
+            image.color = new Color(0.04f, 0.04f, 0.055f, 0.96f);
+            Outline outline = panel.AddComponent<Outline>();
+            outline.effectColor = new Color(0.55f, 0.53f, 0.57f, 1f);
+            outline.effectDistance = new Vector2(4f, -4f);
+            VerticalLayoutGroup layout = panel.AddComponent<VerticalLayoutGroup>();
+            layout.padding = new RectOffset(55, 55, 45, 45);
+            layout.spacing = 18f;
+            layout.childAlignment = TextAnchor.UpperCenter;
+            layout.childControlHeight = true;
+            layout.childControlWidth = true;
+            layout.childForceExpandHeight = false;
+            return panel;
+        }
+
+        private void ShowControls()
+        {
+            logoPanel.gameObject.SetActive(false);
+            buttonPanel.gameObject.SetActive(false);
+            settingsPanel.SetActive(false);
             controlsPanel.SetActive(true);
-            Select(controlsBackButton);
+            Select(controlsPanel.GetComponentInChildren<Button>());
         }
 
-        private void SetMenuVisible(bool visible)
+        private void ShowSettings()
         {
-            pauseRoot.SetActive(visible);
-            Cursor.visible = visible;
-            if (visible)
-                Cursor.lockState = CursorLockMode.None;
+            logoPanel.gameObject.SetActive(false);
+            buttonPanel.gameObject.SetActive(false);
+            controlsPanel.SetActive(false);
+            settingsPanel.SetActive(true);
+            Select(settingsPanel.GetComponentInChildren<Selectable>());
+        }
+
+        private void ShowMainLayout()
+        {
+            controlsPanel.SetActive(false);
+            settingsPanel.SetActive(false);
+            logoPanel.gameObject.SetActive(true);
+            buttonPanel.gameObject.SetActive(true);
+            Select(playButton);
+        }
+
+        private void PlayPressed()
+        {
+            ResumeGame();
+        }
+
+        private void DisableGameplayBehaviours()
+        {
+            disabledGameplayBehaviours.Clear();
+            MonoBehaviour[] behaviours = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            foreach (MonoBehaviour behaviour in behaviours)
+            {
+                if (behaviour == null || !behaviour.enabled || behaviour == this || behaviour.transform.IsChildOf(transform))
+                    continue;
+                Type type = behaviour.GetType();
+                if (type.Namespace != typeof(SurferSlugPauseMenu).Namespace || SimulationTypeNames.Contains(type.Name))
+                    continue;
+                behaviour.enabled = false;
+                disabledGameplayBehaviours.Add(behaviour);
+            }
+        }
+
+        private void RestoreGameplayBehaviours()
+        {
+            foreach (MonoBehaviour behaviour in disabledGameplayBehaviours)
+                if (behaviour != null) behaviour.enabled = true;
+            disabledGameplayBehaviours.Clear();
+        }
+
+        private bool PausePressed()
+        {
+#if ENABLE_INPUT_SYSTEM
+            return (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) ||
+                   (Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame);
+#else
+            return Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.JoystickButton7);
+#endif
+        }
+
+        private void EnsureEventSystem()
+        {
+            if (FindFirstObjectByType<EventSystem>() != null) return;
+            GameObject go = new("Menu EventSystem");
+            go.transform.SetParent(transform, false);
+            go.AddComponent<EventSystem>();
+#if ENABLE_INPUT_SYSTEM
+            go.AddComponent<InputSystemUIInputModule>();
+#else
+            go.AddComponent<StandaloneInputModule>();
+#endif
+        }
+
+        private Text AddText(Transform parent, string text, int size, float height)
+        {
+            GameObject go = CreateUIObject(parent, text + " Text");
+            LayoutElement le = go.AddComponent<LayoutElement>();
+            le.preferredHeight = height;
+            Text label = go.AddComponent<Text>();
+            label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            label.text = text;
+            label.fontSize = size;
+            label.alignment = TextAnchor.MiddleCenter;
+            label.color = new Color(0.92f, 0.81f, 0.57f, 1f);
+            label.raycastTarget = false;
+            return label;
+        }
+
+        private Button CreatePlainButton(Transform parent, string text, UnityEngine.Events.UnityAction action)
+        {
+            GameObject go = CreateUIObject(parent, text + " Button");
+            LayoutElement le = go.AddComponent<LayoutElement>(); le.preferredHeight = 72f;
+            Image img = go.AddComponent<Image>(); img.color = new Color(0.16f, 0.15f, 0.18f, 1f);
+            Button button = go.AddComponent<Button>(); button.onClick.AddListener(action);
+            Text label = AddText(go.transform, text, 25, 0f); Stretch(label.rectTransform);
+            return button;
+        }
+
+        private void CreateVolumeRow(Transform parent, string label)
+        {
+            AddText(parent, label, 24, 55f);
+            GameObject go = CreateUIObject(parent, label + " Slider");
+            LayoutElement le = go.AddComponent<LayoutElement>(); le.preferredHeight = 48f;
+            Slider slider = go.AddComponent<Slider>();
+            Image bg = go.AddComponent<Image>(); bg.color = new Color(0.16f, 0.15f, 0.18f, 1f);
+            slider.targetGraphic = bg; slider.minValue = 0f; slider.maxValue = 1f; slider.value = AudioListener.volume;
+            slider.onValueChanged.AddListener(value => AudioListener.volume = value);
+        }
+
+        private void CreateToggleRow(Transform parent, string label, bool value, UnityEngine.Events.UnityAction<bool> callback)
+        {
+            GameObject go = CreateUIObject(parent, label + " Toggle");
+            LayoutElement le = go.AddComponent<LayoutElement>(); le.preferredHeight = 58f;
+            Toggle toggle = go.AddComponent<Toggle>(); toggle.isOn = value; toggle.onValueChanged.AddListener(callback);
+            Image bg = go.AddComponent<Image>(); bg.color = new Color(0.16f, 0.15f, 0.18f, 1f); toggle.targetGraphic = bg;
+            Text text = AddText(go.transform, label + "     " + (value ? "ON" : "OFF"), 23, 0f); Stretch(text.rectTransform);
+            toggle.onValueChanged.AddListener(v => text.text = label + "     " + (v ? "ON" : "OFF"));
         }
 
         private void QuitGame()
@@ -289,140 +492,42 @@ namespace PixelOcean
 #endif
         }
 
-        private void EnsureEventSystem()
+        private static float EaseOutBack(float t)
         {
-            if (FindFirstObjectByType<EventSystem>() != null)
-                return;
-
-            GameObject eventSystemObject = new("Pause Menu EventSystem");
-            eventSystemObject.transform.SetParent(transform, false);
-            eventSystemObject.AddComponent<EventSystem>();
-#if ENABLE_INPUT_SYSTEM
-            eventSystemObject.AddComponent<InputSystemUIInputModule>();
-#else
-            eventSystemObject.AddComponent<StandaloneInputModule>();
-#endif
+            const float c1 = 1.70158f; const float c3 = c1 + 1f;
+            return 1f + c3 * Mathf.Pow(t - 1f, 3f) + c1 * Mathf.Pow(t - 1f, 2f);
         }
 
-        private GameObject CreatePanel(Transform parent, string name)
+        private static float EaseInCubic(float t) => t * t * t;
+
+        private static GameObject CreateUIObject(Transform parent, string name)
         {
-            GameObject panel = CreateObject(parent, name);
-            Image image = panel.AddComponent<Image>();
-            image.color = panelColor;
-            Outline outline = panel.AddComponent<Outline>();
-            outline.effectColor = new Color(selectedButtonColor.r,
-                selectedButtonColor.g, selectedButtonColor.b, 0.72f);
-            outline.effectDistance = new Vector2(2f, -2f);
-            return panel;
-        }
-
-        private GameObject CreateObject(Transform parent, string name)
-        {
-            GameObject gameObject = new(name, typeof(RectTransform));
-            gameObject.transform.SetParent(parent, false);
-            return gameObject;
-        }
-
-        private Text CreateText(Transform parent, string value, int size, TextAnchor anchor)
-        {
-            GameObject textObject = CreateObject(parent, value + " Text");
-            Text text = textObject.AddComponent<Text>();
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.text = value;
-            text.fontSize = size;
-            text.alignment = anchor;
-            text.color = textColor;
-            text.raycastTarget = false;
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Overflow;
-            return text;
-        }
-
-        private Button CreateButton(Transform parent, string label, UnityEngine.Events.UnityAction action)
-        {
-            GameObject buttonObject = CreateObject(parent, label + " Button");
-            LayoutElement layout = buttonObject.AddComponent<LayoutElement>();
-            layout.preferredHeight = 68f;
-
-            Image image = buttonObject.AddComponent<Image>();
-            image.color = normalButtonColor;
-
-            Outline outline = buttonObject.AddComponent<Outline>();
-            outline.effectColor = new Color(selectedButtonColor.r,
-                selectedButtonColor.g, selectedButtonColor.b, 0.45f);
-            outline.effectDistance = new Vector2(1f, -1f);
-
-            Button button = buttonObject.AddComponent<Button>();
-            ColorBlock colors = button.colors;
-            colors.normalColor = normalButtonColor;
-            colors.highlightedColor = selectedButtonColor;
-            colors.selectedColor = selectedButtonColor;
-            colors.pressedColor = new Color(0.08f, 0.36f, 0.40f, 1f);
-            button.colors = colors;
-            button.onClick.AddListener(action);
-
-            Text text = CreateText(buttonObject.transform, label, 27, TextAnchor.MiddleCenter);
-            Stretch(text.rectTransform);
-            return button;
-        }
-
-
-        private bool HasBakedHierarchy()
-        {
-            return canvas != null &&
-                   pauseRoot != null &&
-                   mainPanel != null &&
-                   controlsPanel != null &&
-                   resumeButton != null &&
-                   controlsBackButton != null;
-        }
-
-        private static void AddVerticalLayout(GameObject target, float spacing, RectOffset padding)
-        {
-            VerticalLayoutGroup layout = target.AddComponent<VerticalLayoutGroup>();
-            layout.padding = padding;
-            layout.spacing = spacing;
-            layout.childAlignment = TextAnchor.UpperCenter;
-            layout.childControlWidth = true;
-            layout.childControlHeight = true;
-            layout.childForceExpandWidth = true;
-            layout.childForceExpandHeight = false;
+            GameObject go = new(name, typeof(RectTransform));
+            go.transform.SetParent(parent, false);
+            return go;
         }
 
         private static void Select(Selectable selectable)
         {
-            if (selectable == null || EventSystem.current == null)
-                return;
-
+            if (selectable == null || EventSystem.current == null) return;
             EventSystem.current.SetSelectedGameObject(null);
             EventSystem.current.SetSelectedGameObject(selectable.gameObject);
         }
 
         private static void Stretch(RectTransform rect)
         {
-            SetRect(rect, Vector2.zero, Vector2.one);
-        }
-
-        private static void SetRect(RectTransform rect, Vector2 min, Vector2 max)
-        {
-            rect.anchorMin = min;
-            rect.anchorMax = max;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
+            rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero; rect.offsetMax = Vector2.zero;
         }
     }
 
-    /// <summary>Automatically creates the pause menu once per scene.</summary>
     internal static class SurferSlugPauseMenuBootstrap
     {
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void CreateMenu()
         {
-            if (UnityEngine.Object.FindFirstObjectByType<SurferSlugPauseMenu>() != null)
-                return;
-
-            GameObject menuObject = new("Surfer Slug Pause Menu");
-            menuObject.AddComponent<SurferSlugPauseMenu>();
+            if (UnityEngine.Object.FindFirstObjectByType<SurferSlugPauseMenu>() != null) return;
+            new GameObject("Surfer Slug Front End").AddComponent<SurferSlugPauseMenu>();
         }
     }
 }
