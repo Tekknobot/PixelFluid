@@ -2773,7 +2773,6 @@ namespace PixelOcean
                 gamepad.rightShoulder.wasPressedThisFrame ||
                 gamepad.leftStickButton.wasPressedThisFrame ||
                 gamepad.rightStickButton.wasPressedThisFrame ||
-                gamepad.startButton.wasPressedThisFrame ||
                 gamepad.selectButton.wasPressedThisFrame ||
                 gamepad.dpad.up.wasPressedThisFrame ||
                 gamepad.dpad.down.wasPressedThisFrame ||
@@ -2825,7 +2824,6 @@ namespace PixelOcean
                 gamepad.rightShoulder.isPressed ||
                 gamepad.leftStickButton.isPressed ||
                 gamepad.rightStickButton.isPressed ||
-                gamepad.startButton.isPressed ||
                 gamepad.selectButton.isPressed ||
                 gamepad.dpad.up.isPressed ||
                 gamepad.dpad.down.isPressed ||
