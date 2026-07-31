@@ -32,6 +32,7 @@ namespace PixelOcean
         private GameObject controlsPanel;
         private GameObject settingsPanel;
         private Button playButton;
+        private Button continueButton;
         private Button controlsButton;
         private Button settingsButton;
         private Button quitButton;
@@ -108,6 +109,14 @@ namespace PixelOcean
             Instance = null;
         }
 
+        public void ShowGameOver()
+        {
+            GameplayPaused = true;
+            DisableGameplayBehaviours();
+            ShowMenu(true);
+            RefreshContinueButton();
+        }
+
         public void PauseGame()
         {
             if (menuVisible)
@@ -133,6 +142,7 @@ namespace PixelOcean
         {
             firstMenu = isMainMenu;
             menuVisible = true;
+            if (continueButton != null) continueButton.gameObject.SetActive(isMainMenu);
             menuRoot.SetActive(true);
             controlsPanel.SetActive(false);
             settingsPanel.SetActive(false);
@@ -144,6 +154,7 @@ namespace PixelOcean
             if (motionRoutine != null)
                 StopCoroutine(motionRoutine);
             motionRoutine = StartCoroutine(ShowAnimated());
+            RefreshContinueButton();
             inputReadyTime = Time.unscaledTime + motionDuration + 0.12f;
         }
 
@@ -169,7 +180,8 @@ namespace PixelOcean
 
             logoPanel.anchoredPosition = logoTarget;
             buttonPanel.anchoredPosition = buttonsTarget;
-            Select(playButton);
+            RefreshContinueButton();
+            Select(continueButton != null && continueButton.gameObject.activeInHierarchy && continueButton.interactable ? continueButton : playButton);
         }
 
         private IEnumerator HideAnimated()
@@ -279,6 +291,7 @@ namespace PixelOcean
             layout.childForceExpandHeight = false;
 
             playButton = CreateSpriteButton(panel.transform, "play_button", PlayPressed);
+            continueButton = CreateSpriteButton(panel.transform, "continue_button", ContinuePressed);
             controlsButton = CreateSpriteButton(panel.transform, "controls_button", ShowControls);
             settingsButton = CreateSpriteButton(panel.transform, "settings_button", ShowSettings);
             quitButton = CreateSpriteButton(panel.transform, "quit_button", QuitGame);
@@ -391,11 +404,56 @@ namespace PixelOcean
             settingsPanel.SetActive(false);
             logoPanel.gameObject.SetActive(true);
             buttonPanel.gameObject.SetActive(true);
-            Select(playButton);
+            RefreshContinueButton();
+            Select(continueButton != null && continueButton.interactable ? continueButton : playButton);
+        }
+
+        private void RefreshContinueButton()
+        {
+            if (continueButton == null) return;
+            bool hasSave = SurfStageSaveSystem.HasSave;
+            continueButton.interactable = hasSave;
+            Image image = continueButton.GetComponent<Image>();
+            if (image != null) image.color = hasSave ? Color.white : new Color(0.42f, 0.42f, 0.42f, 0.75f);
         }
 
         private void PlayPressed()
         {
+            if (!firstMenu)
+            {
+                ResumeGame();
+                return;
+            }
+            StartCoroutine(StartNewAndResume());
+        }
+
+        private IEnumerator StartNewAndResume()
+        {
+            SurfDayProgressionDirector director = FindFirstObjectByType<SurfDayProgressionDirector>();
+            if (director != null) yield return director.StartNewRunFromMenu();
+            SurfRunLifeManager.Instance?.ResetLivesForNewRun();
+            TinyWaveSurfer surfer = FindFirstObjectByType<TinyWaveSurfer>();
+            surfer?.RespawnForManagedRun();
+            ResumeGame();
+        }
+
+        private void ContinuePressed()
+        {
+            if (!SurfStageSaveSystem.TryLoad(out SurfStageSaveSystem.SaveData data))
+            {
+                RefreshContinueButton();
+                return;
+            }
+            StartCoroutine(LoadAndResume(data));
+        }
+
+        private IEnumerator LoadAndResume(SurfStageSaveSystem.SaveData data)
+        {
+            SurfDayProgressionDirector director = FindFirstObjectByType<SurfDayProgressionDirector>();
+            if (director != null) yield return director.LoadSavedRun(data);
+            SurfRunLifeManager.Instance?.RestoreLives(data.lives);
+            TinyWaveSurfer surfer = FindFirstObjectByType<TinyWaveSurfer>();
+            surfer?.RespawnForManagedRun();
             ResumeGame();
         }
 

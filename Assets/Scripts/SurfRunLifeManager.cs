@@ -25,6 +25,9 @@ namespace PixelOcean
         public int LivesRemaining => livesRemaining;
         public int StartingLives => Mathf.Max(1, startingLives);
 
+        public void ResetLivesForNewRun() => livesRemaining = Mathf.Max(1, startingLives);
+        public void RestoreLives(int savedLives) => livesRemaining = Mathf.Clamp(savedLives, 1, Mathf.Max(1, startingLives));
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Install()
         {
@@ -87,22 +90,9 @@ namespace PixelOcean
             }
             else
             {
-                SurfDayProgressionDirector director = FindFirstObjectByType<SurfDayProgressionDirector>();
-                if (director != null)
-                    yield return director.RestartRunInPlace();
-
-                // The scene stays loaded after game over, so Awake() is not run
-                // again on the procedural sky. Explicitly restore its configured
-                // starting time while the screen is still black.
-                ProceduralStarryNight dayNight = FindFirstObjectByType<ProceduralStarryNight>();
-                if (dayNight != null)
-                    dayNight.ResetDayNightCycle();
-
-                livesRemaining = Mathf.Max(1, startingLives);
-
-                if (surfer == null)
-                    surfer = FindFirstObjectByType<TinyWaveSurfer>();
-                surfer?.RespawnForManagedRun();
+                // Keep the stage checkpoint intact. The player chooses Continue
+                // from the main menu to rebuild the ocean at that saved stage.
+                SurferSlugPauseMenu.Instance?.ShowGameOver();
             }
 
             yield return FadeTo(0f);
