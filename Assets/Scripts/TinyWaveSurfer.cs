@@ -358,6 +358,10 @@ namespace PixelOcean
         private float obstacleJumpStartX;
         private float obstacleJumpTargetX;
         private float obstacleJumpProgress;
+        private float scoredJumpPeakY;
+        private bool scoredHandstand;
+        private bool scoredRotation;
+        private bool scoredFlip;
 
         public int CurrentWaveIndex => waveIndex;
         public PixelWaterGPU CurrentWave => currentWave;
@@ -2230,6 +2234,10 @@ namespace PixelOcean
             obstacleJumpTargetX = ClampPlayerXToSandbox(
                 obstacleJumpStartX + direction * (obstacleJumpDistance + carriedDistance));
             airStartY = currentWave.GetGameplaySurfaceHeight(localRideX) + surfaceOffset;
+            scoredJumpPeakY = airStartY;
+            scoredHandstand = false;
+            scoredRotation = false;
+            scoredFlip = false;
             flipTrick = false;
 
             // Start the dedicated surf-jump clip immediately. UpdateAnimation()
@@ -2246,6 +2254,10 @@ namespace PixelOcean
             airTrickActive = true;
             airTrickTimer = 0f;
             currentAirTrickStateHash = animationStateHash;
+
+            if (animationStateHash == HandstandStateHash) scoredHandstand = true;
+            else if (animationStateHash == RotationStateHash) scoredRotation = true;
+            else if (animationStateHash == FlipStateHash) scoredFlip = true;
 
             if (speechBubble != null)
                 speechBubble.HideImmediate();
@@ -2299,6 +2311,9 @@ namespace PixelOcean
                     surfaceY + surfaceOffset,
                     airStartY + arc),
                 renderDepth);
+
+            if (obstacleJumpActive && playerControlled)
+                scoredJumpPeakY = Mathf.Max(scoredJumpPeakY, transform.position.y);
 
             // The player's basic motionless jump is animated entirely by
             // chuck_rotation. Do not rotate, squash, or flip the rendered surfer
@@ -2359,6 +2374,14 @@ namespace PixelOcean
             {
                 localRideX = obstacleJumpTargetX;
                 playerHorizontalVelocity = direction * playerScrollSpeed * 0.48f;
+
+                if (playerControlled && AirTrickScoreSystem.Instance != null)
+                {
+                    float achievedHeight = Mathf.Max(0f, scoredJumpPeakY - airStartY);
+                    AirTrickScoreSystem.Instance.AwardJump(
+                        transform.position, achievedHeight, scoredHandstand, scoredRotation, scoredFlip);
+                }
+
                 obstacleJumpActive = false;
                 airTrickActive = false;
                 airTrickTimer = 0f;

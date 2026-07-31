@@ -117,6 +117,7 @@ namespace PixelOcean
             rescues = 0;
             finalWaveStarted = false;
             bossDefeatedSunset = false;
+            AirTrickScoreSystem.Instance?.BeginDay(1);
             chapter = Chapter.Dawn;
             banner = string.Empty;
             objective = string.Empty;
@@ -143,6 +144,9 @@ namespace PixelOcean
 
         private IEnumerator BeginDayTwo()
         {
+            AirTrickScoreSystem.Instance?.ShowDayRecap(1, 5f);
+            yield return new WaitForSecondsRealtime(5f);
+
             ShowBanner("NIGHT PASSES", "DAY 2 — DEEP CURRENT", 4f);
             rain?.ClearRain();
             yield return new WaitForSeconds(4f);
@@ -165,6 +169,7 @@ namespace PixelOcean
             yield return null;
 
             currentDay = 2;
+            AirTrickScoreSystem.Instance?.BeginDay(2);
             runTime = 0f;
             rescues = 0;
             finalWaveStarted = false;
@@ -235,6 +240,7 @@ namespace PixelOcean
                 else if (currentDay >= 2)
                 {
                     BeginChapter(Chapter.Complete, "TWO DAYS SURVIVED", "THE DEEP WATER WILL RETURN.");
+                    AirTrickScoreSystem.Instance?.ShowDayRecap(2, 10f);
                     rain?.ClearRain();
                 }
                 return;
