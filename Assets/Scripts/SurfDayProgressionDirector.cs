@@ -28,7 +28,7 @@ namespace PixelOcean
         [SerializeField, Min(20f)] private float dangerBeginsAt = 120f;
         [SerializeField, Min(30f)] private float strangeTideBeginsAt = 260f; // 260
         [SerializeField, Min(40f)] private float stormBeginsAt = 430f;
-        [SerializeField, Min(5f)] private float finalWaveBeginsAt = 5f; // 480
+        [SerializeField, Min(5f)] private float finalWaveBeginsAt = 480f; // 480
         [SerializeField, Min(60f)] private float dayEndsAt = 720f; // 720
 
         [Header("Objectives")]
