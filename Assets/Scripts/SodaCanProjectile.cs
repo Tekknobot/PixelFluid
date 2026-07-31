@@ -206,6 +206,18 @@ namespace PixelOcean
                 Bounce(squid.transform.position);
             }
 
+            BloodfishSwimmer bloodfish =
+                hitTransform.GetComponentInParent<BloodfishSwimmer>();
+
+            if (bloodfish != null)
+            {
+                LoadSfx();
+                PlaySfx(sharkHitClip, 0.85f);
+                bloodfish.TakeThrownItemHit(transform.position);
+                Bounce(bloodfish.transform.position);
+                return;
+            }
+
             JellyfishSwimmer jellyfish =
                 hitTransform.GetComponentInParent<JellyfishSwimmer>();
 

@@ -117,11 +117,20 @@ namespace PixelOcean
 
             rain = FindFirstObjectByType<ProceduralRainSystem>();
             rain?.ClearRain();
-            BeginChapter(Chapter.Dawn, "DAWN PATROL", "SURF. STAY ALIVE. LEARN THE WATER.");
             SpawnPickupSet();
             SpawnOceanItems(12);
-            SpawnJellyfishEncounter("Dawn Jellyfish", 1);
-            SpawnMajor<SharkLaneSpawner>("Early Shark", spawner => spawner.SpawnShark(true));
+            if (currentDay == 1)
+            {
+                BeginChapter(Chapter.Dawn, "DAWN PATROL", "SURF. STAY ALIVE. LEARN THE WATER.");
+                SpawnJellyfishEncounter("Dawn Jellyfish", 1);
+                SpawnMajor<SharkLaneSpawner>("Early Shark", spawner => spawner.SpawnShark(true));
+            }
+            else
+            {
+                BeginChapter(Chapter.Dawn, "DAY 2 — DEEP CURRENT", "NEW PREDATORS HAVE ENTERED THE WATER.");
+                SpawnMajor<BloodSharkLaneSpawner>("Dawn Blood Shark", spawner => spawner.SpawnBloodShark(true));
+                SpawnBloodfishEncounter("Dawn Bloodfish", 1);
+            }
         }
 
 
@@ -138,6 +147,7 @@ namespace PixelOcean
             DestroyAll<GiantSquidLaneSwimmer>();
             DestroyAll<GodzillaLaneSwimmer>();
             DestroyAll<JellyfishSwimmer>();
+            DestroyAll<BloodfishSwimmer>();
             DestroyAll<BloodSharkLaneSwimmer>();
             DestroyAll<TransparentSquidLaneSwimmer>();
             yield return null;
@@ -152,6 +162,7 @@ namespace PixelOcean
             SpawnPickupSet();
             SpawnOceanItems(12);
             SpawnMajor<BloodSharkLaneSpawner>("Dawn Blood Shark", spawner => spawner.SpawnBloodShark(true));
+            SpawnBloodfishEncounter("Dawn Bloodfish", 1);
         }
 
         private void ClearRunObjects()
@@ -166,6 +177,7 @@ namespace PixelOcean
             DestroyAll<TransparentSquidLaneSwimmer>();
             DestroyAll<GodzillaLaneSwimmer>();
             DestroyAll<JellyfishSwimmer>();
+            DestroyAll<BloodfishSwimmer>();
             DestroyAll<WhaleLaneSwimmer>();
             DestroyAll<StrugglingSwimmerDrifter>();
             DestroyAll<RescuedSurferExit>();
@@ -235,7 +247,10 @@ namespace PixelOcean
                     SpawnMajor<BloodSharkLaneSpawner>("Storm Blood Shark", spawner => spawner.SpawnBloodShark(true));
                     SpawnMajor<TransparentSquidLaneSpawner>("Storm Transparent Squid", spawner => spawner.SpawnTransparentSquid(true));
                 }
-                SpawnJellyfishEncounter("Storm Jellyfish", 3);
+                if (currentDay == 1)
+                    SpawnJellyfishEncounter("Storm Jellyfish", 3);
+                else
+                    SpawnBloodfishEncounter("Storm Bloodfish", 3);
                 return;
             }
 
@@ -244,7 +259,10 @@ namespace PixelOcean
                 BeginChapter(Chapter.StrangeTide, "STRANGE TIDE", "SOMETHING IS WATCHING THE WATER.");
                 SpawnBoombox();
                 SpawnUfo();
-                SpawnJellyfishEncounter("Strange Tide Jellyfish", 2);
+                if (currentDay == 1)
+                    SpawnJellyfishEncounter("Strange Tide Jellyfish", 2);
+                else
+                    SpawnBloodfishEncounter("Strange Tide Bloodfish", 2);
                 if (currentDay == 1)
                     SpawnMajor<WhaleLaneSpawner>("Strange Tide Whale", spawner => spawner.SpawnWhale(true));
                 else
@@ -371,6 +389,23 @@ namespace PixelOcean
                 holder.transform.SetParent(transform, false);
                 holder.transform.position = new Vector3(x, 0f, 0f);
                 JellyfishSchoolSpawner spawner = holder.AddComponent<JellyfishSchoolSpawner>();
+                spawner.SpawnSchool();
+                progressionSpawners.Add(holder);
+            }
+        }
+
+        private void SpawnBloodfishEncounter(string name, int schools)
+        {
+            IReadOnlyList<float> centres = GetCentres();
+            if (centres.Count == 0) return;
+
+            for (int i = 0; i < schools; i++)
+            {
+                float x = centres[(i + Random.Range(0, centres.Count)) % centres.Count];
+                GameObject holder = new(name + " " + (i + 1));
+                holder.transform.SetParent(transform, false);
+                holder.transform.position = new Vector3(x, 0f, 0f);
+                BloodfishSchoolSpawner spawner = holder.AddComponent<BloodfishSchoolSpawner>();
                 spawner.SpawnSchool();
                 progressionSpawners.Add(holder);
             }

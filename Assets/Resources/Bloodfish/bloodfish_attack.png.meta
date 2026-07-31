@@ -1,0 +1,546 @@
+fileFormatVersion: 2
+guid: d93da7df61ad67440a1bcc2334598c18
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 6373250028724635211
+    second: bloodfish_attack_0
+  - first:
+      213: 861044014625297071
+    second: bloodfish_attack_1
+  - first:
+      213: 6344301460089931954
+    second: bloodfish_attack_2
+  - first:
+      213: -6178156711453771558
+    second: bloodfish_attack_3
+  - first:
+      213: -3671544345032457215
+    second: bloodfish_attack_4
+  - first:
+      213: -8689607375406459715
+    second: bloodfish_attack_5
+  - first:
+      213: 843077835749534257
+    second: bloodfish_attack_6
+  - first:
+      213: -840573378598221793
+    second: bloodfish_attack_7
+  - first:
+      213: 7693725866548061653
+    second: bloodfish_attack_8
+  - first:
+      213: 1143885663270118242
+    second: bloodfish_attack_9
+  - first:
+      213: -736366365425518342
+    second: bloodfish_attack_10
+  - first:
+      213: 5116145576755022657
+    second: bloodfish_attack_11
+  - first:
+      213: -7198535757529366689
+    second: bloodfish_attack_12
+  - first:
+      213: -7837488071247751834
+    second: bloodfish_attack_13
+  - first:
+      213: -5438522689384394419
+    second: bloodfish_attack_14
+  - first:
+      213: -7308155511308961749
+    second: bloodfish_attack_15
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 1
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: bloodfish_attack_0
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 6
+        width: 30
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b4641ea5225527850800000000000000
+      internalID: 6373250028724635211
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bloodfish_attack_1
+      rect:
+        serializedVersion: 2
+        x: 33
+        y: 7
+        width: 28
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fa297b328fa03fb00800000000000000
+      internalID: 861044014625297071
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bloodfish_attack_2
+      rect:
+        serializedVersion: 2
+        x: 65
+        y: 6
+        width: 28
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b807ac709c7b0850800000000000000
+      internalID: 6344301460089931954
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bloodfish_attack_3
+      rect:
+        serializedVersion: 2
+        x: 97
+        y: 6
+        width: 28
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ad83a174437c24aa0800000000000000
+      internalID: -6178156711453771558
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bloodfish_attack_4
+      rect:
+        serializedVersion: 2
+        x: 129
+        y: 6
+        width: 28
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1040f31fedd0c0dc0800000000000000
+      internalID: -3671544345032457215
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bloodfish_attack_5
+      rect:
+        serializedVersion: 2
+        x: 161
+        y: 6
+        width: 28
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: db4984fa120586780800000000000000
+      internalID: -8689607375406459715
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bloodfish_attack_6
+      rect:
+        serializedVersion: 2
+        x: 193
+        y: 5
+        width: 29
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 13a2bd523d633bb00800000000000000
+      internalID: 843077835749534257
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bloodfish_attack_7
+      rect:
+        serializedVersion: 2
+        x: 226
+        y: 5
+        width: 28
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f18c00937fea554f0800000000000000
+      internalID: -840573378598221793
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bloodfish_attack_8
+      rect:
+        serializedVersion: 2
+        x: 257
+        y: 5
+        width: 29
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5d5e4da99ea95ca60800000000000000
+      internalID: 7693725866548061653
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bloodfish_attack_9
+      rect:
+        serializedVersion: 2
+        x: 289
+        y: 6
+        width: 29
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 263a0ee33f5efdf00800000000000000
+      internalID: 1143885663270118242
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bloodfish_attack_10
+      rect:
+        serializedVersion: 2
+        x: 321
+        y: 6
+        width: 29
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: af8344c21b6e7c5f0800000000000000
+      internalID: -736366365425518342
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bloodfish_attack_11
+      rect:
+        serializedVersion: 2
+        x: 353
+        y: 7
+        width: 29
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 14b4ba9ab43300740800000000000000
+      internalID: 5116145576755022657
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bloodfish_attack_12
+      rect:
+        serializedVersion: 2
+        x: 385
+        y: 8
+        width: 29
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f5fb3853ed9a91c90800000000000000
+      internalID: -7198535757529366689
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bloodfish_attack_13
+      rect:
+        serializedVersion: 2
+        x: 418
+        y: 7
+        width: 28
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6659aedbf16ab3390800000000000000
+      internalID: -7837488071247751834
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bloodfish_attack_14
+      rect:
+        serializedVersion: 2
+        x: 449
+        y: 6
+        width: 29
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d415754bd6c7684b0800000000000000
+      internalID: -5438522689384394419
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bloodfish_attack_15
+      rect:
+        serializedVersion: 2
+        x: 482
+        y: 5
+        width: 28
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b28bd116847349a90800000000000000
+      internalID: -7308155511308961749
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      bloodfish_attack_0: 6373250028724635211
+      bloodfish_attack_1: 861044014625297071
+      bloodfish_attack_10: -736366365425518342
+      bloodfish_attack_11: 5116145576755022657
+      bloodfish_attack_12: -7198535757529366689
+      bloodfish_attack_13: -7837488071247751834
+      bloodfish_attack_14: -5438522689384394419
+      bloodfish_attack_15: -7308155511308961749
+      bloodfish_attack_2: 6344301460089931954
+      bloodfish_attack_3: -6178156711453771558
+      bloodfish_attack_4: -3671544345032457215
+      bloodfish_attack_5: -8689607375406459715
+      bloodfish_attack_6: 843077835749534257
+      bloodfish_attack_7: -840573378598221793
+      bloodfish_attack_8: 7693725866548061653
+      bloodfish_attack_9: 1143885663270118242
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

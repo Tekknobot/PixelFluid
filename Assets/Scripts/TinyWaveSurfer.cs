@@ -759,6 +759,13 @@ namespace PixelOcean
                         float d = Vector2.Distance(transform.position, jellyfish.transform.position);
                         if (d < best) { best = d; nearest = jellyfish.transform; }
                     }
+
+                    foreach (BloodfishSwimmer bloodfish in FindObjectsByType<BloodfishSwimmer>(FindObjectsSortMode.None))
+                    {
+                        if (bloodfish == null) continue;
+                        float d = Vector2.Distance(transform.position, bloodfish.transform.position);
+                        if (d < best) { best = d; nearest = bloodfish.transform; }
+                    }
                 }
             }
 
