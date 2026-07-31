@@ -712,11 +712,21 @@ namespace PixelOcean
             // This prevents a nearby shark from stealing the upward shot.
             if (aimAtUfo)
             {
+                DayTwoHelicopterMissile missile = FindFirstObjectByType<DayTwoHelicopterMissile>();
+                DayTwoHelicopterController helicopter = FindFirstObjectByType<DayTwoHelicopterController>();
                 AlienUfoController ufo = FindFirstObjectByType<AlienUfoController>();
-                if (ufo != null && ufo.CanBeHit)
+
+                // Incoming missiles have priority, then the helicopter before it
+                // fires, then the Day 1 UFO. This keeps Up + Action as the dedicated
+                // sky-defense throw without allowing sea creatures to steal it.
+                if (missile != null && missile.CanBeHit)
+                    nearest = missile.transform;
+                else if (helicopter != null && helicopter.CanBeHit)
+                    nearest = helicopter.transform;
+                else if (ufo != null && ufo.CanBeHit)
                     nearest = ufo.transform;
                 else
-                    return; // Do not spend a can when there is no hittable UFO.
+                    return; // Do not spend an item when no sky target can be hit.
             }
             else
             {

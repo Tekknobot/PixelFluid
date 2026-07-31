@@ -26,16 +26,16 @@ namespace PixelOcean
         [Header("Run Length")]
         [SerializeField, Min(10f)] private float rescueBeginsAt = 40f;
         [SerializeField, Min(20f)] private float dangerBeginsAt = 120f;
-        [SerializeField, Min(30f)] private float strangeTideBeginsAt = 260f;
+        [SerializeField, Min(30f)] private float strangeTideBeginsAt = 260f; // 260
         [SerializeField, Min(40f)] private float stormBeginsAt = 430f;
         [SerializeField, Min(5f)] private float finalWaveBeginsAt = 480f;
-        [SerializeField, Min(60f)] private float dayEndsAt = 720f;
+        [SerializeField, Min(60f)] private float dayEndsAt = 720f; // 720
 
         [Header("Objectives")]
         [SerializeField, Min(1)] private int rescuesRequired = 3;
         [SerializeField, Min(1)] private int finalSurvivalSeconds = 60;
 
-        [SerializeField] private bool startOnDayTwoForTesting = true;
+        //[SerializeField] private bool startOnDayTwoForTesting = true;
 
         private readonly List<GameObject> progressionSpawners = new();
         private Chapter chapter;
@@ -78,13 +78,13 @@ namespace PixelOcean
 
         private IEnumerator Start()
         {
-            yield return BeginRun(false);
+            yield return BeginRun(false);    
 
-            if (startOnDayTwoForTesting)
-            {
-                StartCoroutine(BeginDayTwo());
-                yield break;
-            }            
+            //if (startOnDayTwoForTesting)
+            //{
+            //    StartCoroutine(BeginDayTwo());
+            //    yield break;
+            //}  
         }
 
         public IEnumerator RestartRunInPlace()
@@ -106,7 +106,7 @@ namespace PixelOcean
                 yield return null;
 
             runTime = 0f;
-            currentDay = 2;
+            currentDay = 1; // 1
             changingDay = false;
             rescues = 0;
             finalWaveStarted = false;
@@ -151,6 +151,8 @@ namespace PixelOcean
             DestroyAll<BloodSharkLaneSwimmer>();
             DestroyAll<TransparentSquidLaneSwimmer>();
             DestroyAll<StingrayLaneSwimmer>();
+            DestroyAll<DayTwoHelicopterController>();
+            DestroyAll<DayTwoHelicopterMissile>();
             yield return null;
 
             currentDay = 2;
@@ -187,6 +189,8 @@ namespace PixelOcean
             DestroyAll<SodaCanPickup>();
             DestroyAll<SodaCanProjectile>();
             DestroyAll<AlienUfoController>();
+            DestroyAll<DayTwoHelicopterController>();
+            DestroyAll<DayTwoHelicopterMissile>();
             DestroyAll<BoomboxSurferSwimmer>();
         }
 
@@ -261,7 +265,10 @@ namespace PixelOcean
             {
                 BeginChapter(Chapter.StrangeTide, "STRANGE TIDE", "SOMETHING IS WATCHING THE WATER.");
                 SpawnBoombox();
-                SpawnUfo();
+                if (currentDay == 1)
+                    SpawnUfo();
+                else
+                    SpawnHelicopter();
                 if (currentDay == 1)
                     SpawnJellyfishEncounter("Strange Tide Jellyfish", 2);
                 else
@@ -431,6 +438,16 @@ namespace PixelOcean
             GameObject ufo = new("Alien UFO - Story Encounter");
             ufo.AddComponent<SpriteRenderer>();
             ufo.AddComponent<AlienUfoController>();
+        }
+
+        private void SpawnHelicopter()
+        {
+            if (FindFirstObjectByType<DayTwoHelicopterController>() != null) return;
+            GameObject holder = new("Day 2 Helicopter Encounter");
+            holder.transform.SetParent(transform, false);
+            DayTwoHelicopterSpawner spawner = holder.AddComponent<DayTwoHelicopterSpawner>();
+            spawner.SpawnHelicopter();
+            progressionSpawners.Add(holder);
         }
 
         private ProceduralRainSystem EnsureRain()

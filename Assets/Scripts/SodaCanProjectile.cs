@@ -147,6 +147,30 @@ namespace PixelOcean
                 return;
             }
 
+            DayTwoHelicopterMissile helicopterMissile =
+                hitTransform.GetComponentInParent<DayTwoHelicopterMissile>();
+
+            if (helicopterMissile != null && helicopterMissile.CanBeHit)
+            {
+                LoadSfx();
+                PlaySfx(sharkHitClip, 0.9f);
+                helicopterMissile.Intercept(transform.position);
+                Bounce(hitTransform.position);
+                return;
+            }
+
+            DayTwoHelicopterController helicopter =
+                hitTransform.GetComponentInParent<DayTwoHelicopterController>();
+
+            if (helicopter != null && helicopter.CanBeHit)
+            {
+                LoadSfx();
+                PlaySfx(sharkHitClip, 1f);
+                helicopter.TakeThrownItemHit(transform.position);
+                Bounce(helicopter.transform.position);
+                return;
+            }
+
             AlienUfoController ufo =
                 hitTransform.GetComponentInParent<AlienUfoController>();
 
