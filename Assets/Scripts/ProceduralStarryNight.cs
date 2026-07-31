@@ -15,7 +15,7 @@ namespace PixelOcean
         [Header("Day / Night Cycle")]
         [SerializeField] private bool runCycle = true;
         [Tooltip("Real-world minutes required for one complete 24-hour cycle.")]
-        [SerializeField, Min(0.25f)] private float fullDayLengthMinutes = 13.33f;
+        [SerializeField, Min(0.25f)] private float fullDayLengthMinutes = 12f;
         [Tooltip("0 = midnight, 0.25 = sunrise, 0.5 = noon, 0.75 = sunset.")]
         [SerializeField, Range(0f, 1f)] private float startingTimeOfDay = 0.25f;
         [SerializeField, Range(0.1f, 20f)] private float editorFastForwardMultiplier = 1f;

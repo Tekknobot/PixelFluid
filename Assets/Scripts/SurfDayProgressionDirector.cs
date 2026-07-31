@@ -28,14 +28,20 @@ namespace PixelOcean
         [SerializeField, Min(20f)] private float dangerBeginsAt = 120f;
         [SerializeField, Min(30f)] private float strangeTideBeginsAt = 260f; // 260
         [SerializeField, Min(40f)] private float stormBeginsAt = 430f;
-        [SerializeField, Min(5f)] private float finalWaveBeginsAt = 5f;
+        [SerializeField, Min(5f)] private float finalWaveBeginsAt = 5f; // 480
         [SerializeField, Min(60f)] private float dayEndsAt = 720f; // 720
 
         [Header("Objectives")]
         [SerializeField, Min(1)] private int rescuesRequired = 3;
         [SerializeField, Min(1)] private int finalSurvivalSeconds = 240;
 
-        [SerializeField] private bool startOnDayTwoForTesting = true; // true
+        [Header("Boss Defeat Sunset")]
+        [SerializeField, Min(10f)] private float acceleratedSunsetSeconds = 75f;
+        [SerializeField, Min(1f)] private float retreatSpeedMultiplier = 1.75f;
+
+        private bool bossDefeatedSunset;
+
+        //[SerializeField] private bool startOnDayTwoForTesting = true; // true
 
         private readonly List<GameObject> progressionSpawners = new();
         private Chapter chapter;
@@ -80,11 +86,11 @@ namespace PixelOcean
         {
             yield return BeginRun(false);    
 
-            if (startOnDayTwoForTesting)
-            {
-                StartCoroutine(BeginDayTwo());
-                yield break;
-            }  
+            //if (startOnDayTwoForTesting)
+            //{
+            //    StartCoroutine(BeginDayTwo());
+            //    yield break;
+            //}  
         }
 
         public IEnumerator RestartRunInPlace()
@@ -106,10 +112,11 @@ namespace PixelOcean
                 yield return null;
 
             runTime = 0f;
-            currentDay = 2; // 1
+            currentDay = 1; // 1
             changingDay = false;
             rescues = 0;
             finalWaveStarted = false;
+            bossDefeatedSunset = false;
             chapter = Chapter.Dawn;
             banner = string.Empty;
             objective = string.Empty;
@@ -161,6 +168,7 @@ namespace PixelOcean
             runTime = 0f;
             rescues = 0;
             finalWaveStarted = false;
+            bossDefeatedSunset = false;
             chapter = Chapter.Dawn;
             changingDay = false;
             BeginChapter(Chapter.Dawn, "DAY 2 — DEEP CURRENT", "NEW PREDATORS HAVE ENTERED THE WATER.");
@@ -310,7 +318,74 @@ namespace PixelOcean
             if (chapter == Chapter.DangerousWater)
                 objective = $"RESCUES  {rescues}/{rescuesRequired}";
             else if (chapter == Chapter.FinalWave)
-                objective = $"SURVIVE  {Mathf.Max(0, Mathf.CeilToInt(dayEndsAt - runTime))}s";
+                objective = bossDefeatedSunset
+                    ? $"SUNSET  {Mathf.Max(0, Mathf.CeilToInt(dayEndsAt - runTime))}s"
+                    : $"SURVIVE  {Mathf.Max(0, Mathf.CeilToInt(dayEndsAt - runTime))}s";
+        }
+
+
+        public void OnFinalBossDefeated()
+        {
+            if (bossDefeatedSunset || chapter != Chapter.FinalWave)
+                return;
+
+            bossDefeatedSunset = true;
+            StopHostileSpawners();
+            RetreatAllHostileSeaCreatures();
+            rain?.ClearRain();
+
+            float shortenedStart = Mathf.Max(0f, dayEndsAt - acceleratedSunsetSeconds);
+            runTime = Mathf.Max(runTime, shortenedStart);
+            objective = $"SUNSET  {Mathf.Max(0, Mathf.CeilToInt(dayEndsAt - runTime))}s";
+            ShowBanner("THE DEEP RETREATS", "THE OCEAN GROWS QUIET AS SUNSET FALLS.", 5f);
+        }
+
+        private void StopHostileSpawners()
+        {
+            DisableAll<SharkLaneSpawner>();
+            DisableAll<GiantSquidLaneSpawner>();
+            DisableAll<JellyfishSchoolSpawner>();
+            DisableAll<WhaleLaneSpawner>();
+            DisableAll<BloodSharkLaneSpawner>();
+            DisableAll<TransparentSquidLaneSpawner>();
+            DisableAll<StingrayLaneSpawner>();
+            DisableAll<BloodfishSchoolSpawner>();
+        }
+
+        private static void DisableAll<T>() where T : Behaviour
+        {
+            foreach (T spawner in FindObjectsByType<T>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                if (spawner != null) spawner.enabled = false;
+        }
+
+        private void RetreatAllHostileSeaCreatures()
+        {
+            BeginRetreat<SharkLaneSwimmer>();
+            BeginRetreat<GiantSquidLaneSwimmer>();
+            BeginRetreat<JellyfishSwimmer>();
+            BeginRetreat<WhaleLaneSwimmer>();
+            BeginRetreat<BloodSharkLaneSwimmer>();
+            BeginRetreat<TransparentSquidLaneSwimmer>();
+            BeginRetreat<StingrayLaneSwimmer>();
+            BeginRetreat<BloodfishSwimmer>();
+            BeginRetreat<RubberDucklingSwimmer>();
+        }
+
+        private void BeginRetreat<T>() where T : MonoBehaviour
+        {
+            foreach (T creature in FindObjectsByType<T>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+            {
+                if (creature == null)
+                    continue;
+
+                GameObject creatureObject = creature.gameObject;
+                SeaCreatureRetreatMover mover = creatureObject.GetComponent<SeaCreatureRetreatMover>();
+                if (mover == null)
+                    mover = creatureObject.AddComponent<SeaCreatureRetreatMover>();
+
+                creature.enabled = false;
+                mover.Begin(retreatSpeedMultiplier);
+            }
         }
 
         private void OnSwimmerSaved()

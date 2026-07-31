@@ -707,6 +707,9 @@ namespace PixelOcean
 
             yield return new WaitForSeconds(Mathf.Max(0f, deathDelay));
 
+            SurfDayProgressionDirector progression = FindFirstObjectByType<SurfDayProgressionDirector>();
+            progression?.OnFinalBossDefeated();
+
             ExplosionBasicEffect.Spawn(transform.position);
             if (gameObject != null)
                 Destroy(gameObject);
