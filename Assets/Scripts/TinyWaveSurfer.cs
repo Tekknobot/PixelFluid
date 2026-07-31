@@ -720,25 +720,45 @@ namespace PixelOcean
             }
             else
             {
-                foreach (SharkLaneSwimmer shark in FindObjectsByType<SharkLaneSwimmer>(FindObjectsSortMode.None))
+                // Active bosses always own the combat throw target. This prevents
+                // sharks, squid, or jellyfish from stealing a shot intended for
+                // the final encounter simply because they are a little closer.
+                foreach (GodzillaLaneSwimmer boss in FindObjectsByType<GodzillaLaneSwimmer>(FindObjectsSortMode.None))
                 {
-                    if (shark == null) continue;
-                    float d = Vector2.Distance(transform.position, shark.transform.position);
-                    if (d < best) { best = d; nearest = shark.transform; }
+                    if (boss == null || !boss.isActiveAndEnabled || boss.IsDefeated)
+                        continue;
+
+                    float d = Vector2.Distance(transform.position, boss.transform.position);
+                    if (d < best)
+                    {
+                        best = d;
+                        nearest = boss.transform;
+                    }
                 }
 
-                foreach (GiantSquidLaneSwimmer squid in FindObjectsByType<GiantSquidLaneSwimmer>(FindObjectsSortMode.None))
+                // Only use ordinary sea hazards when no active boss exists.
+                if (nearest == null)
                 {
-                    if (squid == null) continue;
-                    float d = Vector2.Distance(transform.position, squid.transform.position);
-                    if (d < best) { best = d; nearest = squid.transform; }
-                }
+                    foreach (SharkLaneSwimmer shark in FindObjectsByType<SharkLaneSwimmer>(FindObjectsSortMode.None))
+                    {
+                        if (shark == null) continue;
+                        float d = Vector2.Distance(transform.position, shark.transform.position);
+                        if (d < best) { best = d; nearest = shark.transform; }
+                    }
 
-                foreach (JellyfishSwimmer jellyfish in FindObjectsByType<JellyfishSwimmer>(FindObjectsSortMode.None))
-                {
-                    if (jellyfish == null) continue;
-                    float d = Vector2.Distance(transform.position, jellyfish.transform.position);
-                    if (d < best) { best = d; nearest = jellyfish.transform; }
+                    foreach (GiantSquidLaneSwimmer squid in FindObjectsByType<GiantSquidLaneSwimmer>(FindObjectsSortMode.None))
+                    {
+                        if (squid == null) continue;
+                        float d = Vector2.Distance(transform.position, squid.transform.position);
+                        if (d < best) { best = d; nearest = squid.transform; }
+                    }
+
+                    foreach (JellyfishSwimmer jellyfish in FindObjectsByType<JellyfishSwimmer>(FindObjectsSortMode.None))
+                    {
+                        if (jellyfish == null) continue;
+                        float d = Vector2.Distance(transform.position, jellyfish.transform.position);
+                        if (d < best) { best = d; nearest = jellyfish.transform; }
+                    }
                 }
             }
 

@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -12,21 +13,44 @@ namespace PixelOcean
         private enum CreatureState { Roam, Pursue, WindUp, Lunge, Recover, InvestigateDeath, MournDeath }
 
         [Header("Movement")]
-        [SerializeField, Min(0.05f)] private float cruiseSpeed = 0.62f;
-        [SerializeField, Min(0.05f)] private float pursuitSpeed = 1.15f;
-        [SerializeField, Min(0.1f)] private float lungeSpeed = 2.35f;
+        [SerializeField, Min(0.05f)] private float cruiseSpeed = 0.82f;
+        [SerializeField, Min(0.05f)] private float pursuitSpeed = 1.75f;
+        [SerializeField, Min(0.1f)] private float lungeSpeed = 3.35f;
         [SerializeField, Range(0f, 0.35f)] private float currentInfluence = 0.04f;
 
         [Header("Unique Behaviour")]
-        [SerializeField, Min(0.5f)] private float detectionRange = 9f;
-        [SerializeField, Min(0.5f)] private float abandonRange = 12f;
-        [SerializeField, Min(0.1f)] private float attackRange = 2.35f;
+        [SerializeField, Min(0.5f)] private float detectionRange = 18f;
+        [SerializeField, Min(0.5f)] private float abandonRange = 24f;
+        [SerializeField, Min(0.1f)] private float attackRange = 3.15f;
         [SerializeField, Min(0.05f)] private float hitRange = 0.82f;
-        [SerializeField, Min(0f)] private float windUpDuration = 0.28f;
-        [SerializeField, Min(0f)] private float attackRecovery = 1.65f;
-        [SerializeField] private Vector2 laneShiftDelayRange = new(1.5f, 3.2f);
-        [SerializeField, Min(0.2f)] private float laneChangeDuration = 0.85f;
+        [SerializeField, Min(0f)] private float windUpDuration = 0.16f;
+        [SerializeField, Min(0f)] private float attackRecovery = 0.72f;
+        [SerializeField] private Vector2 laneShiftDelayRange = new(0.45f, 1.15f);
+        [SerializeField, Min(0.2f)] private float laneChangeDuration = 0.48f;
         [SerializeField, Range(0f, 0.45f)] private float laneDepthBias = 0.12f;
+
+
+        [Header("Health and Thrown Item Damage")]
+        [SerializeField, Min(1)] private int maximumHealth = 8;
+        [SerializeField, Min(1)] private int thrownItemDamage = 1;
+        [SerializeField, Min(0.01f)] private float hurtFlashDuration = 0.12f;
+        [SerializeField, Range(0f, 1f)] private float hurtFlashRed = 1f;
+        [SerializeField, Range(0f, 1f)] private float hurtFlashGreen = 0.12f;
+        [SerializeField, Range(0f, 1f)] private float hurtFlashBlue = 0.12f;
+        [SerializeField, Min(0f)] private float hitAggressionDuration = 4f;
+        [SerializeField, Min(0f)] private float deathDelay = 0.3f;
+        [SerializeField] private AudioClip hurtClip;
+        [SerializeField, Range(0f, 1f)] private float hurtVolume = 1f;
+
+        [Header("Boss Death Sequence")]
+        [SerializeField, Min(0.5f)] private float bossDeathDuration = 3.6f;
+        [SerializeField, Min(0f)] private float bossDeathSinkDistance = 2.8f;
+        [SerializeField, Min(0f)] private float bossDeathShakeAmount = 0.11f;
+        [SerializeField, Min(1f)] private float bossDeathShakeFrequency = 28f;
+        [SerializeField, Min(0.02f)] private float bossDeathFlashInterval = 0.09f;
+        [SerializeField, Range(0f, 1f)] private float bossDeathRedGreen = 0.02f;
+        [SerializeField, Range(0f, 1f)] private float bossDeathRedBlue = 0.02f;
+        [SerializeField, Min(0f)] private float bossDeathTiltDegrees = 12f;
 
         [Header("Player Death Response")]
         [SerializeField, Min(0.05f)] private float deathApproachSpeed = 6.82f;
@@ -77,6 +101,14 @@ namespace PixelOcean
         private float trackedSectionCentreX;
         private bool hasTrackedSectionCentre;
         private float nextWaterRefreshTime;
+
+        private readonly HashSet<GameObject> consumedProjectiles = new();
+        private int currentHealth;
+        private bool defeated;
+        private float enragedUntil;
+        private Coroutine hurtFlashRoutine;
+        private Color normalSpriteColour = Color.white;
+
 
 
         /// <summary>
@@ -149,6 +181,9 @@ namespace PixelOcean
         private void Awake()
         {
             ResolveReferences();
+            currentHealth = Mathf.Max(1, maximumHealth);
+            if (spriteRenderer != null)
+                normalSpriteColour = spriteRenderer.color;
         }
 
         private void Start()
@@ -197,7 +232,7 @@ namespace PixelOcean
 
         private void FixedUpdate()
         {
-            if (!initialised || waterLayers.Count < 2)
+            if (defeated || !initialised || waterLayers.Count < 2)
                 return;
 
             RefreshWaterLayersIfNeeded();
@@ -209,10 +244,11 @@ namespace PixelOcean
                 UpdateBrain(position);
 
             Vector2 waterVelocity = GetLaneVelocity(currentLane, position.x);
+            float aggressionMultiplier = Time.time < enragedUntil ? 1.28f : 1f;
             float speed = state switch
             {
-                CreatureState.Pursue => pursuitSpeed,
-                CreatureState.Lunge => lungeSpeed,
+                CreatureState.Pursue => pursuitSpeed * aggressionMultiplier,
+                CreatureState.Lunge => lungeSpeed * aggressionMultiplier,
                 CreatureState.WindUp => cruiseSpeed * 0.15f,
                 CreatureState.Recover => cruiseSpeed * 0.55f,
                 CreatureState.InvestigateDeath => deathApproachSpeed,
@@ -402,7 +438,7 @@ namespace PixelOcean
                 if (animation == null || !animation.IsAttacking)
                 {
                     state = CreatureState.Recover;
-                    stateUntil = Time.time + 1f;
+                    stateUntil = Time.time + (Time.time < enragedUntil ? 0.35f : 0.55f);
                     nextAttackTime = Time.time + attackRecovery;
                     target = null;
                 }
@@ -502,6 +538,170 @@ namespace PixelOcean
             if (attackHitApplied && attackClip != null && audioSource != null)
                 audioSource.PlayOneShot(attackClip, attackVolume);
         }
+
+
+        /// <summary>
+        /// Applies damage from any throwable using SodaCanProjectile. The creature
+        /// has health but intentionally does not create or expose a health bar.
+        /// </summary>
+        public bool TakeThrownItemHit(int damage, Vector2 impactPosition)
+        {
+            if (defeated || damage <= 0)
+                return false;
+
+            currentHealth = Mathf.Max(0, currentHealth - damage);
+            enragedUntil = Mathf.Max(enragedUntil, Time.time + hitAggressionDuration);
+
+            // Immediately retaliate against the active player after being struck.
+            TinyWaveSurfer retaliationTarget = FindBestTarget(transform.position);
+            if (retaliationTarget != null)
+            {
+                target = retaliationTarget;
+                state = CreatureState.Pursue;
+                nextAttackTime = Mathf.Min(nextAttackTime, Time.time + 0.08f);
+                FaceTarget(body != null ? body.position : (Vector2)transform.position);
+            }
+
+            if (hurtFlashRoutine != null)
+                StopCoroutine(hurtFlashRoutine);
+            hurtFlashRoutine = StartCoroutine(HurtFlash());
+
+            if (hurtClip != null && audioSource != null)
+                audioSource.PlayOneShot(hurtClip, hurtVolume);
+
+            if (currentHealth <= 0)
+                StartCoroutine(DefeatAfterFlash());
+
+            return true;
+        }
+
+        private void OnTriggerEnter2D(Collider2D other)
+        {
+            // SodaCanProjectile owns thrown-item hit detection and ricochet.
+            // Keeping damage in one place prevents duplicate hits and prevents
+            // this swimmer from absorbing the projectile before it can bounce.
+        }
+
+        private IEnumerator HurtFlash()
+        {
+            if (spriteRenderer == null)
+                yield break;
+
+            normalSpriteColour = spriteRenderer.color;
+            spriteRenderer.color = new Color(
+                hurtFlashRed,
+                hurtFlashGreen,
+                hurtFlashBlue,
+                normalSpriteColour.a);
+
+            yield return new WaitForSeconds(hurtFlashDuration);
+
+            if (spriteRenderer != null && !defeated)
+                spriteRenderer.color = normalSpriteColour;
+
+            hurtFlashRoutine = null;
+        }
+
+        private IEnumerator DefeatAfterFlash()
+        {
+            if (defeated)
+                yield break;
+
+            defeated = true;
+            target = null;
+            respondingToDeath = false;
+            changingLane = false;
+            attackHitApplied = false;
+            state = CreatureState.Recover;
+
+            if (hurtFlashRoutine != null)
+            {
+                StopCoroutine(hurtFlashRoutine);
+                hurtFlashRoutine = null;
+            }
+
+            Collider2D[] colliders = GetComponents<Collider2D>();
+            foreach (Collider2D hitbox in colliders)
+            {
+                if (hitbox != null)
+                    hitbox.enabled = false;
+            }
+
+            if (body != null)
+            {
+                body.linearVelocity = Vector2.zero;
+                body.angularVelocity = 0f;
+            }
+
+            Vector2 startPosition = body != null
+                ? body.position
+                : (Vector2)transform.position;
+
+            Quaternion startRotation = transform.rotation;
+            Color originalColour = spriteRenderer != null
+                ? normalSpriteColour
+                : Color.white;
+            Color deathRed = new Color(
+                1f,
+                bossDeathRedGreen,
+                bossDeathRedBlue,
+                originalColour.a);
+
+            float duration = Mathf.Max(0.5f, bossDeathDuration);
+            float elapsed = 0f;
+            float nextFlashTime = 0f;
+            bool showRed = true;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                float easedSink = t * t * (3f - 2f * t);
+
+                if (elapsed >= nextFlashTime)
+                {
+                    showRed = !showRed;
+                    nextFlashTime = elapsed +
+                        bossDeathFlashInterval * Mathf.Lerp(0.65f, 1.9f, t);
+
+                    if (spriteRenderer != null)
+                        spriteRenderer.color = showRed ? deathRed : originalColour;
+                }
+
+                float shakeFade = 1f - t;
+                float shakeX = Mathf.Sin(elapsed * bossDeathShakeFrequency)
+                    * bossDeathShakeAmount * shakeFade;
+                float shakeY = Mathf.Cos(elapsed * bossDeathShakeFrequency * 0.73f)
+                    * bossDeathShakeAmount * 0.55f * shakeFade;
+
+                Vector2 deathPosition = startPosition + new Vector2(
+                    shakeX,
+                    shakeY - bossDeathSinkDistance * easedSink);
+
+                SetPosition(deathPosition);
+
+                float tiltDirection = direction >= 0f ? -1f : 1f;
+                float tilt = bossDeathTiltDegrees * tiltDirection * easedSink;
+                transform.rotation = Quaternion.Slerp(
+                    startRotation,
+                    Quaternion.Euler(0f, 0f, tilt),
+                    easedSink);
+
+                yield return null;
+            }
+
+            if (spriteRenderer != null)
+                spriteRenderer.color = deathRed;
+
+            yield return new WaitForSeconds(Mathf.Max(0f, deathDelay));
+
+            if (gameObject != null)
+                Destroy(gameObject);
+        }
+
+        public int CurrentHealth => currentHealth;
+        public int MaximumHealth => Mathf.Max(1, maximumHealth);
+        public bool IsDefeated => defeated;
 
         private int GetTargetLane(TinyWaveSurfer surfer)
         {

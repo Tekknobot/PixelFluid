@@ -13,6 +13,7 @@ namespace PixelOcean
         private float life = 5f;
         private bool bounced;
         private Transform lockedTarget;
+        private GodzillaLaneSwimmer lockedBoss;
 
         public void Launch(
             Vector2 start,
@@ -23,6 +24,9 @@ namespace PixelOcean
         {
             transform.position = start;
             lockedTarget = target;
+            lockedBoss = target != null
+                ? target.GetComponentInParent<GodzillaLaneSwimmer>()
+                : null;
             SpriteRenderer renderer = GetComponent<SpriteRenderer>();
             renderer.sprite = sprite;
 
@@ -111,6 +115,18 @@ namespace PixelOcean
                 return;
             }
 
+            // When a boss was selected, ordinary sea creatures become transparent
+            // to this projectile. The shot remains locked to the boss instead of
+            // being intercepted by a shark, squid, or jellyfish in front of it.
+            if (lockedBoss != null && !lockedBoss.IsDefeated)
+            {
+                GodzillaLaneSwimmer hitBoss =
+                    other.GetComponentInParent<GodzillaLaneSwimmer>();
+
+                if (hitBoss != lockedBoss)
+                    return;
+            }
+
             HitTarget(other.transform);
         }
 
@@ -118,6 +134,18 @@ namespace PixelOcean
         {
             if (bounced || hitTransform == null)
                 return;
+
+            GodzillaLaneSwimmer boss =
+                hitTransform.GetComponentInParent<GodzillaLaneSwimmer>();
+
+            if (boss != null && !boss.IsDefeated)
+            {
+                LoadSfx();
+                PlaySfx(sharkHitClip, 1f);
+                boss.TakeThrownItemHit(1, transform.position);
+                Bounce(boss.transform.position);
+                return;
+            }
 
             AlienUfoController ufo =
                 hitTransform.GetComponentInParent<AlienUfoController>();
