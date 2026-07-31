@@ -23,7 +23,12 @@ namespace PixelOcean
         public static AirTrickScoreSystem Instance { get; private set; }
 
         [Header("Scoring")]
-        [SerializeField, Min(0f)] private float heightPointsPerUnit = 120f;
+        [SerializeField, Min(0.1f)]
+        private float maximumScoringHeight = 1.75f;
+
+        [SerializeField, Min(1)]
+        private int maximumHeightPoints = 600;
+
         [SerializeField, Min(0)] private int handstandPoints = 100;
         [SerializeField, Min(0)] private int rotationPoints = 140;
         [SerializeField, Min(0)] private int flipPoints = 180;
@@ -31,13 +36,13 @@ namespace PixelOcean
         [SerializeField, Min(0f)] private float floatingScoreLifetime = 1.35f;
 
         [Header("Popup Tiers")]
-        [SerializeField, Min(1)] private int cleanTierMinimum = 240;
-        [SerializeField, Min(1)] private int radicalTierMinimum = 260;
-        [SerializeField, Min(1)] private int legendaryTierMinimum = 280;
+        [SerializeField, Min(1)] private int cleanTierMinimum = 350;
+        [SerializeField, Min(1)] private int radicalTierMinimum = 650;
+        [SerializeField, Min(1)] private int legendaryTierMinimum = 950;
         [SerializeField] private Color baseTierColour = Color.white;
         [SerializeField] private Color cleanTierColour = new(0.25f, 0.95f, 1f, 1f);
         [SerializeField] private Color radicalTierColour = new(1f, 0.88f, 0.15f, 1f);
-        [SerializeField] private Color legendaryTierColour = new(1f, 0.30f, 0.82f, 1f);
+        [SerializeField] private Color legendaryTierColour = new(1.00f, 0.72f, 0.12f, 1f);
 
         private readonly List<FloatingScore> floatingScores = new();
         private GUIStyle floatingStyle;
@@ -115,7 +120,15 @@ namespace PixelOcean
             if (trickCount <= 0)
                 return 0;
 
-            int score = Mathf.RoundToInt(Mathf.Max(0f, height) * heightPointsPerUnit);
+            float safeHeight = Mathf.Max(0f, height);
+
+            float normalizedHeight = Mathf.Clamp01(
+                safeHeight / Mathf.Max(0.1f, maximumScoringHeight));
+
+            int heightScore = Mathf.RoundToInt(
+                normalizedHeight * maximumHeightPoints);
+
+            int score = heightScore;
             if (didHandstand) { score += handstandPoints; handstands++; }
             if (didRotation) { score += rotationPoints; rotations++; }
             if (didFlip) { score += flipPoints; flips++; }
