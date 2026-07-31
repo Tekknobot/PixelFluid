@@ -385,7 +385,8 @@ namespace PixelOcean
             if (hour12 == 0) hour12 = 12;
 
             string phase = GetDayPhase(visualTime);
-            if (dayPhaseLabel != null) dayPhaseLabel.text = $"DAY 1  •  {phase}";
+            int currentDay = progression != null ? Mathf.Max(1, progression.CurrentDay) : 1;
+            if (dayPhaseLabel != null) dayPhaseLabel.text = $"DAY {currentDay}  •  {phase}";
             if (timeLabel != null) timeLabel.text = $"{hour12}:{minute:00} {(hour24 < 12 ? "AM" : "PM")}";
         }
 
