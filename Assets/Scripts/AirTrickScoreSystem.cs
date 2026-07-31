@@ -15,6 +15,7 @@ namespace PixelOcean
         {
             public Vector3 WorldPosition;
             public string Text;
+            public Color TextColour;
             public float CreatedAt;
             public float Lifetime;
         }
@@ -29,8 +30,16 @@ namespace PixelOcean
         [SerializeField, Min(0)] private int extraTrickComboBonus = 75;
         [SerializeField, Min(0f)] private float floatingScoreLifetime = 1.35f;
 
+        [Header("Popup Tiers")]
+        [SerializeField, Min(1)] private int cleanTierMinimum = 240;
+        [SerializeField, Min(1)] private int radicalTierMinimum = 260;
+        [SerializeField, Min(1)] private int legendaryTierMinimum = 280;
+        [SerializeField] private Color baseTierColour = Color.white;
+        [SerializeField] private Color cleanTierColour = new(0.25f, 0.95f, 1f, 1f);
+        [SerializeField] private Color radicalTierColour = new(1f, 0.88f, 0.15f, 1f);
+        [SerializeField] private Color legendaryTierColour = new(1f, 0.30f, 0.82f, 1f);
+
         private readonly List<FloatingScore> floatingScores = new();
-        private GUIStyle hudStyle;
         private GUIStyle floatingStyle;
         private GUIStyle recapTitleStyle;
         private GUIStyle recapValueStyle;
@@ -125,10 +134,12 @@ namespace PixelOcean
             }
             highestAir = Mathf.Max(highestAir, height);
 
+            GetPopupTier(score, out string tierName, out Color tierColour);
             floatingScores.Add(new FloatingScore
             {
                 WorldPosition = landingPosition + Vector3.up * 0.35f,
-                Text = trickName + "\n+" + score + " STOKE",
+                Text = tierName + "  " + trickName + "\n+" + score + " STOKE",
+                TextColour = tierColour,
                 CreatedAt = Time.unscaledTime,
                 Lifetime = floatingScoreLifetime
             });
@@ -141,6 +152,34 @@ namespace PixelOcean
             recapDay = day;
             recapVisible = true;
             recapUntil = Time.unscaledTime + Mathf.Max(1f, duration);
+        }
+
+
+        private void GetPopupTier(int score, out string tierName, out Color tierColour)
+        {
+            if (score >= legendaryTierMinimum)
+            {
+                tierName = "LEGENDARY";
+                tierColour = legendaryTierColour;
+                return;
+            }
+
+            if (score >= radicalTierMinimum)
+            {
+                tierName = "RADICAL";
+                tierColour = radicalTierColour;
+                return;
+            }
+
+            if (score >= cleanTierMinimum)
+            {
+                tierName = "CLEAN";
+                tierColour = cleanTierColour;
+                return;
+            }
+
+            tierName = "AIR";
+            tierColour = baseTierColour;
         }
 
         private static string BuildTrickName(bool handstand, bool rotation, bool flip)
@@ -156,15 +195,8 @@ namespace PixelOcean
 
         private void EnsureStyles()
         {
-            if (hudStyle != null) return;
+            if (floatingStyle != null) return;
 
-            hudStyle = new GUIStyle(GUI.skin.label)
-            {
-                alignment = TextAnchor.UpperRight,
-                fontSize = 18,
-                fontStyle = FontStyle.Bold,
-                normal = { textColor = Color.white }
-            };
             floatingStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleCenter,
@@ -198,9 +230,6 @@ namespace PixelOcean
         {
             EnsureStyles();
 
-            GUI.Label(new Rect(Screen.width - 260f, 18f, 240f, 48f),
-                "STOKE  " + totalStoke.ToString("N0"), hudStyle);
-
             Camera camera = Camera.main;
             if (camera != null)
             {
@@ -212,8 +241,10 @@ namespace PixelOcean
                     if (screen.z <= 0f) continue;
 
                     Color old = GUI.color;
-                    GUI.color = new Color(1f, 1f, 1f, 1f - age01);
-                    GUI.Label(new Rect(screen.x - 110f, Screen.height - screen.y - 38f, 220f, 76f),
+                    Color tierColour = score.TextColour;
+                    GUI.color = new Color(tierColour.r, tierColour.g, tierColour.b,
+                        tierColour.a * (1f - age01));
+                    GUI.Label(new Rect(screen.x - 140f, Screen.height - screen.y - 42f, 280f, 84f),
                         score.Text, floatingStyle);
                     GUI.color = old;
                 }

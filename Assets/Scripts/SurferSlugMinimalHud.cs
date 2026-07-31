@@ -41,6 +41,7 @@ namespace PixelOcean
         private Text timeLabel;
         private Text objectiveLabel;
         private Text livesLabel;
+        private Text stokeLabel;
         private Text chapterLabel;
         private Text inventoryOverflowLabel;
         private CanvasGroup chapterGroup;
@@ -81,6 +82,7 @@ namespace PixelOcean
                 return;
 
             RefreshProgressionAndLives();
+            RefreshStoke();
             RefreshDayDisplay();
             RefreshInventory();
         }
@@ -200,6 +202,20 @@ namespace PixelOcean
 
             livesLabel = CreateText("LIVES  3/3", livesInset, 25, TextAnchor.MiddleCenter, foregroundColour);
             Stretch(livesLabel.rectTransform, Vector2.zero, Vector2.one, new Vector2(10f, 2f), new Vector2(-10f, -2f));
+
+            RectTransform stokeInset = CreateRect("Stoke Inset", panel, Vector2.zero);
+            stokeInset.anchorMin = new Vector2(0.60f, 0f);
+            stokeInset.anchorMax = new Vector2(1f, 0.34f);
+            stokeInset.offsetMin = Vector2.zero;
+            stokeInset.offsetMax = Vector2.zero;
+            AddImage(stokeInset.gameObject, insetColour);
+            AddPixelBorder(stokeInset, borderColour, borderThickness);
+
+            stokeLabel = CreateText("STOKE  0", stokeInset, 22, TextAnchor.MiddleCenter, foregroundColour);
+            stokeLabel.resizeTextForBestFit = true;
+            stokeLabel.resizeTextMinSize = 14;
+            stokeLabel.resizeTextMaxSize = 22;
+            Stretch(stokeLabel.rectTransform, Vector2.zero, Vector2.one, new Vector2(8f, 2f), new Vector2(-8f, -2f));
         }
 
         private void BuildDayPanel(RectTransform panel)
@@ -302,6 +318,17 @@ namespace PixelOcean
                 chapterGroup.alpha = Mathf.MoveTowards(chapterGroup.alpha, showBanner ? 1f : 0f, Time.unscaledDeltaTime * 5f);
             if (chapterLabel != null && showBanner)
                 chapterLabel.text = progression.CurrentBanner;
+        }
+
+        private void RefreshStoke()
+        {
+            if (stokeLabel == null)
+                return;
+
+            int stoke = AirTrickScoreSystem.Instance != null
+                ? AirTrickScoreSystem.Instance.TotalStoke
+                : 0;
+            stokeLabel.text = "STOKE  " + stoke.ToString("N0");
         }
 
         private void RefreshDayDisplay()
