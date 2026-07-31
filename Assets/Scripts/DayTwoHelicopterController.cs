@@ -22,6 +22,14 @@ namespace PixelOcean
         [SerializeField] private float movementSmoothing = 4.2f;
         [SerializeField] private float bankAngle = 8f;
 
+        [Header("Spatial Audio")]
+        [SerializeField] private AudioClip movementClip;
+        [SerializeField] private AudioClip missileLaunchClip;
+        [SerializeField, Range(0f, 1f)] private float movementVolume = 0.72f;
+        [SerializeField, Range(0f, 1f)] private float missileLaunchVolume = 0.95f;
+        [SerializeField, Min(0.1f)] private float audioMinDistance = 5f;
+        [SerializeField, Min(1f)] private float audioMaxDistance = 28f;
+
         [Header("Missile Attack")]
         [SerializeField] private Vector2 firstAttackDelayRange = new(5f, 9f);
         [SerializeField] private Vector2 attackCooldownRange = new(8f, 13f);
@@ -54,6 +62,8 @@ namespace PixelOcean
         private bool waitingOffscreen;
         private float returnAt;
         private Color baseTint = Color.white;
+        private AudioSource movementAudioSource;
+        private AudioSource oneShotAudioSource;
 
         public bool CanBeHit => isActiveAndEnabled && spriteRenderer != null && spriteRenderer.enabled && !waitingOffscreen;
 
@@ -81,6 +91,28 @@ namespace PixelOcean
             body.bodyType = RigidbodyType2D.Kinematic;
             body.gravityScale = 0f;
             body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+
+            movementClip ??= Resources.Load<AudioClip>("Audio/SFX/helicopter");
+            missileLaunchClip ??= Resources.Load<AudioClip>("Audio/SFX/missile_launch");
+            movementAudioSource = CreateSpatialAudioSource(true, movementVolume);
+            movementAudioSource.clip = movementClip;
+            if (movementAudioSource.clip != null)
+                movementAudioSource.Play();
+            oneShotAudioSource = CreateSpatialAudioSource(false, 1f);
+        }
+
+        private AudioSource CreateSpatialAudioSource(bool loop, float volume)
+        {
+            AudioSource source = gameObject.AddComponent<AudioSource>();
+            source.playOnAwake = false;
+            source.loop = loop;
+            source.volume = volume;
+            source.spatialBlend = 1f;
+            source.rolloffMode = AudioRolloffMode.Logarithmic;
+            source.minDistance = audioMinDistance;
+            source.maxDistance = Mathf.Max(audioMinDistance + 0.1f, audioMaxDistance);
+            source.dopplerLevel = 0.15f;
+            return source;
         }
 
         private IEnumerator Start()
@@ -208,6 +240,8 @@ namespace PixelOcean
         private void FireMissile()
         {
             if (target == null) return;
+            if (missileLaunchClip != null && oneShotAudioSource != null)
+                oneShotAudioSource.PlayOneShot(missileLaunchClip, missileLaunchVolume);
             GameObject missile = new("Day 2 Helicopter Tracking Missile");
             missile.transform.position = transform.position + new Vector3(
                 spriteRenderer.flipX ? -missileSpawnOffsetX : missileSpawnOffsetX,

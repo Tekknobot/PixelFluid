@@ -37,7 +37,7 @@ namespace PixelOcean
 
         [Header("Boss Defeat Sunset")]
         [SerializeField, Min(10f)] private float acceleratedSunsetSeconds = 75f;
-        [SerializeField, Min(1f)] private float retreatSpeedMultiplier = 1.75f;
+        [SerializeField, Min(1f)] private float retreatSpeedMultiplier = 0.75f;
 
         private bool bossDefeatedSunset;
 

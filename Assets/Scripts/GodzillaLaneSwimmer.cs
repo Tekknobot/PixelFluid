@@ -68,6 +68,13 @@ namespace PixelOcean
         [SerializeField, Min(0.05f)] private float facingDeadZone = 0.32f;
         [SerializeField, Min(0f)] private float minimumFacingHoldTime = 0.18f;
 
+        [Header("Spatial Reaper Horn")]
+        [SerializeField] private AudioClip reaperHornClip;
+        [SerializeField, Range(0f, 1f)] private float reaperHornVolume = 0.95f;
+        [SerializeField] private Vector2 reaperHornInterval = new(8f, 14f);
+        [SerializeField, Min(0.1f)] private float audioMinDistance = 5f;
+        [SerializeField, Min(1f)] private float audioMaxDistance = 32f;
+
         [Header("Attack Audio")]
         [SerializeField] private AudioClip attackClip;
         [SerializeField, Range(0f, 1f)] private float attackVolume = 1f;
@@ -80,6 +87,7 @@ namespace PixelOcean
         private GodzillaSpriteAnimation animation;
         private TinyWaveSurfer target;
         private AudioSource audioSource;
+        private float nextReaperHornTime;
 
         private CreatureState state;
         private int currentLane;
@@ -221,7 +229,13 @@ namespace PixelOcean
                 audioSource = gameObject.AddComponent<AudioSource>();
             audioSource.playOnAwake = false;
             audioSource.loop = false;
-            audioSource.spatialBlend = 0f;
+            audioSource.spatialBlend = 1f;
+            audioSource.rolloffMode = AudioRolloffMode.Logarithmic;
+            audioSource.minDistance = audioMinDistance;
+            audioSource.maxDistance = Mathf.Max(audioMinDistance + 0.1f, audioMaxDistance);
+            audioSource.dopplerLevel = 0.1f;
+            reaperHornClip ??= Resources.Load<AudioClip>("Audio/SFX/reaper_horn");
+            ScheduleReaperHorn();
             if (attackClip == null)
                 attackClip = Resources.Load<AudioClip>("Audio/SFX/shark_attack");
 
@@ -230,8 +244,22 @@ namespace PixelOcean
             CaptureTrackedSectionCentre();
         }
 
+        private void ScheduleReaperHorn()
+        {
+            float minimum = Mathf.Max(1f, reaperHornInterval.x);
+            float maximum = Mathf.Max(minimum, reaperHornInterval.y);
+            nextReaperHornTime = Time.time + Random.Range(minimum, maximum);
+        }
+
         private void FixedUpdate()
         {
+            if (!defeated && Time.time >= nextReaperHornTime)
+            {
+                if (reaperHornClip != null && audioSource != null)
+                    audioSource.PlayOneShot(reaperHornClip, reaperHornVolume);
+                ScheduleReaperHorn();
+            }
+
             if (defeated || !initialised || waterLayers.Count < 2)
                 return;
 

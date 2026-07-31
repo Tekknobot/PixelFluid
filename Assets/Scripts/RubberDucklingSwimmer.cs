@@ -17,6 +17,13 @@ namespace PixelOcean
         [SerializeField, Min(0.1f)] private float bobSpeed = 4.5f;
         [SerializeField, Min(0.05f)] private float laneRefreshInterval = 0.12f;
 
+        [Header("Spatial Quack Audio")]
+        [SerializeField] private AudioClip quackClip;
+        [SerializeField, Range(0f, 1f)] private float quackVolume = 0.7f;
+        [SerializeField] private Vector2 quackInterval = new(2.2f, 4.8f);
+        [SerializeField, Min(0.1f)] private float audioMinDistance = 3.5f;
+        [SerializeField, Min(1f)] private float audioMaxDistance = 20f;
+
         private readonly List<PixelWaterGPU> waterLayers = new();
         private SpriteRenderer spriteRenderer;
         private InterWaveRenderItem renderItem;
@@ -29,6 +36,8 @@ namespace PixelOcean
         private float nextLaneRefreshTime;
         private int currentLane;
         private bool exploded;
+        private AudioSource audioSource;
+        private float nextQuackTime;
 
         public bool CanBeHit => !exploded;
 
@@ -48,6 +57,23 @@ namespace PixelOcean
             spriteRenderer = GetComponent<SpriteRenderer>();
             renderItem = GetComponent<InterWaveRenderItem>();
             EnsurePhysics();
+            quackClip ??= Resources.Load<AudioClip>("Audio/SFX/duckling_quack");
+            audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.playOnAwake = false;
+            audioSource.loop = false;
+            audioSource.spatialBlend = 1f;
+            audioSource.rolloffMode = AudioRolloffMode.Logarithmic;
+            audioSource.minDistance = audioMinDistance;
+            audioSource.maxDistance = Mathf.Max(audioMinDistance + 0.1f, audioMaxDistance);
+            audioSource.dopplerLevel = 0.1f;
+            ScheduleQuack();
+        }
+
+        private void ScheduleQuack()
+        {
+            float minimum = Mathf.Max(0.25f, quackInterval.x);
+            float maximum = Mathf.Max(minimum, quackInterval.y);
+            nextQuackTime = Time.time + Random.Range(minimum, maximum);
         }
 
         private void EnsurePhysics()
@@ -66,6 +92,13 @@ namespace PixelOcean
         private void Update()
         {
             if (exploded) return;
+
+            if (Time.time >= nextQuackTime)
+            {
+                if (quackClip != null && audioSource != null)
+                    audioSource.PlayOneShot(quackClip, quackVolume);
+                ScheduleQuack();
+            }
 
             lifeRemaining -= Time.deltaTime;
             if (lifeRemaining <= 0f)

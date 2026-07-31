@@ -40,6 +40,12 @@ namespace PixelOcean
         [SerializeField] private float hitFlashDuration = 0.22f;
         [SerializeField] private float hitKickSpeed = 4.5f;
 
+        [Header("Spatial Movement Audio")]
+        [SerializeField] private AudioClip movementClip;
+        [SerializeField, Range(0f, 1f)] private float movementVolume = 0.72f;
+        [SerializeField, Min(0.1f)] private float audioMinDistance = 5f;
+        [SerializeField, Min(1f)] private float audioMaxDistance = 28f;
+
         [Header("Beam Juice")]
         [SerializeField] private Color beamOuterColor = new Color(0.35f, 1f, 0.85f, 0.36f);
         [SerializeField] private Color beamInnerColor = new Color(0.85f, 1f, 0.95f, 0.82f);
@@ -75,6 +81,7 @@ namespace PixelOcean
         private bool waitingOffscreen;
         private float returnAfterTime;
         private float hitFlashUntil;
+        private AudioSource movementAudioSource;
 
         public bool CanBeHit =>
             isActiveAndEnabled &&
@@ -108,6 +115,21 @@ namespace PixelOcean
             worldCamera = Camera.main;
             BuildBeam();
             SetBeamVisible(false);
+
+            movementAudioSource = gameObject.AddComponent<AudioSource>();
+            movementAudioSource.playOnAwake = false;
+            movementAudioSource.loop = true;
+            movementAudioSource.spatialBlend = 1f;
+            movementAudioSource.rolloffMode = AudioRolloffMode.Logarithmic;
+            movementAudioSource.minDistance = audioMinDistance;
+            movementAudioSource.maxDistance = Mathf.Max(audioMinDistance + 0.1f, audioMaxDistance);
+            movementAudioSource.dopplerLevel = 0.15f;
+            movementAudioSource.volume = movementVolume;
+            movementAudioSource.clip = movementClip != null
+                ? movementClip
+                : Resources.Load<AudioClip>("Audio/SFX/alien_ship");
+            if (movementAudioSource.clip != null)
+                movementAudioSource.Play();
         }
 
         private IEnumerator Start()

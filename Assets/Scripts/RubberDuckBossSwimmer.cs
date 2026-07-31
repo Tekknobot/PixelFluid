@@ -62,6 +62,10 @@ namespace PixelOcean
         [SerializeField, Range(1, 4)] private int ducklingsPerWave = 2;
         [SerializeField] private AudioClip squeakClip;
         [SerializeField, Range(0f, 1f)] private float squeakVolume = 0.75f;
+        [SerializeField] private AudioClip giantQuackClip;
+        [SerializeField, Range(0f, 1f)] private float giantQuackVolume = 0.9f;
+        [SerializeField, Min(0.1f)] private float audioMinDistance = 5f;
+        [SerializeField, Min(1f)] private float audioMaxDistance = 30f;
 
         [Header("Water Response")]
         [SerializeField, Range(0f, 1f)] private float waveFollow = 0.88f;
@@ -229,7 +233,13 @@ namespace PixelOcean
                 audioSource = gameObject.AddComponent<AudioSource>();
             audioSource.playOnAwake = false;
             audioSource.loop = false;
-            audioSource.spatialBlend = 0f;
+            audioSource.spatialBlend = 1f;
+            audioSource.rolloffMode = AudioRolloffMode.Logarithmic;
+            audioSource.minDistance = audioMinDistance;
+            audioSource.maxDistance = Mathf.Max(audioMinDistance + 0.1f, audioMaxDistance);
+            audioSource.dopplerLevel = 0.1f;
+            giantQuackClip ??= Resources.Load<AudioClip>("Audio/SFX/rubber_duck_quack");
+            squeakClip ??= Resources.Load<AudioClip>("Audio/SFX/duckling_quack");
             if (attackClip == null)
                 attackClip = Resources.Load<AudioClip>("Audio/SFX/shark_attack");
             if (squeakClip == null)
@@ -746,8 +756,8 @@ namespace PixelOcean
             for (int i = 0; i < count; i++)
                 SpawnDuckling(i, count);
 
-            if (squeakClip != null && audioSource != null)
-                audioSource.PlayOneShot(squeakClip, squeakVolume);
+            if (giantQuackClip != null && audioSource != null)
+                audioSource.PlayOneShot(giantQuackClip, giantQuackVolume);
 
             ScheduleDucklingWave();
         }
