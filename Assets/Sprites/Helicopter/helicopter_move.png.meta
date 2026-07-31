@@ -1,52 +1,55 @@
 fileFormatVersion: 2
-guid: 391b065e311de8448bb54e15004b21c3
+guid: 66b73d88962558b48adda6ba80b790b0
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -2201600250244119665
-    second: stingray_move_0
+      213: -3091726149837931642
+    second: helicopter_move_0
   - first:
-      213: 6637899629461800227
-    second: stingray_move_1
+      213: 4116196096822221495
+    second: helicopter_move_1
   - first:
-      213: -2570053313830915494
-    second: stingray_move_2
+      213: -1032058279673404724
+    second: helicopter_move_2
   - first:
-      213: -6914183958981671749
-    second: stingray_move_3
+      213: 8116465914251500941
+    second: helicopter_move_3
   - first:
-      213: -6956421539241016717
-    second: stingray_move_4
+      213: -8475566156131203429
+    second: helicopter_move_4
   - first:
-      213: -8881004686672084958
-    second: stingray_move_5
+      213: -8809250456877272116
+    second: helicopter_move_5
   - first:
-      213: 6453934923763626300
-    second: stingray_move_6
+      213: -6330391247663824985
+    second: helicopter_move_6
   - first:
-      213: 4561344652476507503
-    second: stingray_move_7
+      213: 1032137889428508799
+    second: helicopter_move_7
   - first:
-      213: 7644062361400813898
-    second: stingray_move_8
+      213: 1321082187060163982
+    second: helicopter_move_8
   - first:
-      213: -6074704897937132937
-    second: stingray_move_9
+      213: -5460116222661734324
+    second: helicopter_move_9
   - first:
-      213: 1028184059211575399
-    second: stingray_move_10
+      213: -7125600510239388055
+    second: helicopter_move_10
   - first:
-      213: -7093689817542791190
-    second: stingray_move_11
+      213: 7771015362496278534
+    second: helicopter_move_11
   - first:
-      213: -5585148890455364610
-    second: stingray_move_12
+      213: -2816168791867967832
+    second: helicopter_move_12
   - first:
-      213: 62108408169126000
-    second: stingray_move_13
+      213: 168330095573425982
+    second: helicopter_move_13
   - first:
-      213: -8103126606626278027
-    second: stingray_move_14
+      213: 2859983354712119836
+    second: helicopter_move_14
+  - first:
+      213: 121001870909046956
+    second: helicopter_move_15
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -70,7 +73,7 @@ TextureImporter:
   streamingMipmaps: 0
   streamingMipmapsPriority: 0
   vTOnly: 0
-  ignoreMipmapLimit: 1
+  ignoreMipmapLimit: 0
   grayScaleToAlpha: 0
   generateCubemap: 6
   cubemapConvolution: 0
@@ -155,13 +158,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: stingray_move_0
+      name: helicopter_move_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 64
-        height: 64
+        width: 128
+        height: 128
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -170,42 +173,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: f83c9caac385271e0800000000000000
-      internalID: -2201600250244119665
+      spriteID: 68bbf18827bf715d0800000000000000
+      internalID: -3091726149837931642
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: stingray_move_1
-      rect:
-        serializedVersion: 2
-        x: 64
-        y: 0
-        width: 64
-        height: 64
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 32584cc3b8e8e1c50800000000000000
-      internalID: 6637899629461800227
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: stingray_move_2
+      name: helicopter_move_1
       rect:
         serializedVersion: 2
         x: 128
         y: 0
-        width: 64
-        height: 64
+        width: 128
+        height: 128
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -214,42 +195,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: a52fa47b026555cd0800000000000000
-      internalID: -2570053313830915494
+      spriteID: 7ba10f0aa8aaf1930800000000000000
+      internalID: 4116196096822221495
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: stingray_move_3
-      rect:
-        serializedVersion: 2
-        x: 192
-        y: 0
-        width: 64
-        height: 64
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: bb4813d7252eb00a0800000000000000
-      internalID: -6914183958981671749
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: stingray_move_4
+      name: helicopter_move_2
       rect:
         serializedVersion: 2
         x: 256
         y: 0
-        width: 64
-        height: 64
+        width: 128
+        height: 128
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -258,42 +217,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 372c9ad7773d57f90800000000000000
-      internalID: -6956421539241016717
+      spriteID: cc2e09476746da1f0800000000000000
+      internalID: -1032058279673404724
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: stingray_move_5
-      rect:
-        serializedVersion: 2
-        x: 320
-        y: 0
-        width: 64
-        height: 64
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 220c4528a4550c480800000000000000
-      internalID: -8881004686672084958
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: stingray_move_6
+      name: helicopter_move_3
       rect:
         serializedVersion: 2
         x: 384
         y: 0
-        width: 64
-        height: 64
+        width: 128
+        height: 128
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -302,42 +239,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: c313b666e9bf09950800000000000000
-      internalID: 6453934923763626300
+      spriteID: d8dd6820fba73a070800000000000000
+      internalID: 8116465914251500941
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: stingray_move_7
-      rect:
-        serializedVersion: 2
-        x: 448
-        y: 0
-        width: 64
-        height: 64
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: f656dfc5bc62d4f30800000000000000
-      internalID: 4561344652476507503
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: stingray_move_8
+      name: helicopter_move_4
       rect:
         serializedVersion: 2
         x: 512
         y: 0
-        width: 64
-        height: 64
+        width: 128
+        height: 128
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -346,42 +261,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: a49aa3cb73a251a60800000000000000
-      internalID: 7644062361400813898
+      spriteID: b960a798c7db06a80800000000000000
+      internalID: -8475566156131203429
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: stingray_move_9
-      rect:
-        serializedVersion: 2
-        x: 576
-        y: 0
-        width: 64
-        height: 64
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 772b12b941052bba0800000000000000
-      internalID: -6074704897937132937
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: stingray_move_10
+      name: helicopter_move_5
       rect:
         serializedVersion: 2
         x: 640
         y: 0
-        width: 64
-        height: 64
+        width: 128
+        height: 128
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -390,42 +283,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 760760d44f7d44e00800000000000000
-      internalID: 1028184059211575399
+      spriteID: cc3f16402614fb580800000000000000
+      internalID: -8809250456877272116
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: stingray_move_11
-      rect:
-        serializedVersion: 2
-        x: 704
-        y: 0
-        width: 64
-        height: 64
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: aef6e86e1b62e8d90800000000000000
-      internalID: -7093689817542791190
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: stingray_move_12
+      name: helicopter_move_6
       rect:
         serializedVersion: 2
         x: 768
         y: 0
-        width: 64
-        height: 64
+        width: 128
+        height: 128
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -434,42 +305,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: efbadbeeca09d72b0800000000000000
-      internalID: -5585148890455364610
+      spriteID: 7af71c933bee528a0800000000000000
+      internalID: -6330391247663824985
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: stingray_move_13
-      rect:
-        serializedVersion: 2
-        x: 832
-        y: 0
-        width: 64
-        height: 64
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 0785c76a447acd000800000000000000
-      internalID: 62108408169126000
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: stingray_move_14
+      name: helicopter_move_7
       rect:
         serializedVersion: 2
         x: 896
         y: 0
-        width: 64
-        height: 64
+        width: 128
+        height: 128
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -478,8 +327,184 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 57536029849eb8f80800000000000000
-      internalID: -8103126606626278027
+      spriteID: f709b9221f3e25e00800000000000000
+      internalID: 1032137889428508799
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: helicopter_move_8
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e8531deef3d655210800000000000000
+      internalID: 1321082187060163982
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: helicopter_move_9
+      rect:
+        serializedVersion: 2
+        x: 1152
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c4056e37935c934b0800000000000000
+      internalID: -5460116222661734324
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: helicopter_move_10
+      rect:
+        serializedVersion: 2
+        x: 1280
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 96ec6d7c618cc1d90800000000000000
+      internalID: -7125600510239388055
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: helicopter_move_11
+      rect:
+        serializedVersion: 2
+        x: 1408
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 600b1b1bc4138db60800000000000000
+      internalID: 7771015362496278534
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: helicopter_move_12
+      rect:
+        serializedVersion: 2
+        x: 1536
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8a63b2d8765fae8d0800000000000000
+      internalID: -2816168791867967832
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: helicopter_move_13
+      rect:
+        serializedVersion: 2
+        x: 1664
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e3f59af7457065200800000000000000
+      internalID: 168330095573425982
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: helicopter_move_14
+      rect:
+        serializedVersion: 2
+        x: 1792
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c1a552155b3b0b720800000000000000
+      internalID: 2859983354712119836
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: helicopter_move_15
+      rect:
+        serializedVersion: 2
+        x: 1920
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ca001bc7f82eda100800000000000000
+      internalID: 121001870909046956
       vertices: []
       indices: 
       edges: []
@@ -488,7 +513,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 32f6ecbf0a5ae65459b0e8bba8878d1e
+    spriteID: 53d3dcc596e7d3d49b968e9cd7966b02
     internalID: 0
     vertices: []
     indices: 
@@ -498,23 +523,24 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":16.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":16.0,"y":1.0},"gridSpriteSize":{"x":128.0,"y":128.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      stingray_move_0: -2201600250244119665
-      stingray_move_1: 6637899629461800227
-      stingray_move_10: 1028184059211575399
-      stingray_move_11: -7093689817542791190
-      stingray_move_12: -5585148890455364610
-      stingray_move_13: 62108408169126000
-      stingray_move_14: -8103126606626278027
-      stingray_move_2: -2570053313830915494
-      stingray_move_3: -6914183958981671749
-      stingray_move_4: -6956421539241016717
-      stingray_move_5: -8881004686672084958
-      stingray_move_6: 6453934923763626300
-      stingray_move_7: 4561344652476507503
-      stingray_move_8: 7644062361400813898
-      stingray_move_9: -6074704897937132937
+      helicopter_move_0: -3091726149837931642
+      helicopter_move_1: 4116196096822221495
+      helicopter_move_10: -7125600510239388055
+      helicopter_move_11: 7771015362496278534
+      helicopter_move_12: -2816168791867967832
+      helicopter_move_13: 168330095573425982
+      helicopter_move_14: 2859983354712119836
+      helicopter_move_15: 121001870909046956
+      helicopter_move_2: -1032058279673404724
+      helicopter_move_3: 8116465914251500941
+      helicopter_move_4: -8475566156131203429
+      helicopter_move_5: -8809250456877272116
+      helicopter_move_6: -6330391247663824985
+      helicopter_move_7: 1032137889428508799
+      helicopter_move_8: 1321082187060163982
+      helicopter_move_9: -5460116222661734324
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

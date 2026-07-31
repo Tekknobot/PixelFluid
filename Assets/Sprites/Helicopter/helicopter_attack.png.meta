@@ -1,52 +1,55 @@
 fileFormatVersion: 2
-guid: 391b065e311de8448bb54e15004b21c3
+guid: e45fd2f7695aa5340b080457f98e6d1d
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -2201600250244119665
-    second: stingray_move_0
+      213: 114799797178093510
+    second: helicopter_attack_0
   - first:
-      213: 6637899629461800227
-    second: stingray_move_1
+      213: -9073223014789840257
+    second: helicopter_attack_1
   - first:
-      213: -2570053313830915494
-    second: stingray_move_2
+      213: -8726762024322223230
+    second: helicopter_attack_2
   - first:
-      213: -6914183958981671749
-    second: stingray_move_3
+      213: 3556905888545676978
+    second: helicopter_attack_3
   - first:
-      213: -6956421539241016717
-    second: stingray_move_4
+      213: 8996606231815067525
+    second: helicopter_attack_4
   - first:
-      213: -8881004686672084958
-    second: stingray_move_5
+      213: 2889607534572914640
+    second: helicopter_attack_5
   - first:
-      213: 6453934923763626300
-    second: stingray_move_6
+      213: -339124406870307112
+    second: helicopter_attack_6
   - first:
-      213: 4561344652476507503
-    second: stingray_move_7
+      213: 2125185176399012650
+    second: helicopter_attack_7
   - first:
-      213: 7644062361400813898
-    second: stingray_move_8
+      213: 3561768998896881723
+    second: helicopter_attack_8
   - first:
-      213: -6074704897937132937
-    second: stingray_move_9
+      213: -7165855084325275909
+    second: helicopter_attack_9
   - first:
-      213: 1028184059211575399
-    second: stingray_move_10
+      213: -1069647800293352380
+    second: helicopter_attack_10
   - first:
-      213: -7093689817542791190
-    second: stingray_move_11
+      213: 3935064954768011694
+    second: helicopter_attack_11
   - first:
-      213: -5585148890455364610
-    second: stingray_move_12
+      213: -3095372962275751057
+    second: helicopter_attack_12
   - first:
-      213: 62108408169126000
-    second: stingray_move_13
+      213: -2591282642141381829
+    second: helicopter_attack_13
   - first:
-      213: -8103126606626278027
-    second: stingray_move_14
+      213: 5709941104622849296
+    second: helicopter_attack_14
+  - first:
+      213: -6149199156065941158
+    second: helicopter_attack_15
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -155,331 +158,353 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: stingray_move_0
+      name: helicopter_attack_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 64
-        height: 64
+        x: 2
+        y: 39
+        width: 122
+        height: 48
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: f83c9caac385271e0800000000000000
-      internalID: -2201600250244119665
+      spriteID: 6cf461baec9d79100800000000000000
+      internalID: 114799797178093510
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: stingray_move_1
+      name: helicopter_attack_1
       rect:
         serializedVersion: 2
-        x: 64
-        y: 0
-        width: 64
-        height: 64
+        x: 130
+        y: 40
+        width: 124
+        height: 48
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 32584cc3b8e8e1c50800000000000000
-      internalID: 6637899629461800227
+      spriteID: f728d837dbf651280800000000000000
+      internalID: -9073223014789840257
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: stingray_move_2
+      name: helicopter_attack_2
       rect:
         serializedVersion: 2
-        x: 128
-        y: 0
-        width: 64
-        height: 64
+        x: 258
+        y: 41
+        width: 125
+        height: 48
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: a52fa47b026555cd0800000000000000
-      internalID: -2570053313830915494
+      spriteID: 283b7ecdc2054e680800000000000000
+      internalID: -8726762024322223230
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: stingray_move_3
+      name: helicopter_attack_3
       rect:
         serializedVersion: 2
-        x: 192
-        y: 0
-        width: 64
-        height: 64
+        x: 386
+        y: 41
+        width: 125
+        height: 48
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: bb4813d7252eb00a0800000000000000
-      internalID: -6914183958981671749
+      spriteID: 2be92427f0bac5130800000000000000
+      internalID: 3556905888545676978
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: stingray_move_4
+      name: helicopter_attack_4
       rect:
         serializedVersion: 2
-        x: 256
-        y: 0
-        width: 64
-        height: 64
+        x: 514
+        y: 42
+        width: 116
+        height: 46
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 372c9ad7773d57f90800000000000000
-      internalID: -6956421539241016717
+      spriteID: 5871767a3bd5adc70800000000000000
+      internalID: 8996606231815067525
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: stingray_move_5
+      name: helicopter_attack_5
       rect:
         serializedVersion: 2
-        x: 320
-        y: 0
-        width: 64
-        height: 64
+        x: 642
+        y: 42
+        width: 124
+        height: 48
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 220c4528a4550c480800000000000000
-      internalID: -8881004686672084958
+      spriteID: 0d7c28e2eb2f91820800000000000000
+      internalID: 2889607534572914640
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: stingray_move_6
+      name: helicopter_attack_6
       rect:
         serializedVersion: 2
-        x: 384
-        y: 0
-        width: 64
-        height: 64
+        x: 770
+        y: 43
+        width: 116
+        height: 48
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: c313b666e9bf09950800000000000000
-      internalID: 6453934923763626300
+      spriteID: 8de84d116203b4bf0800000000000000
+      internalID: -339124406870307112
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: stingray_move_7
+      name: helicopter_attack_7
       rect:
         serializedVersion: 2
-        x: 448
-        y: 0
-        width: 64
-        height: 64
+        x: 898
+        y: 43
+        width: 116
+        height: 48
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: f656dfc5bc62d4f30800000000000000
-      internalID: 4561344652476507503
+      spriteID: a23603188ac2e7d10800000000000000
+      internalID: 2125185176399012650
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: stingray_move_8
+      name: helicopter_attack_8
       rect:
         serializedVersion: 2
-        x: 512
-        y: 0
-        width: 64
-        height: 64
+        x: 1026
+        y: 43
+        width: 124
+        height: 48
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: a49aa3cb73a251a60800000000000000
-      internalID: 7644062361400813898
+      spriteID: b305f3f8802fd6130800000000000000
+      internalID: 3561768998896881723
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: stingray_move_9
+      name: helicopter_attack_9
       rect:
         serializedVersion: 2
-        x: 576
-        y: 0
-        width: 64
-        height: 64
+        x: 1154
+        y: 41
+        width: 123
+        height: 50
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 772b12b941052bba0800000000000000
-      internalID: -6074704897937132937
+      spriteID: bf67dd264c4cd8c90800000000000000
+      internalID: -7165855084325275909
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: stingray_move_10
+      name: helicopter_attack_10
       rect:
         serializedVersion: 2
-        x: 640
-        y: 0
-        width: 64
-        height: 64
+        x: 1282
+        y: 43
+        width: 125
+        height: 48
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 760760d44f7d44e00800000000000000
-      internalID: 1028184059211575399
+      spriteID: 44c9cbc2ef8d721f0800000000000000
+      internalID: -1069647800293352380
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: stingray_move_11
+      name: helicopter_attack_11
       rect:
         serializedVersion: 2
-        x: 704
-        y: 0
-        width: 64
-        height: 64
+        x: 1410
+        y: 42
+        width: 120
+        height: 48
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: aef6e86e1b62e8d90800000000000000
-      internalID: -7093689817542791190
+      spriteID: ea1390d3ab82c9630800000000000000
+      internalID: 3935064954768011694
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: stingray_move_12
+      name: helicopter_attack_12
       rect:
         serializedVersion: 2
-        x: 768
-        y: 0
-        width: 64
-        height: 64
+        x: 1538
+        y: 41
+        width: 116
+        height: 48
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: efbadbeeca09d72b0800000000000000
-      internalID: -5585148890455364610
+      spriteID: f6b8438d0b60b05d0800000000000000
+      internalID: -3095372962275751057
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: stingray_move_13
+      name: helicopter_attack_13
       rect:
         serializedVersion: 2
-        x: 832
-        y: 0
-        width: 64
-        height: 64
+        x: 1666
+        y: 41
+        width: 116
+        height: 47
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 0785c76a447acd000800000000000000
-      internalID: 62108408169126000
+      spriteID: b3bf68a8a2ae90cd0800000000000000
+      internalID: -2591282642141381829
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: stingray_move_14
+      name: helicopter_attack_14
       rect:
         serializedVersion: 2
-        x: 896
-        y: 0
-        width: 64
-        height: 64
+        x: 1794
+        y: 40
+        width: 122
+        height: 45
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 57536029849eb8f80800000000000000
-      internalID: -8103126606626278027
+      spriteID: 01d427d9e29cd3f40800000000000000
+      internalID: 5709941104622849296
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: helicopter_attack_15
+      rect:
+        serializedVersion: 2
+        x: 1922
+        y: 39
+        width: 124
+        height: 47
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a59ce8982f7a9aaa0800000000000000
+      internalID: -6149199156065941158
       vertices: []
       indices: 
       edges: []
@@ -488,7 +513,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 32f6ecbf0a5ae65459b0e8bba8878d1e
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -496,25 +521,24 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries:
-      - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":16.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
+      entries: []
     nameFileIdTable:
-      stingray_move_0: -2201600250244119665
-      stingray_move_1: 6637899629461800227
-      stingray_move_10: 1028184059211575399
-      stingray_move_11: -7093689817542791190
-      stingray_move_12: -5585148890455364610
-      stingray_move_13: 62108408169126000
-      stingray_move_14: -8103126606626278027
-      stingray_move_2: -2570053313830915494
-      stingray_move_3: -6914183958981671749
-      stingray_move_4: -6956421539241016717
-      stingray_move_5: -8881004686672084958
-      stingray_move_6: 6453934923763626300
-      stingray_move_7: 4561344652476507503
-      stingray_move_8: 7644062361400813898
-      stingray_move_9: -6074704897937132937
+      helicopter_attack_0: 114799797178093510
+      helicopter_attack_1: -9073223014789840257
+      helicopter_attack_10: -1069647800293352380
+      helicopter_attack_11: 3935064954768011694
+      helicopter_attack_12: -3095372962275751057
+      helicopter_attack_13: -2591282642141381829
+      helicopter_attack_14: 5709941104622849296
+      helicopter_attack_15: -6149199156065941158
+      helicopter_attack_2: -8726762024322223230
+      helicopter_attack_3: 3556905888545676978
+      helicopter_attack_4: 8996606231815067525
+      helicopter_attack_5: 2889607534572914640
+      helicopter_attack_6: -339124406870307112
+      helicopter_attack_7: 2125185176399012650
+      helicopter_attack_8: 3561768998896881723
+      helicopter_attack_9: -7165855084325275909
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -195,6 +195,18 @@ namespace PixelOcean
                 return;
             }
 
+            StingrayLaneSwimmer stingray =
+                hitTransform.GetComponentInParent<StingrayLaneSwimmer>();
+
+            if (stingray != null)
+            {
+                LoadSfx();
+                PlaySfx(sharkHitClip, 0.9f);
+                stingray.TakeSodaCanHit(transform.position);
+                Bounce(stingray.transform.position);
+                return;
+            }
+
             GiantSquidLaneSwimmer squid =
                 hitTransform.GetComponentInParent<GiantSquidLaneSwimmer>();
 

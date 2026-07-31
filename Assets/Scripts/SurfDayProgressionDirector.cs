@@ -150,6 +150,7 @@ namespace PixelOcean
             DestroyAll<BloodfishSwimmer>();
             DestroyAll<BloodSharkLaneSwimmer>();
             DestroyAll<TransparentSquidLaneSwimmer>();
+            DestroyAll<StingrayLaneSwimmer>();
             yield return null;
 
             currentDay = 2;
@@ -175,6 +176,7 @@ namespace PixelOcean
             DestroyAll<GiantSquidLaneSwimmer>();
             DestroyAll<BloodSharkLaneSwimmer>();
             DestroyAll<TransparentSquidLaneSwimmer>();
+            DestroyAll<StingrayLaneSwimmer>();
             DestroyAll<GodzillaLaneSwimmer>();
             DestroyAll<JellyfishSwimmer>();
             DestroyAll<BloodfishSwimmer>();
@@ -246,6 +248,7 @@ namespace PixelOcean
                 {
                     SpawnMajor<BloodSharkLaneSpawner>("Storm Blood Shark", spawner => spawner.SpawnBloodShark(true));
                     SpawnMajor<TransparentSquidLaneSpawner>("Storm Transparent Squid", spawner => spawner.SpawnTransparentSquid(true));
+                    SpawnMajor<StingrayLaneSpawner>("Storm Stingray", spawner => spawner.SpawnStingray(true));
                 }
                 if (currentDay == 1)
                     SpawnJellyfishEncounter("Storm Jellyfish", 3);
@@ -282,6 +285,7 @@ namespace PixelOcean
                 {
                     SpawnMajor<TransparentSquidLaneSpawner>("First Transparent Squid", spawner => spawner.SpawnTransparentSquid(true));
                     SpawnMajor<BloodSharkLaneSpawner>("Second Blood Shark", spawner => spawner.SpawnBloodShark(true));
+                    SpawnMajor<StingrayLaneSpawner>("First Stingray", spawner => spawner.SpawnStingray(true));
                 }
                 SpawnRescueSet(2);
                 return;
