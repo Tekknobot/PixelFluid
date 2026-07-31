@@ -214,7 +214,7 @@ namespace PixelOcean
             {
                 font = PixelFontLibrary.Bold,
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 17,
+                fontSize = 32,
                 fontStyle = FontStyle.Normal,
                 normal = { textColor = new Color(1f, 0.9f, 0.2f, 1f) }
             };
@@ -261,8 +261,13 @@ namespace PixelOcean
                     Color tierColour = score.TextColour;
                     GUI.color = new Color(tierColour.r, tierColour.g, tierColour.b,
                         tierColour.a * (1f - age01));
-                    GUI.Label(new Rect(screen.x - 140f, Screen.height - screen.y - 42f, 280f, 84f),
-                        score.Text, floatingStyle);
+                    GUI.Label(
+                        new Rect(screen.x - 180f,
+                                Screen.height - screen.y - 60f,
+                                360f,
+                                120f),
+                        score.Text,
+                        floatingStyle);
                     GUI.color = old;
                 }
             }
