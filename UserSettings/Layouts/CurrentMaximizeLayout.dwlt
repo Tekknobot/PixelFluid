@@ -24,7 +24,7 @@ MonoBehaviour:
   m_MinSize: {x: 400, y: 112}
   m_MaxSize: {x: 32384, y: 16192}
   vertical: 0
-  controlID: 35096
+  controlID: 37036
   draggingID: 0
 --- !u!114 &2
 MonoBehaviour:
@@ -99,7 +99,7 @@ MonoBehaviour:
     m_HSlider: 0
     m_VSlider: 0
     m_IgnoreScrollWheelUntilClicked: 0
-    m_EnableMouseInput: 1
+    m_EnableMouseInput: 0
     m_EnableSliderZoomHorizontal: 0
     m_EnableSliderZoomVertical: 0
     m_UniformScale: 1
@@ -155,7 +155,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 112}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 1
-  controlID: 35097
+  controlID: 37037
   draggingID: 0
 --- !u!114 &4
 MonoBehaviour:
@@ -182,7 +182,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 56}
   m_MaxSize: {x: 24288, y: 8096}
   vertical: 0
-  controlID: 35098
+  controlID: 37038
   draggingID: 0
 --- !u!114 &5
 MonoBehaviour:
@@ -254,7 +254,7 @@ MonoBehaviour:
     m_TreeViewState:
       scrollPos: {x: 0, y: 0}
       m_SelectedIDs:
-      - m_rawData: 568105584918883328
+      - m_rawData: 568105584918861242
       m_LastClickedID:
         m_rawData: 0
       m_ExpandedIDs:
@@ -1342,7 +1342,7 @@ MonoBehaviour:
   m_LockTracker:
     m_IsLocked: 0
   m_LastSelectedObjectID:
-    m_rawData: 568105584918883328
+    m_rawData: 568105584918861242
 --- !u!114 &12
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -1421,7 +1421,7 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 0
     m_Folders:
-    - Assets/Resources/Fonts
+    - Assets/Resources/SurferSlugUI
     m_Globs: []
     m_ProductIds: 
     m_AnyWithAssetOrigin: 0
@@ -1431,18 +1431,18 @@ MonoBehaviour:
   m_ViewMode: 1
   m_StartGridSize: 96
   m_LastFolders:
-  - Assets/Resources/Fonts
+  - Assets/Resources/SurferSlugUI
   m_LastFoldersGridSize: 96
   m_LastProjectPath: D:\Unity\PixelFluid
   m_LockTracker:
     m_IsLocked: 0
   m_LastLocalAssetsSearchArea: 0
   m_FolderTreeState:
-    scrollPos: {x: 0, y: 79}
+    scrollPos: {x: 0, y: 169.33325}
     m_SelectedIDs:
-    - m_rawData: 568105584918883324
+    - m_rawData: 568105584918861934
     m_LastClickedID:
-      m_rawData: 568105584918883324
+      m_rawData: 568105584918861934
     m_ExpandedIDs:
     - m_rawData: 568105589213755500
     - m_rawData: 0
@@ -1518,9 +1518,9 @@ MonoBehaviour:
       m_ResourceFile: 
   m_ListAreaState:
     m_SelectedInstanceIDs:
-    - m_rawData: 568105584918883328
+    - m_rawData: 568105584918861242
     m_LastClickedEntityId:
-      m_rawData: 568105584918883328
+      m_rawData: 568105584918861242
     m_HadKeyboardFocusLastEvent: 0
     m_ExpandedInstanceIDs:
     - m_rawData: 568105584918886340
@@ -1614,8 +1614,8 @@ MonoBehaviour:
     y: 0
     width: 512.66675
     height: 1290.6667
-  m_MinSize: {x: 275, y: 50}
-  m_MaxSize: {x: 4000, y: 4000}
+  m_MinSize: {x: 276, y: 76}
+  m_MaxSize: {x: 4001, y: 4026}
   m_ActualView: {fileID: 16}
   m_Panes:
   - {fileID: 16}
