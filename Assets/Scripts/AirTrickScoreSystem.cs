@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine.InputSystem;
 using UnityEngine;
 
 namespace PixelOcean
@@ -222,7 +223,7 @@ namespace PixelOcean
             {
                 font = PixelFontLibrary.Bold,
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 28,
+                fontSize = 64,
                 fontStyle = FontStyle.Normal,
                 normal = { textColor = Color.white }
             };
@@ -230,7 +231,7 @@ namespace PixelOcean
             {
                 font = PixelFontLibrary.Bold,
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 22,
+                fontSize = 32,
                 fontStyle = FontStyle.Normal,
                 normal = { textColor = new Color(1f, 0.9f, 0.2f, 1f) }
             };
@@ -238,7 +239,7 @@ namespace PixelOcean
             {
                 font = PixelFontLibrary.Medium,
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 16,
+                fontSize = 32,
                 normal = { textColor = Color.white }
             };
         }
@@ -274,29 +275,64 @@ namespace PixelOcean
 
             if (!recapVisible) return;
 
-            float width = Mathf.Min(520f, Screen.width - 40f);
-            float height = 330f;
-            Rect panel = new((Screen.width - width) * 0.5f, (Screen.height - height) * 0.5f, width, height);
+            float width = Mathf.Min(700f, Screen.width - 40f);
+            float height = 500f;
+
+            Rect panel = new(
+                (Screen.width - width) * 0.5f,
+                (Screen.height - height) * 0.5f,
+                width,
+                height
+            );
+
             Color oldColor = GUI.color;
             GUI.color = new Color(0f, 0f, 0f, 0.82f);
             GUI.Box(panel, GUIContent.none);
             GUI.color = oldColor;
 
-            GUI.Label(new Rect(panel.x, panel.y + 22f, panel.width, 44f),
-                "DAY " + recapDay + " RECAP", recapTitleStyle);
-            GUI.Label(new Rect(panel.x, panel.y + 76f, panel.width, 40f),
-                "+" + dayStoke.ToString("N0") + " STOKE", recapValueStyle);
-            GUI.Label(new Rect(panel.x + 30f, panel.y + 130f, panel.width - 60f, 30f),
-                "TRICK JUMPS  " + jumpsLanded, recapSmallStyle);
-            GUI.Label(new Rect(panel.x + 30f, panel.y + 164f, panel.width - 60f, 30f),
-                "BEST TRICK  " + bestTrick + "  +" + bestJumpScore, recapSmallStyle);
-            GUI.Label(new Rect(panel.x + 30f, panel.y + 198f, panel.width - 60f, 30f),
-                "HIGHEST AIR  " + highestAir.ToString("0.00") + "m", recapSmallStyle);
-            GUI.Label(new Rect(panel.x + 30f, panel.y + 232f, panel.width - 60f, 30f),
-                "HANDSTANDS " + handstands + "   ROTATIONS " + rotations + "   FLIPS " + flips,
-                recapSmallStyle);
-            GUI.Label(new Rect(panel.x + 30f, panel.y + 274f, panel.width - 60f, 30f),
-                "TOTAL STOKE  " + totalStoke.ToString("N0"), recapValueStyle);
+            GUI.Label(
+                new Rect(panel.x + 20f, panel.y + 25f, panel.width - 40f, 60f),
+                "DAY " + recapDay + " RECAP",
+                recapTitleStyle
+            );
+
+            GUI.Label(
+                new Rect(panel.x + 20f, panel.y + 90f, panel.width - 40f, 50f),
+                "+" + dayStoke.ToString("N0") + " STOKE",
+                recapValueStyle
+            );
+
+            GUI.Label(
+                new Rect(panel.x + 30f, panel.y + 155f, panel.width - 60f, 40f),
+                "TRICK JUMPS  " + jumpsLanded,
+                recapSmallStyle
+            );
+
+            GUI.Label(
+                new Rect(panel.x + 30f, panel.y + 205f, panel.width - 60f, 40f),
+                "BEST TRICK  " + bestTrick + "  +" + bestJumpScore,
+                recapSmallStyle
+            );
+
+            GUI.Label(
+                new Rect(panel.x + 30f, panel.y + 255f, panel.width - 60f, 40f),
+                "HIGHEST AIR  " + highestAir.ToString("0.00") + "m",
+                recapSmallStyle
+            );
+
+            GUI.Label(
+                new Rect(panel.x + 30f, panel.y + 305f, panel.width - 60f, 50f),
+                "HANDSTANDS " + handstands +
+                "   ROTATIONS " + rotations +
+                "   FLIPS " + flips,
+                recapSmallStyle
+            );
+
+            GUI.Label(
+                new Rect(panel.x + 20f, panel.y + 390f, panel.width - 40f, 55f),
+                "TOTAL STOKE  " + totalStoke.ToString("N0"),
+                recapValueStyle
+            );
         }
     }
 }
