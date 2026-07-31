@@ -171,6 +171,30 @@ namespace PixelOcean
                 return;
             }
 
+            BloodSharkLaneSwimmer bloodShark =
+                hitTransform.GetComponentInParent<BloodSharkLaneSwimmer>();
+
+            if (bloodShark != null)
+            {
+                LoadSfx();
+                PlaySfx(sharkHitClip, 1f);
+                bloodShark.TakeSodaCanHit(transform.position);
+                Bounce(bloodShark.transform.position);
+                return;
+            }
+
+            TransparentSquidLaneSwimmer transparentSquid =
+                hitTransform.GetComponentInParent<TransparentSquidLaneSwimmer>();
+
+            if (transparentSquid != null)
+            {
+                LoadSfx();
+                PlaySfx(sharkHitClip, 1f);
+                transparentSquid.TakeSodaCanHit(transform.position);
+                Bounce(transparentSquid.transform.position);
+                return;
+            }
+
             GiantSquidLaneSwimmer squid =
                 hitTransform.GetComponentInParent<GiantSquidLaneSwimmer>();
 

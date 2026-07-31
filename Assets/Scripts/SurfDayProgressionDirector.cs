@@ -35,6 +35,8 @@ namespace PixelOcean
         [SerializeField, Min(1)] private int rescuesRequired = 3;
         [SerializeField, Min(1)] private int finalSurvivalSeconds = 60;
 
+        [SerializeField] private bool startOnDayTwoForTesting = true;
+
         private readonly List<GameObject> progressionSpawners = new();
         private Chapter chapter;
         private float runTime;
@@ -43,6 +45,8 @@ namespace PixelOcean
         private string banner = string.Empty;
         private string objective = string.Empty;
         private bool finalWaveStarted;
+        private bool changingDay;
+        private int currentDay = 1;
         private ProceduralRainSystem rain;
         private GUIStyle titleStyle;
         private GUIStyle objectiveStyle;
@@ -51,6 +55,7 @@ namespace PixelOcean
         public Chapter CurrentChapter => chapter;
         public int Rescues => rescues;
         public float RunTime => runTime;
+        public int CurrentDay => currentDay;
         public float DayDuration => dayEndsAt;
         public float NormalizedDayProgress => dayEndsAt > 0f ? Mathf.Clamp01(runTime / dayEndsAt) : 0f;
         public string CurrentObjective => objective;
@@ -74,6 +79,12 @@ namespace PixelOcean
         private IEnumerator Start()
         {
             yield return BeginRun(false);
+
+            if (startOnDayTwoForTesting)
+            {
+                StartCoroutine(BeginDayTwo());
+                yield break;
+            }            
         }
 
         public IEnumerator RestartRunInPlace()
@@ -95,6 +106,8 @@ namespace PixelOcean
                 yield return null;
 
             runTime = 0f;
+            currentDay = 2;
+            changingDay = false;
             rescues = 0;
             finalWaveStarted = false;
             chapter = Chapter.Dawn;
@@ -111,6 +124,36 @@ namespace PixelOcean
             SpawnMajor<SharkLaneSpawner>("Early Shark", spawner => spawner.SpawnShark(true));
         }
 
+
+        private IEnumerator BeginDayTwo()
+        {
+            ShowBanner("NIGHT PASSES", "DAY 2 — DEEP CURRENT", 4f);
+            rain?.ClearRain();
+            yield return new WaitForSeconds(4f);
+
+            foreach (GameObject holder in progressionSpawners)
+                if (holder != null) Destroy(holder);
+            progressionSpawners.Clear();
+            DestroyAll<SharkLaneSwimmer>();
+            DestroyAll<GiantSquidLaneSwimmer>();
+            DestroyAll<GodzillaLaneSwimmer>();
+            DestroyAll<JellyfishSwimmer>();
+            DestroyAll<BloodSharkLaneSwimmer>();
+            DestroyAll<TransparentSquidLaneSwimmer>();
+            yield return null;
+
+            currentDay = 2;
+            runTime = 0f;
+            rescues = 0;
+            finalWaveStarted = false;
+            chapter = Chapter.Dawn;
+            changingDay = false;
+            BeginChapter(Chapter.Dawn, "DAY 2 — DEEP CURRENT", "NEW PREDATORS HAVE ENTERED THE WATER.");
+            SpawnPickupSet();
+            SpawnOceanItems(12);
+            SpawnMajor<BloodSharkLaneSpawner>("Dawn Blood Shark", spawner => spawner.SpawnBloodShark(true));
+        }
+
         private void ClearRunObjects()
         {
             foreach (GameObject holder in progressionSpawners)
@@ -119,6 +162,8 @@ namespace PixelOcean
 
             DestroyAll<SharkLaneSwimmer>();
             DestroyAll<GiantSquidLaneSwimmer>();
+            DestroyAll<BloodSharkLaneSwimmer>();
+            DestroyAll<TransparentSquidLaneSwimmer>();
             DestroyAll<GodzillaLaneSwimmer>();
             DestroyAll<JellyfishSwimmer>();
             DestroyAll<WhaleLaneSwimmer>();
@@ -152,8 +197,16 @@ namespace PixelOcean
 
             if (runTime >= dayEndsAt && finalWaveStarted)
             {
-                BeginChapter(Chapter.Complete, "DAY COMPLETE", "THE OCEAN LETS YOU GO. FOR NOW.");
-                rain?.ClearRain();
+                if (currentDay == 1 && !changingDay)
+                {
+                    changingDay = true;
+                    StartCoroutine(BeginDayTwo());
+                }
+                else if (currentDay >= 2)
+                {
+                    BeginChapter(Chapter.Complete, "TWO DAYS SURVIVED", "THE DEEP WATER WILL RETURN.");
+                    rain?.ClearRain();
+                }
                 return;
             }
 
@@ -161,7 +214,13 @@ namespace PixelOcean
             {
                 finalWaveStarted = true;
                 BeginChapter(Chapter.FinalWave, "THE LAST WAVE", $"SURVIVE {finalSurvivalSeconds} SECONDS.");
-                SpawnMajor<GodzillaLaneSpawner>("Final Godzilla", spawner => spawner.SpawnGodzilla());
+                if (currentDay == 1)
+                    SpawnMajor<GodzillaLaneSpawner>("Final Godzilla", spawner => spawner.SpawnGodzilla());
+                else
+                {
+                    SpawnMajor<BloodSharkLaneSpawner>("Day 2 Final Blood Shark", spawner => spawner.SpawnBloodShark(true));
+                    SpawnMajor<TransparentSquidLaneSpawner>("Day 2 Final Transparent Squid", spawner => spawner.SpawnTransparentSquid(true));
+                }
                 return;
             }
 
@@ -169,7 +228,13 @@ namespace PixelOcean
             {
                 BeginChapter(Chapter.Storm, "STORM FRONT", "KEEP MOVING. RESCUE ANYONE LEFT OUT THERE.");
                 EnsureRain().SetSituation(ProceduralRainSystem.RainSituation.HeavyRain);
-                SpawnMajor<GiantSquidLaneSpawner>("Storm Squid", spawner => spawner.SpawnSquid(true));
+                if (currentDay == 1)
+                    SpawnMajor<GiantSquidLaneSpawner>("Storm Squid", spawner => spawner.SpawnSquid(true));
+                else
+                {
+                    SpawnMajor<BloodSharkLaneSpawner>("Storm Blood Shark", spawner => spawner.SpawnBloodShark(true));
+                    SpawnMajor<TransparentSquidLaneSpawner>("Storm Transparent Squid", spawner => spawner.SpawnTransparentSquid(true));
+                }
                 SpawnJellyfishEncounter("Storm Jellyfish", 3);
                 return;
             }
@@ -180,15 +245,26 @@ namespace PixelOcean
                 SpawnBoombox();
                 SpawnUfo();
                 SpawnJellyfishEncounter("Strange Tide Jellyfish", 2);
-                SpawnMajor<WhaleLaneSpawner>("Strange Tide Whale", spawner => spawner.SpawnWhale(true));
+                if (currentDay == 1)
+                    SpawnMajor<WhaleLaneSpawner>("Strange Tide Whale", spawner => spawner.SpawnWhale(true));
+                else
+                    SpawnMajor<TransparentSquidLaneSpawner>("Veiled Squid", spawner => spawner.SpawnTransparentSquid(true));
                 return;
             }
 
             if (runTime >= dangerBeginsAt && chapter < Chapter.DangerousWater)
             {
                 BeginChapter(Chapter.DangerousWater, "DANGEROUS WATER", "SAVE 3 SWIMMERS. USE CANS TO FIGHT BACK.");
-                SpawnMajor<GiantSquidLaneSpawner>("First Squid", spawner => spawner.SpawnSquid(true));
-                SpawnMajor<SharkLaneSpawner>("Second Shark", spawner => spawner.SpawnShark(true));
+                if (currentDay == 1)
+                {
+                    SpawnMajor<GiantSquidLaneSpawner>("First Squid", spawner => spawner.SpawnSquid(true));
+                    SpawnMajor<SharkLaneSpawner>("Second Shark", spawner => spawner.SpawnShark(true));
+                }
+                else
+                {
+                    SpawnMajor<TransparentSquidLaneSpawner>("First Transparent Squid", spawner => spawner.SpawnTransparentSquid(true));
+                    SpawnMajor<BloodSharkLaneSpawner>("Second Blood Shark", spawner => spawner.SpawnBloodShark(true));
+                }
                 SpawnRescueSet(2);
                 return;
             }
