@@ -107,14 +107,14 @@ namespace PixelOcean
             textMesh.anchor = TextAnchor.MiddleCenter;
             textMesh.alignment = TextAlignment.Center;
             textMesh.fontSize = preferredFontSize;
-            textMesh.fontStyle = FontStyle.Bold;
+            textMesh.fontStyle = FontStyle.Normal;
             textMesh.characterSize = 1f;
             textMesh.lineSpacing = 0.9f;
             textMesh.color = textColor;
             textMesh.text = string.Empty;
             textMesh.richText = false;
 
-            Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            Font font = PixelFontLibrary.Bold;
             if (font != null)
             {
                 textMesh.font = font;

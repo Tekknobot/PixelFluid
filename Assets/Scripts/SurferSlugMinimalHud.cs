@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -37,24 +38,32 @@ namespace PixelOcean
 
         private RectTransform inventoryRow;
         private RectTransform dayFill;
-        private Text dayPhaseLabel;
-        private Text timeLabel;
-        private Text objectiveLabel;
-        private Text livesLabel;
-        private Text stokeLabel;
-        private Text chapterLabel;
-        private Text inventoryOverflowLabel;
+
+        private TMP_Text dayPhaseLabel;
+        private TMP_Text timeLabel;
+        private TMP_Text objectiveLabel;
+        private TMP_Text livesLabel;
+        private TMP_Text stokeLabel;
+        private TMP_Text chapterLabel;
+        private TMP_Text inventoryOverflowLabel;
         private CanvasGroup chapterGroup;
-        private Font font;
+        private TMP_FontAsset font;
         private CanvasGroup hudGroup;
         private string inventoryFingerprint = string.Empty;
         private readonly List<GameObject> inventorySlots = new();
 
         private void Awake()
         {
-            font = Resources.Load<Font>("LiberationSans");
+            font = PixelFontLibrary.TmpMedium;
+
             if (font == null)
-                font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            {
+                Debug.LogError(
+                    "Surfer Slug HUD could not load Pixelify Sans Medium TMP font. " +
+                    "Make sure the font asset is inside Assets/Resources/Fonts."
+                );
+            }
+
             BuildHud();
             SetHudVisible(false, true);
         }
@@ -120,22 +129,31 @@ namespace PixelOcean
         private void BuildHud()
         {
             Canvas canvas = GetComponent<Canvas>();
-            if (canvas == null) canvas = gameObject.AddComponent<Canvas>();
+            if (canvas == null)
+                canvas = gameObject.AddComponent<Canvas>();
+
             CanvasScaler scaler = GetComponent<CanvasScaler>();
-            if (scaler == null) scaler = gameObject.AddComponent<CanvasScaler>();
-            if (GetComponent<GraphicRaycaster>() == null) gameObject.AddComponent<GraphicRaycaster>();
+            if (scaler == null)
+                scaler = gameObject.AddComponent<CanvasScaler>();
+
+            if (GetComponent<GraphicRaycaster>() == null)
+                gameObject.AddComponent<GraphicRaycaster>();
 
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 32000;
-            canvas.pixelPerfect = false;
+            canvas.pixelPerfect = true;
 
             hudGroup = GetComponent<CanvasGroup>();
             if (hudGroup == null)
                 hudGroup = gameObject.AddComponent<CanvasGroup>();
+
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = referenceResolution;
             scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-            scaler.matchWidthOrHeight = 0.5f;
+
+            // Match width instead of blending width and height scales.
+            scaler.matchWidthOrHeight = 0f;
+            scaler.referencePixelsPerUnit = 100f;
 
             BuildTopPanels(transform);
             BuildChapterBanner(transform);
@@ -183,13 +201,13 @@ namespace PixelOcean
 
         private void BuildObjectivePanel(RectTransform panel)
         {
-            Text heading = CreateText("OBJECTIVE", panel, 14, TextAnchor.UpperLeft, mutedColour);
+            TMP_Text heading = CreateText("OBJECTIVE", panel, 16, TextAnchor.UpperLeft, mutedColour);
             Stretch(heading.rectTransform, new Vector2(0f, 0.68f), Vector2.one, new Vector2(18f, 0f), new Vector2(-18f, -12f));
 
-            objectiveLabel = CreateText("SURF. STAY ALIVE. LEARN THE WATER.", panel, 18, TextAnchor.MiddleLeft, foregroundColour);
-            objectiveLabel.resizeTextForBestFit = true;
-            objectiveLabel.resizeTextMinSize = 12;
-            objectiveLabel.resizeTextMaxSize = 18;
+            objectiveLabel = CreateText("SURF. STAY ALIVE. LEARN THE WATER.", panel, 32, TextAnchor.MiddleLeft, foregroundColour);
+            objectiveLabel.enableAutoSizing = true;
+            objectiveLabel.fontSizeMin = 12f;
+            objectiveLabel.fontSizeMax = 18f;
             Stretch(objectiveLabel.rectTransform, new Vector2(0f, 0.32f), new Vector2(1f, 0.72f), new Vector2(18f, 0f), new Vector2(-18f, 0f));
 
             RectTransform livesInset = CreateRect("Lives Inset", panel, Vector2.zero);
@@ -200,7 +218,7 @@ namespace PixelOcean
             AddImage(livesInset.gameObject, insetColour);
             AddPixelBorder(livesInset, borderColour, borderThickness);
 
-            livesLabel = CreateText("LIVES  3/3", livesInset, 25, TextAnchor.MiddleCenter, foregroundColour);
+            livesLabel = CreateText("LIVES  3/3", livesInset, 32, TextAnchor.MiddleCenter, foregroundColour);
             Stretch(livesLabel.rectTransform, Vector2.zero, Vector2.one, new Vector2(10f, 2f), new Vector2(-10f, -2f));
 
             RectTransform stokeInset = CreateRect("Stoke Inset", panel, Vector2.zero);
@@ -211,19 +229,19 @@ namespace PixelOcean
             AddImage(stokeInset.gameObject, insetColour);
             AddPixelBorder(stokeInset, borderColour, borderThickness);
 
-            stokeLabel = CreateText("STOKE  0", stokeInset, 22, TextAnchor.MiddleCenter, foregroundColour);
-            stokeLabel.resizeTextForBestFit = true;
-            stokeLabel.resizeTextMinSize = 14;
-            stokeLabel.resizeTextMaxSize = 22;
+            stokeLabel = CreateText("STOKE  0", stokeInset, 32, TextAnchor.MiddleCenter, foregroundColour);
+            stokeLabel.enableAutoSizing = true;
+            stokeLabel.fontSizeMin = 14f;
+            stokeLabel.fontSizeMax = 22f;
             Stretch(stokeLabel.rectTransform, Vector2.zero, Vector2.one, new Vector2(8f, 2f), new Vector2(-8f, -2f));
         }
 
         private void BuildDayPanel(RectTransform panel)
         {
-            dayPhaseLabel = CreateText("DAY 1  •  DAWN", panel, 24, TextAnchor.UpperCenter, foregroundColour);
+            dayPhaseLabel = CreateText("DAY 1  •  DAWN", panel, 32, TextAnchor.UpperCenter, foregroundColour);
             Stretch(dayPhaseLabel.rectTransform, new Vector2(0f, 0.58f), new Vector2(0.72f, 1f), new Vector2(18f, 0f), new Vector2(0f, -10f));
 
-            timeLabel = CreateText("7:03 AM", panel, 22, TextAnchor.UpperCenter, foregroundColour);
+            timeLabel = CreateText("7:03 AM", panel, 32, TextAnchor.UpperCenter, foregroundColour);
             Stretch(timeLabel.rectTransform, new Vector2(0.72f, 0.58f), Vector2.one, Vector2.zero, new Vector2(-16f, -10f));
 
             RectTransform track = CreateRect("Day Track", panel, Vector2.zero);
@@ -241,16 +259,39 @@ namespace PixelOcean
             dayFill.offsetMax = Vector2.zero;
             AddImage(dayFill.gameObject, foregroundColour);
 
-            CreateTimeMark("12A", panel, 0f, TextAnchor.LowerLeft);
-            CreateTimeMark("6A", panel, 0.25f, TextAnchor.LowerCenter);
-            CreateTimeMark("12P", panel, 0.5f, TextAnchor.LowerCenter);
-            CreateTimeMark("6P", panel, 0.75f, TextAnchor.LowerCenter);
-            CreateTimeMark("12A", panel, 1f, TextAnchor.LowerRight);
+            CreateRulerMark(panel, 0.00f, true);
+            CreateRulerMark(panel, 0.125f, false);
+            CreateRulerMark(panel, 0.25f, true);
+            CreateRulerMark(panel, 0.375f, false);
+            CreateRulerMark(panel, 0.50f, true);
+            CreateRulerMark(panel, 0.625f, false);
+            CreateRulerMark(panel, 0.75f, true);
+            CreateRulerMark(panel, 0.875f, false);
+            CreateRulerMark(panel, 1.00f, true);
+        }
+
+        private void CreateRulerMark(RectTransform panel, float x, bool major)
+        {
+            RectTransform mark = CreateRect(
+                major ? "Major Mark" : "Minor Mark",
+                panel,
+                Vector2.zero);
+
+            mark.anchorMin = mark.anchorMax = new Vector2(x, 0f);
+            mark.pivot = new Vector2(0.5f, 0f);
+
+            float height = major ? 12f : 6f;
+            float width = 2f;
+
+            mark.sizeDelta = new Vector2(width, height);
+            mark.anchoredPosition = new Vector2(0f, 16f);
+
+            AddImage(mark.gameObject, mutedColour);
         }
 
         private void CreateTimeMark(string value, RectTransform panel, float x, TextAnchor alignment)
         {
-            Text mark = CreateText(value, panel, 15, alignment, mutedColour);
+            TMP_Text mark = CreateText(value, panel, 16, alignment, mutedColour);
             RectTransform rect = mark.rectTransform;
             rect.anchorMin = rect.anchorMax = new Vector2(x, 0f);
             rect.pivot = new Vector2(x, 0f);
@@ -261,7 +302,7 @@ namespace PixelOcean
 
         private void BuildInventoryPanel(RectTransform panel)
         {
-            Text heading = CreateText("ITEMS  •  NEXT TO THROW", panel, 14, TextAnchor.UpperLeft, mutedColour);
+            TMP_Text heading = CreateText("ITEMS  •  NEXT TO THROW", panel, 16, TextAnchor.UpperLeft, mutedColour);
             Stretch(heading.rectTransform, new Vector2(0f, 0.68f), Vector2.one, new Vector2(18f, 0f), new Vector2(-18f, -12f));
 
             inventoryRow = CreateRect("Item Row", panel, Vector2.zero);
@@ -277,7 +318,7 @@ namespace PixelOcean
             layout.childControlHeight = false;
             layout.childForceExpandWidth = false;
             layout.childForceExpandHeight = false;
-            inventoryOverflowLabel = CreateText(string.Empty, panel, 14, TextAnchor.MiddleRight, mutedColour);
+            inventoryOverflowLabel = CreateText(string.Empty, panel, 16, TextAnchor.MiddleRight, mutedColour);
             Stretch(inventoryOverflowLabel.rectTransform, new Vector2(0.84f, 0f), new Vector2(1f, 0.70f), Vector2.zero, new Vector2(-12f, 0f));
         }
 
@@ -292,10 +333,10 @@ namespace PixelOcean
             chapterGroup = banner.gameObject.AddComponent<CanvasGroup>();
             chapterGroup.alpha = 0f;
 
-            chapterLabel = CreateText(string.Empty, banner, 20, TextAnchor.MiddleCenter, foregroundColour);
-            chapterLabel.resizeTextForBestFit = true;
-            chapterLabel.resizeTextMinSize = 12;
-            chapterLabel.resizeTextMaxSize = 20;
+            chapterLabel = CreateText(string.Empty, banner, 32, TextAnchor.MiddleCenter, foregroundColour);
+            chapterLabel.enableAutoSizing = true;
+            chapterLabel.fontSizeMin = 12f;
+            chapterLabel.fontSizeMax = 20f;
             Stretch(chapterLabel.rectTransform, Vector2.zero, Vector2.one, new Vector2(18f, 8f), new Vector2(-18f, -8f));
         }
 
@@ -421,12 +462,12 @@ namespace PixelOcean
             iconRect.sizeDelta = new Vector2(inventoryIconSize, inventoryIconSize);
             iconRect.anchoredPosition = new Vector2(8f, 0f);
 
-            Text countText = CreateText($"×{count}", slot.transform, 20, TextAnchor.MiddleRight, foregroundColour);
+            TMP_Text countText = CreateText($"×{count}", slot.transform, 20, TextAnchor.MiddleRight, foregroundColour);
             Stretch(countText.rectTransform, Vector2.zero, Vector2.one, new Vector2(45f, 0f), new Vector2(-6f, 0f));
 
             if (isNext)
             {
-                Text nextLabel = CreateText("NEXT", slot.transform, 10, TextAnchor.UpperLeft, foregroundColour);
+                TMP_Text nextLabel = CreateText("NEXT", slot.transform, 10, TextAnchor.UpperLeft, foregroundColour);
                 Stretch(nextLabel.rectTransform, new Vector2(0f, 0.64f), new Vector2(1f, 1f), new Vector2(5f, 0f), new Vector2(-5f, -3f));
             }
 
@@ -492,19 +533,56 @@ namespace PixelOcean
             AddImage(edge.gameObject, colour);
         }
 
-        private Text CreateText(string value, Transform parent, int fontSize, TextAnchor alignment, Color colour)
+        private TMP_Text CreateText(
+            string value,
+            Transform parent,
+            int fontSize,
+            TextAnchor alignment,
+            Color colour)
         {
-            GameObject go = new("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
+            GameObject go = new(
+                "Text",
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(TextMeshProUGUI)
+            );
+
             go.transform.SetParent(parent, false);
-            Text text = go.GetComponent<Text>();
+
+            TextMeshProUGUI text = go.GetComponent<TextMeshProUGUI>();
+
             text.text = value;
-            text.font = font;
+            text.font = font != null ? font : PixelFontLibrary.TmpMedium;
             text.fontSize = fontSize;
-            text.fontStyle = FontStyle.Bold;
-            text.alignment = alignment;
+            text.fontStyle = FontStyles.Normal;
+            text.alignment = ConvertAlignment(alignment);
             text.color = colour;
             text.raycastTarget = false;
+
+            text.enableWordWrapping = false;
+            text.extraPadding = false;
+
             return text;
+        }
+
+        private static TextAlignmentOptions ConvertAlignment(TextAnchor alignment)
+        {
+            return alignment switch
+            {
+                TextAnchor.UpperLeft => TextAlignmentOptions.TopLeft,
+                TextAnchor.UpperCenter => TextAlignmentOptions.Top,
+                TextAnchor.UpperRight => TextAlignmentOptions.TopRight,
+
+                TextAnchor.MiddleLeft => TextAlignmentOptions.Left,
+                TextAnchor.MiddleCenter => TextAlignmentOptions.Center,
+                TextAnchor.MiddleRight => TextAlignmentOptions.Right,
+
+                TextAnchor.LowerLeft => TextAlignmentOptions.BottomLeft,
+                TextAnchor.LowerCenter => TextAlignmentOptions.Bottom,
+                TextAnchor.LowerRight => TextAlignmentOptions.BottomRight,
+
+                _ => TextAlignmentOptions.Center
+            };
         }
     }
 

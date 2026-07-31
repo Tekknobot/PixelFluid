@@ -212,27 +212,31 @@ namespace PixelOcean
 
             floatingStyle = new GUIStyle(GUI.skin.label)
             {
+                font = PixelFontLibrary.Bold,
                 alignment = TextAnchor.MiddleCenter,
                 fontSize = 17,
-                fontStyle = FontStyle.Bold,
+                fontStyle = FontStyle.Normal,
                 normal = { textColor = new Color(1f, 0.9f, 0.2f, 1f) }
             };
             recapTitleStyle = new GUIStyle(GUI.skin.label)
             {
+                font = PixelFontLibrary.Bold,
                 alignment = TextAnchor.MiddleCenter,
                 fontSize = 28,
-                fontStyle = FontStyle.Bold,
+                fontStyle = FontStyle.Normal,
                 normal = { textColor = Color.white }
             };
             recapValueStyle = new GUIStyle(GUI.skin.label)
             {
+                font = PixelFontLibrary.Bold,
                 alignment = TextAnchor.MiddleCenter,
                 fontSize = 22,
-                fontStyle = FontStyle.Bold,
+                fontStyle = FontStyle.Normal,
                 normal = { textColor = new Color(1f, 0.9f, 0.2f, 1f) }
             };
             recapSmallStyle = new GUIStyle(GUI.skin.label)
             {
+                font = PixelFontLibrary.Medium,
                 alignment = TextAnchor.MiddleCenter,
                 fontSize = 16,
                 normal = { textColor = Color.white }

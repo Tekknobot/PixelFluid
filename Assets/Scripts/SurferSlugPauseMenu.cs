@@ -451,9 +451,10 @@ namespace PixelOcean
             LayoutElement le = go.AddComponent<LayoutElement>();
             le.preferredHeight = height;
             Text label = go.AddComponent<Text>();
-            label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            label.font = size >= 30 ? PixelFontLibrary.Bold : PixelFontLibrary.SemiBold;
             label.text = text;
             label.fontSize = size;
+            label.fontStyle = FontStyle.Normal;
             label.alignment = TextAnchor.MiddleCenter;
             label.color = new Color(0.92f, 0.81f, 0.57f, 1f);
             label.raycastTarget = false;

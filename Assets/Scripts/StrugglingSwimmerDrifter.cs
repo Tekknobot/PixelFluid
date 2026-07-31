@@ -343,7 +343,8 @@ namespace PixelOcean
             text.alignment = TextAlignment.Center;
             text.fontSize = 32;
             text.characterSize = 0.045f;
-            text.fontStyle = FontStyle.Bold;
+            text.fontStyle = FontStyle.Normal;
+            PixelFontLibrary.Apply(text, heading: true);
             text.color = new Color(0.55f, 1f, 0.72f, 1f);
             MeshRenderer renderer = textObject.GetComponent<MeshRenderer>();
             if (renderer != null) renderer.sortingOrder = 20000;

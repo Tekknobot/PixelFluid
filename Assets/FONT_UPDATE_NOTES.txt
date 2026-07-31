@@ -1,0 +1,5 @@
+Surfer Slug font update:
+- Pixelify Sans Bold: speech bubbles, headings, score/alert text
+- Pixelify Sans SemiBold: buttons and short labels
+- Pixelify Sans Medium: HUD and supporting UI copy
+- Runtime scene applicator updates serialized legacy UI, TextMesh, and TextMesh Pro text.
