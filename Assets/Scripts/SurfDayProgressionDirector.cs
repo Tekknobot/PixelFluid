@@ -28,7 +28,7 @@ namespace PixelOcean
         [SerializeField, Min(20f)] private float dangerBeginsAt = 120f;
         [SerializeField, Min(30f)] private float strangeTideBeginsAt = 260f; // 260
         [SerializeField, Min(40f)] private float stormBeginsAt = 430f;
-        [SerializeField, Min(5f)] private float finalWaveBeginsAt = 480f;
+        [SerializeField, Min(5f)] private float finalWaveBeginsAt = 5f;
         [SerializeField, Min(60f)] private float dayEndsAt = 720f; // 720
 
         [Header("Objectives")]
@@ -153,6 +153,8 @@ namespace PixelOcean
             DestroyAll<StingrayLaneSwimmer>();
             DestroyAll<DayTwoHelicopterController>();
             DestroyAll<DayTwoHelicopterMissile>();
+            DestroyAll<RubberDuckBossSwimmer>();
+            DestroyAll<RubberDucklingSwimmer>();
             yield return null;
 
             currentDay = 2;
@@ -191,6 +193,8 @@ namespace PixelOcean
             DestroyAll<AlienUfoController>();
             DestroyAll<DayTwoHelicopterController>();
             DestroyAll<DayTwoHelicopterMissile>();
+            DestroyAll<RubberDuckBossSwimmer>();
+            DestroyAll<RubberDucklingSwimmer>();
             DestroyAll<BoomboxSurferSwimmer>();
         }
 
@@ -236,8 +240,7 @@ namespace PixelOcean
                     SpawnMajor<GodzillaLaneSpawner>("Final Godzilla", spawner => spawner.SpawnGodzilla());
                 else
                 {
-                    SpawnMajor<BloodSharkLaneSpawner>("Day 2 Final Blood Shark", spawner => spawner.SpawnBloodShark(true));
-                    SpawnMajor<TransparentSquidLaneSpawner>("Day 2 Final Transparent Squid", spawner => spawner.SpawnTransparentSquid(true));
+                    SpawnMajor<RubberDuckBossSpawner>("Day 2 Giant Rubber Duck Boss", spawner => spawner.SpawnRubberDuckBoss());
                 }
                 return;
             }

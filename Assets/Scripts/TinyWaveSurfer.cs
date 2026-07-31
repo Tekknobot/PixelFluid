@@ -730,9 +730,27 @@ namespace PixelOcean
             }
             else
             {
-                // Active bosses always own the combat throw target. This prevents
-                // sharks, squid, or jellyfish from stealing a shot intended for
-                // the final encounter simply because they are a little closer.
+                // Exploding ducklings are immediate threats and can be intercepted.
+                foreach (RubberDucklingSwimmer duckling in FindObjectsByType<RubberDucklingSwimmer>(FindObjectsSortMode.None))
+                {
+                    if (duckling == null || !duckling.isActiveAndEnabled || !duckling.CanBeHit) continue;
+                    float d = Vector2.Distance(transform.position, duckling.transform.position);
+                    if (d < best) { best = d; nearest = duckling.transform; }
+                }
+
+                // When no duckling is incoming, prioritize the active Day 2 boss.
+                if (nearest == null)
+                {
+                    foreach (RubberDuckBossSwimmer boss in FindObjectsByType<RubberDuckBossSwimmer>(FindObjectsSortMode.None))
+                    {
+                        if (boss == null || !boss.isActiveAndEnabled || boss.IsDefeated) continue;
+                        float d = Vector2.Distance(transform.position, boss.transform.position);
+                        if (d < best) { best = d; nearest = boss.transform; }
+                    }
+                }
+
+                // Active bosses own the combat throw target over ordinary hazards.
+                if (nearest == null)
                 foreach (GodzillaLaneSwimmer boss in FindObjectsByType<GodzillaLaneSwimmer>(FindObjectsSortMode.None))
                 {
                     if (boss == null || !boss.isActiveAndEnabled || boss.IsDefeated)

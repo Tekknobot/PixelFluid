@@ -14,6 +14,7 @@ namespace PixelOcean
         private bool bounced;
         private Transform lockedTarget;
         private GodzillaLaneSwimmer lockedBoss;
+        private RubberDuckBossSwimmer lockedDuckBoss;
 
         public void Launch(
             Vector2 start,
@@ -26,6 +27,9 @@ namespace PixelOcean
             lockedTarget = target;
             lockedBoss = target != null
                 ? target.GetComponentInParent<GodzillaLaneSwimmer>()
+                : null;
+            lockedDuckBoss = target != null
+                ? target.GetComponentInParent<RubberDuckBossSwimmer>()
                 : null;
             SpriteRenderer renderer = GetComponent<SpriteRenderer>();
             renderer.sprite = sprite;
@@ -126,6 +130,12 @@ namespace PixelOcean
                 if (hitBoss != lockedBoss)
                     return;
             }
+            if (lockedDuckBoss != null && !lockedDuckBoss.IsDefeated)
+            {
+                RubberDuckBossSwimmer hitBoss = other.GetComponentInParent<RubberDuckBossSwimmer>();
+                if (hitBoss != lockedDuckBoss)
+                    return;
+            }
 
             HitTarget(other.transform);
         }
@@ -134,6 +144,26 @@ namespace PixelOcean
         {
             if (bounced || hitTransform == null)
                 return;
+
+            RubberDucklingSwimmer duckling = hitTransform.GetComponentInParent<RubberDucklingSwimmer>();
+            if (duckling != null && duckling.CanBeHit)
+            {
+                LoadSfx();
+                PlaySfx(sharkHitClip, 0.95f);
+                duckling.TakeThrownItemHit(transform.position);
+                Bounce(hitTransform.position);
+                return;
+            }
+
+            RubberDuckBossSwimmer duckBoss = hitTransform.GetComponentInParent<RubberDuckBossSwimmer>();
+            if (duckBoss != null && !duckBoss.IsDefeated)
+            {
+                LoadSfx();
+                PlaySfx(sharkHitClip, 1f);
+                duckBoss.TakeThrownItemHit(1, transform.position);
+                Bounce(duckBoss.transform.position);
+                return;
+            }
 
             GodzillaLaneSwimmer boss =
                 hitTransform.GetComponentInParent<GodzillaLaneSwimmer>();
