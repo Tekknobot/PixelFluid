@@ -266,6 +266,11 @@ namespace PixelOcean
                 return;
 
             saved = true;
+
+            // Every successful rescue restores one life, capped by the run's
+            // configured maximum (currently three).
+            SurfRunLifeManager.Instance?.AddLives(1);
+
             SwimmerSaved?.Invoke();
             PlaySwimmerSavedSfx();
 

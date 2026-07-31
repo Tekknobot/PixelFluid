@@ -28,6 +28,21 @@ namespace PixelOcean
         public void ResetLivesForNewRun() => livesRemaining = Mathf.Max(1, startingLives);
         public void RestoreLives(int savedLives) => livesRemaining = Mathf.Clamp(savedLives, 1, Mathf.Max(1, startingLives));
 
+        /// <summary>
+        /// Adds lives without allowing the run to exceed its configured maximum.
+        /// Returns true only when at least one life was actually restored.
+        /// </summary>
+        public bool AddLives(int amount = 1)
+        {
+            if (amount <= 0)
+                return false;
+
+            int maximum = StartingLives;
+            int previous = livesRemaining;
+            livesRemaining = Mathf.Clamp(livesRemaining + amount, 0, maximum);
+            return livesRemaining > previous;
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Install()
         {
