@@ -95,7 +95,18 @@ namespace PixelOcean
         [Tooltip("Hold left/right and press Jump (controller A / keyboard Space) to launch forward over hazards.")]
         [SerializeField] private bool enableForwardObstacleJump = true;
         [SerializeField, Min(0.15f)] private float obstacleJumpDuration = 1.62f;
-        [SerializeField, Min(0.05f)] private float obstacleJumpHeight = 0.92f;
+        [Tooltip("Minimum height produced by a quick tap of Jump.")]
+        [SerializeField, Min(0.05f)] private float minimumObstacleJumpHeight = 0.55f;
+        [Tooltip("Maximum height produced by a fully charged Jump hold.")]
+        [SerializeField, Min(0.05f)] private float maximumObstacleJumpHeight = 1.85f;
+        [Tooltip("Seconds of holding Jump required to reach maximum height.")]
+        [SerializeField, Min(0.05f)] private float fullJumpChargeTime = 0.65f;
+        [Tooltip("Shapes charge sensitivity. X is held-time percentage; Y is jump-power percentage.")]
+        [SerializeField] private AnimationCurve jumpChargeCurve = new AnimationCurve(
+            new Keyframe(0f, 0f),
+            new Keyframe(0.35f, 0.16f),
+            new Keyframe(0.7f, 0.58f),
+            new Keyframe(1f, 1f));
         [SerializeField, Min(0.1f)] private float obstacleJumpDistance = 2.15f;
         [Tooltip("Minimum directional input needed to choose the forward obstacle jump.")]
         [SerializeField, Range(0.05f, 1f)] private float obstacleJumpInputThreshold = 0.25f;
@@ -358,6 +369,10 @@ namespace PixelOcean
         private float obstacleJumpStartX;
         private float obstacleJumpTargetX;
         private float obstacleJumpProgress;
+        private float activeObstacleJumpHeight;
+        private bool jumpCharging;
+        private float jumpChargeTime;
+        private float jumpChargeHorizontalInput;
         private float scoredJumpPeakY;
         private bool scoredHandstand;
         private bool scoredRotation;
@@ -1672,6 +1687,7 @@ namespace PixelOcean
             // jump and remains on the current wave. Up/Down by themselves do not
             // switch waves anymore.
             bool jumpPressed = jumpHeld && !previousJumpHeld;
+            bool jumpReleased = !jumpHeld && previousJumpHeld;
 
             // Once the takeoff button has been released, pressing Space / controller A
             // again during the same forward surf jump performs the handstand trick.
@@ -1679,36 +1695,49 @@ namespace PixelOcean
             {
                 TriggerAirTrick(HandstandStateHash); // Xbox A / keyboard Space
             }
-            else if (jumpPressed && state == RiderState.Riding && !specialCharging)
+            else if (state == RiderState.Riding && !specialCharging)
             {
-                // A released charged push owns the jump input. It can only launch
-                // the forward surf jump: no standing trick jump and no wave switch.
-                // The push direction supplies takeoff direction, so forward input
-                // is not required while the surfer is already being propelled.
-                if (specialSkidding && enableForwardObstacleJump)
-                {
-                    BeginForwardSurfJump(direction);
-                }
-                else
-                {
-                    bool wantsUp = layerUpHeld && !layerDownHeld;
-                    bool wantsDown = layerDownHeld && !layerUpHeld;
+                bool wantsUp = layerUpHeld && !layerDownHeld;
+                bool wantsDown = layerDownHeld && !layerUpHeld;
 
-                    if (wantsUp || wantsDown)
+                // Wave-layer changes remain immediate combinations. Forward jumps
+                // instead charge while Jump is held and launch on release, giving
+                // keyboard and digital gamepad buttons pressure-like sensitivity.
+                if (jumpPressed && (wantsUp || wantsDown))
+                {
+                    CancelJumpCharge();
+                    BeginAdjacentWave(wantsUp ? +1 : -1);
+                    layerSwitchInputLocked = true;
+                }
+                else if (jumpPressed)
+                {
+                    float takeoffInput = specialSkidding
+                        ? direction
+                        : horizontal;
+
+                    if (enableForwardObstacleJump &&
+                        (specialSkidding || Mathf.Abs(takeoffInput) >= obstacleJumpInputThreshold))
                     {
-                        BeginAdjacentWave(wantsUp ? +1 : -1);
-                        layerSwitchInputLocked = true;
-                    }
-                    else if (enableForwardObstacleJump &&
-                        Mathf.Abs(horizontal) >= obstacleJumpInputThreshold)
-                    {
-                        BeginForwardSurfJump(horizontal);
+                        BeginJumpCharge(takeoffInput);
                     }
                     else
                     {
                         BeginTurnTrick();
                     }
                 }
+
+                if (jumpCharging && jumpHeld)
+                {
+                    jumpChargeTime = Mathf.Min(
+                        fullJumpChargeTime,
+                        jumpChargeTime + dt);
+
+                    if (Mathf.Abs(horizontal) >= obstacleJumpInputThreshold)
+                        jumpChargeHorizontalInput = horizontal;
+                }
+
+                if (jumpCharging && jumpReleased)
+                    ReleaseChargedForwardJump();
             }
 
             // Release Jump before another normal jump or wave-switch jump can
@@ -2199,7 +2228,40 @@ namespace PixelOcean
             flipTrick = Random.value < flipChance;
         }
 
-        private void BeginForwardSurfJump(float horizontalInput)
+        private void BeginJumpCharge(float horizontalInput)
+        {
+            jumpCharging = true;
+            jumpChargeTime = 0f;
+            jumpChargeHorizontalInput = Mathf.Abs(horizontalInput) >= obstacleJumpInputThreshold
+                ? horizontalInput
+                : direction;
+        }
+
+        private void CancelJumpCharge()
+        {
+            jumpCharging = false;
+            jumpChargeTime = 0f;
+            jumpChargeHorizontalInput = 0f;
+        }
+
+        private void ReleaseChargedForwardJump()
+        {
+            float charge01 = Mathf.Clamp01(
+                jumpChargeTime / Mathf.Max(0.05f, fullJumpChargeTime));
+            float shapedCharge = Mathf.Clamp01(jumpChargeCurve.Evaluate(charge01));
+            float jumpHeight = Mathf.Lerp(
+                minimumObstacleJumpHeight,
+                Mathf.Max(minimumObstacleJumpHeight, maximumObstacleJumpHeight),
+                shapedCharge);
+            float horizontalInput = Mathf.Abs(jumpChargeHorizontalInput) >= obstacleJumpInputThreshold
+                ? jumpChargeHorizontalInput
+                : direction;
+
+            CancelJumpCharge();
+            BeginForwardSurfJump(horizontalInput, jumpHeight);
+        }
+
+        private void BeginForwardSurfJump(float horizontalInput, float chargedJumpHeight)
         {
             if (speechBubble != null) speechBubble.HideImmediate();
 
@@ -2219,6 +2281,10 @@ namespace PixelOcean
             airTrickTimer = 0f;
             currentAirTrickStateHash = 0;
             obstacleJumpProgress = 0f;
+            activeObstacleJumpHeight = Mathf.Clamp(
+                chargedJumpHeight,
+                minimumObstacleJumpHeight,
+                Mathf.Max(minimumObstacleJumpHeight, maximumObstacleJumpHeight));
             state = RiderState.TurningTrick;
             stateTimer = 0f;
 
@@ -2303,7 +2369,7 @@ namespace PixelOcean
 
             float baseArc = Mathf.Sin(t * Mathf.PI);
             float arc = Mathf.Pow(Mathf.Max(0f, baseArc), playerJumpArcPower) *
-                (obstacleJumpActive ? obstacleJumpHeight : turnJumpHeight);
+                (obstacleJumpActive ? activeObstacleJumpHeight : turnJumpHeight);
 
             transform.position = new Vector3(
                 localRideX,

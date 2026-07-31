@@ -24,7 +24,7 @@ namespace PixelOcean
 
         [Header("Scoring")]
         [SerializeField, Min(0.1f)]
-        private float maximumScoringHeight = 1.75f;
+        private float maximumScoringHeight = 2.0f;
 
         [SerializeField, Min(1)]
         private int maximumHeightPoints = 600;
@@ -37,8 +37,8 @@ namespace PixelOcean
 
         [Header("Popup Tiers")]
         [SerializeField, Min(1)] private int cleanTierMinimum = 350;
-        [SerializeField, Min(1)] private int radicalTierMinimum = 650;
-        [SerializeField, Min(1)] private int legendaryTierMinimum = 950;
+        [SerializeField, Min(1)] private int radicalTierMinimum = 450;
+        [SerializeField, Min(1)] private int legendaryTierMinimum = 650;
         [SerializeField] private Color baseTierColour = Color.white;
         [SerializeField] private Color cleanTierColour = new(0.25f, 0.95f, 1f, 1f);
         [SerializeField] private Color radicalTierColour = new(1f, 0.88f, 0.15f, 1f);
