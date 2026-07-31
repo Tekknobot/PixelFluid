@@ -51,6 +51,11 @@ namespace PixelOcean
         public Chapter CurrentChapter => chapter;
         public int Rescues => rescues;
         public float RunTime => runTime;
+        public float DayDuration => dayEndsAt;
+        public float NormalizedDayProgress => dayEndsAt > 0f ? Mathf.Clamp01(runTime / dayEndsAt) : 0f;
+        public string CurrentObjective => objective;
+        public string CurrentBanner => banner;
+        public bool IsBannerVisible => Time.unscaledTime < bannerUntil && !string.IsNullOrEmpty(banner);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Install()
@@ -329,45 +334,7 @@ namespace PixelOcean
                 : System.Array.Empty<float>();
         }
 
-        private void OnGUI()
-        {
-            BuildGuiStyles();
-            float scale = Mathf.Max(1f, Screen.height / 720f);
-            GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
-            float width = Screen.width / scale;
-
-            if (chapter != Chapter.Complete && !string.IsNullOrEmpty(objective))
-                GUI.Label(new Rect(18f, 18f, width - 36f, 38f), objective, panelStyle);
-
-            if (Time.unscaledTime < bannerUntil && !string.IsNullOrEmpty(banner))
-                GUI.Label(new Rect(width * 0.15f, 78f, width * 0.70f, 100f), banner, titleStyle);
-        }
-
-        private void BuildGuiStyles()
-        {
-            if (titleStyle != null) return;
-
-            titleStyle = new GUIStyle(GUI.skin.box)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 22,
-                fontStyle = FontStyle.Bold,
-                wordWrap = true,
-                normal = { textColor = Color.white }
-            };
-            objectiveStyle = new GUIStyle(GUI.skin.label)
-            {
-                alignment = TextAnchor.MiddleLeft,
-                fontSize = 14,
-                fontStyle = FontStyle.Bold,
-                normal = { textColor = Color.white }
-            };
-            panelStyle = new GUIStyle(GUI.skin.box)
-            {
-                alignment = TextAnchor.MiddleLeft,
-                padding = new RectOffset(12, 12, 6, 6),
-                normal = { textColor = Color.white }
-            };
-        }
+        // Progression presentation is handled by SurferSlugMinimalHud so every
+        // gameplay HUD element shares one Canvas, layout and visual style.
     }
 }

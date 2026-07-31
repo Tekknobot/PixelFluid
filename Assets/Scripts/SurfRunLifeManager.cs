@@ -20,10 +20,10 @@ namespace PixelOcean
         private int livesRemaining;
         private float fadeAlpha;
         private bool handlingDeath;
-        private GUIStyle livesStyle;
         private Texture2D fadeTexture;
 
         public int LivesRemaining => livesRemaining;
+        public int StartingLives => Mathf.Max(1, startingLives);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Install()
@@ -125,23 +125,6 @@ namespace PixelOcean
 
         private void OnGUI()
         {
-            if (livesStyle == null)
-            {
-                livesStyle = new GUIStyle(GUI.skin.box)
-                {
-                    alignment = TextAnchor.MiddleCenter,
-                    fontSize = 14,
-                    fontStyle = FontStyle.Bold,
-                    normal = { textColor = Color.white }
-                };
-            }
-
-            float scale = Mathf.Max(1f, Screen.height / 720f);
-            Matrix4x4 old = GUI.matrix;
-            GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
-            GUI.Label(new Rect(18f, 58f, 112f, 32f), $"LIVES  {livesRemaining}/{startingLives}", livesStyle);
-            GUI.matrix = old;
-
             if (fadeAlpha > 0.001f && fadeTexture != null)
             {
                 Color oldColor = GUI.color;

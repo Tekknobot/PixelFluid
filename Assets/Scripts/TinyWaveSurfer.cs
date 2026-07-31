@@ -377,6 +377,15 @@ namespace PixelOcean
         public int SodaCanCount => throwableItems.Count;
         public int ThrowableItemCount => throwableItems.Count;
 
+        /// <summary>
+        /// Returns the collected throwable sprites in pickup order for lightweight HUDs.
+        /// A copy is returned so UI code cannot modify gameplay inventory.
+        /// </summary>
+        public Sprite[] GetThrowableInventorySnapshot()
+        {
+            return throwableItems.ToArray();
+        }
+
         [Tooltip("Enable this when the original sprite artwork faces right.")]
         [SerializeField] private bool spriteFacesRight = true;
 
