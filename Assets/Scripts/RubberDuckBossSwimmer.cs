@@ -60,7 +60,6 @@ namespace PixelOcean
         [Header("Exploding Ducklings")]
         [SerializeField] private Vector2 ducklingSpawnInterval = new(4.5f, 7.5f);
         [SerializeField, Range(1, 4)] private int ducklingsPerWave = 2;
-        [SerializeField, Min(0.05f)] private float ducklingScale = 0.24f;
         [SerializeField] private AudioClip squeakClip;
         [SerializeField, Range(0f, 1f)] private float squeakVolume = 0.75f;
 
@@ -759,7 +758,7 @@ namespace PixelOcean
 
         private void SpawnDuckling(int index, int count)
         {
-            Sprite[] frames = Resources.LoadAll<Sprite>("RubberDuck/rubber_duck_move")
+            Sprite[] frames = Resources.LoadAll<Sprite>("RubberDuck/duckling_move")
                 .OrderBy(sprite =>
                 {
                     int separator = sprite.name.LastIndexOf('_');
@@ -776,14 +775,21 @@ namespace PixelOcean
                 direction * (0.45f + index * 0.16f),
                 (index - (count - 1) * 0.5f) * 0.18f,
                 0f);
-            duckling.transform.localScale = Vector3.one * ducklingScale;
+            duckling.transform.localScale = Vector3.one;
 
             SpriteRenderer renderer = duckling.AddComponent<SpriteRenderer>();
             renderer.sprite = frames[0];
-            renderer.sortingOrder = spriteRenderer != null ? spriteRenderer.sortingOrder + 2 : 12002;
+            if (spriteRenderer != null)
+            {
+                renderer.sortingLayerID = spriteRenderer.sortingLayerID;
+                renderer.sortingOrder = spriteRenderer.sortingOrder;
+            }
+
+            InterWaveRenderItem ducklingRenderItem = duckling.AddComponent<InterWaveRenderItem>();
+            ducklingRenderItem.SetLane(currentLane);
 
             RubberDucklingSwimmer swimmer = duckling.AddComponent<RubberDucklingSwimmer>();
-            swimmer.Initialise(frames);
+            swimmer.Initialise(frames, currentLane);
         }
 
         public int CurrentHealth => currentHealth;

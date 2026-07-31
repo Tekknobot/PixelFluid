@@ -1,9 +1,11 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace PixelOcean
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(SpriteRenderer))]
+    [RequireComponent(typeof(InterWaveRenderItem))]
     public sealed class RubberDucklingSwimmer : MonoBehaviour
     {
         [SerializeField, Min(0.1f)] private float seekSpeed = 1.65f;
@@ -13,50 +15,38 @@ namespace PixelOcean
         [SerializeField, Min(1f)] private float framesPerSecond = 9f;
         [SerializeField, Min(0f)] private float bobAmount = 0.11f;
         [SerializeField, Min(0.1f)] private float bobSpeed = 4.5f;
+        [SerializeField, Min(0.05f)] private float laneRefreshInterval = 0.12f;
 
-        [Header("Layer Ordering")]
-        [SerializeField] private string waterSortingLayer = "Default";
-        [SerializeField] private int sortingOrderOffset = 4;
-        [SerializeField, Min(1f)] private float sortingPrecision = 100f;
-
-        private int baseSortingOrder;
-
+        private readonly List<PixelWaterGPU> waterLayers = new();
         private SpriteRenderer spriteRenderer;
+        private InterWaveRenderItem renderItem;
         private Sprite[] frames;
         private TinyWaveSurfer target;
         private Vector2 velocity;
         private float frameClock;
         private float lifeRemaining;
         private float bobPhase;
+        private float nextLaneRefreshTime;
+        private int currentLane;
         private bool exploded;
 
         public bool CanBeHit => !exploded;
 
-        public void Initialise(Sprite[] movementFrames, SpriteRenderer motherRenderer = null)
+        public void Initialise(Sprite[] movementFrames, int initialLane)
         {
             frames = movementFrames;
             lifeRemaining = lifetime;
             bobPhase = Random.Range(0f, Mathf.PI * 2f);
             target = FindFirstObjectByType<TinyWaveSurfer>();
-
-            if (motherRenderer != null)
-            {
-                spriteRenderer.sortingLayerID = motherRenderer.sortingLayerID;
-                baseSortingOrder = motherRenderer.sortingOrder;
-            }
-            else
-            {
-                spriteRenderer.sortingLayerName = waterSortingLayer;
-                baseSortingOrder = spriteRenderer.sortingOrder;
-            }
-
-            UpdateLayerOrdering();
+            currentLane = Mathf.Max(0, initialLane);
+            RefreshLaneOrdering(true);
             EnsurePhysics();
         }
 
         private void Awake()
         {
             spriteRenderer = GetComponent<SpriteRenderer>();
+            renderItem = GetComponent<InterWaveRenderItem>();
             EnsurePhysics();
         }
 
@@ -65,33 +55,27 @@ namespace PixelOcean
             CircleCollider2D collider = GetComponent<CircleCollider2D>();
             if (collider == null) collider = gameObject.AddComponent<CircleCollider2D>();
             collider.isTrigger = true;
-            collider.radius = 0.72f;
+            collider.radius = 0.38f;
+
             Rigidbody2D body = GetComponent<Rigidbody2D>();
             if (body == null) body = gameObject.AddComponent<Rigidbody2D>();
             body.bodyType = RigidbodyType2D.Kinematic;
             body.gravityScale = 0f;
         }
 
-        private void UpdateLayerOrdering()
-        {
-            if (spriteRenderer == null)
-                return;
-
-            // Objects lower on the screen render in front.
-            int verticalOrder = Mathf.RoundToInt(-transform.position.y * sortingPrecision);
-
-            spriteRenderer.sortingOrder =
-                baseSortingOrder +
-                verticalOrder +
-                sortingOrderOffset;
-        }
-
         private void Update()
         {
             if (exploded) return;
+
             lifeRemaining -= Time.deltaTime;
-            if (lifeRemaining <= 0f) { Explode(false); return; }
-            if (target == null || target.IsDead) target = FindFirstObjectByType<TinyWaveSurfer>();
+            if (lifeRemaining <= 0f)
+            {
+                Explode(false);
+                return;
+            }
+
+            if (target == null || target.IsDead)
+                target = FindFirstObjectByType<TinyWaveSurfer>();
 
             if (frames != null && frames.Length > 0)
             {
@@ -99,21 +83,75 @@ namespace PixelOcean
                 spriteRenderer.sprite = frames[Mathf.FloorToInt(frameClock) % frames.Length];
             }
 
-            if (target == null) return;
+            if (target == null)
+            {
+                RefreshLaneOrdering(false);
+                return;
+            }
+
             Vector2 position = transform.position;
             Vector2 toTarget = (Vector2)target.transform.position - position;
             Vector2 desired = toTarget.normalized * seekSpeed;
-            velocity = Vector2.Lerp(velocity, desired, 1f - Mathf.Exp(-turnResponsiveness * Time.deltaTime));
+            velocity = Vector2.Lerp(
+                velocity,
+                desired,
+                1f - Mathf.Exp(-turnResponsiveness * Time.deltaTime));
+
             position += velocity * Time.deltaTime;
             position.y += Mathf.Sin(Time.time * bobSpeed + bobPhase) * bobAmount * Time.deltaTime;
             transform.position = position;
-            UpdateLayerOrdering();
-            if (Mathf.Abs(velocity.x) > 0.05f) spriteRenderer.flipX = velocity.x < 0f;
+
+            RefreshLaneOrdering(false);
+
+            if (Mathf.Abs(velocity.x) > 0.05f)
+                spriteRenderer.flipX = velocity.x < 0f;
 
             if (toTarget.magnitude <= explosionRange)
             {
                 target.TakeSharkHit(position);
                 Explode(true);
+            }
+        }
+
+        private void RefreshLaneOrdering(bool force)
+        {
+            if (!force && Time.time < nextLaneRefreshTime)
+                return;
+
+            nextLaneRefreshTime = Time.time + laneRefreshInterval;
+            waterLayers.Clear();
+            waterLayers.AddRange(EndlessWaveSections.LayersNearest(transform.position.x));
+            waterLayers.RemoveAll(layer => layer == null || !layer.isActiveAndEnabled);
+            waterLayers.Sort((a, b) => a.IndependentLayerIndex.CompareTo(b.IndependentLayerIndex));
+
+            if (waterLayers.Count < 2)
+            {
+                renderItem?.SetLane(currentLane);
+                return;
+            }
+
+            int closestLane = 0;
+            float closestDistance = float.PositiveInfinity;
+            float worldX = transform.position.x;
+            float worldY = transform.position.y;
+
+            for (int lane = 0; lane < waterLayers.Count - 1; lane++)
+            {
+                float lower = waterLayers[lane].GetGameplaySurfaceHeight(worldX);
+                float upper = waterLayers[lane + 1].GetGameplaySurfaceHeight(worldX);
+                float laneCentre = (lower + upper) * 0.5f;
+                float distance = Mathf.Abs(worldY - laneCentre);
+                if (distance < closestDistance)
+                {
+                    closestDistance = distance;
+                    closestLane = lane;
+                }
+            }
+
+            if (closestLane != currentLane || force)
+            {
+                currentLane = closestLane;
+                renderItem?.SetLane(currentLane);
             }
         }
 

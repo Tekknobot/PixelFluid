@@ -7,3 +7,9 @@ DAY 2 GIANT RUBBER DUCK BOSS
 - Ducklings damage the player on contact and use explosion_basic.
 - Thrown ocean items prioritize ducklings, then the giant duck boss.
 - Destroyed ducklings explode harmlessly.
+
+
+DUCKLING SPRITE + LANE LAYERING UPDATE
+- Ducklings now use Resources/RubberDuck/duckling_move (32 px frames).
+- Ducklings spawn at normal scale; the boss sprite is no longer scaled down.
+- Each duckling owns an InterWaveRenderItem and updates it to the nearest active water lane while seeking the player.
