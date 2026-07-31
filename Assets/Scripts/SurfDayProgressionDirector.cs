@@ -33,9 +33,9 @@ namespace PixelOcean
 
         [Header("Objectives")]
         [SerializeField, Min(1)] private int rescuesRequired = 3;
-        [SerializeField, Min(1)] private int finalSurvivalSeconds = 60;
+        [SerializeField, Min(1)] private int finalSurvivalSeconds = 240;
 
-        //[SerializeField] private bool startOnDayTwoForTesting = true;
+        [SerializeField] private bool startOnDayTwoForTesting = true; // true
 
         private readonly List<GameObject> progressionSpawners = new();
         private Chapter chapter;
@@ -80,11 +80,11 @@ namespace PixelOcean
         {
             yield return BeginRun(false);    
 
-            //if (startOnDayTwoForTesting)
-            //{
-            //    StartCoroutine(BeginDayTwo());
-            //    yield break;
-            //}  
+            if (startOnDayTwoForTesting)
+            {
+                StartCoroutine(BeginDayTwo());
+                yield break;
+            }  
         }
 
         public IEnumerator RestartRunInPlace()
@@ -106,7 +106,7 @@ namespace PixelOcean
                 yield return null;
 
             runTime = 0f;
-            currentDay = 1; // 1
+            currentDay = 2; // 1
             changingDay = false;
             rescues = 0;
             finalWaveStarted = false;
