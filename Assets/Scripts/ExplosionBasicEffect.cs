@@ -14,8 +14,10 @@ namespace PixelOcean
         [SerializeField] private int sortingOrder = 12030;
 
         private SpriteRenderer spriteRenderer;
+        private AudioSource explosionAudioSource;
         private Sprite[] frames;
         private float frameClock;
+        private bool visualFinished;
 
         public static void Spawn(Vector3 worldPosition)
         {
@@ -39,22 +41,50 @@ namespace PixelOcean
             }
 
             spriteRenderer.sprite = frames[0];
+            PlayExplosionSound();
         }
 
         private void Update()
         {
-            if (frames == null || frames.Length == 0)
-                return;
-
-            frameClock += Time.deltaTime * framesPerSecond;
-            int frameIndex = Mathf.FloorToInt(frameClock);
-            if (frameIndex >= frames.Length)
+            if (!visualFinished && frames != null && frames.Length > 0)
             {
+                frameClock += Time.deltaTime * framesPerSecond;
+                int frameIndex = Mathf.FloorToInt(frameClock);
+                if (frameIndex >= frames.Length)
+                {
+                    visualFinished = true;
+                    spriteRenderer.enabled = false;
+                }
+                else
+                {
+                    spriteRenderer.sprite = frames[frameIndex];
+                }
+            }
+
+            if (visualFinished && (explosionAudioSource == null || !explosionAudioSource.isPlaying))
                 Destroy(gameObject);
+        }
+
+        private void PlayExplosionSound()
+        {
+            AudioClip clip = Resources.Load<AudioClip>("Audio/SFX/explosion_8bit");
+            if (clip == null)
+            {
+                Debug.LogWarning("ExplosionBasicEffect could not load Resources/Audio/SFX/explosion_8bit.");
                 return;
             }
 
-            spriteRenderer.sprite = frames[frameIndex];
+            explosionAudioSource = gameObject.AddComponent<AudioSource>();
+            explosionAudioSource.playOnAwake = false;
+            explosionAudioSource.loop = false;
+            explosionAudioSource.clip = clip;
+            explosionAudioSource.spatialBlend = 1f;
+            explosionAudioSource.rolloffMode = AudioRolloffMode.Logarithmic;
+            explosionAudioSource.minDistance = 2.5f;
+            explosionAudioSource.maxDistance = 32f;
+            explosionAudioSource.dopplerLevel = 0f;
+            explosionAudioSource.volume = 1f;
+            explosionAudioSource.Play();
         }
 
         private static Sprite[] LoadFrames()
