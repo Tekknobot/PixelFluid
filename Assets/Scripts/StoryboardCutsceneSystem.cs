@@ -31,6 +31,7 @@ namespace PixelOcean
         private CanvasGroup rootGroup;
         private Image dimImage;
         private RectTransform boardRoot;
+        private Image boardBorder;
         private Image boardImage;
         private TMP_Text dialogueText;
         private TMP_Text continueText;
@@ -104,59 +105,123 @@ namespace PixelOcean
                 });
         }
 
-        public IEnumerator PlaySequence(string[] resourcePaths, string[] lines)
+        public IEnumerator PlaySequence(
+            string[] resourcePaths,
+            string[] lines)
         {
             if (playing || resourcePaths == null || lines == null)
                 yield break;
 
-            int pageCount = Mathf.Min(resourcePaths.Length, lines.Length);
+            int pageCount = Mathf.Min(
+                resourcePaths.Length,
+                lines.Length);
+
             if (pageCount <= 0)
                 yield break;
 
             BuildUi();
+
             playing = true;
             previousTimeScale = Time.timeScale;
             previousAudioVolume = AudioListener.volume;
             Time.timeScale = 0f;
 
-            rootGroup.gameObject.SetActive(true);
-            rootGroup.alpha = 0f;
+            // Keep all board graphics hidden before the canvas becomes active.
+            boardImage.sprite = null;
+            boardImage.enabled = false;
+            boardImage.color = new Color(1f, 1f, 1f, 0f);
+
+            if (boardBorder != null)
+            {
+                boardBorder.enabled = false;
+
+                Color borderColour = boardBorder.color;
+                borderColour.a = 0f;
+                boardBorder.color = borderColour;
+            }
+
+            boardRoot.anchoredPosition = new Vector2(0f, 56f);
+
             dialogueText.text = string.Empty;
+            dialogueText.maxVisibleCharacters = 0;
             continueText.text = string.Empty;
-            dimImage.color = new Color(0f, 0f, 0f, dimOpacity);
+
+            dimImage.color = new Color(
+                0f,
+                0f,
+                0f,
+                dimOpacity);
+
+            rootGroup.alpha = 0f;
+            rootGroup.gameObject.SetActive(true);
 
             yield return FadeRoot(0f, 1f, fadeDuration);
-            yield return FadeAudio(previousAudioVolume, duckedAudioVolume, fadeDuration);
+            yield return FadeAudio(
+                previousAudioVolume,
+                duckedAudioVolume,
+                fadeDuration);
 
             for (int i = 0; i < pageCount; i++)
             {
                 Sprite board = Resources.Load<Sprite>(resourcePaths[i]);
+
                 if (board == null)
                 {
-                    Debug.LogWarning($"Storyboard board was not found at Resources/{resourcePaths[i]}.", this);
+                    Debug.LogWarning(
+                        $"Storyboard board was not found at Resources/{resourcePaths[i]}.",
+                        this);
+
                     continue;
                 }
 
+                // Assign the sprite before enabling the Image.
+                boardImage.enabled = false;
                 boardImage.sprite = board;
+                boardImage.color = new Color(1f, 1f, 1f, 0f);
                 boardImage.enabled = true;
+
+                if (boardBorder != null)
+                {
+                    Color borderColour = boardBorder.color;
+                    borderColour.a = 0f;
+                    boardBorder.color = borderColour;
+                    boardBorder.enabled = true;
+                }
+
                 dialogueText.text = string.Empty;
+                dialogueText.maxVisibleCharacters = 0;
                 continueText.text = string.Empty;
 
                 yield return AnimateBoardIn(i == 0 ? 0 : 1);
                 yield return TypeLine(lines[i]);
 
-                continueText.text = "A / SPACE / ENTER  •  CONTINUE";
+                continueText.text =
+                    "A / SPACE / ENTER  •  CONTINUE";
+
                 yield return WaitForAdvance();
+
                 continueText.text = string.Empty;
 
                 if (i < pageCount - 1)
                     yield return AnimateBoardOut();
             }
 
+            // Hide the board before fading the overall canvas.
+            boardImage.sprite = null;
+            boardImage.enabled = false;
+
+            if (boardBorder != null)
+                boardBorder.enabled = false;
+
             yield return FadeRoot(1f, 0f, fadeDuration);
-            yield return FadeAudio(AudioListener.volume, previousAudioVolume, fadeDuration);
+
+            yield return FadeAudio(
+                AudioListener.volume,
+                previousAudioVolume,
+                fadeDuration);
 
             rootGroup.gameObject.SetActive(false);
+
             Time.timeScale = previousTimeScale;
             playing = false;
             typing = false;
@@ -212,41 +277,109 @@ namespace PixelOcean
 
         private IEnumerator AnimateBoardIn(int direction)
         {
-            float startX = direction == 0 ? 0f : boardDisplaySize * 0.32f;
+            float startX = direction == 0
+                ? 0f
+                : boardDisplaySize * 0.32f;
+
+            boardRoot.anchoredPosition =
+                new Vector2(startX, 56f);
+
+            Color artworkColour = boardImage.color;
+            artworkColour.a = 0f;
+            boardImage.color = artworkColour;
+
+            Color borderColour = boardBorder != null
+                ? boardBorder.color
+                : Color.clear;
+
+            borderColour.a = 0f;
+
+            if (boardBorder != null)
+                boardBorder.color = borderColour;
+
             float elapsed = 0f;
-            Color colour = boardImage.color;
 
             while (elapsed < boardTransitionDuration)
             {
                 elapsed += Time.unscaledDeltaTime;
-                float t = Mathf.Clamp01(elapsed / boardTransitionDuration);
-                float eased = 1f - Mathf.Pow(1f - t, 3f);
-                boardRoot.anchoredPosition = new Vector2(Mathf.Lerp(startX, 0f, eased), 56f);
-                colour.a = t;
-                boardImage.color = colour;
+
+                float t = Mathf.Clamp01(
+                    elapsed / boardTransitionDuration);
+
+                float eased =
+                    1f - Mathf.Pow(1f - t, 3f);
+
+                boardRoot.anchoredPosition = new Vector2(
+                    Mathf.Lerp(startX, 0f, eased),
+                    56f);
+
+                artworkColour.a = t;
+                boardImage.color = artworkColour;
+
+                if (boardBorder != null)
+                {
+                    borderColour.a = t;
+                    boardBorder.color = borderColour;
+                }
+
                 yield return null;
             }
 
-            boardRoot.anchoredPosition = new Vector2(0f, 56f);
-            colour.a = 1f;
-            boardImage.color = colour;
+            boardRoot.anchoredPosition =
+                new Vector2(0f, 56f);
+
+            artworkColour.a = 1f;
+            boardImage.color = artworkColour;
+
+            if (boardBorder != null)
+            {
+                borderColour.a = 1f;
+                boardBorder.color = borderColour;
+            }
         }
 
         private IEnumerator AnimateBoardOut()
         {
             float elapsed = 0f;
-            Color colour = boardImage.color;
+
+            Color artworkColour = boardImage.color;
+
+            Color borderColour = boardBorder != null
+                ? boardBorder.color
+                : Color.clear;
 
             while (elapsed < boardTransitionDuration)
             {
                 elapsed += Time.unscaledDeltaTime;
-                float t = Mathf.Clamp01(elapsed / boardTransitionDuration);
+
+                float t = Mathf.Clamp01(
+                    elapsed / boardTransitionDuration);
+
                 float eased = t * t;
-                boardRoot.anchoredPosition = new Vector2(Mathf.Lerp(0f, -boardDisplaySize * 0.25f, eased), 56f);
-                colour.a = 1f - t;
-                boardImage.color = colour;
+
+                boardRoot.anchoredPosition = new Vector2(
+                    Mathf.Lerp(
+                        0f,
+                        -boardDisplaySize * 0.25f,
+                        eased),
+                    56f);
+
+                artworkColour.a = 1f - t;
+                boardImage.color = artworkColour;
+
+                if (boardBorder != null)
+                {
+                    borderColour.a = 1f - t;
+                    boardBorder.color = borderColour;
+                }
+
                 yield return null;
             }
+
+            boardImage.enabled = false;
+
+            if (boardBorder != null)
+                boardBorder.enabled = false;
         }
 
         private IEnumerator FadeRoot(float from, float to, float duration)
@@ -283,8 +416,16 @@ namespace PixelOcean
             if (silverFont == null)
                 silverFont = PixelFontLibrary.TmpMedium;
 
-            GameObject canvasObject = new("Storyboard Canvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster), typeof(CanvasGroup));
+            GameObject canvasObject = new(
+                "Storyboard Canvas",
+                typeof(RectTransform),
+                typeof(Canvas),
+                typeof(CanvasScaler),
+                typeof(GraphicRaycaster),
+                typeof(CanvasGroup));
+
             canvasObject.transform.SetParent(transform, false);
+
             canvas = canvasObject.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 32760;
@@ -297,13 +438,19 @@ namespace PixelOcean
             scaler.matchWidthOrHeight = 0.5f;
 
             rootGroup = canvasObject.GetComponent<CanvasGroup>();
+            rootGroup.alpha = 0f;
             rootGroup.interactable = false;
             rootGroup.blocksRaycasts = true;
 
             RectTransform canvasRect = canvasObject.GetComponent<RectTransform>();
 
             dimImage = CreateImage("Dimmed Gameplay", canvasRect, Color.black);
-            Stretch(dimImage.rectTransform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            Stretch(
+                dimImage.rectTransform,
+                Vector2.zero,
+                Vector2.one,
+                Vector2.zero,
+                Vector2.zero);
 
             boardRoot = CreateRect("Storyboard Board", canvasRect);
             boardRoot.anchorMin = boardRoot.anchorMax = new Vector2(0.5f, 0.5f);
@@ -311,28 +458,76 @@ namespace PixelOcean
             boardRoot.sizeDelta = new Vector2(boardDisplaySize, boardDisplaySize);
             boardRoot.anchoredPosition = new Vector2(0f, 56f);
 
-            Image border = CreateImage("Board Border", boardRoot, new Color32(28, 36, 48, 255));
-            Stretch(border.rectTransform, Vector2.zero, Vector2.one, new Vector2(-6f, -6f), new Vector2(6f, 6f));
+            boardBorder = CreateImage(
+                "Board Border",
+                boardRoot,
+                new Color32(28, 36, 48, 255));
 
-            boardImage = CreateImage("Board Artwork", boardRoot, Color.white);
+            Stretch(
+                boardBorder.rectTransform,
+                Vector2.zero,
+                Vector2.one,
+                new Vector2(-6f, -6f),
+                new Vector2(6f, 6f));
+
+            // Prevent the empty Image component from producing a startup square.
+            boardBorder.enabled = false;
+
+            boardImage = CreateImage(
+                "Board Artwork",
+                boardRoot,
+                new Color(1f, 1f, 1f, 0f));
+
             boardImage.preserveAspect = true;
-            Stretch(boardImage.rectTransform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+
+            Stretch(
+                boardImage.rectTransform,
+                Vector2.zero,
+                Vector2.one,
+                Vector2.zero,
+                Vector2.zero);
+
+            // It will only be enabled after a valid storyboard sprite is assigned.
+            boardImage.sprite = null;
+            boardImage.enabled = false;
 
             RectTransform dialoguePanel = CreateRect("Dialogue Panel", canvasRect);
-            dialoguePanel.anchorMin = dialoguePanel.anchorMax = new Vector2(0.5f, 0.5f);
+            dialoguePanel.anchorMin = dialoguePanel.anchorMax =
+                new Vector2(0.5f, 0.5f);
             dialoguePanel.pivot = new Vector2(0.5f, 1f);
             dialoguePanel.sizeDelta = new Vector2(920f, 190f);
             dialoguePanel.anchoredPosition = new Vector2(0f, -282f);
-            //CreateImage("Dialogue Background", dialoguePanel, new Color(0.025f, 0.018f, 0.05f, 0.94f));
+
             AddBorder(dialoguePanel, 3f);
 
-            dialogueText = CreateText("Dialogue", dialoguePanel, 32f, TextAlignmentOptions.Center);
+            dialogueText = CreateText(
+                "Dialogue",
+                dialoguePanel,
+                32f,
+                TextAlignmentOptions.Center);
+
             dialogueText.enableWordWrapping = true;
             dialogueText.overflowMode = TextOverflowModes.Overflow;
-            Stretch(dialogueText.rectTransform, Vector2.zero, Vector2.one, new Vector2(36f, 42f), new Vector2(-36f, -28f));
 
-            continueText = CreateText("Continue", dialoguePanel, 16f, TextAlignmentOptions.BottomRight);
-            Stretch(continueText.rectTransform, Vector2.zero, Vector2.one, new Vector2(20f, 10f), new Vector2(-24f, -12f));
+            Stretch(
+                dialogueText.rectTransform,
+                Vector2.zero,
+                Vector2.one,
+                new Vector2(36f, 42f),
+                new Vector2(-36f, -28f));
+
+            continueText = CreateText(
+                "Continue",
+                dialoguePanel,
+                16f,
+                TextAlignmentOptions.BottomRight);
+
+            Stretch(
+                continueText.rectTransform,
+                Vector2.zero,
+                Vector2.one,
+                new Vector2(20f, 10f),
+                new Vector2(-24f, -12f));
 
             rootGroup.gameObject.SetActive(false);
         }
