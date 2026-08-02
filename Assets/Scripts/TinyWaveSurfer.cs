@@ -338,9 +338,9 @@ namespace PixelOcean
         [SerializeField, Min(0.1f)] private float waterSlashCooldown = 0.65f;
         [SerializeField, Min(0.1f)] private float waterSlashActionDuration = 0.62f;
         [SerializeField, Min(0.1f)] private float flowFinisherActionDuration = 0.85f;
-        [SerializeField, Min(0.1f)] private float waterSlashSpeed = 3.5f;
-        [SerializeField, Min(0.1f)] private float flowFinisherSpeed = 10f;
-        [SerializeField, Min(0.1f)] private float waterSlashLifetime = 1.6f;
+        [SerializeField, Min(0.1f)] private float waterSlashSpeed = 3f;
+        [SerializeField, Min(0.1f)] private float flowFinisherSpeed = 3.5f;
+        [SerializeField, Min(0.1f)] private float waterSlashLifetime = 2.6f;
         [Tooltip("World scale of the ordinary Water Slash projectile.")]
         [SerializeField] private Vector2 waterSlashProjectileScale = new(1f, 1f);
         [Tooltip("World scale of each projectile released by the Flow Finisher.")]
