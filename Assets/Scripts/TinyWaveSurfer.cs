@@ -91,14 +91,36 @@ namespace PixelOcean
         [Tooltip("Smooths the jump arc at takeoff and landing.")]
         [SerializeField, Range(0.1f, 3f)] private float playerJumpArcPower = 1.35f;
 
+        [Header("Aerial Trick Chain")]
+        [Tooltip("Allows the three unique air tricks to be chained during one forward surf jump.")]
+        [SerializeField] private bool enableAerialTrickChain = true;
+        [Tooltip("Maximum number of unique tricks in one jump. There are currently three trick animations.")]
+        [SerializeField, Range(1, 3)] private int maximumTricksPerChain = 3;
+        [Tooltip("Extra airtime granted by each newly chained trick. Later tricks receive diminishing benefit.")]
+        [SerializeField, Range(0f, 0.5f)] private float trickChainAirtimeBonus = 0.24f;
+        [Tooltip("Legacy value retained for existing Inspector data. Chained tricks no longer add horizontal movement.")]
+        [SerializeField, Range(0f, 1.5f)] private float trickChainDistanceBonus = 0f;
+        [Tooltip("Legacy timing value retained for existing Inspector data. Trick transitions now wait for the complete clip.")]
+        [SerializeField, Range(0.1f, 1f)] private float trickChainInputLock = 0.34f;
+        [Tooltip("Legacy landing-window value retained for existing Inspector data.")]
+        [SerializeField, Range(0.5f, 0.95f)] private float latestTrickChainTime = 0.78f;
+        [Tooltip("Second jump reaches roughly half the height of the initial jump. Velocity uses sqrt(0.5) because jump height scales with velocity squared.")]
+        [SerializeField, Range(0.25f, 1.5f)] private float secondTrickJumpStrength = 0.7071f;
+        [Tooltip("Third jump reaches roughly half the height of the second jump, or one quarter of the initial jump.")]
+        [SerializeField, Range(0.25f, 1.5f)] private float thirdTrickJumpStrength = 0.5f;
+        [Tooltip("Legacy value retained for existing Inspector data. Only the initial jump establishes horizontal momentum.")]
+        [SerializeField, Range(0f, 4f)] private float chainedTrickForwardBoost = 0f;
+        [Tooltip("Gravity applied while a trick animation is playing. Lower values soften descent without creating a mid-air freeze.")]
+        [SerializeField, Range(0.1f, 1f)] private float activeTrickGravityMultiplier = 0.48f;
+
         [Header("Forward Obstacle Surf Jump")]
         [Tooltip("Hold left/right and press Jump (controller A / keyboard Space) to launch forward over hazards.")]
         [SerializeField] private bool enableForwardObstacleJump = true;
         [SerializeField, Min(0.15f)] private float obstacleJumpDuration = 1.62f;
         [Tooltip("Minimum height produced by a quick tap of Jump.")]
-        [SerializeField, Min(0.05f)] private float minimumObstacleJumpHeight = 0.55f;
+        [SerializeField, Min(0.05f)] private float minimumObstacleJumpHeight = 0.42f;
         [Tooltip("Maximum height produced by a fully charged Jump hold.")]
-        [SerializeField, Min(0.05f)] private float maximumObstacleJumpHeight = 1.85f;
+        [SerializeField, Min(0.05f)] private float maximumObstacleJumpHeight = 1.3f;
         [Tooltip("Seconds of holding Jump required to reach maximum height.")]
         [SerializeField, Min(0.05f)] private float fullJumpChargeTime = 0.65f;
         [Tooltip("Shapes charge sensitivity. X is held-time percentage; Y is jump-power percentage.")]
@@ -365,7 +387,15 @@ namespace PixelOcean
         private bool airTrickActive;
         private float airTrickTimer;
         private int currentAirTrickStateHash;
+        private int queuedAirTrickStateHash;
         [SerializeField, Min(0.1f)] private float airTrickDuration = 1.25f;
+        private int aerialTrickChainCount;
+        private float aerialTrickAirtimeBonus;
+        private float obstacleAirVerticalVelocity;
+        private float obstacleAirHorizontalVelocity;
+        private float obstacleAirGravity;
+        private float obstacleAirTakeoffVelocity;
+        private float obstacleAirElapsed;
         private float obstacleJumpStartX;
         private float obstacleJumpTargetX;
         private float obstacleJumpProgress;
@@ -1045,6 +1075,16 @@ namespace PixelOcean
             }
 
             currentAnimationStateHash = desiredStateHash;
+
+            if (desiredStateHash == HandstandStateHash)
+                surferAnimator.speed = 1.15f;
+            else if (desiredStateHash == RotationStateHash)
+                surferAnimator.speed = 1.3f;
+            else if (desiredStateHash == FlipStateHash)
+                surferAnimator.speed = 1.55f;
+            else
+                surferAnimator.speed = 1f;      
+
             surferAnimator.CrossFade(desiredStateHash, 0.02f, 0, 0f);
         }
 
@@ -2221,6 +2261,7 @@ namespace PixelOcean
             airTrickActive = false;
             airTrickTimer = 0f;
             currentAirTrickStateHash = 0;
+            queuedAirTrickStateHash = 0;
             obstacleJumpProgress = 0f;
             state = RiderState.TurningTrick;
             stateTimer = 0f;
@@ -2280,6 +2321,7 @@ namespace PixelOcean
             airTrickActive = false;
             airTrickTimer = 0f;
             currentAirTrickStateHash = 0;
+            queuedAirTrickStateHash = 0;
             obstacleJumpProgress = 0f;
             activeObstacleJumpHeight = Mathf.Clamp(
                 chargedJumpHeight,
@@ -2305,6 +2347,20 @@ namespace PixelOcean
             scoredRotation = false;
             scoredFlip = false;
             flipTrick = false;
+            aerialTrickChainCount = 0;
+            aerialTrickAirtimeBonus = 0f;
+            obstacleAirElapsed = 0f;
+
+            // Use continuous velocity instead of recalculating a normalized arc.
+            // Extending a combo can therefore never move the surfer back to an
+            // earlier point in the jump.
+            float launchDuration = Mathf.Max(0.15f, obstacleJumpDuration);
+            obstacleAirGravity = (8f * activeObstacleJumpHeight) /
+                (launchDuration * launchDuration);
+            obstacleAirTakeoffVelocity = (4f * activeObstacleJumpHeight) / launchDuration;
+            obstacleAirVerticalVelocity = obstacleAirTakeoffVelocity;
+            obstacleAirHorizontalVelocity =
+                (obstacleJumpTargetX - obstacleJumpStartX) / launchDuration;
 
             // Start the dedicated surf-jump clip immediately. UpdateAnimation()
             // keeps this state active for the full obstacle jump and will not let
@@ -2314,77 +2370,93 @@ namespace PixelOcean
 
         private void TriggerAirTrick(int animationStateHash)
         {
-            if (!obstacleJumpActive || state != RiderState.TurningTrick || airTrickActive)
+            if (!obstacleJumpActive || state != RiderState.TurningTrick)
                 return;
 
+            bool alreadyPerformed =
+                (animationStateHash == HandstandStateHash && scoredHandstand) ||
+                (animationStateHash == RotationStateHash && scoredRotation) ||
+                (animationStateHash == FlipStateHash && scoredFlip);
+            if (alreadyPerformed || animationStateHash == queuedAirTrickStateHash)
+                return;
+
+            int chainLimit = Mathf.Clamp(maximumTricksPerChain, 1, 3);
+            if (aerialTrickChainCount >= chainLimit)
+                return;
+
+            // A different trick pressed while the current clip is playing is buffered.
+            // It starts only after the current trick has played for its full duration.
+            if (airTrickActive)
+            {
+                if (enableAerialTrickChain && aerialTrickChainCount < chainLimit)
+                    queuedAirTrickStateHash = animationStateHash;
+                return;
+            }
+
+            StartAirTrick(animationStateHash);
+        }
+
+        private void StartAirTrick(int animationStateHash)
+        {
             airTrickActive = true;
             airTrickTimer = 0f;
             currentAirTrickStateHash = animationStateHash;
+            queuedAirTrickStateHash = 0;
 
             if (animationStateHash == HandstandStateHash) scoredHandstand = true;
             else if (animationStateHash == RotationStateHash) scoredRotation = true;
             else if (animationStateHash == FlipStateHash) scoredFlip = true;
 
+            aerialTrickChainCount++;
+
+            if (enableAerialTrickChain && aerialTrickChainCount >= 2)
+            {
+                // The second and third tricks behave like genuine extra jumps.
+                // They act on the surfer's CURRENT velocity and position instead
+                // of stretching the original arc, so no rewind or old-location
+                // snap can occur during descent.
+                float jumpStrength = aerialTrickChainCount == 2
+                    ? secondTrickJumpStrength
+                    : thirdTrickJumpStrength;
+                float renewedUpwardVelocity = obstacleAirTakeoffVelocity * jumpStrength;
+                obstacleAirVerticalVelocity = Mathf.Max(
+                    obstacleAirVerticalVelocity,
+                    renewedUpwardVelocity);
+
+                // Do not add or scale horizontal speed here. The complete combo
+                // carries only the momentum established by the initial jump.
+                // Chained tricks contribute vertical lift and animation timing only.
+            }
+
             if (speechBubble != null)
                 speechBubble.HideImmediate();
 
-            // Every input owns one animation; no random trick selection remains.
             UpdateAnimation(true, true);
         }
 
         private void UpdateTurnTrick()
         {
-            float activeDuration = obstacleJumpActive
-                ? obstacleJumpDuration
-                : turnTrickDuration;
-            float t = Mathf.Clamp01(
-                stateTimer /
-                Mathf.Max(0.01f, activeDuration));
-            obstacleJumpProgress = obstacleJumpActive ? t : 0f;
-
-            if (airTrickActive)
-            {
-                airTrickTimer += Time.deltaTime;
-                if (airTrickTimer >= airTrickDuration)
-                {
-                    airTrickActive = false;
-                    airTrickTimer = 0f;
-                    currentAirTrickStateHash = 0;
-                    if (t < 1f)
-                        UpdateAnimation(true, true);
-                }
-            }
-
             if (obstacleJumpActive)
             {
-                // Strong movement at takeoff, then a soft ease into landing.
-                float horizontalT = 1f - Mathf.Pow(1f - t, obstacleLandingEase);
-                localRideX = Mathf.Lerp(obstacleJumpStartX, obstacleJumpTargetX, horizontalT);
-                localRideX = ClampPlayerXToSandbox(localRideX);
-                RebindToNearestHorizontalSection();
+                UpdateForwardComboJump();
+                return;
             }
 
-            float surfaceY =
-                currentWave.GetGameplaySurfaceHeight(localRideX);
+            float t = Mathf.Clamp01(
+                stateTimer /
+                Mathf.Max(0.01f, turnTrickDuration));
+            obstacleJumpProgress = 0f;
 
+            float surfaceY = currentWave.GetGameplaySurfaceHeight(localRideX);
             float baseArc = Mathf.Sin(t * Mathf.PI);
-            float arc = Mathf.Pow(Mathf.Max(0f, baseArc), playerJumpArcPower) *
-                (obstacleJumpActive ? activeObstacleJumpHeight : turnJumpHeight);
+            float arc = Mathf.Pow(Mathf.Max(0f, baseArc), playerJumpArcPower) * turnJumpHeight;
 
             transform.position = new Vector3(
                 localRideX,
-                Mathf.Max(
-                    surfaceY + surfaceOffset,
-                    airStartY + arc),
+                Mathf.Max(surfaceY + surfaceOffset, airStartY + arc),
                 renderDepth);
 
-            if (obstacleJumpActive && playerControlled)
-                scoredJumpPeakY = Mathf.Max(scoredJumpPeakY, transform.position.y);
-
-            // The player's basic motionless jump is animated entirely by
-            // chuck_rotation. Do not rotate, squash, or flip the rendered surfer
-            // in code, otherwise the sprite-sheet rotation is applied twice.
-            bool basicPlayerJump = playerControlled && !obstacleJumpActive;
+            bool basicPlayerJump = playerControlled;
             if (basicPlayerJump)
             {
                 transform.rotation = Quaternion.identity;
@@ -2392,42 +2464,18 @@ namespace PixelOcean
             }
             else
             {
-                float spinDirection =
-                    direction >= 0f ? -1f : 1f;
-
-                float automaticSpin = obstacleJumpActive
-                    ? spinDirection * Mathf.Sin(t * Mathf.PI) * 16f
-                    : turnSpinDegrees * spinDirection * t;
+                float spinDirection = direction >= 0f ? -1f : 1f;
+                float automaticSpin = turnSpinDegrees * spinDirection * t;
                 float controlledSpin = playerControlled
                     ? playerTrickInput * playerAirTrickDegrees * t
                     : 0f;
-                transform.rotation = Quaternion.Euler(
-                    0f,
-                    0f,
-                    automaticSpin + controlledSpin);
+                transform.rotation = Quaternion.Euler(0f, 0f, automaticSpin + controlledSpin);
 
-                float flipAmount = flipTrick
-                    ? Mathf.Cos(t * Mathf.PI * 2f)
-                    : 1f;
-
-                float trickScale =
-                    spriteWorldScale *
-                    Mathf.Max(
-                        0.18f,
-                        Mathf.Abs(flipAmount));
-
-                ApplyFacing(
-                    trickScale,
-                    spriteWorldScale);
-
-                // Temporarily reverse the visual during the middle of a flip trick.
-                if (flipTrick &&
-                    spriteRenderer != null &&
-                    flipAmount < 0f)
-                {
-                    spriteRenderer.flipX =
-                        !spriteRenderer.flipX;
-                }
+                float flipAmount = flipTrick ? Mathf.Cos(t * Mathf.PI * 2f) : 1f;
+                float trickScale = spriteWorldScale * Mathf.Max(0.18f, Mathf.Abs(flipAmount));
+                ApplyFacing(trickScale, spriteWorldScale);
+                if (flipTrick && spriteRenderer != null && flipAmount < 0f)
+                    spriteRenderer.flipX = !spriteRenderer.flipX;
             }
 
             if (t < 1f)
@@ -2436,38 +2484,111 @@ namespace PixelOcean
             if (!playerControlled)
                 direction *= -1f;
 
-            if (obstacleJumpActive)
+            state = RiderState.Riding;
+            stateTimer = 0f;
+            transform.rotation = Quaternion.identity;
+            ApplyFacing(spriteWorldScale, spriteWorldScale);
+            UpdateAnimation(Mathf.Abs(playerHorizontalVelocity) > 0.03f, true);
+        }
+
+        private void UpdateForwardComboJump()
+        {
+            float dt = Time.deltaTime;
+            obstacleAirElapsed += dt;
+
+            if (airTrickActive)
             {
-                localRideX = obstacleJumpTargetX;
-                playerHorizontalVelocity = direction * playerScrollSpeed * 0.48f;
-
-                if (playerControlled && AirTrickScoreSystem.Instance != null)
+                airTrickTimer += dt;
+                if (airTrickTimer >= airTrickDuration)
                 {
-                    float achievedHeight = Mathf.Max(0f, scoredJumpPeakY - airStartY);
-                    AirTrickScoreSystem.Instance.AwardJump(
-                        transform.position, achievedHeight, scoredHandstand, scoredRotation, scoredFlip);
-                }
+                    airTrickActive = false;
+                    airTrickTimer = 0f;
+                    currentAirTrickStateHash = 0;
 
-                obstacleJumpActive = false;
-                airTrickActive = false;
-                airTrickTimer = 0f;
-                obstacleJumpProgress = 0f;
+                    int nextTrick = queuedAirTrickStateHash;
+                    queuedAirTrickStateHash = 0;
+                    if (nextTrick != 0)
+                        StartAirTrick(nextTrick);
+                    else
+                        UpdateAnimation(true, true);
+                }
             }
+
+            // Preserve momentum continuously. A chained trick only changes the
+            // current velocities; it never recomputes an old point on the arc.
+            localRideX += obstacleAirHorizontalVelocity * dt;
+            localRideX = ClampPlayerXToSandbox(localRideX);
+            RebindToNearestHorizontalSection();
+
+            float currentY = transform.position.y;
+
+            // Keep gravity active throughout the combo so the surfer never
+            // freezes in mid-air. While a trick clip is playing gravity is
+            // softened rather than disabled, producing a gentle natural drift
+            // through the peak and into descent. Full gravity resumes between
+            // clips and after the final animation.
+            float gravityScale = airTrickActive
+                ? Mathf.Clamp(activeTrickGravityMultiplier, 0.1f, 1f)
+                : 1f;
+            obstacleAirVerticalVelocity -= obstacleAirGravity * gravityScale * dt;
+
+            float nextY = currentY + obstacleAirVerticalVelocity * dt;
+
+            float surfaceY = currentWave.GetGameplaySurfaceHeight(localRideX) + surfaceOffset;
+
+            // A buffered trick also prevents an early landing between clips.
+            bool animationOwnsAir = airTrickActive || queuedAirTrickStateHash != 0;
+            if (animationOwnsAir && nextY < surfaceY + 0.035f)
+            {
+                nextY = surfaceY + 0.035f;
+                obstacleAirVerticalVelocity = Mathf.Max(0f, obstacleAirVerticalVelocity);
+            }
+
+            transform.position = new Vector3(localRideX, Mathf.Max(nextY, surfaceY), renderDepth);
+            scoredJumpPeakY = Mathf.Max(scoredJumpPeakY, transform.position.y);
+
+            float expectedDuration = Mathf.Max(0.15f, obstacleJumpDuration) +
+                Mathf.Max(0, aerialTrickChainCount - 1) * airTrickDuration;
+            obstacleJumpProgress = Mathf.Clamp01(obstacleAirElapsed / expectedDuration);
+
+            // Animation sheets provide the trick rotation. Keep the controller
+            // root stable and facing forward so visual frames remain attached to
+            // the surfer's current world position.
+            transform.rotation = Quaternion.identity;
+            ApplyFacing(spriteWorldScale, spriteWorldScale);
+
+            bool descendingToWater = obstacleAirVerticalVelocity <= 0f &&
+                transform.position.y <= surfaceY + 0.001f;
+            if (!descendingToWater || animationOwnsAir)
+                return;
+
+            playerHorizontalVelocity = obstacleAirHorizontalVelocity;
+
+            if (playerControlled && AirTrickScoreSystem.Instance != null)
+            {
+                float achievedHeight = Mathf.Max(0f, scoredJumpPeakY - airStartY);
+                AirTrickScoreSystem.Instance.AwardJump(
+                    transform.position, achievedHeight, scoredHandstand, scoredRotation, scoredFlip);
+            }
+
+            obstacleJumpActive = false;
+            airTrickActive = false;
+            airTrickTimer = 0f;
+            currentAirTrickStateHash = 0;
+            queuedAirTrickStateHash = 0;
+            obstacleJumpProgress = 0f;
+            aerialTrickChainCount = 0;
+            aerialTrickAirtimeBonus = 0f;
+            obstacleAirVerticalVelocity = 0f;
+            obstacleAirHorizontalVelocity = 0f;
+            obstacleAirElapsed = 0f;
 
             state = RiderState.Riding;
             stateTimer = 0f;
-
+            transform.position = new Vector3(localRideX, surfaceY, renderDepth);
             transform.rotation = Quaternion.identity;
-
-            ApplyFacing(
-                spriteWorldScale,
-                spriteWorldScale);
-
-            // Restore the appropriate riding animation as soon as the board
-            // touches the wave again.
-            UpdateAnimation(
-                Mathf.Abs(playerHorizontalVelocity) > 0.03f,
-                true);
+            ApplyFacing(spriteWorldScale, spriteWorldScale);
+            UpdateAnimation(Mathf.Abs(playerHorizontalVelocity) > 0.03f, true);
         }
 
         [ContextMenu("Ride Next Wave")]

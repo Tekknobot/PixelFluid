@@ -11,8 +11,8 @@ CONTROLS
 - Up/Down + Jump wave-layer changes remain immediate and are not charged.
 
 DEFAULT TUNING
-- minimumObstacleJumpHeight: 0.55
-- maximumObstacleJumpHeight: 1.85
+- minimumObstacleJumpHeight: 0.42
+- maximumObstacleJumpHeight: 1.30
 - fullJumpChargeTime: 0.65 seconds
 - jumpChargeCurve: gentle early response, stronger upper charge range
 
