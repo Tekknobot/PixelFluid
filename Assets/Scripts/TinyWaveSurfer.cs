@@ -382,8 +382,25 @@ namespace PixelOcean
         [SerializeField, Range(0.1f, 0.95f)] private float onFireTrailAlphaFalloff = 0.62f;
         [Tooltip("Additional vertical waviness applied across the trail.")]
         [SerializeField, Range(0f, 0.12f)] private float onFireTrailWaveAmount = 0.025f;
+        [Tooltip("Seconds of motion history between each trail copy.")]
+        [SerializeField, Range(0.015f, 0.18f)] private float onFireTrailHistoryStep = 0.045f;
+        [Tooltip("How quickly each trail eases toward its historical position.")]
+        [SerializeField, Range(1f, 40f)] private float onFireTrailFollowSharpness = 16f;
+
+        private sealed class OnFireTrailSnapshot
+        {
+            public Vector3 Position;
+            public Quaternion Rotation;
+            public Vector3 Scale;
+            public Sprite Sprite;
+            public bool FlipX;
+            public bool FlipY;
+            public float Time;
+        }
 
         private readonly List<SpriteRenderer> onFireTrailRenderers = new();
+        private readonly List<Vector3> onFireTrailVelocities = new();
+        private readonly List<OnFireTrailSnapshot> onFireTrailHistory = new();
         private int lastWaveRenderQueue = -1;
 
         private RiderState state;
@@ -1020,16 +1037,19 @@ namespace PixelOcean
                 int index = onFireTrailRenderers.Count;
 
                 GameObject trailObject = new GameObject($"ON FIRE Sprite Trail {index + 1}");
-                trailObject.transform.SetParent(transform, false);
-                trailObject.transform.localPosition = new Vector3(0f, 0f, 0.015f + index * 0.001f);
+                trailObject.transform.SetParent(null, true);
+                trailObject.transform.position = transform.position;
+                trailObject.transform.rotation = transform.rotation;
+                trailObject.transform.localScale = transform.lossyScale;
 
                 SpriteRenderer trailRenderer = trailObject.AddComponent<SpriteRenderer>();
                 trailRenderer.sharedMaterial = spriteRenderer.sharedMaterial;
                 trailRenderer.sortingLayerID = spriteRenderer.sortingLayerID;
-                trailRenderer.sortingOrder = spriteRenderer.sortingOrder - 1 - index;
+                trailRenderer.sortingOrder = spriteRenderer.sortingOrder + index;
                 trailRenderer.enabled = false;
 
                 onFireTrailRenderers.Add(trailRenderer);
+                onFireTrailVelocities.Add(Vector3.zero);
             }
 
             while (onFireTrailRenderers.Count > desiredCount)
@@ -1037,10 +1057,55 @@ namespace PixelOcean
                 int last = onFireTrailRenderers.Count - 1;
                 SpriteRenderer rendererToRemove = onFireTrailRenderers[last];
                 onFireTrailRenderers.RemoveAt(last);
+                onFireTrailVelocities.RemoveAt(last);
 
                 if (rendererToRemove != null)
                     Destroy(rendererToRemove.gameObject);
             }
+        }
+
+        private void CaptureOnFireTrailSnapshot()
+        {
+            if (spriteRenderer == null)
+                return;
+
+            onFireTrailHistory.Insert(0, new OnFireTrailSnapshot
+            {
+                Position = transform.position,
+                Rotation = transform.rotation,
+                Scale = transform.lossyScale,
+                Sprite = spriteRenderer.sprite,
+                FlipX = spriteRenderer.flipX,
+                FlipY = spriteRenderer.flipY,
+                Time = Time.unscaledTime
+            });
+
+            float keepDuration = Mathf.Max(0.25f,
+                onFireTrailHistoryStep * (Mathf.Clamp(onFireTrailCount, 1, 8) + 3));
+            float oldestAllowed = Time.unscaledTime - keepDuration;
+            onFireTrailHistory.RemoveAll(snapshot => snapshot == null || snapshot.Time < oldestAllowed);
+        }
+
+        private OnFireTrailSnapshot FindOnFireTrailSnapshot(float targetTime)
+        {
+            if (onFireTrailHistory.Count == 0)
+                return null;
+
+            OnFireTrailSnapshot best = onFireTrailHistory[onFireTrailHistory.Count - 1];
+            float bestDifference = Mathf.Abs(best.Time - targetTime);
+
+            for (int i = 0; i < onFireTrailHistory.Count; i++)
+            {
+                OnFireTrailSnapshot candidate = onFireTrailHistory[i];
+                float difference = Mathf.Abs(candidate.Time - targetTime);
+                if (difference < bestDifference)
+                {
+                    best = candidate;
+                    bestDifference = difference;
+                }
+            }
+
+            return best;
         }
 
         private void UpdateOnFireSpriteEffect()
@@ -1056,9 +1121,24 @@ namespace PixelOcean
                 ((AirTrickScoreSystem.Instance != null && AirTrickScoreSystem.Instance.IsOnFire) ||
                  (specialAttackActive && specialAttackIsFinisher));
 
+            if (!active)
+            {
+                onFireTrailHistory.Clear();
+                for (int i = 0; i < onFireTrailRenderers.Count; i++)
+                {
+                    if (onFireTrailRenderers[i] != null)
+                        onFireTrailRenderers[i].enabled = false;
+                    if (i < onFireTrailVelocities.Count)
+                        onFireTrailVelocities[i] = Vector3.zero;
+                }
+                return;
+            }
+
+            CaptureOnFireTrailSnapshot();
+
             float time = Time.unscaledTime;
             float pulse = 0.5f + 0.5f * Mathf.Sin(time * onFireSpritePulseSpeed);
-            float facingSign = spriteRenderer.flipX ? -1f : 1f;
+            float smoothTime = 1f / Mathf.Max(1f, onFireTrailFollowSharpness);
 
             for (int i = 0; i < onFireTrailRenderers.Count; i++)
             {
@@ -1066,9 +1146,12 @@ namespace PixelOcean
                 if (trail == null)
                     continue;
 
-                trail.enabled = active;
-                if (!active)
+                OnFireTrailSnapshot snapshot = FindOnFireTrailSnapshot(
+                    time - onFireTrailHistoryStep * (i + 1));
+                if (snapshot == null)
                     continue;
+
+                trail.enabled = true;
 
                 float layer01 = onFireTrailRenderers.Count <= 1
                     ? 0f
@@ -1082,36 +1165,47 @@ namespace PixelOcean
                     onFireSpriteColour,
                     Color.white,
                     Mathf.Lerp(0.28f, 0.05f, layer01));
-
                 colour.a = alpha;
 
                 trail.color = colour;
-                trail.sprite = spriteRenderer.sprite;
-                trail.flipX = spriteRenderer.flipX;
-                trail.flipY = spriteRenderer.flipY;
+                trail.sprite = snapshot.Sprite;
+                trail.flipX = snapshot.FlipX;
+                trail.flipY = snapshot.FlipY;
+                trail.sharedMaterial = spriteRenderer.sharedMaterial;
                 trail.sortingLayerID = spriteRenderer.sortingLayerID;
                 trail.sortingOrder = spriteRenderer.sortingOrder + i;
 
-                float distance = onFireAfterimageOffset +
-                    onFireTrailSpacing * (i + 1);
-
                 float wave = Mathf.Sin(
-                    time * onFireSpritePulseSpeed * 0.8f -
-                    i * 0.85f) *
-                    onFireTrailWaveAmount *
-                    (1f + layer01);
+                    time * onFireSpritePulseSpeed * 0.65f - i * 0.8f) *
+                    onFireTrailWaveAmount * (1f + layer01);
 
-                trail.transform.localPosition = new Vector3(
-                    -facingSign * distance,
-                    wave,
-                    0.015f + i * 0.001f);
+                Vector3 targetPosition = snapshot.Position + Vector3.up * wave;
+                Vector3 velocity = onFireTrailVelocities[i];
+                trail.transform.position = Vector3.SmoothDamp(
+                    trail.transform.position,
+                    targetPosition,
+                    ref velocity,
+                    smoothTime,
+                    Mathf.Infinity,
+                    Time.unscaledDeltaTime);
+                onFireTrailVelocities[i] = velocity;
 
-                float scale = 1f +
+                float rotationBlend = 1f - Mathf.Exp(
+                    -onFireTrailFollowSharpness * Time.unscaledDeltaTime);
+                trail.transform.rotation = Quaternion.Slerp(
+                    trail.transform.rotation,
+                    snapshot.Rotation,
+                    rotationBlend);
+
+                float scalePulse = 1f +
                     onFireSpritePulseAmount *
                     Mathf.Lerp(1f, 0.35f, layer01) *
                     Mathf.Lerp(0.4f, 1f, pulse);
-
-                trail.transform.localScale = new Vector3(scale, scale, 1f);
+                Vector3 targetScale = snapshot.Scale * scalePulse;
+                trail.transform.localScale = Vector3.Lerp(
+                    trail.transform.localScale,
+                    targetScale,
+                    rotationBlend);
             }
         }
 
