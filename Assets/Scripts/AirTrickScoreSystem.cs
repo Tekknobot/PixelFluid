@@ -34,6 +34,25 @@ namespace PixelOcean
         [SerializeField, Min(0)] private int rotationPoints = 140;
         [SerializeField, Min(0)] private int flipPoints = 180;
         [SerializeField, Min(0)] private int extraTrickComboBonus = 75;
+
+        [Header("Combo Chain Scoring")]
+        [Tooltip("Extra Stoke for completing the second distinct trick in one aerial chain.")]
+        [SerializeField, Min(0)] private int doubleChainBonus = 120;
+        [Tooltip("Additional Stoke for completing all three distinct tricks in one aerial chain.")]
+        [SerializeField, Min(0)] private int tripleChainBonus = 260;
+        [Tooltip("Stoke awarded per second spent airborne, capped by Maximum Scoring Airtime.")]
+        [SerializeField, Min(0)] private int airtimePointsPerSecond = 90;
+        [SerializeField, Min(0.1f)] private float maximumScoringAirtime = 4f;
+        [Tooltip("Stoke awarded per world unit travelled during the complete jump.")]
+        [SerializeField, Min(0)] private int distancePointsPerUnit = 35;
+        [Tooltip("Maximum horizontal distance that contributes to Stoke.")]
+        [SerializeField, Min(0.1f)] private float maximumScoringDistance = 8f;
+        [Tooltip("Multiplier applied after all base, height, airtime and distance points are combined.")]
+        [SerializeField, Range(1f, 3f)] private float doubleChainMultiplier = 1.15f;
+        [SerializeField, Range(1f, 4f)] private float tripleChainMultiplier = 1.35f;
+        [Tooltip("Small reward for completing the whole chain and returning to the water.")]
+        [SerializeField, Min(0)] private int cleanLandingBonus = 50;
+
         [SerializeField, Min(0f)] private float floatingScoreLifetime = 1.35f;
 
         [Header("Popup Tiers")]
@@ -114,45 +133,115 @@ namespace PixelOcean
             recapVisible = false;
         }
 
+        // Compatibility overload for any older callers. New controller code uses
+        // the full combo-aware overload below.
         public int AwardJump(Vector3 landingPosition, float height, bool didHandstand,
             bool didRotation, bool didFlip)
         {
-            int trickCount = (didHandstand ? 1 : 0) + (didRotation ? 1 : 0) + (didFlip ? 1 : 0);
-            if (trickCount <= 0)
+            int inferredChain = (didHandstand ? 1 : 0) +
+                (didRotation ? 1 : 0) +
+                (didFlip ? 1 : 0);
+
+            return AwardJump(
+                landingPosition,
+                height,
+                didHandstand,
+                didRotation,
+                didFlip,
+                inferredChain,
+                0f,
+                0f,
+                true);
+        }
+
+        /// <summary>
+        /// Awards Stoke for the complete landed aerial sequence. Chain depth is
+        /// reported explicitly by the surfer controller, while airtime and travel
+        /// reward the new double/triple-jump motion without counting height twice.
+        /// </summary>
+        public int AwardJump(Vector3 landingPosition, float height, bool didHandstand,
+            bool didRotation, bool didFlip, int completedChainLength,
+            float airtimeSeconds, float horizontalDistance, bool cleanLanding)
+        {
+            int uniqueTrickCount = (didHandstand ? 1 : 0) +
+                (didRotation ? 1 : 0) +
+                (didFlip ? 1 : 0);
+            if (uniqueTrickCount <= 0)
                 return 0;
 
-            float safeHeight = Mathf.Max(0f, height);
+            int chainLength = Mathf.Clamp(
+                Mathf.Min(completedChainLength, uniqueTrickCount),
+                1,
+                3);
 
+            float safeHeight = Mathf.Max(0f, height);
             float normalizedHeight = Mathf.Clamp01(
                 safeHeight / Mathf.Max(0.1f, maximumScoringHeight));
-
             int heightScore = Mathf.RoundToInt(
                 normalizedHeight * maximumHeightPoints);
 
-            int score = heightScore;
+            float scoredAirtime = Mathf.Clamp(
+                airtimeSeconds,
+                0f,
+                Mathf.Max(0.1f, maximumScoringAirtime));
+            int airtimeScore = Mathf.RoundToInt(
+                scoredAirtime * airtimePointsPerSecond);
+
+            float scoredDistance = Mathf.Clamp(
+                Mathf.Abs(horizontalDistance),
+                0f,
+                Mathf.Max(0.1f, maximumScoringDistance));
+            int distanceScore = Mathf.RoundToInt(
+                scoredDistance * distancePointsPerUnit);
+
+            int score = heightScore + airtimeScore + distanceScore;
             if (didHandstand) { score += handstandPoints; handstands++; }
             if (didRotation) { score += rotationPoints; rotations++; }
             if (didFlip) { score += flipPoints; flips++; }
-            if (trickCount > 1) score += (trickCount - 1) * extraTrickComboBonus;
 
+            // Retain the original per-extra-trick reward, then layer the new
+            // sequence-completion bonuses on top. A triple chain receives both
+            // the double milestone and the triple milestone.
+            if (chainLength > 1)
+                score += (chainLength - 1) * extraTrickComboBonus;
+            if (chainLength >= 2)
+                score += doubleChainBonus;
+            if (chainLength >= 3)
+                score += tripleChainBonus;
+            if (cleanLanding)
+                score += cleanLandingBonus;
+
+            float chainMultiplier = chainLength >= 3
+                ? tripleChainMultiplier
+                : chainLength == 2
+                    ? doubleChainMultiplier
+                    : 1f;
+            score = Mathf.RoundToInt(score * chainMultiplier);
             score = Mathf.Max(1, score);
+
             dayStoke += score;
             totalStoke += score;
             jumpsLanded++;
 
             string trickName = BuildTrickName(didHandstand, didRotation, didFlip);
+            string chainLabel = chainLength >= 3
+                ? "TRIPLE CHAIN"
+                : chainLength == 2
+                    ? "DOUBLE CHAIN"
+                    : "SINGLE TRICK";
+
             if (score > bestJumpScore)
             {
                 bestJumpScore = score;
-                bestTrick = trickName;
+                bestTrick = chainLabel + "  " + trickName;
             }
-            highestAir = Mathf.Max(highestAir, height);
+            highestAir = Mathf.Max(highestAir, safeHeight);
 
             GetPopupTier(score, out string tierName, out Color tierColour);
             floatingScores.Add(new FloatingScore
             {
                 WorldPosition = landingPosition + Vector3.up * 0.35f,
-                Text = tierName + "  " + trickName + "\n+" + score + " STOKE",
+                Text = tierName + "  " + chainLabel + "\n" + trickName + "  +" + score + " STOKE",
                 TextColour = tierColour,
                 CreatedAt = Time.unscaledTime,
                 Lifetime = floatingScoreLifetime
@@ -263,10 +352,11 @@ namespace PixelOcean
                     GUI.color = new Color(tierColour.r, tierColour.g, tierColour.b,
                         tierColour.a * (1f - age01));
                     GUI.Label(
-                        new Rect(screen.x - 180f,
-                                Screen.height - screen.y - 60f,
-                                360f,
-                                120f),
+                        new Rect(
+                            screen.x - 250f,
+                            Screen.height - screen.y - 80f,
+                            500f,
+                            180f),
                         score.Text,
                         floatingStyle);
                     GUI.color = old;

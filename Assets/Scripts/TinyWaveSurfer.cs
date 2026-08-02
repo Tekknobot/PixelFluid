@@ -398,6 +398,7 @@ namespace PixelOcean
         private float obstacleAirElapsed;
         private float obstacleJumpStartX;
         private float obstacleJumpTargetX;
+        private float scoredJumpStartX;
         private float obstacleJumpProgress;
         private float activeObstacleJumpHeight;
         private bool jumpCharging;
@@ -2339,6 +2340,7 @@ namespace PixelOcean
             float carriedDistance = carriedSkidSpeed * 0.22f;
 
             obstacleJumpStartX = localRideX;
+            scoredJumpStartX = localRideX;
             obstacleJumpTargetX = ClampPlayerXToSandbox(
                 obstacleJumpStartX + direction * (obstacleJumpDistance + carriedDistance));
             airStartY = currentWave.GetGameplaySurfaceHeight(localRideX) + surfaceOffset;
@@ -2372,6 +2374,21 @@ namespace PixelOcean
         {
             if (!obstacleJumpActive || state != RiderState.TurningTrick)
                 return;
+
+            // Input is read before the movement update each frame. Reject a
+            // late combo press immediately when the descending surfer has
+            // already reached the live water surface, rather than allowing one
+            // final chained launch before the landing state is processed.
+            if (currentWave != null && obstacleAirVerticalVelocity <= 0f)
+            {
+                float liveSurfaceY =
+                    currentWave.GetGameplaySurfaceHeight(localRideX) + surfaceOffset;
+                if (transform.position.y <= liveSurfaceY + 0.01f)
+                {
+                    queuedAirTrickStateHash = 0;
+                    return;
+                }
+            }
 
             bool alreadyPerformed =
                 (animationStateHash == HandstandStateHash && scoredHandstand) ||
@@ -2536,15 +2553,17 @@ namespace PixelOcean
 
             float surfaceY = currentWave.GetGameplaySurfaceHeight(localRideX) + surfaceOffset;
 
-            // A buffered trick also prevents an early landing between clips.
-            bool animationOwnsAir = airTrickActive || queuedAirTrickStateHash != 0;
-            if (animationOwnsAir && nextY < surfaceY + 0.035f)
-            {
-                nextY = surfaceY + 0.035f;
-                obstacleAirVerticalVelocity = Mathf.Max(0f, obstacleAirVerticalVelocity);
-            }
+            // Water contact always ends the aerial chain. Trick animations and
+            // buffered inputs may soften gravity, but they are never allowed to
+            // hold the surfer above the surface or preserve an airborne state
+            // after the board has reached the water.
+            bool touchedWaterThisFrame = obstacleAirVerticalVelocity <= 0f &&
+                nextY <= surfaceY + 0.001f;
 
-            transform.position = new Vector3(localRideX, Mathf.Max(nextY, surfaceY), renderDepth);
+            transform.position = new Vector3(
+                localRideX,
+                touchedWaterThisFrame ? surfaceY : nextY,
+                renderDepth);
             scoredJumpPeakY = Mathf.Max(scoredJumpPeakY, transform.position.y);
 
             float expectedDuration = Mathf.Max(0.15f, obstacleJumpDuration) +
@@ -2557,18 +2576,36 @@ namespace PixelOcean
             transform.rotation = Quaternion.identity;
             ApplyFacing(spriteWorldScale, spriteWorldScale);
 
-            bool descendingToWater = obstacleAirVerticalVelocity <= 0f &&
-                transform.position.y <= surfaceY + 0.001f;
-            if (!descendingToWater || animationOwnsAir)
+            bool descendingToWater = touchedWaterThisFrame ||
+                (obstacleAirVerticalVelocity <= 0f &&
+                 transform.position.y <= surfaceY + 0.001f);
+            if (!descendingToWater)
                 return;
+
+            // Close the combo before reporting the landing. This prevents an
+            // input read on the next frame from starting or buffering another
+            // trick after the surfer has already touched the water.
+            airTrickActive = false;
+            airTrickTimer = 0f;
+            currentAirTrickStateHash = 0;
+            queuedAirTrickStateHash = 0;
 
             playerHorizontalVelocity = obstacleAirHorizontalVelocity;
 
             if (playerControlled && AirTrickScoreSystem.Instance != null)
             {
                 float achievedHeight = Mathf.Max(0f, scoredJumpPeakY - airStartY);
+                float travelledDistance = Mathf.Abs(localRideX - scoredJumpStartX);
                 AirTrickScoreSystem.Instance.AwardJump(
-                    transform.position, achievedHeight, scoredHandstand, scoredRotation, scoredFlip);
+                    transform.position,
+                    achievedHeight,
+                    scoredHandstand,
+                    scoredRotation,
+                    scoredFlip,
+                    aerialTrickChainCount,
+                    obstacleAirElapsed,
+                    travelledDistance,
+                    true);
             }
 
             obstacleJumpActive = false;
