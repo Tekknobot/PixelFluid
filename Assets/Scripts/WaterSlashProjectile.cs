@@ -47,7 +47,7 @@ namespace PixelOcean
             spriteRenderer.flipX = direction < 0;
             baseColour = projectileTint;
             spriteRenderer.color = baseColour;
-            frames = Resources.LoadAll<Sprite>("VFX/water_slash")
+            frames = Resources.LoadAll<Sprite>("VFX/water_slash_mac")
                 .OrderBy(s => FrameNumber(s.name)).ToArray();
             if (frames.Length > 0)
                 spriteRenderer.sprite = frames[0];
