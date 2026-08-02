@@ -114,6 +114,14 @@ namespace PixelOcean
         public float OnFireAnimationMultiplier => IsOnFire ? 1.2f : 1f;
         public float OnFireJumpMultiplier => IsOnFire ? 1.12f : 1f;
 
+        public void DebugMaxFlow()
+        {
+            currentFlow = MaximumFlow;
+            onFireUntil = Time.unscaledTime + Mathf.Max(10f, onFireDuration);
+            onFireWasActive = true;
+            lastFlowGainTime = Time.unscaledTime;
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Install()
         {

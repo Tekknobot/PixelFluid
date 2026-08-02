@@ -522,6 +522,59 @@ namespace PixelOcean
             BeginRetreat<RubberDucklingSwimmer>();
         }
 
+        public void DebugNextChapter()
+        {
+            switch (chapter)
+            {
+                case Chapter.Dawn: runTime = Mathf.Max(runTime, rescueBeginsAt + 0.05f); break;
+                case Chapter.FirstRescue: runTime = Mathf.Max(runTime, dangerBeginsAt + 0.05f); break;
+                case Chapter.DangerousWater: runTime = Mathf.Max(runTime, strangeTideBeginsAt + 0.05f); break;
+                case Chapter.StrangeTide: runTime = Mathf.Max(runTime, stormBeginsAt + 0.05f); break;
+                case Chapter.Storm: runTime = Mathf.Max(runTime, finalWaveBeginsAt + 0.05f); break;
+                case Chapter.FinalWave: runTime = Mathf.Max(runTime, dayEndsAt + 0.05f); break;
+            }
+        }
+
+        public void DebugSpawnBoss()
+        {
+            if (chapter < Chapter.FinalWave)
+                runTime = Mathf.Max(runTime, finalWaveBeginsAt + 0.05f);
+        }
+
+        public void DebugResetCurrentDay()
+        {
+            StartCoroutine(LoadSavedRun(new SurfStageSaveSystem.SaveData
+            {
+                day = currentDay,
+                chapter = (int)Chapter.Dawn,
+                runTime = 0f,
+                rescues = 0,
+                finalWaveStarted = false,
+                bossDefeatedSunset = false,
+                unlockedAbilities = SurfAbilityProgression.Instance != null ? (int)SurfAbilityProgression.Instance.Unlocked : 0,
+                jumpUpgradeLevel = SurfAbilityProgression.Instance != null ? SurfAbilityProgression.Instance.JumpUpgradeLevel : 0,
+                waterSlashUpgradeLevel = SurfAbilityProgression.Instance != null ? SurfAbilityProgression.Instance.WaterSlashUpgradeLevel : 0,
+                skidUpgradeLevel = SurfAbilityProgression.Instance != null ? SurfAbilityProgression.Instance.SkidUpgradeLevel : 0
+            }));
+        }
+
+        public void DebugNextDay()
+        {
+            StartCoroutine(LoadSavedRun(new SurfStageSaveSystem.SaveData
+            {
+                day = currentDay + 1,
+                chapter = (int)Chapter.Dawn,
+                runTime = 0f,
+                rescues = 0,
+                finalWaveStarted = false,
+                bossDefeatedSunset = false,
+                unlockedAbilities = SurfAbilityProgression.Instance != null ? (int)SurfAbilityProgression.Instance.Unlocked : 0,
+                jumpUpgradeLevel = SurfAbilityProgression.Instance != null ? SurfAbilityProgression.Instance.JumpUpgradeLevel : 0,
+                waterSlashUpgradeLevel = SurfAbilityProgression.Instance != null ? SurfAbilityProgression.Instance.WaterSlashUpgradeLevel : 0,
+                skidUpgradeLevel = SurfAbilityProgression.Instance != null ? SurfAbilityProgression.Instance.SkidUpgradeLevel : 0
+            }));
+        }
+
         private void BeginRetreat<T>() where T : MonoBehaviour
         {
             foreach (T creature in FindObjectsByType<T>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))

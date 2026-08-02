@@ -51,6 +51,16 @@ namespace PixelOcean
         }
 
         public bool Has(SurfAbility ability) => (unlocked & ability) == ability;
+
+        public void DebugUnlockAll()
+        {
+            unlocked = SurfAbility.WaveSwitch | SurfAbility.ChargedJump |
+                SurfAbility.Handstand | SurfAbility.Rotation | SurfAbility.Flip |
+                SurfAbility.DoubleChain | SurfAbility.TripleChain |
+                SurfAbility.WaterSkid | SurfAbility.WaterSlash |
+                SurfAbility.Flow | SurfAbility.FlowFinisher;
+            ApplyUpgradesToAllPlayers();
+        }
         public void ResetForNewRun()
         {
             unlocked = SurfAbility.WaveSwitch;
