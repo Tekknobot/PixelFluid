@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
 using UnityEngine;
@@ -22,6 +23,8 @@ namespace PixelOcean
         }
 
         public static AirTrickScoreSystem Instance { get; private set; }
+        public static event Action<int> CleanChainLanded;
+        public static event Action OnFireActivated;
 
         [Header("Scoring")]
         [SerializeField, Min(0.1f)]
@@ -300,6 +303,12 @@ namespace PixelOcean
 
             if (cleanLanding)
             {
+                // The progression director listens before AddFlow so the first
+                // successful multi-trick landing can unlock Flow and immediately
+                // receive the Flow earned by that same landing.
+                if (chainLength >= 2)
+                    CleanChainLanded?.Invoke(chainLength);
+
                 float flowGain = chainLength >= 3
                     ? tripleChainFlow
                     : chainLength == 2 ? doubleChainFlow : singleTrickFlow;
@@ -345,6 +354,7 @@ namespace PixelOcean
                 currentFlow = maximumFlow;
                 onFireUntil = Time.unscaledTime + onFireDuration;
                 onFireWasActive = true;
+                OnFireActivated?.Invoke();
                 if (onFireActivationClip != null && flowAudioSource != null)
                     flowAudioSource.PlayOneShot(onFireActivationClip, flowAudioVolume);
             }

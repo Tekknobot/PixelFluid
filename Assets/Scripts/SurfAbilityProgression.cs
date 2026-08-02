@@ -17,7 +17,8 @@ namespace PixelOcean
         WaterSkid = 1 << 7,
         WaterSlash = 1 << 8,
         Flow = 1 << 9,
-        FlowFinisher = 1 << 10
+        FlowFinisher = 1 << 10,
+        ThrowItems = 1 << 11
     }
 
     [DefaultExecutionOrder(-12100)]
@@ -58,7 +59,7 @@ namespace PixelOcean
                 SurfAbility.Handstand | SurfAbility.Rotation | SurfAbility.Flip |
                 SurfAbility.DoubleChain | SurfAbility.TripleChain |
                 SurfAbility.WaterSkid | SurfAbility.WaterSlash |
-                SurfAbility.Flow | SurfAbility.FlowFinisher;
+                SurfAbility.Flow | SurfAbility.FlowFinisher | SurfAbility.ThrowItems;
             ApplyUpgradesToAllPlayers();
         }
         public void ResetForNewRun()
@@ -77,19 +78,22 @@ namespace PixelOcean
         public void RestoreFor(int day, SurfDayProgressionDirector.Chapter chapter)
         {
             ResetForNewRun();
-            if (day >= 1 && chapter >= SurfDayProgressionDirector.Chapter.DangerousWater)
-                Unlock(SurfAbility.ChargedJump | SurfAbility.Handstand);
-            if (day >= 1 && chapter >= SurfDayProgressionDirector.Chapter.StrangeTide)
-                Unlock(SurfAbility.Rotation | SurfAbility.Flip | SurfAbility.DoubleChain);
-            if (day >= 1 && chapter >= SurfDayProgressionDirector.Chapter.Storm)
-                Unlock(SurfAbility.WaterSkid);
-            if (day >= 1 && chapter >= SurfDayProgressionDirector.Chapter.FinalWave)
-                Unlock(SurfAbility.WaterSlash);
+
+            // Legacy-save reconstruction. New saves restore the exact flags.
             if (day >= 2)
-                Unlock(SurfAbility.TripleChain);
-            if (day >= 2 && chapter >= SurfDayProgressionDirector.Chapter.DangerousWater)
-                Unlock(SurfAbility.Flow);
-            if (day >= 2 && chapter >= SurfDayProgressionDirector.Chapter.Storm)
+            {
+                DebugUnlockAll();
+                return;
+            }
+
+            if (chapter >= SurfDayProgressionDirector.Chapter.DangerousWater)
+                Unlock(SurfAbility.ChargedJump | SurfAbility.Handstand | SurfAbility.ThrowItems);
+            if (chapter >= SurfDayProgressionDirector.Chapter.StrangeTide)
+                Unlock(SurfAbility.Rotation | SurfAbility.Flip |
+                    SurfAbility.DoubleChain | SurfAbility.TripleChain | SurfAbility.Flow);
+            if (chapter >= SurfDayProgressionDirector.Chapter.Storm)
+                Unlock(SurfAbility.WaterSkid | SurfAbility.WaterSlash);
+            if (chapter >= SurfDayProgressionDirector.Chapter.FinalWave)
                 Unlock(SurfAbility.FlowFinisher);
         }
 

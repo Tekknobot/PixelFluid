@@ -961,6 +961,9 @@ namespace PixelOcean
 
         private void PerformAction(bool aimAtUfo)
         {
+            if (!HasAbility(SurfAbility.ThrowItems))
+                return;
+
             // Action alone throws the next stored ocean item toward sea hazards.
             // Up + Action fires it into the sky at the UFO. Ocean props collect automatically.
             ThrowSodaCan(aimAtUfo);

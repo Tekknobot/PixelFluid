@@ -31,6 +31,12 @@ namespace PixelOcean
         [SerializeField, Min(5f)] private float finalWaveBeginsAt = 480f; // 480
         [SerializeField, Min(60f)] private float dayEndsAt = 720f; // 720
 
+        [Header("Day 1 Mechanic Introduction")]
+        [SerializeField, Min(0f)] private float handstandUnlockAt = 150f;
+        [SerializeField, Min(0f)] private float throwingUnlockAt = 180f;
+        [SerializeField, Min(0f)] private float waterSkidUnlockAt = 375f;
+        [SerializeField, Min(0f)] private float waterSlashUnlockAt = 430f;
+
         [Header("Objectives")]
         [SerializeField, Min(1)] private int rescuesRequired = 3;
         [SerializeField, Min(1)] private int finalSurvivalSeconds = 240;
@@ -93,8 +99,19 @@ namespace PixelOcean
             host.AddComponent<SurfDayProgressionDirector>();
         }
 
-        private void OnEnable() => StrugglingSwimmerDrifter.SwimmerSaved += OnSwimmerSaved;
-        private void OnDisable() => StrugglingSwimmerDrifter.SwimmerSaved -= OnSwimmerSaved;
+        private void OnEnable()
+        {
+            StrugglingSwimmerDrifter.SwimmerSaved += OnSwimmerSaved;
+            AirTrickScoreSystem.CleanChainLanded += OnCleanChainLanded;
+            AirTrickScoreSystem.OnFireActivated += OnFirstOnFireActivated;
+        }
+
+        private void OnDisable()
+        {
+            StrugglingSwimmerDrifter.SwimmerSaved -= OnSwimmerSaved;
+            AirTrickScoreSystem.CleanChainLanded -= OnCleanChainLanded;
+            AirTrickScoreSystem.OnFireActivated -= OnFirstOnFireActivated;
+        }
 
         private IEnumerator Start()
         {
@@ -159,6 +176,11 @@ namespace PixelOcean
                     // Backward compatibility with saves created before staged abilities/upgrades.
                     SurfAbilityProgression.Instance.RestoreFor(currentDay, chapter);
                 }
+
+                // Day 2 is mastery-only: every core mechanic is always available,
+                // including when continuing a save created by an older build.
+                if (currentDay >= 2)
+                    SurfAbilityProgression.Instance.DebugUnlockAll();
             }
             RefreshLearningObjectiveForStage();
 
@@ -268,7 +290,6 @@ namespace PixelOcean
             else
             {
                 BeginChapter(Chapter.Dawn, "DAY 2 — DEEP CURRENT", "NEW PREDATORS HAVE ENTERED THE WATER.");
-            UnlockAbility(SurfAbility.TripleChain, "TRIPLE CHAINS UNLOCKED", "LAND ALL 3 UNIQUE TRICKS IN ONE JUMP.");
                 SpawnMajor<BloodSharkLaneSpawner>("Dawn Blood Shark", spawner => spawner.SpawnBloodShark(true));
                 SpawnBloodfishEncounter("Dawn Bloodfish", 1);
             }
@@ -305,7 +326,7 @@ namespace PixelOcean
 
             currentDay = 2;
             AirTrickScoreSystem.Instance?.BeginDay(2);
-            SurfAbilityProgression.Instance?.RestoreFor(2, Chapter.Dawn);
+            SurfAbilityProgression.Instance?.DebugUnlockAll();
             runTime = 0f;
             rescues = 0;
             finalWaveStarted = false;
@@ -313,8 +334,7 @@ namespace PixelOcean
             chapter = Chapter.Dawn;
             changingDay = false;
             BeginChapter(Chapter.Dawn, "DAY 2 — DEEP CURRENT", "NEW PREDATORS HAVE ENTERED THE WATER.");
-            learningObjective = "CHAIN ALL 3 UNIQUE AIR TRICKS IN ONE JUMP.";
-            ShowBanner("TRIPLE CHAINS UNLOCKED", learningObjective, 5f);
+            learningObjective = "USE THE FULL MOVESET TO BUILD FLOW AND SURVIVE.";
             SpawnPickupSet();
             SpawnOceanItems(12);
             SpawnMajor<BloodSharkLaneSpawner>("Dawn Blood Shark", spawner => spawner.SpawnBloodShark(true));
@@ -368,6 +388,7 @@ namespace PixelOcean
                 return;
 
             runTime += Time.deltaTime;
+            UpdateDayOneMechanicUnlocks();
 
             if (runTime >= dayEndsAt && finalWaveStarted)
             {
@@ -389,7 +410,6 @@ namespace PixelOcean
             {
                 finalWaveStarted = true;
                 BeginChapter(Chapter.FinalWave, "THE LAST WAVE", $"SURVIVE {finalSurvivalSeconds} SECONDS.");
-                if (currentDay == 1) UnlockAbility(SurfAbility.WaterSlash, "WATER SLASH UNLOCKED", "PRESS RB / R WHILE RIDING.");
                 if (currentDay == 1)
                     SpawnMajor<GodzillaLaneSpawner>("Final Godzilla", spawner => spawner.SpawnGodzilla());
                 else
@@ -402,8 +422,6 @@ namespace PixelOcean
             if (runTime >= stormBeginsAt && chapter < Chapter.Storm)
             {
                 BeginChapter(Chapter.Storm, "STORM FRONT", "KEEP MOVING. RESCUE ANYONE LEFT OUT THERE.");
-                if (currentDay == 1) UnlockAbility(SurfAbility.WaterSkid, "WATER SKID UNLOCKED", "HOLD B / E, THEN RELEASE.");
-                else UnlockAbility(SurfAbility.FlowFinisher, "FLOW FINISHER UNLOCKED", "WHILE ON FIRE, PRESS RB / R ON THE WATER.");
                 EnsureRain().SetSituation(ProceduralRainSystem.RainSituation.HeavyRain);
                 if (currentDay == 1)
                     SpawnMajor<GiantSquidLaneSpawner>("Storm Squid", spawner => spawner.SpawnSquid(true));
@@ -423,7 +441,11 @@ namespace PixelOcean
             if (runTime >= strangeTideBeginsAt && chapter < Chapter.StrangeTide)
             {
                 BeginChapter(Chapter.StrangeTide, "STRANGE TIDE", "SOMETHING IS WATCHING THE WATER.");
-                if (currentDay == 1) UnlockAbility(SurfAbility.Rotation | SurfAbility.Flip | SurfAbility.DoubleChain, "TRICK CHAINS UNLOCKED", "CHAIN A DIFFERENT TRICK BEFORE LANDING.");
+                if (currentDay == 1)
+                    UnlockAbility(SurfAbility.Rotation | SurfAbility.Flip |
+                        SurfAbility.DoubleChain | SurfAbility.TripleChain,
+                        "FULL TRICK CHAINS UNLOCKED",
+                        "CHAIN EACH UNIQUE AIR TRICK ONCE BEFORE LANDING.");
                 SpawnBoombox();
                 if (currentDay == 1)
                     SpawnUfo();
@@ -443,8 +465,10 @@ namespace PixelOcean
             if (runTime >= dangerBeginsAt && chapter < Chapter.DangerousWater)
             {
                 BeginChapter(Chapter.DangerousWater, "DANGEROUS WATER", "SAVE 3 SWIMMERS. USE CANS TO FIGHT BACK.");
-                if (currentDay == 1) UnlockAbility(SurfAbility.ChargedJump | SurfAbility.Handstand, "CHARGED JUMP UNLOCKED", "HOLD JUMP WHILE MOVING. PRESS JUMP AGAIN IN AIR.");
-                else UnlockAbility(SurfAbility.Flow, "FLOW METER UNLOCKED", "CLEAN TRICK CHAINS BUILD FLOW.");
+                if (currentDay == 1)
+                    UnlockAbility(SurfAbility.ChargedJump,
+                        "CHARGED JUMP UNLOCKED",
+                        "HOLD JUMP WHILE MOVING, THEN RELEASE TO LAUNCH.");
                 if (currentDay == 1)
                 {
                     SpawnMajor<GiantSquidLaneSpawner>("First Squid", spawner => spawner.SpawnSquid(true));
@@ -592,6 +616,59 @@ namespace PixelOcean
             }
         }
 
+        private void UpdateDayOneMechanicUnlocks()
+        {
+            if (currentDay != 1 || SurfAbilityProgression.Instance == null)
+                return;
+
+            if (runTime >= handstandUnlockAt &&
+                !SurfAbilityProgression.Instance.Has(SurfAbility.Handstand))
+                UnlockAbility(SurfAbility.Handstand,
+                    "HANDSTAND UNLOCKED",
+                    "PRESS A / SPACE AGAIN WHILE AIRBORNE.");
+
+            if (runTime >= throwingUnlockAt &&
+                !SurfAbilityProgression.Instance.Has(SurfAbility.ThrowItems))
+                UnlockAbility(SurfAbility.ThrowItems,
+                    "THROWING UNLOCKED",
+                    "PRESS X / F ON THE WATER TO THROW A COLLECTED OBJECT.");
+
+            if (runTime >= waterSkidUnlockAt &&
+                !SurfAbilityProgression.Instance.Has(SurfAbility.WaterSkid))
+                UnlockAbility(SurfAbility.WaterSkid,
+                    "WATER SKID UNLOCKED",
+                    "HOLD B / E ON THE WATER, THEN RELEASE.");
+
+            if (runTime >= waterSlashUnlockAt &&
+                !SurfAbilityProgression.Instance.Has(SurfAbility.WaterSlash))
+                UnlockAbility(SurfAbility.WaterSlash,
+                    "WATER SLASH UNLOCKED",
+                    "PRESS RB / R WHILE RIDING.");
+        }
+
+        private void OnCleanChainLanded(int chainLength)
+        {
+            if (currentDay != 1 || chapter < Chapter.StrangeTide || chainLength < 2)
+                return;
+
+            UnlockAbility(SurfAbility.Flow,
+                "FLOW METER UNLOCKED",
+                "CLEAN TRICK CHAINS BUILD FLOW. KEEP THE RHYTHM GOING.");
+            RefreshLearningObjectiveForStage();
+        }
+
+        private void OnFirstOnFireActivated()
+        {
+            if (currentDay != 1 || SurfAbilityProgression.Instance == null ||
+                !SurfAbilityProgression.Instance.Has(SurfAbility.Flow))
+                return;
+
+            UnlockAbility(SurfAbility.FlowFinisher,
+                "FLOW FINISHER UNLOCKED",
+                "WHILE ON FIRE, PRESS RB / R ON THE WATER.");
+            RefreshLearningObjectiveForStage();
+        }
+
         private void OnSwimmerSaved()
         {
             rescues++;
@@ -614,61 +691,59 @@ namespace PixelOcean
 
         private void UnlockAbility(SurfAbility ability, string heading, string instruction)
         {
+            if (SurfAbilityProgression.Instance == null)
+                return;
+
+            if (!SurfAbilityProgression.Instance.Unlock(ability))
+                return;
+
             learningObjective = instruction;
-            if (SurfAbilityProgression.Instance != null && SurfAbilityProgression.Instance.Unlock(ability))
-                ShowBanner(heading, instruction, 5f);
+            ShowBanner(heading, instruction, 5f);
             SurfStageSaveSystem.Save(this);
         }
 
         private void RefreshLearningObjectiveForStage()
         {
-            if (currentDay <= 1)
+            SurfAbilityProgression abilities = SurfAbilityProgression.Instance;
+
+            if (currentDay >= 2)
             {
-                switch (chapter)
-                {
-                    case Chapter.Dawn:
-                        learningObjective = "SURF LEFT/RIGHT. HOLD UP/DOWN + JUMP TO CHANGE WAVES.";
-                        break;
-                    case Chapter.FirstRescue:
-                        learningObjective = "REACH STRUGGLING SWIMMERS. A RESCUE RESTORES 1 LIFE.";
-                        break;
-                    case Chapter.DangerousWater:
-                        learningObjective = "HOLD JUMP WHILE MOVING; RELEASE, THEN PRESS JUMP AGAIN IN AIR.";
-                        break;
-                    case Chapter.StrangeTide:
-                        learningObjective = "CHAIN A DIFFERENT AIR TRICK BEFORE LANDING.";
-                        break;
-                    case Chapter.Storm:
-                        learningObjective = "HOLD B / E TO CHARGE A WATER SKID, THEN RELEASE.";
-                        break;
-                    case Chapter.FinalWave:
-                        learningObjective = "PRESS RB / R WHILE RIDING TO FIRE WATER SLASH.";
-                        break;
-                    default:
-                        learningObjective = string.Empty;
-                        break;
-                }
+                learningObjective = "USE THE FULL MOVESET TO BUILD FLOW AND SURVIVE.";
                 return;
             }
 
-            switch (chapter)
+            if (chapter == Chapter.Dawn)
             {
-                case Chapter.Dawn:
-                case Chapter.FirstRescue:
-                    learningObjective = "CHAIN ALL 3 UNIQUE AIR TRICKS IN ONE JUMP.";
-                    break;
-                case Chapter.DangerousWater:
-                case Chapter.StrangeTide:
-                    learningObjective = "LAND CLEAN CHAINS TO BUILD THE FLOW METER.";
-                    break;
-                case Chapter.Storm:
-                case Chapter.FinalWave:
-                    learningObjective = "WHILE ON FIRE, PRESS RB / R ON THE WATER FOR FLOW FINISHER.";
-                    break;
-                default:
-                    learningObjective = string.Empty;
-                    break;
+                learningObjective = "SURF LEFT/RIGHT. HOLD UP/DOWN + JUMP TO CHANGE WAVES.";
+                return;
             }
+
+            if (chapter == Chapter.FirstRescue)
+            {
+                learningObjective = "REACH STRUGGLING SWIMMERS. A RESCUE RESTORES 1 LIFE.";
+                return;
+            }
+
+            if (abilities == null || !abilities.Has(SurfAbility.ChargedJump))
+                learningObjective = "HOLD JUMP WHILE MOVING, THEN RELEASE TO LAUNCH.";
+            else if (!abilities.Has(SurfAbility.Handstand))
+                learningObjective = "PRESS A / SPACE AGAIN WHILE AIRBORNE FOR A HANDSTAND.";
+            else if (!abilities.Has(SurfAbility.ThrowItems))
+                learningObjective = "PRESS X / F ON THE WATER TO THROW A COLLECTED OBJECT.";
+            else if (!abilities.Has(SurfAbility.TripleChain))
+                learningObjective = "CHAIN DIFFERENT AIR TRICKS BEFORE LANDING.";
+            else if (!abilities.Has(SurfAbility.Flow))
+                learningObjective = "LAND A CLEAN MULTI-TRICK CHAIN TO REVEAL FLOW.";
+            else if (!abilities.Has(SurfAbility.WaterSkid))
+                learningObjective = "CLEAN CHAINS BUILD FLOW. KEEP THE RHYTHM GOING.";
+            else if (!abilities.Has(SurfAbility.WaterSlash))
+                learningObjective = "HOLD B / E ON THE WATER, THEN RELEASE FOR A SKID.";
+            else if (!abilities.Has(SurfAbility.FlowFinisher))
+                learningObjective = "BUILD FLOW TO 100% AND ENTER ON FIRE.";
+            else if (chapter >= Chapter.FinalWave)
+                learningObjective = "TIP • BUILD FLOW AND USE THE FINISHER AGAINST THE BOSS.";
+            else
+                learningObjective = "WHILE ON FIRE, PRESS RB / R ON THE WATER FOR FLOW FINISHER.";
         }
 
         private void ShowBanner(string heading, string subheading, float duration)
