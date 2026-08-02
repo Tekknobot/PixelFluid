@@ -37,6 +37,8 @@ namespace PixelOcean
         private Button settingsButton;
         private Button quitButton;
         private Image logoImage;
+        private Image startupBlackImage;
+        private CanvasGroup startupBlackGroup;
         private Sprite[] logoFrames;
         private Coroutine motionRoutine;
         private Coroutine logoRoutine;
@@ -225,6 +227,16 @@ namespace PixelOcean
             scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
             scaler.matchWidthOrHeight = 0.5f;
             canvasObject.AddComponent<GraphicRaycaster>();
+
+            GameObject blackObject = CreateUIObject(canvasObject.transform, "Opening Black Hold");
+            Stretch(blackObject.GetComponent<RectTransform>());
+            startupBlackImage = blackObject.AddComponent<Image>();
+            startupBlackImage.color = Color.black;
+            startupBlackImage.raycastTarget = true;
+            startupBlackGroup = blackObject.AddComponent<CanvasGroup>();
+            startupBlackGroup.alpha = 1f;
+            startupBlackGroup.interactable = false;
+            startupBlackGroup.blocksRaycasts = true;
 
             menuRoot = CreateUIObject(canvasObject.transform, "Menu Root");
             Stretch(menuRoot.GetComponent<RectTransform>());
@@ -429,12 +441,23 @@ namespace PixelOcean
 
         private IEnumerator StartNewAndResume()
         {
+            // Keep the dedicated black layer visible while the front-end UI exits.
+            yield return HideMenuForOpeningTransition();
+
             SurfDayProgressionDirector director = FindFirstObjectByType<SurfDayProgressionDirector>();
-            if (director != null) yield return director.StartNewRunFromMenu();
+            if (director != null)
+                yield return director.StartNewRunFromMenu();
+
             SurfRunLifeManager.Instance?.ResetLivesForNewRun();
             TinyWaveSurfer surfer = FindFirstObjectByType<TinyWaveSurfer>();
             surfer?.RespawnForManagedRun();
-            ResumeGame();
+
+            // The opening boards now belong to the Play flow, not the day director.
+            // They appear over pure black before the ocean is ever revealed.
+            yield return StoryboardCutsceneSystem.PlayDayOneOpening();
+
+            yield return FadeStartupBlack(1f, 0f, 0.85f);
+            FinishOpeningTransition();
         }
 
         private void ContinuePressed()
@@ -449,12 +472,87 @@ namespace PixelOcean
 
         private IEnumerator LoadAndResume(SurfStageSaveSystem.SaveData data)
         {
+            // Continue skips the opening boards but still prevents a one-frame view
+            // of the ocean before the saved state is ready.
+            yield return HideMenuForOpeningTransition();
+
             SurfDayProgressionDirector director = FindFirstObjectByType<SurfDayProgressionDirector>();
-            if (director != null) yield return director.LoadSavedRun(data);
+            if (director != null)
+                yield return director.LoadSavedRun(data);
+
             SurfRunLifeManager.Instance?.RestoreLives(data.lives);
             TinyWaveSurfer surfer = FindFirstObjectByType<TinyWaveSurfer>();
             surfer?.RespawnForManagedRun();
-            ResumeGame();
+
+            yield return FadeStartupBlack(1f, 0f, 0.85f);
+            FinishOpeningTransition();
+        }
+
+        private IEnumerator HideMenuForOpeningTransition()
+        {
+            if (startupBlackGroup != null)
+            {
+                startupBlackGroup.gameObject.SetActive(true);
+                startupBlackGroup.alpha = 1f;
+                startupBlackGroup.blocksRaycasts = true;
+            }
+
+            if (motionRoutine != null)
+                StopCoroutine(motionRoutine);
+
+            Vector2 logoStart = logoPanel.anchoredPosition;
+            Vector2 buttonStart = buttonPanel.anchoredPosition;
+            Vector2 logoEnd = new(-1450f, 0f);
+            Vector2 buttonEnd = new(1500f, 0f);
+            float duration = motionDuration * 0.72f;
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = EaseInCubic(Mathf.Clamp01(elapsed / duration));
+                logoPanel.anchoredPosition = Vector2.LerpUnclamped(logoStart, logoEnd, t);
+                buttonPanel.anchoredPosition = Vector2.LerpUnclamped(buttonStart, buttonEnd, t);
+                yield return null;
+            }
+
+            menuRoot.SetActive(false);
+            menuVisible = false;
+            EventSystem.current?.SetSelectedGameObject(null);
+        }
+
+        private IEnumerator FadeStartupBlack(float from, float to, float duration)
+        {
+            if (startupBlackGroup == null)
+                yield break;
+
+            startupBlackGroup.gameObject.SetActive(true);
+            startupBlackGroup.alpha = from;
+            startupBlackGroup.blocksRaycasts = true;
+
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / Mathf.Max(0.01f, duration)));
+                startupBlackGroup.alpha = Mathf.Lerp(from, to, t);
+                yield return null;
+            }
+
+            startupBlackGroup.alpha = to;
+            startupBlackGroup.blocksRaycasts = to > 0.001f;
+            if (to <= 0.001f)
+                startupBlackGroup.gameObject.SetActive(false);
+        }
+
+        private void FinishOpeningTransition()
+        {
+            firstMenu = false;
+            GameplayPaused = false;
+            RestoreGameplayBehaviours();
+            Cursor.visible = false;
+            EventSystem.current?.SetSelectedGameObject(null);
+            inputReadyTime = Time.unscaledTime + 0.16f;
         }
 
         private void DisableGameplayBehaviours()

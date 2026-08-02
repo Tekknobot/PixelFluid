@@ -284,6 +284,7 @@ namespace PixelOcean
             if (currentDay == 1)
             {
                 BeginChapter(Chapter.Dawn, "DAWN PATROL", "SURF. STAY ALIVE. LEARN THE WATER.");
+
                 SpawnJellyfishEncounter("Dawn Jellyfish", 1);
                 SpawnMajor<SharkLaneSpawner>("Early Shark", spawner => spawner.SpawnShark(true));
             }
