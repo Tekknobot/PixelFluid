@@ -109,7 +109,7 @@ namespace PixelOcean
         public float Flow01 => Mathf.Clamp01(currentFlow / Mathf.Max(1f, maximumFlow));
         public float CurrentFlow => currentFlow;
         public float MaximumFlow => Mathf.Max(1f, maximumFlow);
-        public bool IsOnFire => Time.unscaledTime < onFireUntil;
+        public bool IsOnFire => (SurfAbilityProgression.Instance == null || SurfAbilityProgression.Instance.Has(SurfAbility.Flow)) && Time.unscaledTime < onFireUntil;
         public float OnFireTimeRemaining => Mathf.Max(0f, onFireUntil - Time.unscaledTime);
         public float OnFireAnimationMultiplier => IsOnFire ? 1.2f : 1f;
         public float OnFireJumpMultiplier => IsOnFire ? 1.12f : 1f;
@@ -317,6 +317,7 @@ namespace PixelOcean
 
         private void AddFlow(float amount)
         {
+            if (SurfAbilityProgression.Instance != null && !SurfAbilityProgression.Instance.Has(SurfAbility.Flow)) return;
             if (amount <= 0f)
                 return;
 
@@ -343,7 +344,7 @@ namespace PixelOcean
 
         public bool ConsumeFlowFinisher(Vector3 worldPosition)
         {
-            if (!IsOnFire) return false;
+            if (!IsOnFire || (SurfAbilityProgression.Instance != null && !SurfAbilityProgression.Instance.Has(SurfAbility.FlowFinisher))) return false;
             onFireUntil = 0f;
             currentFlow = 0f;
             onFireWasActive = false;

@@ -584,6 +584,7 @@ namespace PixelOcean
             ApplyCurrentWaveSorting(true);
 
             ScheduleNextLayerJump(0f);
+            ApplyProgressionUpgrades();
         }
 
         private IEnumerator Start()
@@ -1827,6 +1828,7 @@ namespace PixelOcean
             Vector3 p = transform.position;
             p.x = localRideX;
             transform.position = p;
+            ApplyProgressionUpgrades();
         }
 
 
@@ -2048,6 +2050,7 @@ namespace PixelOcean
                         : horizontal;
 
                     if (enableForwardObstacleJump &&
+                        HasAbility(SurfAbility.ChargedJump) &&
                         (specialSkidding || Mathf.Abs(takeoffInput) >= obstacleJumpInputThreshold))
                     {
                         BeginJumpCharge(takeoffInput);
@@ -2094,6 +2097,11 @@ namespace PixelOcean
             }
         }
 
+        private static bool HasAbility(SurfAbility ability)
+        {
+            return SurfAbilityProgression.Instance == null || SurfAbilityProgression.Instance.Has(ability);
+        }
+
         private static bool ReadShoulderInput()
         {
 #if ENABLE_INPUT_SYSTEM
@@ -2108,9 +2116,9 @@ namespace PixelOcean
 
         private void TryBeginWaterSpecial()
         {
-            if (!enableWaterSlash || state != RiderState.Riding || Time.time < nextWaterSlashTime || specialCharging || specialSkidding)
+            if (!enableWaterSlash || !HasAbility(SurfAbility.WaterSlash) || state != RiderState.Riding || Time.time < nextWaterSlashTime || specialCharging || specialSkidding)
                 return;
-            specialAttackIsFinisher = AirTrickScoreSystem.Instance != null && AirTrickScoreSystem.Instance.IsOnFire;
+            specialAttackIsFinisher = HasAbility(SurfAbility.FlowFinisher) && AirTrickScoreSystem.Instance != null && AirTrickScoreSystem.Instance.IsOnFire;
             if (specialAttackIsFinisher && !AirTrickScoreSystem.Instance.ConsumeFlowFinisher(transform.position))
                 specialAttackIsFinisher = false;
             specialAttackActive = true;
@@ -2273,6 +2281,11 @@ namespace PixelOcean
 
         private void UpdateChargedWaterSkid(bool specialHeld, float horizontalInput, float dt)
         {
+            if (!HasAbility(SurfAbility.WaterSkid))
+            {
+                specialCharging = false; specialChargeTime = 0f; specialSkidding = false;
+                return;
+            }
             if (!enableChargedWaterSkid || state != RiderState.Riding || currentWave == null)
             {
                 specialCharging = false;
@@ -2337,6 +2350,7 @@ namespace PixelOcean
 
         private void BeginAdjacentWave(int step, bool preserveGlidePush = false)
         {
+            if (!HasAbility(SurfAbility.WaveSwitch)) return;
             if (state != RiderState.Riding)
                 return;
 
@@ -2725,6 +2739,7 @@ namespace PixelOcean
 
         private void BeginJumpCharge(float horizontalInput)
         {
+            if (!HasAbility(SurfAbility.ChargedJump)) return;
             jumpCharging = true;
             jumpChargeTime = 0f;
             jumpChargeHorizontalInput = Mathf.Abs(horizontalInput) >= obstacleJumpInputThreshold
@@ -2829,6 +2844,9 @@ namespace PixelOcean
 
         private void TriggerAirTrick(int animationStateHash)
         {
+            SurfAbility required = animationStateHash == HandstandStateHash ? SurfAbility.Handstand :
+                animationStateHash == RotationStateHash ? SurfAbility.Rotation : SurfAbility.Flip;
+            if (!HasAbility(required)) return;
             if (!obstacleJumpActive || state != RiderState.TurningTrick)
                 return;
 
@@ -2854,7 +2872,9 @@ namespace PixelOcean
             if (alreadyPerformed || animationStateHash == queuedAirTrickStateHash)
                 return;
 
-            int chainLimit = Mathf.Clamp(maximumTricksPerChain, 1, 3);
+            int unlockedChainLimit = HasAbility(SurfAbility.TripleChain) ? 3 :
+                HasAbility(SurfAbility.DoubleChain) ? 2 : 1;
+            int chainLimit = Mathf.Min(Mathf.Clamp(maximumTricksPerChain, 1, 3), unlockedChainLimit);
             if (aerialTrickChainCount >= chainLimit)
                 return;
 
@@ -3535,6 +3555,62 @@ namespace PixelOcean
             ApplyFacing(
                 spriteWorldScale,
                 spriteWorldScale);
+        }
+
+        private int appliedJumpUpgradeLevel;
+        private int appliedWaterSlashUpgradeLevel;
+        private int appliedSkidUpgradeLevel;
+
+        public void ApplyDayUpgrade(int upgradeIndex)
+        {
+            if (SurfAbilityProgression.Instance != null)
+            {
+                SurfAbilityProgression.Instance.AddUpgrade(upgradeIndex);
+                return;
+            }
+
+            ApplySingleUpgrade(upgradeIndex);
+        }
+
+        public void ApplyProgressionUpgrades()
+        {
+            SurfAbilityProgression progression = SurfAbilityProgression.Instance;
+            if (progression == null)
+                return;
+
+            while (appliedJumpUpgradeLevel < progression.JumpUpgradeLevel)
+            {
+                ApplySingleUpgrade(0);
+                appliedJumpUpgradeLevel++;
+            }
+            while (appliedWaterSlashUpgradeLevel < progression.WaterSlashUpgradeLevel)
+            {
+                ApplySingleUpgrade(1);
+                appliedWaterSlashUpgradeLevel++;
+            }
+            while (appliedSkidUpgradeLevel < progression.SkidUpgradeLevel)
+            {
+                ApplySingleUpgrade(2);
+                appliedSkidUpgradeLevel++;
+            }
+        }
+
+        private void ApplySingleUpgrade(int upgradeIndex)
+        {
+            switch (upgradeIndex)
+            {
+                case 0:
+                    minimumObstacleJumpHeight *= 1.10f;
+                    maximumObstacleJumpHeight *= 1.10f;
+                    break;
+                case 1:
+                    waterSlashCooldown = Mathf.Max(0.12f, waterSlashCooldown * 0.85f);
+                    break;
+                case 2:
+                    minimumSkidSpeed *= 1.15f;
+                    maximumSkidSpeed *= 1.15f;
+                    break;
+            }
         }
     }
 

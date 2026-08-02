@@ -17,6 +17,10 @@ namespace PixelOcean
             public bool finalWaveStarted;
             public bool bossDefeatedSunset;
             public int lives = 3;
+            public int unlockedAbilities;
+            public int jumpUpgradeLevel;
+            public int waterSlashUpgradeLevel;
+            public int skidUpgradeLevel;
         }
 
         public static bool HasSave => PlayerPrefs.HasKey(SaveKey) && TryLoad(out _);
@@ -27,6 +31,13 @@ namespace PixelOcean
             SaveData data = director.CaptureSaveData();
             if (SurfRunLifeManager.Instance != null)
                 data.lives = Mathf.Max(1, SurfRunLifeManager.Instance.LivesRemaining);
+            if (SurfAbilityProgression.Instance != null)
+            {
+                data.unlockedAbilities = (int)SurfAbilityProgression.Instance.Unlocked;
+                data.jumpUpgradeLevel = SurfAbilityProgression.Instance.JumpUpgradeLevel;
+                data.waterSlashUpgradeLevel = SurfAbilityProgression.Instance.WaterSlashUpgradeLevel;
+                data.skidUpgradeLevel = SurfAbilityProgression.Instance.SkidUpgradeLevel;
+            }
             PlayerPrefs.SetString(SaveKey, JsonUtility.ToJson(data));
             PlayerPrefs.Save();
         }

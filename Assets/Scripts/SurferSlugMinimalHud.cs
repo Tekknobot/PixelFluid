@@ -47,6 +47,7 @@ namespace PixelOcean
         private TMP_Text livesLabel;
         private TMP_Text stokeLabel;
         private TMP_Text flowLabel;
+        private GameObject flowTrackObject;
         private TMP_Text chapterLabel;
         private TMP_Text inventoryOverflowLabel;
         private CanvasGroup chapterGroup;
@@ -205,14 +206,15 @@ namespace PixelOcean
 
         private void BuildObjectivePanel(RectTransform panel)
         {
-            TMP_Text heading = CreateText("OBJECTIVE", panel, 16, TextAnchor.UpperLeft, mutedColour);
-            Stretch(heading.rectTransform, new Vector2(0f, 0.68f), Vector2.one, new Vector2(18f, 0f), new Vector2(-18f, -12f));
+            TMP_Text heading = CreateText("OBJECTIVE + CURRENT LESSON", panel, 16, TextAnchor.UpperLeft, mutedColour);
+            Stretch(heading.rectTransform, new Vector2(0f, 0.76f), Vector2.one, new Vector2(18f, 0f), new Vector2(-18f, -10f));
 
-            objectiveLabel = CreateText("SURF. STAY ALIVE. LEARN THE WATER.", panel, 32, TextAnchor.MiddleLeft, foregroundColour);
+            objectiveLabel = CreateText("SURF. STAY ALIVE.\nLEARN  •  MOVE LEFT/RIGHT.", panel, 32, TextAnchor.MiddleLeft, foregroundColour);
             objectiveLabel.enableAutoSizing = true;
-            objectiveLabel.fontSizeMin = 12f;
-            objectiveLabel.fontSizeMax = 18f;
-            Stretch(objectiveLabel.rectTransform, new Vector2(0f, 0.32f), new Vector2(1f, 0.72f), new Vector2(18f, 0f), new Vector2(-18f, 0f));
+            objectiveLabel.fontSizeMin = 10f;
+            objectiveLabel.fontSizeMax = 16f;
+            objectiveLabel.enableWordWrapping = true;
+            Stretch(objectiveLabel.rectTransform, new Vector2(0f, 0.38f), new Vector2(1f, 0.78f), new Vector2(18f, 0f), new Vector2(-18f, 0f));
 
             RectTransform livesInset = CreateRect("Lives Inset", panel, Vector2.zero);
             livesInset.anchorMin = new Vector2(0f, 0.16f);
@@ -240,6 +242,7 @@ namespace PixelOcean
             Stretch(stokeLabel.rectTransform, Vector2.zero, Vector2.one, new Vector2(8f, 2f), new Vector2(-8f, -2f));
 
             RectTransform flowTrack = CreateRect("Flow Track", panel, Vector2.zero);
+            flowTrackObject = flowTrack.gameObject;
             flowTrack.anchorMin = new Vector2(0f, 0f);
             flowTrack.anchorMax = new Vector2(1f, 0.14f);
             flowTrack.offsetMin = Vector2.zero;
@@ -397,6 +400,9 @@ namespace PixelOcean
 
         private void RefreshFlow()
         {
+            bool unlocked = SurfAbilityProgression.Instance == null || SurfAbilityProgression.Instance.Has(SurfAbility.Flow);
+            if (flowTrackObject != null) flowTrackObject.SetActive(unlocked);
+            if (!unlocked) return;
             AirTrickScoreSystem scoring = AirTrickScoreSystem.Instance;
             float flow01 = scoring != null ? scoring.Flow01 : 0f;
             bool onFire = scoring != null && scoring.IsOnFire;
