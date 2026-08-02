@@ -57,13 +57,18 @@ namespace PixelOcean
 
         [Header("Flow Meter / On Fire")]
         [SerializeField, Min(1f)] private float maximumFlow = 100f;
-        [SerializeField, Min(0f)] private float singleTrickFlow = 10f;
-        [SerializeField, Min(0f)] private float doubleChainFlow = 28f;
-        [SerializeField, Min(0f)] private float tripleChainFlow = 48f;
+        [SerializeField, Min(0f)] private float singleTrickFlow = 30f;
+        [SerializeField, Min(0f)] private float doubleChainFlow = 48f;
+        [SerializeField, Min(0f)] private float tripleChainFlow = 68f;
         [SerializeField, Min(0f)] private float flowDecayDelay = 2.5f;
         [SerializeField, Min(0f)] private float flowDecayPerSecond = 8f;
         [SerializeField, Min(1f)] private float onFireDuration = 20f;
         [SerializeField, Range(1f, 3f)] private float onFireStokeMultiplier = 1.5f;
+        [SerializeField, Min(0)] private int flowFinisherStoke = 750;
+        [SerializeField] private AudioClip onFireActivationClip;
+        [SerializeField] private AudioClip comboCompleteClip;
+        [SerializeField, Range(0f, 1f)] private float flowAudioVolume = 0.9f;
+        private AudioSource flowAudioSource;
 
         [Header("Popup Tiers")]
         [SerializeField, Min(1)] private int cleanTierMinimum = 350;
@@ -130,6 +135,11 @@ namespace PixelOcean
 
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            flowAudioSource = GetComponent<AudioSource>();
+            if (flowAudioSource == null) flowAudioSource = gameObject.AddComponent<AudioSource>();
+            flowAudioSource.playOnAwake = false;
+            if (onFireActivationClip == null) onFireActivationClip = Resources.Load<AudioClip>("Audio/SFX/on_fire_activate");
+            if (comboCompleteClip == null) comboCompleteClip = Resources.Load<AudioClip>("Audio/SFX/ching");
         }
 
         private void Update()
@@ -286,6 +296,8 @@ namespace PixelOcean
                     ? tripleChainFlow
                     : chainLength == 2 ? doubleChainFlow : singleTrickFlow;
                 AddFlow(flowGain);
+                if (chainLength >= 2 && comboCompleteClip != null && flowAudioSource != null)
+                    flowAudioSource.PlayOneShot(comboCompleteClip, flowAudioVolume);
             }
 
             GetPopupTier(score, out string tierName, out Color tierColour);
@@ -324,7 +336,30 @@ namespace PixelOcean
                 currentFlow = maximumFlow;
                 onFireUntil = Time.unscaledTime + onFireDuration;
                 onFireWasActive = true;
+                if (onFireActivationClip != null && flowAudioSource != null)
+                    flowAudioSource.PlayOneShot(onFireActivationClip, flowAudioVolume);
             }
+        }
+
+        public bool ConsumeFlowFinisher(Vector3 worldPosition)
+        {
+            if (!IsOnFire) return false;
+            onFireUntil = 0f;
+            currentFlow = 0f;
+            onFireWasActive = false;
+            lastFlowGainTime = Time.unscaledTime;
+            int award = Mathf.Max(0, flowFinisherStoke);
+            dayStoke += award;
+            totalStoke += award;
+            floatingScores.Add(new FloatingScore
+            {
+                WorldPosition = worldPosition + Vector3.up * 0.55f,
+                Text = "FLOW FINISH!\n+" + award + " STOKE",
+                TextColour = legendaryTierColour,
+                CreatedAt = Time.unscaledTime,
+                Lifetime = Mathf.Max(1.5f, floatingScoreLifetime)
+            });
+            return true;
         }
 
         public void ShowDayRecap(int day, float duration)

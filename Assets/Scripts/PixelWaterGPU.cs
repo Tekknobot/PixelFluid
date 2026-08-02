@@ -594,6 +594,23 @@ namespace PixelOcean
 
 
 
+        /// <summary>
+        /// Returns a representative visible colour for gameplay effects that should
+        /// blend with this simulation layer. It uses the same independent-layer
+        /// shading applied by the water renderer.
+        /// </summary>
+        public Color GetProjectileWaterTint()
+        {
+            Color main = GetIndependentLayerColour(mainWaterColor);
+            Color surface = GetIndependentLayerColour(surfaceWaterColor);
+            Color tint = Color.Lerp(main, surface, 0.72f);
+            tint.r = Mathf.Clamp01(tint.r * colourBrightness);
+            tint.g = Mathf.Clamp01(tint.g * colourBrightness);
+            tint.b = Mathf.Clamp01(tint.b * colourBrightness);
+            tint.a = 1f;
+            return tint;
+        }
+
         private Color GetIndependentLayerColour(Color source)
         {
             if (independentLayerIndex <= 0)

@@ -120,7 +120,7 @@ namespace PixelOcean
         [Tooltip("Minimum height produced by a quick tap of Jump.")]
         [SerializeField, Min(0.05f)] private float minimumObstacleJumpHeight = 0.42f;
         [Tooltip("Maximum height produced by a fully charged Jump hold.")]
-        [SerializeField, Min(0.05f)] private float maximumObstacleJumpHeight = 1.3f;
+        [SerializeField, Min(0.05f)] private float maximumObstacleJumpHeight = 1.1f;
         [Tooltip("Seconds of holding Jump required to reach maximum height.")]
         [SerializeField, Min(0.05f)] private float fullJumpChargeTime = 0.65f;
         [Tooltip("Shapes charge sensitivity. X is held-time percentage; Y is jump-power percentage.")]
@@ -331,6 +331,36 @@ namespace PixelOcean
         [SerializeField] private AudioClip healthUpClip;
         [SerializeField, Range(0f, 1f)] private float hurtSoundVolume = 1f;
         [SerializeField, Range(0f, 1f)] private float healthUpSoundVolume = 1f;
+
+        [Header("Water Slash / Flow Finisher")]
+        [SerializeField] private bool enableWaterSlash = true;
+        [Tooltip("Right bumper / keyboard R. While ON FIRE this becomes the Flow Finisher.")]
+        [SerializeField, Min(0.1f)] private float waterSlashCooldown = 0.65f;
+        [SerializeField, Min(0.1f)] private float waterSlashActionDuration = 0.62f;
+        [SerializeField, Min(0.1f)] private float flowFinisherActionDuration = 0.85f;
+        [SerializeField, Min(0.1f)] private float waterSlashSpeed = 3.5f;
+        [SerializeField, Min(0.1f)] private float flowFinisherSpeed = 10f;
+        [SerializeField, Min(0.1f)] private float waterSlashLifetime = 1.6f;
+        [Tooltip("World scale of the ordinary Water Slash projectile.")]
+        [SerializeField] private Vector2 waterSlashProjectileScale = new(1f, 1f);
+        [Tooltip("World scale of each projectile released by the Flow Finisher.")]
+        [SerializeField] private Vector2 flowFinisherProjectileScale = new(1f, 1f);
+        [Tooltip("How strongly projectile artwork is tinted toward the active simulation water colour.")]
+        [SerializeField, Range(0f, 1f)] private float projectileWaterTintStrength = 0.62f;
+        [Tooltip("Flow Finisher releases waves across the three nearest simulation lanes.")]
+        [SerializeField] private bool flowFinisherUsesThreeLanes = true;
+        [SerializeField, Min(1f)] private float actionAnimationFps = 18f;
+        [SerializeField] private AudioClip waterSlashClip;
+        [SerializeField] private AudioClip flowFinisherClip;
+        [SerializeField, Range(0f, 1f)] private float specialAttackVolume = 1f;
+        private Sprite[] waterSlashActionFrames;
+        private Sprite[] flowFinisherFrames;
+        private bool specialAttackActive;
+        private bool specialAttackIsFinisher;
+        private bool specialAttackProjectileReleased;
+        private float specialAttackTimer;
+        private float nextWaterSlashTime;
+        private bool previousShoulderHeld;
         private int lastWaveRenderQueue = -1;
 
         private RiderState state;
@@ -439,6 +469,19 @@ namespace PixelOcean
         [Tooltip("Enable this when the original sprite artwork faces right.")]
         [SerializeField] private bool spriteFacesRight = true;
 
+        private static Sprite[] LoadOrderedSprites(string resourcePath)
+        {
+            Sprite[] loaded = Resources.LoadAll<Sprite>(resourcePath);
+            System.Array.Sort(loaded, (a, b) => ExtractFrameNumber(a.name).CompareTo(ExtractFrameNumber(b.name)));
+            return loaded;
+        }
+
+        private static int ExtractFrameNumber(string name)
+        {
+            int split = name.LastIndexOf('_');
+            return split >= 0 && int.TryParse(name.Substring(split + 1), out int value) ? value : 0;
+        }
+
         private void ApplyFacing(float xScale, float yScale)
         {
             bool movingRight = direction > 0f;
@@ -472,6 +515,10 @@ namespace PixelOcean
                 maleHurtClip = Resources.Load<AudioClip>("Audio/SFX/male_hurt");
             if (healthUpClip == null)
                 healthUpClip = Resources.Load<AudioClip>("Audio/SFX/health_up");
+            if (waterSlashClip == null) waterSlashClip = Resources.Load<AudioClip>("Audio/SFX/water_slash");
+            if (flowFinisherClip == null) flowFinisherClip = Resources.Load<AudioClip>("Audio/SFX/flow_finish");
+            waterSlashActionFrames = LoadOrderedSprites("Surfers/chuck_water_slash");
+            flowFinisherFrames = LoadOrderedSprites("Surfers/chuck_flow_finish");
             EnsurePixelSprite();
             EnsureSurferAnimator();
             EnsureSharkHitCollider();
@@ -1651,6 +1698,17 @@ namespace PixelOcean
                 out float trickInput);
             playerTrickInput = trickInput;
 
+            bool shoulderHeld = aiControlled ? false : ReadShoulderInput();
+            bool shoulderPressed = shoulderHeld && !previousShoulderHeld;
+            previousShoulderHeld = shoulderHeld;
+            if (shoulderPressed)
+                TryBeginWaterSpecial();
+            if (specialAttackActive)
+            {
+                UpdateWaterSpecial(dt);
+                return;
+            }
+
             bool attackHeld = aiControlled ? aiAttackPulse > 0f : ReadAttackInput();
             if (attackHeld && !previousAttackHeld)
             {
@@ -1804,6 +1862,151 @@ namespace PixelOcean
                 localRideX = ClampPlayerXToSandbox(localRideX);
                 FollowSurface(dt);
             }
+        }
+
+        private static bool ReadShoulderInput()
+        {
+#if ENABLE_INPUT_SYSTEM
+            return (Keyboard.current != null && Keyboard.current.rKey.isPressed) ||
+                (Gamepad.current != null && Gamepad.current.rightShoulder.isPressed);
+#elif ENABLE_LEGACY_INPUT_MANAGER
+            return Input.GetKey(KeyCode.R) || Input.GetKey(KeyCode.JoystickButton5);
+#else
+            return false;
+#endif
+        }
+
+        private void TryBeginWaterSpecial()
+        {
+            if (!enableWaterSlash || state != RiderState.Riding || Time.time < nextWaterSlashTime || specialCharging || specialSkidding)
+                return;
+            specialAttackIsFinisher = AirTrickScoreSystem.Instance != null && AirTrickScoreSystem.Instance.IsOnFire;
+            if (specialAttackIsFinisher && !AirTrickScoreSystem.Instance.ConsumeFlowFinisher(transform.position))
+                specialAttackIsFinisher = false;
+            specialAttackActive = true;
+            specialAttackProjectileReleased = false;
+            specialAttackTimer = 0f;
+            playerHorizontalVelocity = 0f;
+            nextWaterSlashTime = Time.time + waterSlashCooldown;
+            if (surferAnimator != null) surferAnimator.enabled = false;
+            AudioClip clip = specialAttackIsFinisher ? flowFinisherClip : waterSlashClip;
+            if (clip != null && deathAudioSource != null) deathAudioSource.PlayOneShot(clip, specialAttackVolume);
+            if (speechBubble != null) speechBubble.HideImmediate();
+        }
+
+        private void UpdateWaterSpecial(float dt)
+        {
+            specialAttackTimer += dt;
+            float duration = specialAttackIsFinisher ? flowFinisherActionDuration : waterSlashActionDuration;
+            Sprite[] frames = specialAttackIsFinisher ? flowFinisherFrames : waterSlashActionFrames;
+            if (spriteRenderer != null && frames != null && frames.Length > 0)
+            {
+                int index = Mathf.Min(frames.Length - 1, Mathf.FloorToInt(specialAttackTimer * actionAnimationFps));
+                spriteRenderer.sprite = frames[index];
+            }
+            float releaseTime = duration * (specialAttackIsFinisher ? 0.58f : 0.48f);
+            if (!specialAttackProjectileReleased && specialAttackTimer >= releaseTime)
+            {
+                specialAttackProjectileReleased = true;
+
+                if (specialAttackIsFinisher && flowFinisherUsesThreeLanes)
+                {
+                    LaunchFlowFinisherAcrossNearestLanes();
+                }
+                else
+                {
+                    LaunchWaterProjectile(currentWave, specialAttackIsFinisher, 0);
+                }
+            }
+            if (specialAttackTimer < duration) return;
+            specialAttackActive = false;
+            specialAttackTimer = 0f;
+            if (surferAnimator != null)
+            {
+                surferAnimator.enabled = true;
+                currentAnimationStateHash = 0;
+                UpdateAnimation(false, true);
+            }
+        }
+
+
+        private void LaunchFlowFinisherAcrossNearestLanes()
+        {
+            RefreshWaveList();
+            if (simulations.Count == 0 || currentWave == null)
+            {
+                LaunchWaterProjectile(currentWave, true, 0);
+                return;
+            }
+
+            int centreIndex = simulations.IndexOf(currentWave);
+            if (centreIndex < 0)
+                centreIndex = Mathf.Clamp(waveIndex, 0, simulations.Count - 1);
+
+            // Always use the current lane first, then the closest neighbouring
+            // lanes by index. At the top or bottom edge this naturally selects
+            // two lanes on the available side instead of wrapping across the stack.
+            List<int> selectedIndices = new List<int>(3) { centreIndex };
+            for (int distance = 1; selectedIndices.Count < 3 &&
+                (centreIndex - distance >= 0 || centreIndex + distance < simulations.Count); distance++)
+            {
+                if (centreIndex - distance >= 0)
+                    selectedIndices.Add(centreIndex - distance);
+                if (selectedIndices.Count >= 3)
+                    break;
+                if (centreIndex + distance < simulations.Count)
+                    selectedIndices.Add(centreIndex + distance);
+            }
+
+            for (int i = 0; i < selectedIndices.Count; i++)
+            {
+                int selectedIndex = selectedIndices[i];
+                PixelWaterGPU targetWave = simulations[selectedIndex];
+                LaunchWaterProjectile(targetWave, true, selectedIndex - centreIndex);
+            }
+        }
+
+        private void LaunchWaterProjectile(PixelWaterGPU targetWave, bool isFinisher, int laneOffset)
+        {
+            float spawnX = transform.position.x + direction * 0.55f;
+            float spawnY = transform.position.y + 0.08f;
+            float spawnZ = transform.position.z;
+            int projectileSortingOrder = sortingOrder + 25;
+            Color projectileTint = Color.white;
+
+            if (targetWave != null)
+            {
+                spawnY = targetWave.GetGameplaySurfaceHeight(spawnX) + surfaceOffset + 0.08f;
+                spawnZ = targetWave.transform.position.z - 0.03f;
+                projectileSortingOrder = Mathf.Clamp(
+                    targetWave.GetWaveLayerRenderQueue() + 3,
+                    2501,
+                    4999);
+                projectileTint = Color.Lerp(
+                    Color.white,
+                    targetWave.GetProjectileWaterTint(),
+                    projectileWaterTintStrength);
+            }
+
+            string projectileName = isFinisher
+                ? $"Flow Finisher Wave Lane {laneOffset:+0;-0;0}"
+                : "Water Slash";
+            GameObject projectile = new GameObject(projectileName);
+            WaterSlashProjectile slash = projectile.AddComponent<WaterSlashProjectile>();
+            Vector2 projectileScale = isFinisher
+                ? flowFinisherProjectileScale
+                : waterSlashProjectileScale;
+
+            slash.Launch(
+                new Vector3(spawnX, spawnY, spawnZ),
+                direction >= 0f ? 1 : -1,
+                isFinisher,
+                isFinisher ? flowFinisherSpeed : waterSlashSpeed,
+                isFinisher ? waterSlashLifetime * 1.35f : waterSlashLifetime,
+                actionAnimationFps,
+                projectileSortingOrder,
+                projectileScale,
+                projectileTint);
         }
 
         private bool ReadSpecialInput()
