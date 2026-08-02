@@ -55,6 +55,16 @@ namespace PixelOcean
 
         [SerializeField, Min(0f)] private float floatingScoreLifetime = 1.35f;
 
+        [Header("Flow Meter / On Fire")]
+        [SerializeField, Min(1f)] private float maximumFlow = 100f;
+        [SerializeField, Min(0f)] private float singleTrickFlow = 10f;
+        [SerializeField, Min(0f)] private float doubleChainFlow = 28f;
+        [SerializeField, Min(0f)] private float tripleChainFlow = 48f;
+        [SerializeField, Min(0f)] private float flowDecayDelay = 2.5f;
+        [SerializeField, Min(0f)] private float flowDecayPerSecond = 8f;
+        [SerializeField, Min(1f)] private float onFireDuration = 20f;
+        [SerializeField, Range(1f, 3f)] private float onFireStokeMultiplier = 1.5f;
+
         [Header("Popup Tiers")]
         [SerializeField, Min(1)] private int cleanTierMinimum = 350;
         [SerializeField, Min(1)] private int radicalTierMinimum = 450;
@@ -83,10 +93,21 @@ namespace PixelOcean
         private bool recapVisible;
         private float recapUntil;
         private int recapDay;
+        private float currentFlow;
+        private float lastFlowGainTime;
+        private float onFireUntil;
+        private bool onFireWasActive;
 
         public int TotalStoke => totalStoke;
         public int DayStoke => dayStoke;
         public bool IsRecapVisible => recapVisible;
+        public float Flow01 => Mathf.Clamp01(currentFlow / Mathf.Max(1f, maximumFlow));
+        public float CurrentFlow => currentFlow;
+        public float MaximumFlow => Mathf.Max(1f, maximumFlow);
+        public bool IsOnFire => Time.unscaledTime < onFireUntil;
+        public float OnFireTimeRemaining => Mathf.Max(0f, onFireUntil - Time.unscaledTime);
+        public float OnFireAnimationMultiplier => IsOnFire ? 1.2f : 1f;
+        public float OnFireJumpMultiplier => IsOnFire ? 1.12f : 1f;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Install()
@@ -118,6 +139,21 @@ namespace PixelOcean
 
             if (recapVisible && now >= recapUntil)
                 recapVisible = false;
+
+            bool onFireNow = IsOnFire;
+            if (onFireWasActive && !onFireNow)
+            {
+                currentFlow = 0f;
+                lastFlowGainTime = now;
+            }
+            onFireWasActive = onFireNow;
+
+            if (!onFireNow && currentFlow > 0f &&
+                now - lastFlowGainTime >= flowDecayDelay)
+            {
+                currentFlow = Mathf.Max(0f,
+                    currentFlow - flowDecayPerSecond * Time.unscaledDeltaTime);
+            }
         }
 
         public void BeginDay(int day)
@@ -131,6 +167,10 @@ namespace PixelOcean
             highestAir = 0f;
             bestTrick = "NONE";
             recapVisible = false;
+            currentFlow = 0f;
+            onFireUntil = 0f;
+            onFireWasActive = false;
+            lastFlowGainTime = Time.unscaledTime;
         }
 
         // Compatibility overload for any older callers. New controller code uses
@@ -217,6 +257,9 @@ namespace PixelOcean
                     ? doubleChainMultiplier
                     : 1f;
             score = Mathf.RoundToInt(score * chainMultiplier);
+            bool scoredWhileOnFire = IsOnFire;
+            if (scoredWhileOnFire)
+                score = Mathf.RoundToInt(score * onFireStokeMultiplier);
             score = Mathf.Max(1, score);
 
             dayStoke += score;
@@ -237,17 +280,51 @@ namespace PixelOcean
             }
             highestAir = Mathf.Max(highestAir, safeHeight);
 
+            if (cleanLanding)
+            {
+                float flowGain = chainLength >= 3
+                    ? tripleChainFlow
+                    : chainLength == 2 ? doubleChainFlow : singleTrickFlow;
+                AddFlow(flowGain);
+            }
+
             GetPopupTier(score, out string tierName, out Color tierColour);
             floatingScores.Add(new FloatingScore
             {
                 WorldPosition = landingPosition + Vector3.up * 0.35f,
-                Text = tierName + "  " + chainLabel + "\n" + trickName + "  +" + score + " STOKE",
+                Text = (scoredWhileOnFire ? "ON FIRE  " : string.Empty) +
+                    tierName + "  " + chainLabel + "\n" +
+                    trickName + "  +" + score + " STOKE",
                 TextColour = tierColour,
                 CreatedAt = Time.unscaledTime,
                 Lifetime = floatingScoreLifetime
             });
 
             return score;
+        }
+
+        private void AddFlow(float amount)
+        {
+            if (amount <= 0f)
+                return;
+
+            lastFlowGainTime = Time.unscaledTime;
+            if (IsOnFire)
+            {
+                onFireUntil = Mathf.Min(
+                    Time.unscaledTime + onFireDuration * 1.5f,
+                    onFireUntil + amount / Mathf.Max(1f, maximumFlow) * 2f);
+                currentFlow = maximumFlow;
+                return;
+            }
+
+            currentFlow = Mathf.Clamp(currentFlow + amount, 0f, maximumFlow);
+            if (currentFlow >= maximumFlow)
+            {
+                currentFlow = maximumFlow;
+                onFireUntil = Time.unscaledTime + onFireDuration;
+                onFireWasActive = true;
+            }
         }
 
         public void ShowDayRecap(int day, float duration)

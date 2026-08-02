@@ -38,12 +38,15 @@ namespace PixelOcean
 
         private RectTransform inventoryRow;
         private RectTransform dayFill;
+        private RectTransform flowFill;
+        private Image flowFillImage;
 
         private TMP_Text dayPhaseLabel;
         private TMP_Text timeLabel;
         private TMP_Text objectiveLabel;
         private TMP_Text livesLabel;
         private TMP_Text stokeLabel;
+        private TMP_Text flowLabel;
         private TMP_Text chapterLabel;
         private TMP_Text inventoryOverflowLabel;
         private CanvasGroup chapterGroup;
@@ -92,6 +95,7 @@ namespace PixelOcean
 
             RefreshProgressionAndLives();
             RefreshStoke();
+            RefreshFlow();
             RefreshDayDisplay();
             RefreshInventory();
         }
@@ -165,7 +169,7 @@ namespace PixelOcean
             root.anchorMin = new Vector2(0f, 1f);
             root.anchorMax = new Vector2(1f, 1f);
             root.pivot = new Vector2(0.5f, 1f);
-            root.offsetMin = new Vector2(safeMargin.x, -150f);
+            root.offsetMin = new Vector2(safeMargin.x, -174f);
             root.offsetMax = new Vector2(-safeMargin.x, -safeMargin.y);
 
             HorizontalLayoutGroup row = root.gameObject.AddComponent<HorizontalLayoutGroup>();
@@ -195,7 +199,7 @@ namespace PixelOcean
             layout.preferredWidth = preferredWidth;
             layout.flexibleWidth = flexibleWidth;
             layout.minWidth = preferredWidth > 0f ? preferredWidth * 0.72f : 520f;
-            layout.preferredHeight = 128f;
+            layout.preferredHeight = 152f;
             return panel;
         }
 
@@ -211,8 +215,8 @@ namespace PixelOcean
             Stretch(objectiveLabel.rectTransform, new Vector2(0f, 0.32f), new Vector2(1f, 0.72f), new Vector2(18f, 0f), new Vector2(-18f, 0f));
 
             RectTransform livesInset = CreateRect("Lives Inset", panel, Vector2.zero);
-            livesInset.anchorMin = new Vector2(0f, 0f);
-            livesInset.anchorMax = new Vector2(0.58f, 0.34f);
+            livesInset.anchorMin = new Vector2(0f, 0.16f);
+            livesInset.anchorMax = new Vector2(0.58f, 0.38f);
             livesInset.offsetMin = new Vector2(0f, 0f);
             livesInset.offsetMax = Vector2.zero;
             AddImage(livesInset.gameObject, insetColour);
@@ -222,8 +226,8 @@ namespace PixelOcean
             Stretch(livesLabel.rectTransform, Vector2.zero, Vector2.one, new Vector2(10f, 2f), new Vector2(-10f, -2f));
 
             RectTransform stokeInset = CreateRect("Stoke Inset", panel, Vector2.zero);
-            stokeInset.anchorMin = new Vector2(0.60f, 0f);
-            stokeInset.anchorMax = new Vector2(1f, 0.34f);
+            stokeInset.anchorMin = new Vector2(0.60f, 0.16f);
+            stokeInset.anchorMax = new Vector2(1f, 0.38f);
             stokeInset.offsetMin = Vector2.zero;
             stokeInset.offsetMax = Vector2.zero;
             AddImage(stokeInset.gameObject, insetColour);
@@ -234,6 +238,25 @@ namespace PixelOcean
             stokeLabel.fontSizeMin = 14f;
             stokeLabel.fontSizeMax = 22f;
             Stretch(stokeLabel.rectTransform, Vector2.zero, Vector2.one, new Vector2(8f, 2f), new Vector2(-8f, -2f));
+
+            RectTransform flowTrack = CreateRect("Flow Track", panel, Vector2.zero);
+            flowTrack.anchorMin = new Vector2(0f, 0f);
+            flowTrack.anchorMax = new Vector2(1f, 0.14f);
+            flowTrack.offsetMin = Vector2.zero;
+            flowTrack.offsetMax = Vector2.zero;
+            AddImage(flowTrack.gameObject, insetColour);
+            AddPixelBorder(flowTrack, borderColour, borderThickness);
+
+            flowFill = CreateRect("Flow Fill", flowTrack, Vector2.zero);
+            flowFill.anchorMin = Vector2.zero;
+            flowFill.anchorMax = new Vector2(0f, 1f);
+            flowFill.pivot = new Vector2(0f, 0.5f);
+            flowFill.offsetMin = new Vector2(3f, 3f);
+            flowFill.offsetMax = new Vector2(-3f, -3f);
+            flowFillImage = AddImage(flowFill.gameObject, new Color(1f, 0.55f, 0.08f, 0.95f));
+
+            flowLabel = CreateText("FLOW  0%", flowTrack, 16, TextAnchor.MiddleCenter, foregroundColour);
+            Stretch(flowLabel.rectTransform, Vector2.zero, Vector2.one, new Vector2(8f, 0f), new Vector2(-8f, 0f));
         }
 
         private void BuildDayPanel(RectTransform panel)
@@ -327,7 +350,7 @@ namespace PixelOcean
             RectTransform banner = CreateRect("Chapter Banner", parent, new Vector2(650f, 74f));
             banner.anchorMin = banner.anchorMax = new Vector2(0.5f, 1f);
             banner.pivot = new Vector2(0.5f, 1f);
-            banner.anchoredPosition = new Vector2(0f, -(safeMargin.y + 145f));
+            banner.anchoredPosition = new Vector2(0f, -(safeMargin.y + 170f));
             AddImage(banner.gameObject, panelColour);
             AddPixelBorder(banner, borderColour, borderThickness);
             chapterGroup = banner.gameObject.AddComponent<CanvasGroup>();
@@ -370,6 +393,32 @@ namespace PixelOcean
                 ? AirTrickScoreSystem.Instance.TotalStoke
                 : 0;
             stokeLabel.text = "STOKE  " + stoke.ToString("N0");
+        }
+
+        private void RefreshFlow()
+        {
+            AirTrickScoreSystem scoring = AirTrickScoreSystem.Instance;
+            float flow01 = scoring != null ? scoring.Flow01 : 0f;
+            bool onFire = scoring != null && scoring.IsOnFire;
+
+            if (flowFill != null)
+                flowFill.anchorMax = new Vector2(onFire ? 1f : flow01, 1f);
+
+            if (flowFillImage != null)
+            {
+                float green = onFire
+                    ? 0.72f + Mathf.Sin(Time.unscaledTime * 12f) * 0.18f
+                    : 0.55f;
+                flowFillImage.color = new Color(1f, green, 0.08f, onFire ? 1f : 0.95f);
+            }
+
+            if (flowLabel != null)
+            {
+                flowLabel.text = onFire
+                    ? "ON FIRE  " + Mathf.CeilToInt(scoring.OnFireTimeRemaining)
+                    : "FLOW  " + Mathf.RoundToInt(flow01 * 100f) + "%";
+                flowLabel.fontSize = onFire ? 18f : 16f;
+            }
         }
 
         private void RefreshDayDisplay()

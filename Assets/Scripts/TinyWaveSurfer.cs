@@ -1077,14 +1077,17 @@ namespace PixelOcean
 
             currentAnimationStateHash = desiredStateHash;
 
+            float flowAnimationMultiplier = AirTrickScoreSystem.Instance != null
+                ? AirTrickScoreSystem.Instance.OnFireAnimationMultiplier
+                : 1f;
             if (desiredStateHash == HandstandStateHash)
-                surferAnimator.speed = 1.15f;
+                surferAnimator.speed = 1.15f * flowAnimationMultiplier;
             else if (desiredStateHash == RotationStateHash)
-                surferAnimator.speed = 1.3f;
+                surferAnimator.speed = 1.3f * flowAnimationMultiplier;
             else if (desiredStateHash == FlipStateHash)
-                surferAnimator.speed = 1.55f;
+                surferAnimator.speed = 1.55f * flowAnimationMultiplier;
             else
-                surferAnimator.speed = 1f;      
+                surferAnimator.speed = 1f;
 
             surferAnimator.CrossFade(desiredStateHash, 0.02f, 0, 0f);
         }
@@ -2324,10 +2327,14 @@ namespace PixelOcean
             currentAirTrickStateHash = 0;
             queuedAirTrickStateHash = 0;
             obstacleJumpProgress = 0f;
+            float flowJumpMultiplier = AirTrickScoreSystem.Instance != null
+                ? AirTrickScoreSystem.Instance.OnFireJumpMultiplier
+                : 1f;
             activeObstacleJumpHeight = Mathf.Clamp(
-                chargedJumpHeight,
+                chargedJumpHeight * flowJumpMultiplier,
                 minimumObstacleJumpHeight,
-                Mathf.Max(minimumObstacleJumpHeight, maximumObstacleJumpHeight));
+                Mathf.Max(minimumObstacleJumpHeight,
+                    maximumObstacleJumpHeight * flowJumpMultiplier));
             state = RiderState.TurningTrick;
             stateTimer = 0f;
 
@@ -2435,7 +2442,11 @@ namespace PixelOcean
                 float jumpStrength = aerialTrickChainCount == 2
                     ? secondTrickJumpStrength
                     : thirdTrickJumpStrength;
-                float renewedUpwardVelocity = obstacleAirTakeoffVelocity * jumpStrength;
+                float flowJumpMultiplier = AirTrickScoreSystem.Instance != null
+                    ? AirTrickScoreSystem.Instance.OnFireJumpMultiplier
+                    : 1f;
+                float renewedUpwardVelocity =
+                    obstacleAirTakeoffVelocity * jumpStrength * flowJumpMultiplier;
                 obstacleAirVerticalVelocity = Mathf.Max(
                     obstacleAirVerticalVelocity,
                     renewedUpwardVelocity);
