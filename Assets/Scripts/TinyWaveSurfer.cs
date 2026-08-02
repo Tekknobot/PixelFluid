@@ -347,8 +347,10 @@ namespace PixelOcean
         [SerializeField] private Vector2 flowFinisherProjectileScale = new(1f, 1f);
         [Tooltip("How strongly projectile artwork is tinted toward the active simulation water colour.")]
         [SerializeField, Range(0f, 1f)] private float projectileWaterTintStrength = 0.62f;
-        [Tooltip("Flow Finisher releases waves across the three nearest simulation lanes.")]
-        [SerializeField] private bool flowFinisherUsesThreeLanes = true;
+        [Tooltip("Flow Finisher releases waves across every active simulation lane.")]
+        [SerializeField] private bool flowFinisherUsesAllLanes = true;
+        [Tooltip("Delay between each lane projectile during the Flow Finisher cascade.")]
+        [SerializeField, Range(0.02f, 0.4f)] private float flowFinisherLaneDelay = 0.11f;
         [SerializeField, Min(1f)] private float actionAnimationFps = 18f;
         [SerializeField] private AudioClip waterSlashClip;
         [SerializeField] private AudioClip flowFinisherClip;
@@ -361,6 +363,27 @@ namespace PixelOcean
         private float specialAttackTimer;
         private float nextWaterSlashTime;
         private bool previousShoulderHeld;
+        private readonly List<PixelWaterGPU> pendingFinisherLanes = new();
+        private int pendingFinisherLaneIndex;
+        private float nextFinisherLaneReleaseTime;
+
+        [Header("On Fire Sprite Effect")]
+        [SerializeField] private bool enableOnFireSpriteEffect = true;
+        [SerializeField] private Color onFireSpriteColour = new(1f, 0.58f, 0.08f, 0.72f);
+        [SerializeField, Range(0f, 0.3f)] private float onFireSpritePulseAmount = 0.09f;
+        [SerializeField, Range(1f, 20f)] private float onFireSpritePulseSpeed = 8f;
+        [SerializeField, Range(0f, 0.2f)] private float onFireAfterimageOffset = 0.025f;
+
+        [Tooltip("Number of layered sprite trails shown behind Chuck while ON FIRE.")]
+        [SerializeField, Range(1, 8)] private int onFireTrailCount = 8;
+        [Tooltip("Spacing between each ON FIRE trail layer in world units.")]
+        [SerializeField, Range(0.01f, 0.25f)] private float onFireTrailSpacing = 0.095f;
+        [Tooltip("How strongly each later trail fades compared with the previous one.")]
+        [SerializeField, Range(0.1f, 0.95f)] private float onFireTrailAlphaFalloff = 0.62f;
+        [Tooltip("Additional vertical waviness applied across the trail.")]
+        [SerializeField, Range(0f, 0.12f)] private float onFireTrailWaveAmount = 0.025f;
+
+        private readonly List<SpriteRenderer> onFireTrailRenderers = new();
         private int lastWaveRenderQueue = -1;
 
         private RiderState state;
@@ -520,6 +543,7 @@ namespace PixelOcean
             waterSlashActionFrames = LoadOrderedSprites("Surfers/chuck_water_slash");
             flowFinisherFrames = LoadOrderedSprites("Surfers/chuck_flow_finish");
             EnsurePixelSprite();
+            EnsureOnFireSpriteEffect();
             EnsureSurferAnimator();
             EnsureSharkHitCollider();
             EnsureSpeechBubble();
@@ -574,6 +598,7 @@ namespace PixelOcean
         private void LateUpdate()
         {
             UpdateSpriteReaction(Time.deltaTime);
+            UpdateOnFireSpriteEffect();
 
             if (speechBubble != null)
                 speechBubble.RefreshSorting();
@@ -981,6 +1006,115 @@ namespace PixelOcean
             float pulse = 1f + Mathf.Sin(t * Mathf.PI) * 0.16f;
             transform.localScale = livingScale * pulse;
         }
+
+
+        private void EnsureOnFireSpriteEffect()
+        {
+            if (!enableOnFireSpriteEffect || spriteRenderer == null)
+                return;
+
+            int desiredCount = Mathf.Clamp(onFireTrailCount, 1, 8);
+
+            while (onFireTrailRenderers.Count < desiredCount)
+            {
+                int index = onFireTrailRenderers.Count;
+
+                GameObject trailObject = new GameObject($"ON FIRE Sprite Trail {index + 1}");
+                trailObject.transform.SetParent(transform, false);
+                trailObject.transform.localPosition = new Vector3(0f, 0f, 0.015f + index * 0.001f);
+
+                SpriteRenderer trailRenderer = trailObject.AddComponent<SpriteRenderer>();
+                trailRenderer.sharedMaterial = spriteRenderer.sharedMaterial;
+                trailRenderer.sortingLayerID = spriteRenderer.sortingLayerID;
+                trailRenderer.sortingOrder = spriteRenderer.sortingOrder - 1 - index;
+                trailRenderer.enabled = false;
+
+                onFireTrailRenderers.Add(trailRenderer);
+            }
+
+            while (onFireTrailRenderers.Count > desiredCount)
+            {
+                int last = onFireTrailRenderers.Count - 1;
+                SpriteRenderer rendererToRemove = onFireTrailRenderers[last];
+                onFireTrailRenderers.RemoveAt(last);
+
+                if (rendererToRemove != null)
+                    Destroy(rendererToRemove.gameObject);
+            }
+        }
+
+        private void UpdateOnFireSpriteEffect()
+        {
+            if (!enableOnFireSpriteEffect || spriteRenderer == null)
+                return;
+
+            EnsureOnFireSpriteEffect();
+            if (onFireTrailRenderers.Count == 0)
+                return;
+
+            bool active = state != RiderState.Dead &&
+                ((AirTrickScoreSystem.Instance != null && AirTrickScoreSystem.Instance.IsOnFire) ||
+                 (specialAttackActive && specialAttackIsFinisher));
+
+            float time = Time.unscaledTime;
+            float pulse = 0.5f + 0.5f * Mathf.Sin(time * onFireSpritePulseSpeed);
+            float facingSign = spriteRenderer.flipX ? -1f : 1f;
+
+            for (int i = 0; i < onFireTrailRenderers.Count; i++)
+            {
+                SpriteRenderer trail = onFireTrailRenderers[i];
+                if (trail == null)
+                    continue;
+
+                trail.enabled = active;
+                if (!active)
+                    continue;
+
+                float layer01 = onFireTrailRenderers.Count <= 1
+                    ? 0f
+                    : i / (float)(onFireTrailRenderers.Count - 1);
+
+                float alpha = onFireSpriteColour.a *
+                    Mathf.Pow(onFireTrailAlphaFalloff, i) *
+                    Mathf.Lerp(0.72f, 1f, pulse);
+
+                Color colour = Color.Lerp(
+                    onFireSpriteColour,
+                    Color.white,
+                    Mathf.Lerp(0.28f, 0.05f, layer01));
+
+                colour.a = alpha;
+
+                trail.color = colour;
+                trail.sprite = spriteRenderer.sprite;
+                trail.flipX = spriteRenderer.flipX;
+                trail.flipY = spriteRenderer.flipY;
+                trail.sortingLayerID = spriteRenderer.sortingLayerID;
+                trail.sortingOrder = spriteRenderer.sortingOrder + i;
+
+                float distance = onFireAfterimageOffset +
+                    onFireTrailSpacing * (i + 1);
+
+                float wave = Mathf.Sin(
+                    time * onFireSpritePulseSpeed * 0.8f -
+                    i * 0.85f) *
+                    onFireTrailWaveAmount *
+                    (1f + layer01);
+
+                trail.transform.localPosition = new Vector3(
+                    -facingSign * distance,
+                    wave,
+                    0.015f + i * 0.001f);
+
+                float scale = 1f +
+                    onFireSpritePulseAmount *
+                    Mathf.Lerp(1f, 0.35f, layer01) *
+                    Mathf.Lerp(0.4f, 1f, pulse);
+
+                trail.transform.localScale = new Vector3(scale, scale, 1f);
+            }
+        }
+
 
         private void EnsureSpeechBubble()
         {
@@ -1709,6 +1843,8 @@ namespace PixelOcean
                 return;
             }
 
+            UpdatePendingFlowFinisherCascade();
+
             bool attackHeld = aiControlled ? aiAttackPulse > 0f : ReadAttackInput();
             if (attackHeld && !previousAttackHeld)
             {
@@ -1896,6 +2032,7 @@ namespace PixelOcean
 
         private void UpdateWaterSpecial(float dt)
         {
+            UpdatePendingFlowFinisherCascade();
             specialAttackTimer += dt;
             float duration = specialAttackIsFinisher ? flowFinisherActionDuration : waterSlashActionDuration;
             Sprite[] frames = specialAttackIsFinisher ? flowFinisherFrames : waterSlashActionFrames;
@@ -1909,9 +2046,9 @@ namespace PixelOcean
             {
                 specialAttackProjectileReleased = true;
 
-                if (specialAttackIsFinisher && flowFinisherUsesThreeLanes)
+                if (specialAttackIsFinisher && flowFinisherUsesAllLanes)
                 {
-                    LaunchFlowFinisherAcrossNearestLanes();
+                    BeginFlowFinisherAllLaneCascade();
                 }
                 else
                 {
@@ -1930,9 +2067,12 @@ namespace PixelOcean
         }
 
 
-        private void LaunchFlowFinisherAcrossNearestLanes()
+        private void BeginFlowFinisherAllLaneCascade()
         {
             RefreshWaveList();
+            pendingFinisherLanes.Clear();
+            pendingFinisherLaneIndex = 0;
+
             if (simulations.Count == 0 || currentWave == null)
             {
                 LaunchWaterProjectile(currentWave, true, 0);
@@ -1943,27 +2083,40 @@ namespace PixelOcean
             if (centreIndex < 0)
                 centreIndex = Mathf.Clamp(waveIndex, 0, simulations.Count - 1);
 
-            // Always use the current lane first, then the closest neighbouring
-            // lanes by index. At the top or bottom edge this naturally selects
-            // two lanes on the available side instead of wrapping across the stack.
-            List<int> selectedIndices = new List<int>(3) { centreIndex };
-            for (int distance = 1; selectedIndices.Count < 3 &&
-                (centreIndex - distance >= 0 || centreIndex + distance < simulations.Count); distance++)
+            // Current lane first, then ripple outward one lane at a time.
+            pendingFinisherLanes.Add(simulations[centreIndex]);
+            for (int distance = 1; pendingFinisherLanes.Count < simulations.Count; distance++)
             {
-                if (centreIndex - distance >= 0)
-                    selectedIndices.Add(centreIndex - distance);
-                if (selectedIndices.Count >= 3)
+                int lower = centreIndex - distance;
+                int upper = centreIndex + distance;
+                if (lower >= 0)
+                    pendingFinisherLanes.Add(simulations[lower]);
+                if (upper < simulations.Count)
+                    pendingFinisherLanes.Add(simulations[upper]);
+                if (lower < 0 && upper >= simulations.Count)
                     break;
-                if (centreIndex + distance < simulations.Count)
-                    selectedIndices.Add(centreIndex + distance);
             }
 
-            for (int i = 0; i < selectedIndices.Count; i++)
-            {
-                int selectedIndex = selectedIndices[i];
-                PixelWaterGPU targetWave = simulations[selectedIndex];
-                LaunchWaterProjectile(targetWave, true, selectedIndex - centreIndex);
-            }
+            nextFinisherLaneReleaseTime = Time.time;
+            UpdatePendingFlowFinisherCascade();
+        }
+
+        private void UpdatePendingFlowFinisherCascade()
+        {
+            if (pendingFinisherLaneIndex >= pendingFinisherLanes.Count ||
+                Time.time < nextFinisherLaneReleaseTime)
+                return;
+
+            PixelWaterGPU targetWave = pendingFinisherLanes[pendingFinisherLaneIndex];
+            int laneOffset = targetWave != null && currentWave != null
+                ? targetWave.IndependentLayerIndex - currentWave.IndependentLayerIndex
+                : pendingFinisherLaneIndex;
+            LaunchWaterProjectile(targetWave, true, laneOffset);
+            pendingFinisherLaneIndex++;
+            nextFinisherLaneReleaseTime = Time.time + Mathf.Max(0.01f, flowFinisherLaneDelay);
+
+            if (pendingFinisherLaneIndex >= pendingFinisherLanes.Count)
+                pendingFinisherLanes.Clear();
         }
 
         private void LaunchWaterProjectile(PixelWaterGPU targetWave, bool isFinisher, int laneOffset)
