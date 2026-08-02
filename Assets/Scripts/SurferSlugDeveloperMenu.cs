@@ -70,7 +70,7 @@ namespace PixelOcean
             if (!visible) return;
             EnsureStyles();
             float panelWidth = 390f;
-            float panelHeight = 500f;
+            float panelHeight = 548f;
 
             Rect panel = new Rect(
                 (Screen.width - panelWidth) * 0.5f,
@@ -89,7 +89,11 @@ namespace PixelOcean
             if (GUILayout.Button("Max Flow / ON FIRE", buttonStyle)) AirTrickScoreSystem.Instance?.DebugMaxFlow();
             if (GUILayout.Button("Next Chapter", buttonStyle)) FindFirstObjectByType<SurfDayProgressionDirector>()?.DebugNextChapter();
             if (GUILayout.Button("Spawn Current Day Boss", buttonStyle)) FindFirstObjectByType<SurfDayProgressionDirector>()?.DebugSpawnBoss();
-            if (GUILayout.Button("Next Day", buttonStyle)) FindFirstObjectByType<SurfDayProgressionDirector>()?.DebugNextDay();
+            if (GUILayout.Button("Next Day", buttonStyle))
+            {
+                visible = false;
+                FindFirstObjectByType<SurfDayProgressionDirector>()?.DebugNextDay();
+            }
             if (GUILayout.Button("Reset Current Day", buttonStyle)) FindFirstObjectByType<SurfDayProgressionDirector>()?.DebugResetCurrentDay();
             GUILayout.Space(8f);
             SurfDayProgressionDirector director = FindFirstObjectByType<SurfDayProgressionDirector>();

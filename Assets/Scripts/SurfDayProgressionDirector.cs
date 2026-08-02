@@ -325,6 +325,10 @@ namespace PixelOcean
             DestroyAll<RubberDucklingSwimmer>();
             yield return null;
 
+            // The world stays paused behind the cutscene system's full black fade.
+            // Day 2 enemies are not spawned until all six boards have finished.
+            yield return StoryboardCutsceneSystem.PlayDayTwoOpening();
+
             currentDay = 2;
             AirTrickScoreSystem.Instance?.BeginDay(2);
             SurfAbilityProgression.Instance?.DebugUnlockAll();
@@ -585,6 +589,15 @@ namespace PixelOcean
 
         public void DebugNextDay()
         {
+            // Developer advancement from Day 1 uses the real transition so the
+            // Day 2 storyboard, pause, black fade and spawn timing are tested too.
+            if (currentDay == 1 && !changingDay)
+            {
+                changingDay = true;
+                StartCoroutine(BeginDayTwo());
+                return;
+            }
+
             StartCoroutine(LoadSavedRun(new SurfStageSaveSystem.SaveData
             {
                 day = currentDay + 1,

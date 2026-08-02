@@ -105,6 +105,34 @@ namespace PixelOcean
                 });
         }
 
+        /// <summary>
+        /// Plays the six-board Day 2 transition while the game remains frozen
+        /// behind a full black fade. Artwork is loaded from Resources/Storyboards/Day2.
+        /// </summary>
+        public static IEnumerator PlayDayTwoOpening()
+        {
+            StoryboardCutsceneSystem system = EnsureInstance();
+            yield return system.PlaySequence(
+                new[]
+                {
+                    "Storyboards/Day2/board_1",
+                    "Storyboards/Day2/board_2",
+                    "Storyboards/Day2/board_3",
+                    "Storyboards/Day2/board_4",
+                    "Storyboards/Day2/board_5",
+                    "Storyboards/Day2/board_6"
+                },
+                new[]
+                {
+                    "...IT'S TOO QUIET.",
+                    "WHERE DID EVERYBODY GO?",
+                    "WAIT... WHAT WAS THAT?",
+                    "SOMETHING'S MOVING BENEATH ME.",
+                    "THOSE AREN'T YESTERDAY'S SHARKS.",
+                    "AND NOW THERE'S SOMETHING ABOVE ME."
+                });
+        }
+
         public IEnumerator PlaySequence(
             string[] resourcePaths,
             string[] lines)
