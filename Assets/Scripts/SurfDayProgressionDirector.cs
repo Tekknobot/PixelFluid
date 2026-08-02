@@ -197,13 +197,13 @@ namespace PixelOcean
             bool dayTwo = currentDay >= 2;
             if (!dayTwo)
             {
-                objective = "SURF. STAY ALIVE. LEARN THE WATER.";
+                objective = "Surf. Stay alive. Learn the water.";
                 SpawnJellyfishEncounter("Dawn Jellyfish", 1);
                 SpawnMajor<SharkLaneSpawner>("Early Shark", spawner => spawner.SpawnShark(true));
             }
             else
             {
-                objective = "NEW PREDATORS HAVE ENTERED THE WATER.";
+                objective = "New predators have entered the water.";
                 SpawnMajor<BloodSharkLaneSpawner>("Dawn Blood Shark", spawner => spawner.SpawnBloodShark(true));
                 SpawnBloodfishEncounter("Dawn Bloodfish", 1);
             }
@@ -227,14 +227,14 @@ namespace PixelOcean
             }
             if (chapter >= Chapter.StrangeTide)
             {
-                objective = "SOMETHING IS WATCHING THE WATER.";
+                objective = "Something is watching the water.";
                 SpawnBoombox();
                 if (!dayTwo) { SpawnUfo(); SpawnJellyfishEncounter("Strange Tide Jellyfish", 2); SpawnMajor<WhaleLaneSpawner>("Strange Tide Whale", s => s.SpawnWhale(true)); }
                 else { SpawnHelicopter(); SpawnBloodfishEncounter("Strange Tide Bloodfish", 2); SpawnMajor<TransparentSquidLaneSpawner>("Veiled Squid", s => s.SpawnTransparentSquid(true)); }
             }
             if (chapter >= Chapter.Storm)
             {
-                objective = "KEEP MOVING. RESCUE ANYONE LEFT OUT THERE.";
+                objective = "Keep moving. Rescue anyone left out there.";
                 EnsureRain().SetSituation(ProceduralRainSystem.RainSituation.HeavyRain);
                 if (!dayTwo) { SpawnMajor<GiantSquidLaneSpawner>("Storm Squid", s => s.SpawnSquid(true)); SpawnJellyfishEncounter("Storm Jellyfish", 3); }
                 else { SpawnMajor<BloodSharkLaneSpawner>("Storm Blood Shark", s => s.SpawnBloodShark(true)); SpawnMajor<TransparentSquidLaneSpawner>("Storm Transparent Squid", s => s.SpawnTransparentSquid(true)); SpawnMajor<StingrayLaneSpawner>("Storm Stingray", s => s.SpawnStingray(true)); SpawnBloodfishEncounter("Storm Bloodfish", 3); }
@@ -334,7 +334,7 @@ namespace PixelOcean
             chapter = Chapter.Dawn;
             changingDay = false;
             BeginChapter(Chapter.Dawn, "DAY 2 — DEEP CURRENT", "NEW PREDATORS HAVE ENTERED THE WATER.");
-            learningObjective = "USE THE FULL MOVESET TO BUILD FLOW AND SURVIVE.";
+            learningObjective = "Use the full moveset to build flow and survive.";
             SpawnPickupSet();
             SpawnOceanItems(12);
             SpawnMajor<BloodSharkLaneSpawner>("Dawn Blood Shark", spawner => spawner.SpawnBloodShark(true));
@@ -708,42 +708,42 @@ namespace PixelOcean
 
             if (currentDay >= 2)
             {
-                learningObjective = "USE THE FULL MOVESET TO BUILD FLOW AND SURVIVE.";
+                learningObjective = "Use the full moveset to build Flow and survive.";
                 return;
             }
 
             if (chapter == Chapter.Dawn)
             {
-                learningObjective = "SURF LEFT/RIGHT. HOLD UP/DOWN + JUMP TO CHANGE WAVES.";
+                learningObjective = "Surf left/right. Hold Up/Down + Jump to change waves.";
                 return;
             }
 
             if (chapter == Chapter.FirstRescue)
             {
-                learningObjective = "REACH STRUGGLING SWIMMERS. A RESCUE RESTORES 1 LIFE.";
+                learningObjective = "Reach struggling swimmers. A rescue restores 1 life.";
                 return;
             }
 
             if (abilities == null || !abilities.Has(SurfAbility.ChargedJump))
-                learningObjective = "HOLD JUMP WHILE MOVING, THEN RELEASE TO LAUNCH.";
+                learningObjective = "Hold Jump while moving, then release to launch.";
             else if (!abilities.Has(SurfAbility.Handstand))
-                learningObjective = "PRESS A / SPACE AGAIN WHILE AIRBORNE FOR A HANDSTAND.";
+                learningObjective = "Press A / Space again while airborne for a handstand.";
             else if (!abilities.Has(SurfAbility.ThrowItems))
-                learningObjective = "PRESS X / F ON THE WATER TO THROW A COLLECTED OBJECT.";
+                learningObjective = "Press X / F on the water to throw a collected object.";
             else if (!abilities.Has(SurfAbility.TripleChain))
-                learningObjective = "CHAIN DIFFERENT AIR TRICKS BEFORE LANDING.";
+                learningObjective = "Chain different air tricks before landing.";
             else if (!abilities.Has(SurfAbility.Flow))
-                learningObjective = "LAND A CLEAN MULTI-TRICK CHAIN TO REVEAL FLOW.";
+                learningObjective = "Land a clean multi-trick chain to reveal Flow.";
             else if (!abilities.Has(SurfAbility.WaterSkid))
-                learningObjective = "CLEAN CHAINS BUILD FLOW. KEEP THE RHYTHM GOING.";
+                learningObjective = "Clean chains build Flow. Keep the rhythm going.";
             else if (!abilities.Has(SurfAbility.WaterSlash))
-                learningObjective = "HOLD B / E ON THE WATER, THEN RELEASE FOR A SKID.";
+                learningObjective = "Hold B / E on the water, then release for a skid.";
             else if (!abilities.Has(SurfAbility.FlowFinisher))
-                learningObjective = "BUILD FLOW TO 100% AND ENTER ON FIRE.";
+                learningObjective = "Build Flow to 100% and enter ON FIRE.";
             else if (chapter >= Chapter.FinalWave)
-                learningObjective = "TIP • BUILD FLOW AND USE THE FINISHER AGAINST THE BOSS.";
+                learningObjective = "Tip • Build Flow and use the finisher against the boss.";
             else
-                learningObjective = "WHILE ON FIRE, PRESS RB / R ON THE WATER FOR FLOW FINISHER.";
+                learningObjective = "While ON FIRE, press RB / R on the water for Flow Finisher.";
         }
 
         private void ShowBanner(string heading, string subheading, float duration)

@@ -206,10 +206,10 @@ namespace PixelOcean
 
         private void BuildObjectivePanel(RectTransform panel)
         {
-            TMP_Text heading = CreateText("OBJECTIVE + CURRENT LESSON", panel, 16, TextAnchor.UpperLeft, mutedColour);
+            TMP_Text heading = CreateText("OBJECTIVE + CURRENT LESSON", panel, 16, TextAnchor.UpperLeft, mutedColour, true);
             Stretch(heading.rectTransform, new Vector2(0f, 0.76f), Vector2.one, new Vector2(18f, 0f), new Vector2(-18f, -10f));
 
-            objectiveLabel = CreateText("SURF. STAY ALIVE.\nLEARN  •  MOVE LEFT/RIGHT.", panel, 32, TextAnchor.MiddleLeft, foregroundColour);
+            objectiveLabel = CreateText("Surf. Stay alive.\nLEARN  •  Move Left/Right.", panel, 32, TextAnchor.MiddleLeft, foregroundColour);
             objectiveLabel.enableAutoSizing = true;
             objectiveLabel.fontSizeMin = 10f;
             objectiveLabel.fontSizeMax = 16f;
@@ -328,7 +328,7 @@ namespace PixelOcean
 
         private void BuildInventoryPanel(RectTransform panel)
         {
-            TMP_Text heading = CreateText("ITEMS  •  NEXT TO THROW", panel, 16, TextAnchor.UpperLeft, mutedColour);
+            TMP_Text heading = CreateText("ITEMS  •  NEXT TO THROW", panel, 16, TextAnchor.UpperLeft, mutedColour, true);
             Stretch(heading.rectTransform, new Vector2(0f, 0.68f), Vector2.one, new Vector2(18f, 0f), new Vector2(-18f, -12f));
 
             inventoryRow = CreateRect("Item Row", panel, Vector2.zero);
@@ -371,7 +371,7 @@ namespace PixelOcean
             if (objectiveLabel != null)
                 objectiveLabel.text = progression != null && !string.IsNullOrEmpty(progression.CurrentObjective)
                     ? progression.CurrentObjective
-                    : "SURF. STAY ALIVE.";
+                    : "Surf. Stay alive.";
 
             if (livesLabel != null)
             {
@@ -594,7 +594,8 @@ namespace PixelOcean
             Transform parent,
             int fontSize,
             TextAnchor alignment,
-            Color colour)
+            Color colour,
+            bool uppercase = false)
         {
             GameObject go = new(
                 "Text",
@@ -610,7 +611,9 @@ namespace PixelOcean
             text.text = value;
             text.font = font != null ? font : PixelFontLibrary.TmpMedium;
             text.fontSize = fontSize;
-            text.fontStyle = FontStyles.Normal;
+            text.fontStyle = uppercase
+                ? FontStyles.UpperCase
+                : FontStyles.Normal;
             text.alignment = ConvertAlignment(alignment);
             text.color = colour;
             text.raycastTarget = false;
