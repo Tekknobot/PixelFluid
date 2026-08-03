@@ -89,6 +89,7 @@ namespace PixelOcean
         };
 
         private Coroutine pendingCheckpoint;
+        private Coroutine pendingDeveloperBossSpawn;
 
         /// <summary>
         /// Saves after the current gameplay state has settled. This is important for
@@ -781,12 +782,120 @@ namespace PixelOcean
 
         public void DebugSpawnBoss()
         {
-            if (chapter < Chapter.FinalWave)
-                runTime = Mathf.Max(runTime, finalWaveBeginsAt + 0.05f);
+            // Deliberately leave DebugNextChapter untouched. The dedicated boss
+            // button owns a complete, immediate encounter rebuild instead of
+            // relying on Update() to notice a timer change later.
+            if (pendingDeveloperBossSpawn != null)
+                return;
 
-            SurfAbilityProgression.Instance?.EnsureForStage(currentDay, Chapter.FinalWave);
+            pendingDeveloperBossSpawn =
+                StartCoroutine(DebugSpawnBossEncounterRoutine());
+        }
+
+        private IEnumerator DebugSpawnBossEncounterRoutine()
+        {
+            // The developer boss button is a full combat test loadout: every
+            // mechanic plus one level of each selectable day upgrade.
+            SurfAbilityProgression.Instance?.DebugPrepareCompleteBossLoadout();
+
+            runTime = Mathf.Max(runTime, finalWaveBeginsAt + 0.05f);
+            chapter = Chapter.FinalWave;
+            finalWaveStarted = true;
+            bossDefeatedSunset = false;
+            changingDay = false;
+
+            RefreshLearningObjectiveForStage();
             SyncDayNightToRunTime();
-            QueueCheckpoint();
+            PrepareBossArenaSeaLife();
+
+            // Remove stale or wrong-day boss state first. Destroy is deferred,
+            // so wait before asking spawners to test whether a boss still exists.
+            DestroyAll<BossArenaPrison>();
+            DestroyAll<GodzillaLaneSwimmer>();
+            DestroyAll<RubberDuckBossSwimmer>();
+            DestroyAll<GodzillaSkullSwimmer>();
+            DestroyAll<RubberDucklingSwimmer>();
+            DestroyAll<GodzillaLaneSpawner>();
+            DestroyAll<RubberDuckBossSpawner>();
+
+            yield return null;
+            yield return new WaitForEndOfFrame();
+            yield return null;
+
+            if (currentDay == 1)
+            {
+                SpawnMajor<GodzillaLaneSpawner>(
+                    "Developer Final Godzilla",
+                    spawner => spawner.SpawnGodzilla());
+            }
+            else if (currentDay == 2)
+            {
+                SpawnMajor<RubberDuckBossSpawner>(
+                    "Developer Day 2 Giant Rubber Duck Boss",
+                    spawner => spawner.SpawnRubberDuckBoss());
+            }
+            else
+            {
+                // Day 3 uses its Shadow Final Wave rather than a giant boss.
+                DayThreeOceanRemembers dayThree =
+                    FindFirstObjectByType<DayThreeOceanRemembers>();
+
+                if (dayThree == null)
+                {
+                    GameObject host = new GameObject(
+                        "Day Three Ocean Remembers");
+                    dayThree = host.AddComponent<DayThreeOceanRemembers>();
+                }
+            }
+
+            yield return null;
+            yield return new WaitForEndOfFrame();
+
+            // Verify both the boss and its arena. The normal spawners already
+            // construct BossArenaPrison, but this repairs any failed partial spawn.
+            if (currentDay == 1)
+            {
+                GodzillaLaneSwimmer boss =
+                    FindFirstObjectByType<GodzillaLaneSwimmer>();
+
+                if (boss != null &&
+                    FindFirstObjectByType<BossArenaPrison>() == null)
+                {
+                    GameObject arenaHost = new GameObject(
+                        "Developer Reaper Boss Arena Prison");
+                    BossArenaPrison arena =
+                        arenaHost.AddComponent<BossArenaPrison>();
+                    arena.Configure(
+                        boss,
+                        BossArenaPrison.ArenaTheme.Reaper);
+                }
+            }
+            else if (currentDay == 2)
+            {
+                RubberDuckBossSwimmer boss =
+                    FindFirstObjectByType<RubberDuckBossSwimmer>();
+
+                if (boss != null &&
+                    FindFirstObjectByType<BossArenaPrison>() == null)
+                {
+                    GameObject arenaHost = new GameObject(
+                        "Developer Rubber Duck Boss Arena Prison");
+                    BossArenaPrison arena =
+                        arenaHost.AddComponent<BossArenaPrison>();
+                    arena.Configure(
+                        boss,
+                        BossArenaPrison.ArenaTheme.RubberDuck);
+                }
+            }
+
+            SurfAbilityProgression.Instance?.ApplyUpgradesToAllPlayers();
+            ShowBanner(
+                currentDay <= 2 ? "BOSS ENCOUNTER READY" : "FINAL WAVE READY",
+                CurrentObjective,
+                3.5f);
+
+            SurfStageSaveSystem.Save(this);
+            pendingDeveloperBossSpawn = null;
         }
 
         public void DebugResetCurrentDay()

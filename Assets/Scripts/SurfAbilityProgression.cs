@@ -62,6 +62,27 @@ namespace PixelOcean
                 SurfAbility.Flow | SurfAbility.FlowFinisher | SurfAbility.ThrowItems;
             ApplyUpgradesToAllPlayers();
         }
+
+        /// <summary>
+        /// Gives developer-started boss encounters every mechanic and one level
+        /// of each selectable day upgrade. This is intentionally separate from
+        /// ordinary chapter reconstruction so normal saves and progression are
+        /// not inflated.
+        /// </summary>
+        public void DebugPrepareCompleteBossLoadout()
+        {
+            unlocked = SurfAbility.WaveSwitch | SurfAbility.ChargedJump |
+                SurfAbility.Handstand | SurfAbility.Rotation | SurfAbility.Flip |
+                SurfAbility.DoubleChain | SurfAbility.TripleChain |
+                SurfAbility.WaterSkid | SurfAbility.WaterSlash |
+                SurfAbility.Flow | SurfAbility.FlowFinisher | SurfAbility.ThrowItems;
+
+            jumpUpgradeLevel = Mathf.Max(jumpUpgradeLevel, 1);
+            waterSlashUpgradeLevel = Mathf.Max(waterSlashUpgradeLevel, 1);
+            skidUpgradeLevel = Mathf.Max(skidUpgradeLevel, 1);
+
+            ApplyUpgradesToAllPlayers();
+        }
         public void ResetForNewRun()
         {
             unlocked = SurfAbility.WaveSwitch;
