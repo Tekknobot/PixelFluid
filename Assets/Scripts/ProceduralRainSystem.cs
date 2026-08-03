@@ -644,8 +644,7 @@ namespace PixelOcean
                 name = "Procedural Rain Drop",
                 filterMode = FilterMode.Bilinear,
                 wrapMode = TextureWrapMode.Clamp,
-                hideFlags = HideFlags.HideAndDontSave,
-                alphaIsTransparency = true
+                hideFlags = HideFlags.HideAndDontSave
             };
 
             Color[] pixels = new Color[width * height];
@@ -677,8 +676,7 @@ namespace PixelOcean
                 name = "Procedural Rain Splash",
                 filterMode = FilterMode.Point,
                 wrapMode = TextureWrapMode.Clamp,
-                hideFlags = HideFlags.HideAndDontSave,
-                alphaIsTransparency = true
+                hideFlags = HideFlags.HideAndDontSave
             };
 
             Color[] pixels = new Color[size * size];
