@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,6 +9,7 @@ namespace PixelOcean
     [RequireComponent(typeof(InterWaveRenderItem))]
     public sealed class RubberDucklingSwimmer : MonoBehaviour
     {
+        public static event Action<RubberDucklingSwimmer> DestroyedByProjectile;
         [SerializeField, Min(0.1f)] private float seekSpeed = 1.65f;
         [SerializeField, Min(0.1f)] private float turnResponsiveness = 2.6f;
         [SerializeField, Min(0.1f)] private float explosionRange = 0.58f;
@@ -45,7 +47,7 @@ namespace PixelOcean
         {
             frames = movementFrames;
             lifeRemaining = lifetime;
-            bobPhase = Random.Range(0f, Mathf.PI * 2f);
+            bobPhase = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
             target = FindFirstObjectByType<TinyWaveSurfer>();
             currentLane = Mathf.Max(0, initialLane);
             RefreshLaneOrdering(true);
@@ -73,7 +75,7 @@ namespace PixelOcean
         {
             float minimum = Mathf.Max(0.25f, quackInterval.x);
             float maximum = Mathf.Max(minimum, quackInterval.y);
-            nextQuackTime = Time.time + Random.Range(minimum, maximum);
+            nextQuackTime = Time.time + UnityEngine.Random.Range(minimum, maximum);
         }
 
         private void EnsurePhysics()
@@ -191,6 +193,7 @@ namespace PixelOcean
         public bool TakeThrownItemHit(Vector2 impactPosition)
         {
             if (exploded) return false;
+            DestroyedByProjectile?.Invoke(this);
             Explode(false);
             return true;
         }

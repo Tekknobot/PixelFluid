@@ -3,10 +3,8 @@ using UnityEngine;
 namespace PixelOcean
 {
     /// <summary>
-    /// Turns a boss encounter into a camera-sized arena. The player is held inside
-    /// the current screen while the boss runs its normal lane AI. After the survival
-    /// timer expires, one edge becomes an escape gate; reaching it ends the encounter.
-    /// Defeating the boss normally also releases the arena automatically.
+    /// Seals a boss encounter inside a bounded arena. Escape is earned by completing
+    /// the boss-specific objective instead of waiting out a timer.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class BossArenaPrison : MonoBehaviour
@@ -19,17 +17,30 @@ namespace PixelOcean
         public float CameraLeftBoundary => leftX;
         public float CameraRightBoundary => rightX;
         public float CentreX => centreX;
+
         public enum ArenaTheme { Reaper, RubberDuck }
 
         [Header("Arena")]
         [SerializeField] private ArenaTheme theme = ArenaTheme.Reaper;
         [SerializeField, Min(6f)] private float arenaWidth = 16f;
         [SerializeField, Min(0.25f)] private float edgePadding = 0.8f;
-        [SerializeField, Min(5f)] private float escapeGateDelay = 42f;
         [SerializeField, Min(0.25f)] private float escapeDistance = 1.25f;
         [SerializeField, Min(0f)] private float introLockDuration = 1.25f;
 
+        [Header("Reaper Objective")]
+        [SerializeField, Range(2, 8)] private int reaperHitsToOpenEscape = 4;
+
+        [Header("Rubber Duck Objective")]
+        [SerializeField, Range(1, 12)] private int ducklingsPerOpening = 4;
+        [SerializeField, Range(1, 8)] private int duckDamagePhasesToOpenEscape = 3;
+        [SerializeField, Min(1f)] private float duckVulnerabilityDuration = 6f;
+
+        [Header("Boss UI")]
+        [SerializeField, Min(0f)] private float panelY = 325f;
+
         private MonoBehaviour boss;
+        private GodzillaLaneSwimmer reaperBoss;
+        private RubberDuckBossSwimmer duckBoss;
         private TinyWaveSurfer player;
         private Camera gameplayCamera;
         private float centreX;
@@ -39,13 +50,19 @@ namespace PixelOcean
         private bool gateOpen;
         private bool gateOnRight;
         private bool encounterFinished;
+        private int reaperHits;
+        private int ducklingsDestroyed;
+        private int duckDamagePhases;
+        private bool duckWindowOpen;
         private GUIStyle titleStyle;
         private GUIStyle smallStyle;
 
         public void Configure(MonoBehaviour bossBehaviour, ArenaTheme arenaTheme)
         {
+            UnsubscribeBossEvents();
             boss = bossBehaviour;
             theme = arenaTheme;
+            SubscribeBossEvents();
             CaptureArena();
         }
 
@@ -56,13 +73,85 @@ namespace PixelOcean
 
         private void Start()
         {
+            SubscribeBossEvents();
             CaptureArena();
         }
 
         private void OnDestroy()
         {
+            UnsubscribeBossEvents();
             if (Active == this)
                 Active = null;
+        }
+
+        private void SubscribeBossEvents()
+        {
+            reaperBoss = boss as GodzillaLaneSwimmer;
+            duckBoss = boss as RubberDuckBossSwimmer;
+
+            if (reaperBoss != null)
+                reaperBoss.ArenaHitAccepted += OnReaperHitAccepted;
+
+            if (duckBoss != null)
+            {
+                duckBoss.ArenaHitAccepted += OnDuckHitAccepted;
+                duckBoss.ConfigureArenaArmour(true);
+                RubberDucklingSwimmer.DestroyedByProjectile += OnDucklingDestroyed;
+            }
+        }
+
+        private void UnsubscribeBossEvents()
+        {
+            if (reaperBoss != null)
+                reaperBoss.ArenaHitAccepted -= OnReaperHitAccepted;
+            if (duckBoss != null)
+                duckBoss.ArenaHitAccepted -= OnDuckHitAccepted;
+            RubberDucklingSwimmer.DestroyedByProjectile -= OnDucklingDestroyed;
+            reaperBoss = null;
+            duckBoss = null;
+        }
+
+        private void OnReaperHitAccepted(GodzillaLaneSwimmer sender)
+        {
+            if (encounterFinished || gateOpen || sender != reaperBoss)
+                return;
+
+            reaperHits++;
+            if (reaperHits >= Mathf.Max(1, reaperHitsToOpenEscape))
+                OpenEscapeGate();
+        }
+
+        private void OnDucklingDestroyed(RubberDucklingSwimmer duckling)
+        {
+            if (encounterFinished || gateOpen || duckBoss == null || duckWindowOpen)
+                return;
+
+            ducklingsDestroyed++;
+            if (ducklingsDestroyed >= Mathf.Max(1, ducklingsPerOpening))
+            {
+                ducklingsDestroyed = 0;
+                duckWindowOpen = true;
+                duckBoss.OpenArenaVulnerability(duckVulnerabilityDuration);
+            }
+        }
+
+        private void OnDuckHitAccepted(RubberDuckBossSwimmer sender)
+        {
+            if (encounterFinished || gateOpen || sender != duckBoss || !duckWindowOpen)
+                return;
+
+            duckWindowOpen = false;
+            duckDamagePhases++;
+            duckBoss.CloseArenaVulnerability();
+
+            if (duckDamagePhases >= Mathf.Max(1, duckDamagePhasesToOpenEscape))
+                OpenEscapeGate();
+        }
+
+        private void OpenEscapeGate()
+        {
+            gateOpen = true;
+            gateOnRight = boss == null || boss.transform.position.x <= centreX;
         }
 
         public float ClampPlayerX(float desiredX, out bool hitClosedBoundary)
@@ -78,8 +167,6 @@ namespace PixelOcean
                 return clamped;
             }
 
-            // The open side remains traversable so the player can escape. The
-            // opposite wall continues to stop skids, jumps and combo momentum.
             if (gateOnRight)
             {
                 if (desiredX < min)
@@ -102,9 +189,7 @@ namespace PixelOcean
         {
             float min = CameraLeftBoundary + viewportHalfWidth;
             float max = CameraRightBoundary - viewportHalfWidth;
-            return min <= max
-                ? Mathf.Clamp(desiredCameraX, min, max)
-                : CentreX;
+            return min <= max ? Mathf.Clamp(desiredCameraX, min, max) : CentreX;
         }
 
         private void CaptureArena()
@@ -136,12 +221,16 @@ namespace PixelOcean
                 return;
             }
 
+            if (duckWindowOpen && duckBoss != null && !duckBoss.IsVulnerable)
+            {
+                duckWindowOpen = false;
+                duckBoss.CloseArenaVulnerability();
+            }
+
             if (player == null || player.IsDead)
                 player = FindFirstObjectByType<TinyWaveSurfer>();
             if (player == null)
                 return;
-
-            gateOpen = Time.time - startedAt >= escapeGateDelay;
 
             Vector3 p = player.transform.position;
             float paddedLeft = leftX + edgePadding;
@@ -180,10 +269,8 @@ namespace PixelOcean
         private void SetPlayerPosition(Vector3 position)
         {
             Rigidbody2D body = player.GetComponent<Rigidbody2D>();
-            if (body != null)
-                body.position = position;
-            else
-                player.transform.position = position;
+            if (body != null) body.position = position;
+            else player.transform.position = position;
         }
 
         private void FinishArena(bool escaped)
@@ -223,21 +310,36 @@ namespace PixelOcean
             };
         }
 
+        private string BuildStatus()
+        {
+            if (gateOpen)
+                return gateOnRight ? "ESCAPE ROUTE OPEN  >>>" : "<<<  ESCAPE ROUTE OPEN";
+
+            if (theme == ArenaTheme.Reaper)
+            {
+                int remaining = Mathf.Max(0, reaperHitsToOpenEscape - reaperHits);
+                return remaining > 0 ? "BREAK THE TIDE  " + remaining + " HITS" : "THE TIDE IS SHIFTING...";
+            }
+
+            if (duckWindowOpen)
+                return "DUCK EXPOSED — HIT IT NOW!";
+
+            int ducklingsRemaining = Mathf.Max(0, ducklingsPerOpening - ducklingsDestroyed);
+            int phasesRemaining = Mathf.Max(0, duckDamagePhasesToOpenEscape - duckDamagePhases);
+            return "POP " + ducklingsRemaining + " DUCKLINGS  •  " + phasesRemaining + " WAVES LEFT";
+        }
+
         private void OnGUI()
         {
             if (encounterFinished || boss == null)
                 return;
 
             EnsureStyles();
-            float elapsed = Time.time - startedAt;
             string bossName = theme == ArenaTheme.Reaper ? "REAPER TIDE" : "DUCK STORM";
-            string status = gateOpen
-                ? (gateOnRight ? "ESCAPE ROUTE OPEN  >>>" : "<<<  ESCAPE ROUTE OPEN")
-                : "ARENA SEALED  " + Mathf.CeilToInt(Mathf.Max(0f, escapeGateDelay - elapsed));
+            string status = BuildStatus();
 
             Color old = GUI.color;
             GUI.color = new Color(0f, 0.05f, 0.09f, 0.82f);
-            const float panelY = 320f;
             GUI.Box(new Rect(Screen.width * 0.5f - 210f, panelY, 420f, 72f), GUIContent.none);
             GUI.color = old;
             GUI.Label(new Rect(Screen.width * 0.5f - 200f, panelY + 4f, 400f, 34f), bossName, titleStyle);

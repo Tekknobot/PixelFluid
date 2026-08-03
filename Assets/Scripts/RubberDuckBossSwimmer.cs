@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,7 @@ namespace PixelOcean
     [RequireComponent(typeof(InterWaveRenderItem))]
     public sealed class RubberDuckBossSwimmer : MonoBehaviour
     {
+        public event Action<RubberDuckBossSwimmer> ArenaHitAccepted;
         private enum CreatureState { Roam, Pursue, WindUp, Lunge, Recover, InvestigateDeath, MournDeath }
 
         [Header("Movement")]
@@ -123,6 +125,8 @@ namespace PixelOcean
         private Coroutine hurtFlashRoutine;
         private Color normalSpriteColour = Color.white;
         private float nextVulnerableTime;
+        private bool arenaArmourEnabled;
+        private float arenaVulnerabilityUntil;
 
 
 
@@ -179,7 +183,7 @@ namespace PixelOcean
             targetLane = currentLane;
             renderItem.SetLane(currentLane);
             depthOffset = -Mathf.Abs(laneDepthBias);
-            direction = Random.value < 0.5f ? -1f : 1f;
+            direction = UnityEngine.Random.value < 0.5f ? -1f : 1f;
 
             Vector2 position = transform.position;
             float minX = waterLayers[0].TankMinimum.x;
@@ -566,6 +570,27 @@ namespace PixelOcean
         }
 
 
+        public void ConfigureArenaArmour(bool enabled)
+        {
+            arenaArmourEnabled = enabled;
+            arenaVulnerabilityUntil = enabled ? -1f : float.PositiveInfinity;
+        }
+
+        public void OpenArenaVulnerability(float duration)
+        {
+            if (!arenaArmourEnabled || defeated)
+                return;
+
+            arenaVulnerabilityUntil = Time.time + Mathf.Max(0.5f, duration);
+            nextVulnerableTime = Mathf.Min(nextVulnerableTime, Time.time);
+        }
+
+        public void CloseArenaVulnerability()
+        {
+            if (arenaArmourEnabled)
+                arenaVulnerabilityUntil = -1f;
+        }
+
         /// <summary>
         /// Applies damage from any throwable using SodaCanProjectile. The creature
         /// has health but intentionally does not create or expose a health bar.
@@ -578,11 +603,16 @@ namespace PixelOcean
             // Boss armour only opens for one hit at a time. Returning false lets
             // SodaCanProjectile continue its normal ricochet instead of melting
             // the boss with a pile of projectiles in the same second.
+            if (arenaArmourEnabled && Time.time > arenaVulnerabilityUntil)
+                return false;
             if (Time.time < nextVulnerableTime)
                 return false;
 
             nextVulnerableTime = Time.time + Mathf.Max(0.05f, vulnerabilityCooldown);
             currentHealth = Mathf.Max(0, currentHealth - Mathf.Max(1, Mathf.Min(damage, thrownItemDamage)));
+            ArenaHitAccepted?.Invoke(this);
+            if (arenaArmourEnabled)
+                CloseArenaVulnerability();
             enragedUntil = Mathf.Max(enragedUntil, Time.time + hitAggressionDuration);
 
             // Immediately retaliate against the active player after being struck.
@@ -778,7 +808,7 @@ namespace PixelOcean
         {
             float minimum = Mathf.Max(0.5f, ducklingSpawnInterval.x);
             float maximum = Mathf.Max(minimum, ducklingSpawnInterval.y);
-            nextDucklingSpawnTime = Time.time + Random.Range(minimum, maximum);
+            nextDucklingSpawnTime = Time.time + UnityEngine.Random.Range(minimum, maximum);
         }
 
         private void SpawnDuckling(int index, int count)
@@ -820,7 +850,7 @@ namespace PixelOcean
         public int CurrentHealth => currentHealth;
         public int MaximumHealth => Mathf.Max(1, maximumHealth);
         public bool IsDefeated => defeated;
-        public bool IsVulnerable => !defeated && Time.time >= nextVulnerableTime;
+        public bool IsVulnerable => !defeated && Time.time >= nextVulnerableTime && (!arenaArmourEnabled || Time.time <= arenaVulnerabilityUntil);
         public float VulnerabilityTimeRemaining => Mathf.Max(0f, nextVulnerableTime - Time.time);
 
         private int GetTargetLane(TinyWaveSurfer surfer)
@@ -847,8 +877,8 @@ namespace PixelOcean
 
             // Godzilla moves in two-lane sweeps when possible, unlike the shark's
             // frequent single-lane wandering.
-            int step = Random.value < 0.7f ? 2 : 1;
-            int sign = Random.value < 0.5f ? -1 : 1;
+            int step = UnityEngine.Random.value < 0.7f ? 2 : 1;
+            int sign = UnityEngine.Random.value < 0.5f ? -1 : 1;
             targetLane = Mathf.Clamp(currentLane + sign * step, 0, laneCount - 1);
             if (targetLane == currentLane)
                 targetLane = currentLane == 0 ? Mathf.Min(step, laneCount - 1) : Mathf.Max(0, currentLane - step);
@@ -948,7 +978,7 @@ namespace PixelOcean
         {
             float minimum = Mathf.Min(laneShiftDelayRange.x, laneShiftDelayRange.y);
             float maximum = Mathf.Max(laneShiftDelayRange.x, laneShiftDelayRange.y);
-            nextLaneShiftTime = Time.time + Random.Range(minimum, maximum);
+            nextLaneShiftTime = Time.time + UnityEngine.Random.Range(minimum, maximum);
         }
     }
 }

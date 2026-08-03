@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,7 @@ namespace PixelOcean
     [RequireComponent(typeof(InterWaveRenderItem))]
     public sealed class GodzillaLaneSwimmer : MonoBehaviour
     {
+        public event Action<GodzillaLaneSwimmer> ArenaHitAccepted;
         private enum CreatureState { Roam, Pursue, WindUp, Lunge, Recover, InvestigateDeath, MournDeath }
 
         [Header("Movement")]
@@ -176,7 +178,7 @@ namespace PixelOcean
             targetLane = currentLane;
             renderItem.SetLane(currentLane);
             depthOffset = -Mathf.Abs(laneDepthBias);
-            direction = Random.value < 0.5f ? -1f : 1f;
+            direction = UnityEngine.Random.value < 0.5f ? -1f : 1f;
 
             Vector2 position = transform.position;
             float minX = waterLayers[0].TankMinimum.x;
@@ -253,7 +255,7 @@ namespace PixelOcean
         {
             float minimum = Mathf.Max(1f, reaperHornInterval.x);
             float maximum = Mathf.Max(minimum, reaperHornInterval.y);
-            nextReaperHornTime = Time.time + Random.Range(minimum, maximum);
+            nextReaperHornTime = Time.time + UnityEngine.Random.Range(minimum, maximum);
         }
 
         private void FixedUpdate()
@@ -590,6 +592,7 @@ namespace PixelOcean
 
             nextVulnerableTime = Time.time + Mathf.Max(0.05f, vulnerabilityCooldown);
             currentHealth = Mathf.Max(0, currentHealth - Mathf.Max(1, Mathf.Min(damage, thrownItemDamage)));
+            ArenaHitAccepted?.Invoke(this);
             enragedUntil = Mathf.Max(enragedUntil, Time.time + hitAggressionDuration);
 
             // Immediately retaliate against the active player after being struck.
@@ -772,8 +775,8 @@ namespace PixelOcean
 
             // Godzilla moves in two-lane sweeps when possible, unlike the shark's
             // frequent single-lane wandering.
-            int step = Random.value < 0.7f ? 2 : 1;
-            int sign = Random.value < 0.5f ? -1 : 1;
+            int step = UnityEngine.Random.value < 0.7f ? 2 : 1;
+            int sign = UnityEngine.Random.value < 0.5f ? -1 : 1;
             targetLane = Mathf.Clamp(currentLane + sign * step, 0, laneCount - 1);
             if (targetLane == currentLane)
                 targetLane = currentLane == 0 ? Mathf.Min(step, laneCount - 1) : Mathf.Max(0, currentLane - step);
@@ -873,7 +876,7 @@ namespace PixelOcean
         {
             float minimum = Mathf.Min(laneShiftDelayRange.x, laneShiftDelayRange.y);
             float maximum = Mathf.Max(laneShiftDelayRange.x, laneShiftDelayRange.y);
-            nextLaneShiftTime = Time.time + Random.Range(minimum, maximum);
+            nextLaneShiftTime = Time.time + UnityEngine.Random.Range(minimum, maximum);
         }
     }
 }
