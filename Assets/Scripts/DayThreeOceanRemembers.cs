@@ -551,9 +551,17 @@ namespace PixelOcean
             bool hostile = director != null &&
                            director.CurrentChapter >= SurfDayProgressionDirector.Chapter.FinalWave;
 
-            float side = hostile
-                ? sideSign * Mathf.Sign(Mathf.Sin(Time.unscaledTime * 0.72f + phase))
-                : sideSign;
+            float side = sideSign;
+
+            if (hostile)
+            {
+                // Stay on the usual side most of the time.
+                // Only cross in front briefly and occasionally.
+                float crossWave = Mathf.Sin(Time.unscaledTime * 0.14f + phase);
+
+                if (crossWave > 0.94f)
+                    side = -sideSign;
+            }
             float distance = hostile
                 ? Mathf.Max(0.65f, normalFollowDistance * 0.85f) +
                   Mathf.Abs(Mathf.Sin(Time.unscaledTime * 0.41f + phase)) * 0.75f
