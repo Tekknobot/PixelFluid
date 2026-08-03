@@ -15,22 +15,21 @@ namespace PixelOcean
         private enum CreatureState { Roam, Pursue, WindUp, Lunge, Recover, InvestigateDeath, MournDeath }
 
         [Header("Movement")]
-        [SerializeField, Min(0.05f)] private float cruiseSpeed = 0.82f;
-        [SerializeField, Min(0.05f)] private float pursuitSpeed = 1.75f;
-        [SerializeField, Min(0.1f)] private float lungeSpeed = 3.35f;
-        [SerializeField, Range(0f, 0.35f)] private float currentInfluence = 0.04f;
+        [SerializeField, Min(0.05f)] private float cruiseSpeed = 0.65f;
+        [SerializeField, Min(0.05f)] private float pursuitSpeed = 1.35f;
+        [SerializeField, Min(0.1f)] private float lungeSpeed = 2.35f;
+        [SerializeField, Range(0f, 0.35f)] private float currentInfluence = 0.025f;
 
         [Header("Unique Behaviour")]
-        [SerializeField, Min(0.5f)] private float detectionRange = 18f;
-        [SerializeField, Min(0.5f)] private float abandonRange = 24f;
-        [SerializeField, Min(0.1f)] private float attackRange = 3.15f;
-        [SerializeField, Min(0.05f)] private float hitRange = 0.82f;
-        [SerializeField, Min(0f)] private float windUpDuration = 0.16f;
-        [SerializeField, Min(0f)] private float attackRecovery = 0.72f;
-        [SerializeField] private Vector2 laneShiftDelayRange = new(0.45f, 1.15f);
-        [SerializeField, Min(0.2f)] private float laneChangeDuration = 0.48f;
-        [SerializeField, Range(0f, 0.45f)] private float laneDepthBias = 0.12f;
-
+        [SerializeField, Min(0.5f)] private float detectionRange = 15f;
+        [SerializeField, Min(0.5f)] private float abandonRange = 21f;
+        [SerializeField, Min(0.1f)] private float attackRange = 2.55f;
+        [SerializeField, Min(0.05f)] private float hitRange = 0.68f;
+        [SerializeField, Min(0f)] private float windUpDuration = 0.42f;
+        [SerializeField, Min(0f)] private float attackRecovery = 1.15f;
+        [SerializeField] private Vector2 laneShiftDelayRange = new(1.15f, 2.25f);
+        [SerializeField, Min(0.2f)] private float laneChangeDuration = 0.72f;
+        [SerializeField, Range(0f, 0.45f)] private float laneDepthBias = 0.08f;
 
         [Header("Health and Thrown Item Damage")]
         [SerializeField, Min(1)] private int maximumHealth = 8;
