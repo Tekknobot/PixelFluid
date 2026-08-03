@@ -11,7 +11,7 @@ namespace PixelOcean
     public sealed class ProceduralHorizonFog : MonoBehaviour
     {
         [Header("Placement")]
-        [Tooltip("World-space height where the soft top of the fog begins.")]
+        [Tooltip("Minimum world-space height where the soft top of the fog begins.")]
         [SerializeField] private float horizonY = 1.65f;
         [Tooltip("Extra width beyond both camera edges.")]
         [SerializeField, Min(0f)] private float horizontalPadding = 3f;
@@ -19,6 +19,12 @@ namespace PixelOcean
         [SerializeField, Min(0f)] private float lowerPadding = 3f;
         [Tooltip("Render above distant scenery but below the water simulations.")]
         [SerializeField] private int sortingOrder = 0;
+
+        [Header("Wave Stack Coverage")]
+        [Tooltip("How far the fully opaque fog overlaps upward into the visible bottom of the highest wave layer.")]
+        [SerializeField, Range(0f, 1f)] private float opaqueWaveOverlap = 0.23f;
+        [Tooltip("How often the active wave-layer list is refreshed. The layer positions themselves are still checked every frame.")]
+        [SerializeField, Range(0.1f, 3f)] private float waveRefreshInterval = 0.75f;
 
         [Header("Pixel Fog")]
         [SerializeField, Range(32, 512)] private int textureWidth = 256;
@@ -32,11 +38,17 @@ namespace PixelOcean
         [SerializeField, Range(0f, 1f)] private float mistStrength = 0.72f;
 
         [Header("Colours")]
-        [SerializeField] private Color nightHorizonColour = new(0.025f, 0.11f, 0.15f, 1f);
-        [SerializeField] private Color dayHorizonColour = new(0.17f, 0.48f, 0.58f, 1f);
-        [SerializeField] private Color nightDeepWaterColour = new(0.015f, 0.12f, 0.16f, 1f);
-        [SerializeField] private Color dayDeepWaterColour = new(0.03f, 0.34f, 0.43f, 1f);
-        [SerializeField, Range(0f, 1f)] private float colourFollowStrength = 0.8f;
+
+        // Top of the gradient (near the horizon)
+        [SerializeField] private Color nightHorizonColour = new(0.012f, 0.095f, 0.120f, 1f);
+        [SerializeField] private Color dayHorizonColour   = new(0.018f, 0.135f, 0.165f, 1f);
+
+        // Bottom of the gradient (deep ocean)
+        [SerializeField] private Color nightDeepWaterColour = new(0.003f, 0.030f, 0.040f, 1f);
+        [SerializeField] private Color dayDeepWaterColour   = new(0.006f, 0.055f, 0.070f, 1f);
+
+        [SerializeField, Range(0f, 1f)]
+        private float colourFollowStrength = 0.8f;
 
         private SpriteRenderer spriteRenderer;
         private Texture2D texture;
@@ -44,6 +56,8 @@ namespace PixelOcean
         private Color[] pixels;
         private Camera gameplayCamera;
         private ProceduralStarryNight dayNight;
+        private PixelWaterGPU[] waveLayers;
+        private float nextWaveRefreshTime;
         private float timer;
         private float phase;
 
@@ -51,12 +65,14 @@ namespace PixelOcean
         {
             gameplayCamera = Camera.main;
             dayNight = FindFirstObjectByType<ProceduralStarryNight>();
+            RefreshWaveLayers();
             BuildResources();
             Redraw();
         }
 
         private void OnEnable()
         {
+            RefreshWaveLayers();
             FitToCamera();
         }
 
@@ -68,6 +84,9 @@ namespace PixelOcean
             if (dayNight == null)
                 dayNight = FindFirstObjectByType<ProceduralStarryNight>();
 
+            if (Time.unscaledTime >= nextWaveRefreshTime)
+                RefreshWaveLayers();
+
             FitToCamera();
 
             phase += Time.deltaTime * driftSpeed;
@@ -77,6 +96,42 @@ namespace PixelOcean
                 timer = refreshInterval;
                 Redraw();
             }
+        }
+
+        private void RefreshWaveLayers()
+        {
+            waveLayers = FindObjectsByType<PixelWaterGPU>(
+                FindObjectsInactive.Exclude,
+                FindObjectsSortMode.None);
+
+            nextWaveRefreshTime =
+                Time.unscaledTime + Mathf.Max(0.1f, waveRefreshInterval);
+        }
+
+        private float GetHighestVisibleWaveBottom()
+        {
+            bool foundWave = false;
+            float highestBottom = float.NegativeInfinity;
+
+            if (waveLayers != null)
+            {
+                for (int i = 0; i < waveLayers.Length; i++)
+                {
+                    PixelWaterGPU wave = waveLayers[i];
+                    if (wave == null || !wave.isActiveAndEnabled)
+                        continue;
+
+                    highestBottom = Mathf.Max(
+                        highestBottom,
+                        wave.VisibleWaveBottom);
+
+                    foundWave = true;
+                }
+            }
+
+            return foundWave
+                ? highestBottom
+                : float.NegativeInfinity;
         }
 
         private void BuildResources()
@@ -100,7 +155,6 @@ namespace PixelOcean
             sprite.hideFlags = HideFlags.HideAndDontSave;
 
             spriteRenderer.sprite = sprite;
-
             spriteRenderer.sortingOrder = sortingOrder;
             spriteRenderer.maskInteraction = SpriteMaskInteraction.None;
         }
@@ -112,11 +166,51 @@ namespace PixelOcean
 
             float cameraHeight = gameplayCamera.orthographicSize * 2f;
             float cameraWidth = cameraHeight * gameplayCamera.aspect;
-            float bottomY = gameplayCamera.transform.position.y - gameplayCamera.orthographicSize - lowerPadding;
-            float requiredHeight = Mathf.Max(0.5f, horizonY - bottomY);
+            float bottomY =
+                gameplayCamera.transform.position.y -
+                gameplayCamera.orthographicSize -
+                lowerPadding;
 
-            transform.position = new Vector3(gameplayCamera.transform.position.x, horizonY, 0f);
-            transform.localScale = new Vector3(cameraWidth + horizontalPadding * 2f, requiredHeight, 1f);
+            /*
+             * The texture becomes fully opaque after softBandFraction of its
+             * world-space height has passed downward from the top.
+             *
+             * Solve for the top position required to place that opaque cutoff at
+             * the highest visible bottom edge of the complete wave stack.
+             */
+            float topY = horizonY;
+            float highestWaveBottom = GetHighestVisibleWaveBottom();
+
+            if (!float.IsNegativeInfinity(highestWaveBottom))
+            {
+                float desiredOpaqueCutoff =
+                    highestWaveBottom + opaqueWaveOverlap;
+
+                float softFraction = Mathf.Clamp(
+                    softBandFraction,
+                    0.02f,
+                    0.8f);
+
+                float denominator = Mathf.Max(0.01f, 1f - softFraction);
+
+                float requiredTopForCoverage =
+                    (desiredOpaqueCutoff - softFraction * bottomY) /
+                    denominator;
+
+                topY = Mathf.Max(horizonY, requiredTopForCoverage);
+            }
+
+            float requiredHeight = Mathf.Max(0.5f, topY - bottomY);
+
+            transform.position = new Vector3(
+                gameplayCamera.transform.position.x,
+                topY,
+                0f);
+
+            transform.localScale = new Vector3(
+                cameraWidth + horizontalPadding * 2f,
+                requiredHeight,
+                1f);
         }
 
         private void Redraw()
@@ -161,13 +255,13 @@ namespace PixelOcean
             for (int by = 0; by < textureHeight; by += block)
             {
                 /*
-                * Unity texture coordinates start at the bottom:
-                *
-                * by = 0                 bottom
-                * by = textureHeight - 1 top
-                *
-                * Convert that into a distance measured downward from the top.
-                */
+                 * Unity texture coordinates start at the bottom:
+                 *
+                 * by = 0                  bottom
+                 * by = textureHeight - 1  top
+                 *
+                 * Convert that into a distance measured downward from the top.
+                 */
                 float yFromTop = (textureHeight - 1) - by;
 
                 for (int bx = 0; bx < textureWidth; bx += block)
@@ -190,12 +284,9 @@ namespace PixelOcean
                         softRows;
 
                     /*
-                    * At the top:
-                    * fogDepth is around zero and therefore transparent.
-                    *
-                    * Moving downward:
-                    * fogDepth reaches one and becomes fully opaque.
-                    */
+                     * At the top, fogDepth is around zero and transparent.
+                     * Moving downward, fogDepth reaches one and becomes opaque.
+                     */
                     float fogDepth = (yFromTop - brokenEdge) / softRows;
 
                     float alpha;
