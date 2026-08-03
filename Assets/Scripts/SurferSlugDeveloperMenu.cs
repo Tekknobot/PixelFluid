@@ -10,9 +10,26 @@ namespace PixelOcean
     public sealed class SurferSlugDeveloperMenu : MonoBehaviour
     {
         private const int MenuItemCount = 8;
+        private const string DeveloperUnlockedKey = "SurferSlug.DeveloperUnlocked";
 
         private static SurferSlugDeveloperMenu instance;
         public static bool IsOpen => instance != null && instance.visible;
+        public static bool IsUnlocked => PlayerPrefs.GetInt(DeveloperUnlockedKey, 0) == 1;
+
+        public static void UnlockAndOpen()
+        {
+            PlayerPrefs.SetInt(DeveloperUnlockedKey, 1);
+            PlayerPrefs.Save();
+
+            if (instance == null)
+                return;
+
+            // The pause menu temporarily disables gameplay behaviours. Re-enable
+            // this persistent overlay so the completed secret code can open it.
+            instance.enabled = true;
+            instance.unlockNoticeUntil = Time.unscaledTime + 2.25f;
+            instance.SetVisible(true);
+        }
 
         private bool visible;
         private bool godMode;
@@ -20,6 +37,7 @@ namespace PixelOcean
         private int selectedIndex;
         private float nextNavigationTime;
         private float previousTimeScale = 1f;
+        private float unlockNoticeUntil;
 
         private GUIStyle titleStyle;
         private GUIStyle buttonStyle;
@@ -58,10 +76,9 @@ namespace PixelOcean
 
         private void Update()
         {
-            // F10 is deliberately the only way to open the developer menu.
-            // Controller buttons can navigate it after it is already open,
-            // but can never trigger developer mode during normal play.
-            if (TogglePressed())
+            // F10 becomes a convenient shortcut only after the controller code
+            // has been discovered once on this installation.
+            if (IsUnlocked && TogglePressed())
                 SetVisible(!visible);
 
             if (visible)
@@ -231,6 +248,18 @@ namespace PixelOcean
             if (!visible) return;
 
             EnsureStyles();
+
+            if (Time.unscaledTime < unlockNoticeUntil)
+            {
+                GUIStyle noticeStyle = new GUIStyle(titleStyle)
+                {
+                    fontSize = 20,
+                    alignment = TextAnchor.MiddleCenter
+                };
+                GUI.Label(new Rect(0f, Screen.height - 82f, Screen.width, 44f),
+                    "DEVELOPER MODE ENABLED", noticeStyle);
+            }
+
             const float panelWidth = 430f;
             const float panelHeight = 610f;
 

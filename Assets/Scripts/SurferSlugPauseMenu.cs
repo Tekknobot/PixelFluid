@@ -35,6 +35,7 @@ namespace PixelOcean
         private Button continueButton;
         private Button controlsButton;
         private Button settingsButton;
+        private Button developerButton;
         private Button quitButton;
         private Image logoImage;
         private Image startupBlackImage;
@@ -45,6 +46,11 @@ namespace PixelOcean
         private bool firstMenu = true;
         private bool menuVisible;
         private float inputReadyTime;
+
+        // Secret controller code: UP, UP, LEFT, RIGHT, LEFT, RIGHT, LB, RB.
+        private const float DeveloperCheatStepTimeout = 1.0f;
+        private int developerCheatStep;
+        private float developerCheatDeadline;
 
         private static readonly HashSet<string> SimulationTypeNames = new(StringComparer.Ordinal)
         {
@@ -84,6 +90,9 @@ namespace PixelOcean
 
         private void Update()
         {
+            if (menuVisible)
+                UpdateDeveloperCheat();
+
             if (Time.unscaledTime < inputReadyTime)
                 return;
 
@@ -99,6 +108,101 @@ namespace PixelOcean
             {
                 PauseGame();
             }
+        }
+
+
+        private enum DeveloperCheatInput
+        {
+            None,
+            Up,
+            Left,
+            Right,
+            LeftBumper,
+            RightBumper,
+            Other
+        }
+
+        private void UpdateDeveloperCheat()
+        {
+#if ENABLE_INPUT_SYSTEM
+            Gamepad gamepad = Gamepad.current;
+            if (gamepad == null)
+            {
+                ResetDeveloperCheat();
+                return;
+            }
+
+            if (developerCheatStep > 0 && Time.unscaledTime > developerCheatDeadline)
+                ResetDeveloperCheat();
+
+            DeveloperCheatInput input = ReadDeveloperCheatInput(gamepad);
+            if (input == DeveloperCheatInput.None)
+                return;
+
+            DeveloperCheatInput expected = developerCheatStep switch
+            {
+                0 => DeveloperCheatInput.Up,
+                1 => DeveloperCheatInput.Up,
+                2 => DeveloperCheatInput.Left,
+                3 => DeveloperCheatInput.Right,
+                4 => DeveloperCheatInput.Left,
+                5 => DeveloperCheatInput.Right,
+                6 => DeveloperCheatInput.LeftBumper,
+                7 => DeveloperCheatInput.RightBumper,
+                _ => DeveloperCheatInput.None
+            };
+
+            if (input == expected)
+            {
+                developerCheatStep++;
+                developerCheatDeadline = Time.unscaledTime + DeveloperCheatStepTimeout;
+
+                if (developerCheatStep >= 8)
+                {
+                    ResetDeveloperCheat();
+                    RefreshDeveloperButton();
+                    SurferSlugDeveloperMenu.UnlockAndOpen();
+                }
+                return;
+            }
+
+            // A fresh UP can immediately begin another attempt.
+            developerCheatStep = input == DeveloperCheatInput.Up ? 1 : 0;
+            developerCheatDeadline = developerCheatStep > 0
+                ? Time.unscaledTime + DeveloperCheatStepTimeout
+                : 0f;
+#endif
+        }
+
+#if ENABLE_INPUT_SYSTEM
+        private static DeveloperCheatInput ReadDeveloperCheatInput(Gamepad gamepad)
+        {
+            if (gamepad.dpad.up.wasPressedThisFrame) return DeveloperCheatInput.Up;
+            if (gamepad.dpad.left.wasPressedThisFrame) return DeveloperCheatInput.Left;
+            if (gamepad.dpad.right.wasPressedThisFrame) return DeveloperCheatInput.Right;
+            if (gamepad.leftShoulder.wasPressedThisFrame) return DeveloperCheatInput.LeftBumper;
+            if (gamepad.rightShoulder.wasPressedThisFrame) return DeveloperCheatInput.RightBumper;
+
+            // Inputs outside the code intentionally cancel a partial sequence.
+            if (gamepad.dpad.down.wasPressedThisFrame ||
+                gamepad.buttonSouth.wasPressedThisFrame ||
+                gamepad.buttonNorth.wasPressedThisFrame ||
+                gamepad.buttonEast.wasPressedThisFrame ||
+                gamepad.buttonWest.wasPressedThisFrame ||
+                gamepad.leftTrigger.wasPressedThisFrame ||
+                gamepad.rightTrigger.wasPressedThisFrame ||
+                gamepad.startButton.wasPressedThisFrame ||
+                gamepad.selectButton.wasPressedThisFrame)
+                return DeveloperCheatInput.Other;
+
+            return DeveloperCheatInput.None;
+        }
+#endif
+
+        private void ResetDeveloperCheat()
+        {
+            developerCheatStep = 0;
+            developerCheatDeadline = 0f;
         }
 
         private void OnDestroy()
@@ -157,6 +261,7 @@ namespace PixelOcean
                 StopCoroutine(motionRoutine);
             motionRoutine = StartCoroutine(ShowAnimated());
             RefreshContinueButton();
+            RefreshDeveloperButton();
             inputReadyTime = Time.unscaledTime + motionDuration + 0.12f;
         }
 
@@ -306,9 +411,64 @@ namespace PixelOcean
             continueButton = CreateSpriteButton(panel.transform, "continue_button", ContinuePressed);
             controlsButton = CreateSpriteButton(panel.transform, "controls_button", ShowControls);
             settingsButton = CreateSpriteButton(panel.transform, "settings_button", ShowSettings);
+            developerButton = CreateDeveloperButton(panel.transform);
             quitButton = CreateSpriteButton(panel.transform, "quit_button", QuitGame);
 
             settingsButton.gameObject.SetActive(false);
+            RefreshDeveloperButton();
+        }
+
+
+        private Button CreateDeveloperButton(Transform parent)
+        {
+            GameObject go = CreateUIObject(parent, "developer_button");
+            LayoutElement layout = go.AddComponent<LayoutElement>();
+            layout.preferredHeight = 112f;
+            layout.preferredWidth = 400f;
+
+            Image background = go.AddComponent<Image>();
+            background.color = new Color(0.035f, 0.11f, 0.14f, 0.96f);
+
+            Outline outline = go.AddComponent<Outline>();
+            outline.effectColor = new Color(0.25f, 0.9f, 0.9f, 1f);
+            outline.effectDistance = new Vector2(3f, -3f);
+
+            Button button = go.AddComponent<Button>();
+            button.transition = Selectable.Transition.ColorTint;
+            ColorBlock colors = button.colors;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(1f, 0.86f, 0.50f, 1f);
+            colors.selectedColor = new Color(1f, 0.86f, 0.50f, 1f);
+            colors.pressedColor = new Color(0.72f, 0.82f, 1f, 1f);
+            colors.fadeDuration = 0.08f;
+            button.colors = colors;
+            button.onClick.AddListener(OpenDeveloperMenu);
+
+            GameObject textObject = CreateUIObject(go.transform, "Developer Label");
+            RectTransform textRect = textObject.GetComponent<RectTransform>();
+            Stretch(textRect);
+            Text label = textObject.AddComponent<Text>();
+            label.font = PixelFontLibrary.Bold;
+            label.text = "DEVELOPER";
+            label.fontSize = 35;
+            label.alignment = TextAnchor.MiddleCenter;
+            label.color = Color.white;
+            label.raycastTarget = false;
+
+            return button;
+        }
+
+        private void RefreshDeveloperButton()
+        {
+            if (developerButton == null)
+                return;
+
+            developerButton.gameObject.SetActive(SurferSlugDeveloperMenu.IsUnlocked);
+        }
+
+        private void OpenDeveloperMenu()
+        {
+            SurferSlugDeveloperMenu.UnlockAndOpen();
         }
 
         private Button CreateSpriteButton(Transform parent, string resourceName, UnityEngine.Events.UnityAction action)
@@ -417,6 +577,7 @@ namespace PixelOcean
             logoPanel.gameObject.SetActive(true);
             buttonPanel.gameObject.SetActive(true);
             RefreshContinueButton();
+            RefreshDeveloperButton();
             Select(continueButton != null && continueButton.interactable ? continueButton : playButton);
         }
 
