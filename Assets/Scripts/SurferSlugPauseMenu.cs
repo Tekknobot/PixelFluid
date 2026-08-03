@@ -43,6 +43,9 @@ namespace PixelOcean
         private Image logoImage;
         private Image startupBlackImage;
         private CanvasGroup startupBlackGroup;
+        private readonly List<RectTransform> fadeWaveBands = new();
+        private readonly List<CanvasGroup> fadeWaveGroups = new();
+        private readonly List<Vector2> fadeWaveHomePositions = new();
         private Sprite[] logoFrames;
         private Coroutine motionRoutine;
         private Coroutine logoRoutine;
@@ -365,6 +368,8 @@ namespace PixelOcean
             startupBlackGroup.interactable = false;
             startupBlackGroup.blocksRaycasts = true;
 
+            BuildRigidAbyssBands(blackObject.transform);
+
             menuRoot = CreateUIObject(canvasObject.transform, "Menu Root");
             Stretch(menuRoot.GetComponent<RectTransform>());
             Image dim = menuRoot.AddComponent<Image>();
@@ -375,6 +380,68 @@ namespace PixelOcean
             BuildTitleCredits(menuRoot.transform);
             BuildControls(menuRoot.transform);
             BuildSettings(menuRoot.transform);
+        }
+
+
+        private void BuildRigidAbyssBands(Transform parent)
+        {
+            fadeWaveBands.Clear();
+            fadeWaveGroups.Clear();
+            fadeWaveHomePositions.Clear();
+
+            // Twelve narrow, near-black layers create a deliberate stepped gradient.
+            Color[] colors =
+            {
+                new Color(0.002f, 0.004f, 0.009f, 1f),
+                new Color(0.004f, 0.009f, 0.016f, 1f),
+                new Color(0.006f, 0.015f, 0.024f, 1f),
+                new Color(0.008f, 0.021f, 0.032f, 1f),
+                new Color(0.010f, 0.027f, 0.041f, 1f),
+                new Color(0.012f, 0.033f, 0.050f, 1f),
+                new Color(0.014f, 0.038f, 0.058f, 1f),
+                new Color(0.012f, 0.031f, 0.049f, 1f),
+                new Color(0.009f, 0.024f, 0.039f, 1f),
+                new Color(0.006f, 0.017f, 0.029f, 1f),
+                new Color(0.004f, 0.010f, 0.019f, 1f),
+                new Color(0.002f, 0.005f, 0.011f, 1f)
+            };
+
+            const float screenHeight = 1080f;
+            float bandHeight = screenHeight / colors.Length + 4f;
+
+            for (int i = 0; i < colors.Length; i++)
+            {
+                GameObject bandObject = CreateUIObject(parent, $"Rigid Abyss Layer {i + 1:00}");
+                RectTransform rect = bandObject.GetComponent<RectTransform>();
+
+                rect.anchorMin = new Vector2(0f, 0.5f);
+                rect.anchorMax = new Vector2(1f, 0.5f);
+                rect.pivot = new Vector2(0.5f, 0.5f);
+                rect.sizeDelta = new Vector2(180f, bandHeight);
+
+                float y = -screenHeight * 0.5f + bandHeight * 0.5f + i * (screenHeight / colors.Length);
+                Vector2 home = new Vector2(0f, y);
+                rect.anchoredPosition = home;
+
+                Image image = bandObject.AddComponent<Image>();
+                image.color = colors[i];
+                image.raycastTarget = false;
+
+                // A one-pixel-feeling separator makes each division intentional.
+                Outline divider = bandObject.AddComponent<Outline>();
+                divider.effectColor = new Color(0.09f, 0.15f, 0.19f, i % 3 == 0 ? 0.18f : 0.08f);
+                divider.effectDistance = new Vector2(0f, -2f);
+                divider.useGraphicAlpha = true;
+
+                CanvasGroup group = bandObject.AddComponent<CanvasGroup>();
+                group.alpha = 1f;
+                group.interactable = false;
+                group.blocksRaycasts = false;
+
+                fadeWaveBands.Add(rect);
+                fadeWaveGroups.Add(group);
+                fadeWaveHomePositions.Add(home);
+            }
         }
 
         private void BuildLogo(Transform parent)
@@ -734,20 +801,82 @@ namespace PixelOcean
                 yield break;
 
             startupBlackGroup.gameObject.SetActive(true);
-            startupBlackGroup.alpha = from;
+            startupBlackGroup.alpha = 1f;
             startupBlackGroup.blocksRaycasts = true;
 
+            bool revealing = to < from;
             float elapsed = 0f;
+
             while (elapsed < duration)
             {
                 elapsed += Time.unscaledDeltaTime;
-                float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / Mathf.Max(0.01f, duration)));
-                startupBlackGroup.alpha = Mathf.Lerp(from, to, t);
+                float normalized = Mathf.Clamp01(elapsed / Mathf.Max(0.01f, duration));
+                float eased = Mathf.SmoothStep(0f, 1f, normalized);
+
+                if (startupBlackImage != null)
+                {
+                    Color black = startupBlackImage.color;
+                    black.a = revealing
+                        ? Mathf.Lerp(1f, 0f, Mathf.Clamp01((normalized - 0.12f) / 0.88f))
+                        : Mathf.Lerp(0f, 1f, eased);
+                    startupBlackImage.color = black;
+                }
+
+                for (int i = 0; i < fadeWaveBands.Count; i++)
+                {
+                    RectTransform band = fadeWaveBands[i];
+                    if (band == null)
+                        continue;
+
+                    float stagger = i * 0.025f;
+                    float layerT = Mathf.Clamp01((normalized - stagger) / Mathf.Max(0.01f, 1f - stagger));
+                    layerT = Mathf.SmoothStep(0f, 1f, layerT);
+
+                    Vector2 home = i < fadeWaveHomePositions.Count
+                        ? fadeWaveHomePositions[i]
+                        : Vector2.zero;
+
+                    // Keep the layers rigid. Only stagger their vertical exit/arrival.
+                    float directionBias = (i % 2 == 0) ? -1f : 1f;
+                    float horizontalStep = directionBias * (10f + (i % 4) * 5f);
+                    float verticalTravel = 1180f;
+
+                    float verticalOffset = revealing
+                        ? -verticalTravel * layerT
+                        : -verticalTravel * (1f - layerT);
+
+                    band.anchoredPosition = home + new Vector2(horizontalStep, verticalOffset);
+
+                    if (i < fadeWaveGroups.Count && fadeWaveGroups[i] != null)
+                    {
+                        fadeWaveGroups[i].alpha = revealing
+                            ? Mathf.Lerp(1f, 0f, layerT)
+                            : Mathf.Lerp(0f, 1f, layerT);
+                    }
+                }
+
                 yield return null;
             }
 
-            startupBlackGroup.alpha = to;
+            if (startupBlackImage != null)
+            {
+                Color black = startupBlackImage.color;
+                black.a = to;
+                startupBlackImage.color = black;
+            }
+
+            startupBlackGroup.alpha = 1f;
             startupBlackGroup.blocksRaycasts = to > 0.001f;
+
+            for (int i = 0; i < fadeWaveBands.Count; i++)
+            {
+                if (fadeWaveBands[i] != null && i < fadeWaveHomePositions.Count)
+                    fadeWaveBands[i].anchoredPosition = fadeWaveHomePositions[i];
+
+                if (i < fadeWaveGroups.Count && fadeWaveGroups[i] != null)
+                    fadeWaveGroups[i].alpha = to;
+            }
+
             if (to <= 0.001f)
                 startupBlackGroup.gameObject.SetActive(false);
         }
