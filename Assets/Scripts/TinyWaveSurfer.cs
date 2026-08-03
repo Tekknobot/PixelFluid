@@ -2449,8 +2449,30 @@ namespace PixelOcean
             ApplyCurrentWaveSorting(true);
         }
 
+        public void StopArenaHorizontalMomentum()
+        {
+            playerHorizontalVelocity = 0f;
+            specialSkidding = false;
+            specialCharging = false;
+            specialChargeTime = 0f;
+            specialSkidTimer = 0f;
+            specialSkidCurrentSpeed = 0f;
+            glideWaveSwitchActive = false;
+            obstacleAirHorizontalVelocity = 0f;
+            obstacleJumpTargetX = localRideX;
+        }
+
         private float ClampPlayerXToSandbox(float desiredX)
         {
+            BossArenaPrison arena = BossArenaPrison.Active;
+            if (arena != null && BossArenaPrison.IsActive)
+            {
+                float clamped = arena.ClampPlayerX(desiredX, out bool hitClosedBoundary);
+                if (hitClosedBoundary)
+                    StopArenaHorizontalMomentum();
+                return clamped;
+            }
+
             EndlessWaveSections endless = EndlessWaveSections.Instance;
             if (endless != null && endless.IsReady)
             {

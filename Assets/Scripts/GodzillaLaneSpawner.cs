@@ -49,6 +49,10 @@ namespace PixelOcean
 
             GodzillaLaneSwimmer swimmer = spawnedGodzilla.AddComponent<GodzillaLaneSwimmer>();
             swimmer.Initialise(startingLane);
+
+            GameObject arenaHost = new GameObject("Reaper Boss Arena Prison");
+            BossArenaPrison arena = arenaHost.AddComponent<BossArenaPrison>();
+            arena.Configure(swimmer, BossArenaPrison.ArenaTheme.Reaper);
             globalSpawned = true;
         }
 

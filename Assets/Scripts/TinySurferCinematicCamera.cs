@@ -182,6 +182,8 @@ namespace PixelOcean
             if (clampToCurrentSimulation)
                 desiredPosition = ClampInsideSimulation(desiredPosition);
 
+            desiredPosition = ClampInsideBossArena(desiredPosition);
+
             Vector3 smoothedPosition = Vector3.SmoothDamp(
                 transform.position,
                 desiredPosition,
@@ -190,9 +192,10 @@ namespace PixelOcean
                 activeMaximumSpeed,
                 deltaTime);
 
-            transform.position = clampToCurrentSimulation
+            Vector3 finalPosition = clampToCurrentSimulation
                 ? ClampInsideSimulation(smoothedPosition)
                 : smoothedPosition;
+            transform.position = ClampInsideBossArena(finalPosition);
 
             if (controlledCamera.orthographic)
             {
@@ -296,6 +299,29 @@ namespace PixelOcean
                 availableSurfers.Length - 1);
 
             surfer = availableSurfers[focusedSurferIndex];
+        }
+
+        private Vector3 ClampInsideBossArena(Vector3 desired)
+        {
+            BossArenaPrison arena = BossArenaPrison.Active;
+            if (arena == null || !BossArenaPrison.IsActive || controlledCamera == null)
+                return desired;
+
+            float halfWidth;
+            if (controlledCamera.orthographic)
+            {
+                halfWidth = controlledCamera.orthographicSize * controlledCamera.aspect;
+            }
+            else
+            {
+                float distance = Mathf.Abs(cameraDepth - surfer.transform.position.z);
+                float halfHeight = Mathf.Tan(
+                    controlledCamera.fieldOfView * 0.5f * Mathf.Deg2Rad) * distance;
+                halfWidth = halfHeight * controlledCamera.aspect;
+            }
+
+            desired.x = arena.ClampCameraX(desired.x, halfWidth);
+            return desired;
         }
 
         private Vector3 ClampInsideSimulation(Vector3 desired)

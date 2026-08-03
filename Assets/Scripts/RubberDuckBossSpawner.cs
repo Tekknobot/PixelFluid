@@ -35,6 +35,10 @@ namespace PixelOcean
             animation.SetFrames(movement, attack);
             RubberDuckBossSwimmer swimmer = spawnedBoss.AddComponent<RubberDuckBossSwimmer>();
             swimmer.Initialise(startingLane);
+
+            GameObject arenaHost = new GameObject("Rubber Duck Boss Arena Prison");
+            BossArenaPrison arena = arenaHost.AddComponent<BossArenaPrison>();
+            arena.Configure(swimmer, BossArenaPrison.ArenaTheme.RubberDuck);
         }
 
         private static Sprite[] LoadOrdered(string path) => Resources.LoadAll<Sprite>(path)

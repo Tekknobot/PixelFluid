@@ -38,6 +38,9 @@ namespace PixelOcean
         [SerializeField, Range(0f, 1f)] private float hurtFlashGreen = 0.12f;
         [SerializeField, Range(0f, 1f)] private float hurtFlashBlue = 0.12f;
         [SerializeField, Min(0f)] private float hitAggressionDuration = 4f;
+        [Tooltip("Minimum time between accepted projectile hits. Hits during armour recovery ricochet without damage.")]
+        [SerializeField, Min(0.05f)] private float vulnerabilityCooldown = 1.15f;
+        [SerializeField, Min(0f)] private float openingInvulnerability = 1.6f;
         [SerializeField, Min(0f)] private float deathDelay = 0.3f;
         [SerializeField] private AudioClip hurtClip;
         [SerializeField, Range(0f, 1f)] private float hurtVolume = 1f;
@@ -116,6 +119,7 @@ namespace PixelOcean
         private float enragedUntil;
         private Coroutine hurtFlashRoutine;
         private Color normalSpriteColour = Color.white;
+        private float nextVulnerableTime;
 
 
 
@@ -190,6 +194,7 @@ namespace PixelOcean
         {
             ResolveReferences();
             currentHealth = Mathf.Max(1, maximumHealth);
+            nextVulnerableTime = Time.time + openingInvulnerability;
             if (spriteRenderer != null)
                 normalSpriteColour = spriteRenderer.color;
         }
@@ -577,7 +582,14 @@ namespace PixelOcean
             if (defeated || damage <= 0)
                 return false;
 
-            currentHealth = Mathf.Max(0, currentHealth - damage);
+            // Boss armour only opens for one hit at a time. Returning false lets
+            // SodaCanProjectile continue its normal ricochet instead of melting
+            // the boss with a pile of projectiles in the same second.
+            if (Time.time < nextVulnerableTime)
+                return false;
+
+            nextVulnerableTime = Time.time + Mathf.Max(0.05f, vulnerabilityCooldown);
+            currentHealth = Mathf.Max(0, currentHealth - Mathf.Max(1, Mathf.Min(damage, thrownItemDamage)));
             enragedUntil = Mathf.Max(enragedUntil, Time.time + hitAggressionDuration);
 
             // Immediately retaliate against the active player after being struck.
@@ -733,6 +745,8 @@ namespace PixelOcean
         public int CurrentHealth => currentHealth;
         public int MaximumHealth => Mathf.Max(1, maximumHealth);
         public bool IsDefeated => defeated;
+        public bool IsVulnerable => !defeated && Time.time >= nextVulnerableTime;
+        public float VulnerabilityTimeRemaining => Mathf.Max(0f, nextVulnerableTime - Time.time);
 
         private int GetTargetLane(TinyWaveSurfer surfer)
         {
