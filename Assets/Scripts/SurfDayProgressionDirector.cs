@@ -116,7 +116,9 @@ namespace PixelOcean
         private IEnumerator Start()
         {
             yield return BeginRun(false);
-            SurfStageSaveSystem.Save(this);    
+            // Never overwrite an existing disk save merely because the title scene loaded.
+            if (!SurfStageSaveSystem.HasSave)
+                SurfStageSaveSystem.Save(this);
 
             //if (startOnDayTwoForTesting)
             //{
@@ -160,6 +162,7 @@ namespace PixelOcean
             rain = FindFirstObjectByType<ProceduralRainSystem>();
             rain?.ClearRain();
             AirTrickScoreSystem.Instance?.BeginDay(currentDay);
+            AirTrickScoreSystem.Instance?.RestorePersistentStoke(data.totalStoke, data.dayStoke);
             if (SurfAbilityProgression.Instance != null)
             {
                 if (data.unlockedAbilities != 0 || data.jumpUpgradeLevel != 0 ||

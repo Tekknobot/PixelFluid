@@ -506,6 +506,54 @@ namespace PixelOcean
             return throwableItems.ToArray();
         }
 
+        public void CapturePersistentState(SurfStageSaveSystem.SaveData data)
+        {
+            if (data == null) return;
+            data.hasPlayerState = true;
+            data.playerX = transform.position.x;
+            data.playerWaveIndex = waveIndex;
+            data.playerHealth = Mathf.Clamp(currentHealth, 1, MaximumHealth);
+            data.playerDirection = direction >= 0f ? 1f : -1f;
+
+            Sprite[] inventory = throwableItems.ToArray();
+            data.throwableSpriteNames = new string[inventory.Length];
+            for (int i = 0; i < inventory.Length; i++)
+                data.throwableSpriteNames[i] = inventory[i] != null ? inventory[i].name : string.Empty;
+        }
+
+        public void RestorePersistentState(SurfStageSaveSystem.SaveData data)
+        {
+            if (data == null || !data.hasPlayerState) return;
+
+            RefreshWaveList();
+            if (simulations.Count > 0)
+            {
+                int restoredWave = Mathf.Clamp(data.playerWaveIndex, 0, simulations.Count - 1);
+                PickWave(restoredWave, true);
+                Vector3 restored = GetStartingPosition(currentWave);
+                restored.x = ClampPlayerXToSandbox(data.playerX);
+                localRideX = restored.x;
+                transform.position = restored;
+                renderDepth = restored.z;
+            }
+
+            direction = data.playerDirection >= 0f ? 1f : -1f;
+            currentHealth = Mathf.Clamp(data.playerHealth, 1, MaximumHealth);
+            healthBar?.SetHealth(currentHealth, MaximumHealth);
+            throwableItems.Clear();
+
+            if (data.throwableSpriteNames != null && data.throwableSpriteNames.Length > 0)
+            {
+                Sprite[] allResourceSprites = Resources.LoadAll<Sprite>(string.Empty);
+                foreach (string spriteName in data.throwableSpriteNames)
+                {
+                    if (string.IsNullOrEmpty(spriteName)) continue;
+                    Sprite match = System.Array.Find(allResourceSprites, sprite => sprite != null && sprite.name == spriteName);
+                    if (match != null) throwableItems.Enqueue(match);
+                }
+            }
+        }
+
         [Tooltip("Enable this when the original sprite artwork faces right.")]
         [SerializeField] private bool spriteFacesRight = true;
 

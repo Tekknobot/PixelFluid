@@ -483,6 +483,7 @@ namespace PixelOcean
             SurfRunLifeManager.Instance?.RestoreLives(data.lives);
             TinyWaveSurfer surfer = FindFirstObjectByType<TinyWaveSurfer>();
             surfer?.RespawnForManagedRun();
+            surfer?.RestorePersistentState(data);
 
             yield return FadeStartupBlack(1f, 0f, 0.85f);
             FinishOpeningTransition();

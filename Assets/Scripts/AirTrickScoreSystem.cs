@@ -110,6 +110,12 @@ namespace PixelOcean
 
         public int TotalStoke => totalStoke;
         public int DayStoke => dayStoke;
+
+        public void RestorePersistentStoke(int savedTotalStoke, int savedDayStoke)
+        {
+            totalStoke = Mathf.Max(0, savedTotalStoke);
+            dayStoke = Mathf.Clamp(savedDayStoke, 0, totalStoke);
+        }
         public bool IsRecapVisible => recapVisible;
         public float Flow01 => Mathf.Clamp01(currentFlow / Mathf.Max(1f, maximumFlow));
         public float CurrentFlow => currentFlow;
