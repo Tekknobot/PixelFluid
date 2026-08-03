@@ -411,52 +411,13 @@ namespace PixelOcean
             continueButton = CreateSpriteButton(panel.transform, "continue_button", ContinuePressed);
             controlsButton = CreateSpriteButton(panel.transform, "controls_button", ShowControls);
             settingsButton = CreateSpriteButton(panel.transform, "settings_button", ShowSettings);
-            developerButton = CreateDeveloperButton(panel.transform);
+            developerButton = CreateSpriteButton(panel.transform, "developer_button", OpenDeveloperMenu);
             quitButton = CreateSpriteButton(panel.transform, "quit_button", QuitGame);
 
             settingsButton.gameObject.SetActive(false);
             RefreshDeveloperButton();
         }
 
-
-        private Button CreateDeveloperButton(Transform parent)
-        {
-            GameObject go = CreateUIObject(parent, "developer_button");
-            LayoutElement layout = go.AddComponent<LayoutElement>();
-            layout.preferredHeight = 112f;
-            layout.preferredWidth = 400f;
-
-            Image background = go.AddComponent<Image>();
-            background.color = new Color(0.035f, 0.11f, 0.14f, 0.96f);
-
-            Outline outline = go.AddComponent<Outline>();
-            outline.effectColor = new Color(0.25f, 0.9f, 0.9f, 1f);
-            outline.effectDistance = new Vector2(3f, -3f);
-
-            Button button = go.AddComponent<Button>();
-            button.transition = Selectable.Transition.ColorTint;
-            ColorBlock colors = button.colors;
-            colors.normalColor = Color.white;
-            colors.highlightedColor = new Color(1f, 0.86f, 0.50f, 1f);
-            colors.selectedColor = new Color(1f, 0.86f, 0.50f, 1f);
-            colors.pressedColor = new Color(0.72f, 0.82f, 1f, 1f);
-            colors.fadeDuration = 0.08f;
-            button.colors = colors;
-            button.onClick.AddListener(OpenDeveloperMenu);
-
-            GameObject textObject = CreateUIObject(go.transform, "Developer Label");
-            RectTransform textRect = textObject.GetComponent<RectTransform>();
-            Stretch(textRect);
-            Text label = textObject.AddComponent<Text>();
-            label.font = PixelFontLibrary.Bold;
-            label.text = "DEVELOPER";
-            label.fontSize = 35;
-            label.alignment = TextAnchor.MiddleCenter;
-            label.color = Color.white;
-            label.raycastTarget = false;
-
-            return button;
-        }
 
         private void RefreshDeveloperButton()
         {
