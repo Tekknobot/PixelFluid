@@ -86,9 +86,8 @@ namespace PixelOcean
             float maxX = waterLayers[0].TankMaximum.x;
             if (spawnAtSectionEdge)
             {
-                float halfWidth = spriteRenderer.bounds.extents.x;
-                bool fromLeft = Random.value < 0.5f;
-                position.x = fromLeft ? minX + halfWidth + 0.35f : maxX - halfWidth - 0.35f;
+                position.x = CameraSafeSpawnUtility.ChooseOffscreenEntryX(
+                    waterLayers, spriteRenderer, out bool fromLeft);
                 direction = fromLeft ? 1f : -1f;
             }
             else position.x = (minX + maxX) * 0.5f;

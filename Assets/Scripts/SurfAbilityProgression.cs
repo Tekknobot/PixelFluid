@@ -106,6 +106,37 @@ namespace PixelOcean
             ApplyUpgradesToAllPlayers();
         }
 
+        /// <summary>
+        /// Adds every mechanic that should already be available at a given story stage.
+        /// This is additive: selected day-upgrade levels and later unlocks are never removed.
+        /// It keeps developer chapter jumps and saves consistent with normal progression.
+        /// </summary>
+        public void EnsureForStage(int day, SurfDayProgressionDirector.Chapter chapter)
+        {
+            Unlock(SurfAbility.WaveSwitch);
+
+            if (day >= 2)
+            {
+                DebugUnlockAll();
+                return;
+            }
+
+            if (chapter >= SurfDayProgressionDirector.Chapter.DangerousWater)
+                Unlock(SurfAbility.ChargedJump | SurfAbility.Handstand | SurfAbility.ThrowItems);
+
+            if (chapter >= SurfDayProgressionDirector.Chapter.StrangeTide)
+                Unlock(SurfAbility.Rotation | SurfAbility.Flip |
+                    SurfAbility.DoubleChain | SurfAbility.TripleChain | SurfAbility.Flow);
+
+            if (chapter >= SurfDayProgressionDirector.Chapter.Storm)
+                Unlock(SurfAbility.WaterSkid | SurfAbility.WaterSlash);
+
+            if (chapter >= SurfDayProgressionDirector.Chapter.FinalWave)
+                Unlock(SurfAbility.FlowFinisher);
+
+            ApplyUpgradesToAllPlayers();
+        }
+
         public void AddUpgrade(int upgradeIndex)
         {
             switch (upgradeIndex)

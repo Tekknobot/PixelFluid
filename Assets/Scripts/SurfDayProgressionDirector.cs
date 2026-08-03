@@ -88,6 +88,30 @@ namespace PixelOcean
             bossDefeatedSunset = bossDefeatedSunset
         };
 
+        private Coroutine pendingCheckpoint;
+
+        /// <summary>
+        /// Saves after the current gameplay state has settled. This is important for
+        /// developer jumps and chapter transitions because spawns/destructions are deferred.
+        /// </summary>
+        private void QueueCheckpoint()
+        {
+            if (!isActiveAndEnabled)
+                return;
+
+            if (pendingCheckpoint != null)
+                StopCoroutine(pendingCheckpoint);
+            pendingCheckpoint = StartCoroutine(SaveCheckpointAfterFrame());
+        }
+
+        private IEnumerator SaveCheckpointAfterFrame()
+        {
+            yield return null;
+            yield return new WaitForEndOfFrame();
+            SurfStageSaveSystem.Save(this);
+            pendingCheckpoint = null;
+        }
+
         /// <summary>
         /// Keeps the procedural sky tied to the run clock. Each surf day starts
         /// at 6:00 AM and reaches midnight at the end of the configured day.
@@ -204,6 +228,10 @@ namespace PixelOcean
                 // including when continuing a save created by an older build.
                 if (currentDay >= 2)
                     SurfAbilityProgression.Instance.DebugUnlockAll();
+
+                // A save made after a developer chapter jump must contain every
+                // mechanic that normal progression would have granted by this stage.
+                SurfAbilityProgression.Instance.EnsureForStage(currentDay, chapter);
             }
             RefreshLearningObjectiveForStage();
             SyncDayNightToRunTime();
@@ -399,6 +427,7 @@ namespace PixelOcean
             DestroyAll<RubberDuckBossSwimmer>();
             DestroyAll<RubberDucklingSwimmer>();
             DestroyAll<BoomboxSurferSwimmer>();
+            DestroyAll<BossArenaPrison>();
         }
 
         private static void DestroyAll<T>() where T : Component
@@ -546,6 +575,7 @@ namespace PixelOcean
             SyncDayNightToRunTime();
             objective = $"SUNSET  {Mathf.Max(0, Mathf.CeilToInt(dayEndsAt - runTime))}s";
             ShowBanner("THE DEEP RETREATS", "THE OCEAN GROWS QUIET AS SUNSET FALLS.", 5f);
+            QueueCheckpoint();
         }
 
         private void StopHostileSpawners()
@@ -581,23 +611,51 @@ namespace PixelOcean
 
         public void DebugNextChapter()
         {
+            Chapter targetChapter = chapter;
             switch (chapter)
             {
-                case Chapter.Dawn: runTime = Mathf.Max(runTime, rescueBeginsAt + 0.05f); break;
-                case Chapter.FirstRescue: runTime = Mathf.Max(runTime, dangerBeginsAt + 0.05f); break;
-                case Chapter.DangerousWater: runTime = Mathf.Max(runTime, strangeTideBeginsAt + 0.05f); break;
-                case Chapter.StrangeTide: runTime = Mathf.Max(runTime, stormBeginsAt + 0.05f); break;
-                case Chapter.Storm: runTime = Mathf.Max(runTime, finalWaveBeginsAt + 0.05f); break;
-                case Chapter.FinalWave: runTime = Mathf.Max(runTime, dayEndsAt + 0.05f); break;
+                case Chapter.Dawn:
+                    targetChapter = Chapter.FirstRescue;
+                    runTime = Mathf.Max(runTime, rescueBeginsAt + 0.05f);
+                    break;
+                case Chapter.FirstRescue:
+                    targetChapter = Chapter.DangerousWater;
+                    runTime = Mathf.Max(runTime, dangerBeginsAt + 0.05f);
+                    break;
+                case Chapter.DangerousWater:
+                    targetChapter = Chapter.StrangeTide;
+                    runTime = Mathf.Max(runTime, strangeTideBeginsAt + 0.05f);
+                    break;
+                case Chapter.StrangeTide:
+                    targetChapter = Chapter.Storm;
+                    runTime = Mathf.Max(runTime, stormBeginsAt + 0.05f);
+                    break;
+                case Chapter.Storm:
+                    targetChapter = Chapter.FinalWave;
+                    runTime = Mathf.Max(runTime, finalWaveBeginsAt + 0.05f);
+                    break;
+                case Chapter.FinalWave:
+                    targetChapter = Chapter.Complete;
+                    runTime = Mathf.Max(runTime, dayEndsAt + 0.05f);
+                    break;
             }
+
+            // Apply the destination chapter's mechanics immediately, before the
+            // deferred checkpoint is captured. Update() will still perform the
+            // normal population/banner transition on the following frame.
+            SurfAbilityProgression.Instance?.EnsureForStage(currentDay, targetChapter);
             SyncDayNightToRunTime();
+            QueueCheckpoint();
         }
 
         public void DebugSpawnBoss()
         {
             if (chapter < Chapter.FinalWave)
                 runTime = Mathf.Max(runTime, finalWaveBeginsAt + 0.05f);
+
+            SurfAbilityProgression.Instance?.EnsureForStage(currentDay, Chapter.FinalWave);
             SyncDayNightToRunTime();
+            QueueCheckpoint();
         }
 
         public void DebugResetCurrentDay()
@@ -717,6 +775,7 @@ namespace PixelOcean
         {
             rescues++;
             ShowBanner("SWIMMER SAVED", $"RESCUES  {rescues}/{rescuesRequired}", 2.5f);
+            QueueCheckpoint();
 
             if (rescues < rescuesRequired)
                 SpawnRescueSet(1);
@@ -730,7 +789,7 @@ namespace PixelOcean
             objective = newObjective;
             RefreshLearningObjectiveForStage();
             ShowBanner(heading, CurrentObjective, 4f);
-            SurfStageSaveSystem.Save(this);
+            QueueCheckpoint();
         }
 
         private void UnlockAbility(SurfAbility ability, string heading, string instruction)
@@ -858,6 +917,8 @@ namespace PixelOcean
             for (int i = 0; i < schools; i++)
             {
                 float x = centres[(i + Random.Range(0, centres.Count)) % centres.Count];
+                IReadOnlyList<PixelWaterGPU> layers = EndlessWaveSections.LayersNearest(x);
+                x = CameraSafeSpawnUtility.ChooseOffscreenEntryX(layers, null, out _);
                 GameObject holder = new(name + " " + (i + 1));
                 holder.transform.SetParent(transform, false);
                 holder.transform.position = new Vector3(x, 0f, 0f);
@@ -875,6 +936,8 @@ namespace PixelOcean
             for (int i = 0; i < schools; i++)
             {
                 float x = centres[(i + Random.Range(0, centres.Count)) % centres.Count];
+                IReadOnlyList<PixelWaterGPU> layers = EndlessWaveSections.LayersNearest(x);
+                x = CameraSafeSpawnUtility.ChooseOffscreenEntryX(layers, null, out _);
                 GameObject holder = new(name + " " + (i + 1));
                 holder.transform.SetParent(transform, false);
                 holder.transform.position = new Vector3(x, 0f, 0f);

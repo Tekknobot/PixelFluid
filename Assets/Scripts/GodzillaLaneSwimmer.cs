@@ -230,9 +230,9 @@ namespace PixelOcean
             direction = UnityEngine.Random.value < 0.5f ? -1f : 1f;
 
             Vector2 position = transform.position;
-            float minX = waterLayers[0].TankMinimum.x;
-            float maxX = waterLayers[0].TankMaximum.x;
-            position.x = direction > 0f ? minX + 0.8f : maxX - 0.8f;
+            position.x = CameraSafeSpawnUtility.ChooseOffscreenEntryX(
+                waterLayers, spriteRenderer, out bool enterFromLeft, 0.9f);
+            direction = enterFromLeft ? 1f : -1f;
             position.y = GetLaneCentreY(currentLane, position.x) + depthOffset;
             SetPosition(position);
 

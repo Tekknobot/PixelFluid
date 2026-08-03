@@ -10,19 +10,12 @@ namespace PixelOcean
         [SerializeField, Min(0)] private int startingLane = 2;
         [SerializeField, Min(0.05f)] private float scale = 0.62f;
 
-        private static bool globalSpawned;
         private GameObject spawnedGodzilla;
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetStaticState()
-        {
-            globalSpawned = false;
-        }
 
         [ContextMenu("Spawn Godzilla Once")]
         public void SpawnGodzilla()
         {
-            if (globalSpawned || spawnedGodzilla != null ||
+            if (spawnedGodzilla != null ||
                 FindFirstObjectByType<GodzillaLaneSwimmer>() != null)
                 return;
 
@@ -53,7 +46,6 @@ namespace PixelOcean
             GameObject arenaHost = new GameObject("Reaper Boss Arena Prison");
             BossArenaPrison arena = arenaHost.AddComponent<BossArenaPrison>();
             arena.Configure(swimmer, BossArenaPrison.ArenaTheme.Reaper);
-            globalSpawned = true;
         }
 
         private static Sprite[] LoadOrdered(string path)

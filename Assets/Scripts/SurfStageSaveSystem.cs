@@ -177,7 +177,13 @@ namespace PixelOcean
                     Directory.CreateDirectory(directory);
 
                 string temporaryPath = SavePath + ".tmp";
-                File.WriteAllText(temporaryPath, json);
+                using (FileStream stream = new FileStream(temporaryPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                using (StreamWriter writer = new StreamWriter(stream))
+                {
+                    writer.Write(json);
+                    writer.Flush();
+                    stream.Flush(true);
+                }
 
                 if (File.Exists(SavePath))
                 {

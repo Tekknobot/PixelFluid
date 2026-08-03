@@ -97,12 +97,8 @@ namespace PixelOcean
             Vector2 position = transform.position;
             if (spawnAtSectionEdge)
             {
-                float minX = waterLayers[0].TankMinimum.x;
-                float maxX = waterLayers[0].TankMaximum.x;
-                float halfWidth = spriteRenderer != null ? spriteRenderer.bounds.extents.x : 0.45f;
-                float clearance = Mathf.Max(0.75f, halfWidth + 0.35f);
-                bool enterFromLeft = Random.value < 0.5f;
-                position.x = enterFromLeft ? minX + clearance : maxX - clearance;
+                position.x = CameraSafeSpawnUtility.ChooseOffscreenEntryX(
+                    waterLayers, spriteRenderer, out bool enterFromLeft);
                 direction = enterFromLeft ? 1f : -1f;
                 if (spriteRenderer != null)
                     spriteRenderer.flipX = !enterFromLeft;
