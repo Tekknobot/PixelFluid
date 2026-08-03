@@ -86,7 +86,9 @@ namespace PixelOcean
         private GUIStyle floatingStyle;
         private GUIStyle recapTitleStyle;
         private GUIStyle recapValueStyle;
+        private GUIStyle recapLabelStyle;
         private GUIStyle recapSmallStyle;
+        private GUIStyle recapFooterStyle;
 
         private int totalStoke;
         private int dayStoke;
@@ -437,31 +439,107 @@ namespace PixelOcean
                 alignment = TextAnchor.MiddleCenter,
                 fontSize = 32,
                 fontStyle = FontStyle.Normal,
+                wordWrap = true,
                 normal = { textColor = new Color(1f, 0.9f, 0.2f, 1f) }
             };
+
             recapTitleStyle = new GUIStyle(GUI.skin.label)
             {
                 font = PixelFontLibrary.Bold,
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 72,
+                fontSize = 86,
                 fontStyle = FontStyle.Normal,
-                normal = { textColor = Color.white }
+                wordWrap = false,
+                normal = { textColor = new Color(0.49f, 0.94f, 1f, 1f) }
             };
+
             recapValueStyle = new GUIStyle(GUI.skin.label)
             {
                 font = PixelFontLibrary.Bold,
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 42,
+                fontSize = 62,
                 fontStyle = FontStyle.Normal,
-                normal = { textColor = new Color(1f, 0.9f, 0.2f, 1f) }
+                wordWrap = false,
+                normal = { textColor = new Color(1f, 0.82f, 0.28f, 1f) }
             };
+
+            recapLabelStyle = new GUIStyle(GUI.skin.label)
+            {
+                font = PixelFontLibrary.SemiBold,
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = 30,
+                fontStyle = FontStyle.Normal,
+                wordWrap = false,
+                normal = { textColor = new Color(0.55f, 0.92f, 1f, 1f) }
+            };
+
             recapSmallStyle = new GUIStyle(GUI.skin.label)
             {
                 font = PixelFontLibrary.Medium,
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 36,
+                fontSize = 38,
+                fontStyle = FontStyle.Normal,
+                wordWrap = true,
                 normal = { textColor = Color.white }
             };
+
+            recapFooterStyle = new GUIStyle(GUI.skin.label)
+            {
+                font = PixelFontLibrary.Bold,
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = 50,
+                fontStyle = FontStyle.Normal,
+                wordWrap = false,
+                normal = { textColor = new Color(1f, 0.82f, 0.28f, 1f) }
+            };
+        }
+
+        private static void DrawSolidRect(Rect rect, Color colour)
+        {
+            Color previous = GUI.color;
+            GUI.color = colour;
+            GUI.DrawTexture(rect, Texture2D.whiteTexture);
+            GUI.color = previous;
+        }
+
+        private static void DrawPixelFrame(Rect panel)
+        {
+            // Chunky, square pixel frame: shadow, white outer rail, cyan inner rail.
+            DrawSolidRect(new Rect(panel.x + 10f, panel.y + 12f, panel.width, panel.height),
+                new Color(0f, 0f, 0f, 0.42f));
+            DrawSolidRect(panel, new Color(0.96f, 0.99f, 1f, 1f));
+            DrawSolidRect(new Rect(panel.x + 5f, panel.y + 5f, panel.width - 10f, panel.height - 10f),
+                new Color(0.18f, 0.76f, 0.91f, 1f));
+            DrawSolidRect(new Rect(panel.x + 10f, panel.y + 10f, panel.width - 20f, panel.height - 20f),
+                new Color(0.015f, 0.09f, 0.15f, 0.98f));
+        }
+
+        private static void DrawWaveRail(Rect rect, float phase)
+        {
+            DrawSolidRect(rect, new Color(0.05f, 0.30f, 0.43f, 1f));
+
+            const float blockWidth = 28f;
+            const float crestWidth = 14f;
+            float offset = Mathf.Repeat(phase, blockWidth);
+            for (float x = rect.x - blockWidth + offset; x < rect.xMax; x += blockWidth)
+            {
+                DrawSolidRect(new Rect(x, rect.y, crestWidth, rect.height * 0.5f),
+                    new Color(0.38f, 0.91f, 1f, 1f));
+                DrawSolidRect(new Rect(x + crestWidth, rect.y + rect.height * 0.5f,
+                        blockWidth - crestWidth, rect.height * 0.5f),
+                    new Color(0.20f, 0.66f, 0.82f, 1f));
+            }
+        }
+
+        private static void DrawShadowedLabel(Rect rect, string text, GUIStyle style,
+            float shadowOffset = 3f)
+        {
+            Color original = style.normal.textColor;
+            style.normal.textColor = new Color(0f, 0f, 0f, 0.72f);
+            GUI.Label(new Rect(rect.x + shadowOffset, rect.y + shadowOffset, rect.width, rect.height),
+                text, style);
+            style.normal.textColor = original;
+            GUI.Label(rect, text, style);
         }
 
         private void OnGUI()
@@ -496,8 +574,15 @@ namespace PixelOcean
 
             if (!recapVisible) return;
 
-            float width = Mathf.Min(920f, Screen.width - 36f);
-            float height = Mathf.Min(640f, Screen.height - 36f);
+            float width = Mathf.Min(980f, Screen.width - 36f);
+            float height = Mathf.Min(700f, Screen.height - 36f);
+            float scale = Mathf.Clamp(Mathf.Min(width / 980f, height / 700f), 0.62f, 1f);
+
+            recapTitleStyle.fontSize = Mathf.RoundToInt(86f * scale);
+            recapValueStyle.fontSize = Mathf.RoundToInt(62f * scale);
+            recapLabelStyle.fontSize = Mathf.RoundToInt(30f * scale);
+            recapSmallStyle.fontSize = Mathf.RoundToInt(38f * scale);
+            recapFooterStyle.fontSize = Mathf.RoundToInt(50f * scale);
 
             Rect panel = new(
                 (Screen.width - width) * 0.5f,
@@ -506,54 +591,90 @@ namespace PixelOcean
                 height
             );
 
-            Color oldColor = GUI.color;
-            GUI.color = new Color(0f, 0.045f, 0.075f, 0.94f);
-            GUI.Box(panel, GUIContent.none);
-            GUI.color = oldColor;
+            DrawPixelFrame(panel);
 
-            GUI.Label(
-                new Rect(panel.x + 24f, panel.y + 30f, panel.width - 48f, 78f),
+            Rect interior = new(panel.x + 18f, panel.y + 18f,
+                panel.width - 36f, panel.height - 36f);
+            float wavePhase = Time.unscaledTime * 18f;
+            DrawWaveRail(new Rect(interior.x, interior.y, interior.width, 14f * scale), wavePhase);
+            DrawWaveRail(new Rect(interior.x, interior.yMax - 14f * scale,
+                interior.width, 14f * scale), -wavePhase);
+
+            float top = interior.y + 22f * scale;
+            DrawShadowedLabel(
+                new Rect(interior.x + 20f, top, interior.width - 40f, 82f * scale),
                 "DAY " + recapDay + " RECAP",
-                recapTitleStyle
-            );
+                recapTitleStyle,
+                4f * scale);
 
+            float stokeLabelY = top + 82f * scale;
             GUI.Label(
-                new Rect(panel.x + 24f, panel.y + 112f, panel.width - 48f, 62f),
-                "+" + dayStoke.ToString("N0") + " STOKE",
-                recapValueStyle
-            );
+                new Rect(interior.x + 30f, stokeLabelY, interior.width - 60f, 36f * scale),
+                "TODAY'S STOKE",
+                recapLabelStyle);
 
-            GUI.Label(
-                new Rect(panel.x + 34f, panel.y + 195f, panel.width - 68f, 50f),
-                "TRICK JUMPS  " + jumpsLanded,
-                recapSmallStyle
-            );
+            DrawShadowedLabel(
+                new Rect(interior.x + 30f, stokeLabelY + 27f * scale,
+                    interior.width - 60f, 72f * scale),
+                "+" + dayStoke.ToString("N0"),
+                recapValueStyle,
+                3f * scale);
 
-            GUI.Label(
-                new Rect(panel.x + 34f, panel.y + 260f, panel.width - 68f, 56f),
-                "BEST TRICK  " + bestTrick + "  +" + bestJumpScore,
-                recapSmallStyle
-            );
+            float dividerY = stokeLabelY + 105f * scale;
+            DrawSolidRect(new Rect(interior.x + 52f * scale, dividerY,
+                    interior.width - 104f * scale, 3f * scale),
+                new Color(0.20f, 0.67f, 0.82f, 0.95f));
 
-            GUI.Label(
-                new Rect(panel.x + 34f, panel.y + 330f, panel.width - 68f, 50f),
-                "HIGHEST AIR  " + highestAir.ToString("0.00") + "m",
-                recapSmallStyle
-            );
+            float statsTop = dividerY + 16f * scale;
+            float rowHeight = 68f * scale;
+            float statsWidth = interior.width - 84f * scale;
+            float statsX = interior.x + 42f * scale;
 
-            GUI.Label(
-                new Rect(panel.x + 34f, panel.y + 395f, panel.width - 68f, 64f),
-                "HANDSTANDS " + handstands +
-                "   ROTATIONS " + rotations +
-                "   FLIPS " + flips,
-                recapSmallStyle
-            );
+            DrawSolidRect(new Rect(statsX, statsTop, statsWidth, rowHeight),
+                new Color(0.02f, 0.17f, 0.24f, 0.92f));
+            GUI.Label(new Rect(statsX + 12f * scale, statsTop, statsWidth - 24f * scale, rowHeight),
+                "TRICK JUMPS    " + jumpsLanded,
+                recapSmallStyle);
 
-            GUI.Label(
-                new Rect(panel.x + 24f, panel.yMax - 118f, panel.width - 48f, 70f),
-                "TOTAL STOKE  " + totalStoke.ToString("N0"),
-                recapValueStyle
-            );
+            DrawSolidRect(new Rect(statsX, statsTop + rowHeight + 7f * scale, statsWidth, rowHeight * 1.18f),
+                new Color(0.025f, 0.21f, 0.29f, 0.92f));
+            GUI.Label(new Rect(statsX + 12f * scale, statsTop + rowHeight + 7f * scale,
+                    statsWidth - 24f * scale, rowHeight * 1.18f),
+                "BEST TRICK\n" + bestTrick + "    +" + bestJumpScore,
+                recapSmallStyle);
+
+            float lowerRowY = statsTop + rowHeight * 2.18f + 14f * scale;
+            float halfGap = 7f * scale;
+            float halfWidth = (statsWidth - halfGap) * 0.5f;
+
+            DrawSolidRect(new Rect(statsX, lowerRowY, halfWidth, rowHeight),
+                new Color(0.02f, 0.17f, 0.24f, 0.92f));
+            GUI.Label(new Rect(statsX + 8f * scale, lowerRowY, halfWidth - 16f * scale, rowHeight),
+                "HIGHEST AIR\n" + highestAir.ToString("0.00") + " m",
+                recapSmallStyle);
+
+            DrawSolidRect(new Rect(statsX + halfWidth + halfGap, lowerRowY, halfWidth, rowHeight),
+                new Color(0.02f, 0.17f, 0.24f, 0.92f));
+            GUI.Label(new Rect(statsX + halfWidth + halfGap + 8f * scale, lowerRowY,
+                    halfWidth - 16f * scale, rowHeight),
+                "H " + handstands + "    R " + rotations + "    F " + flips,
+                recapSmallStyle);
+
+            float footerY = interior.yMax - 105f * scale;
+            DrawSolidRect(new Rect(interior.x + 34f * scale, footerY,
+                    interior.width - 68f * scale, 78f * scale),
+                new Color(0.035f, 0.25f, 0.34f, 0.96f));
+            DrawSolidRect(new Rect(interior.x + 34f * scale, footerY,
+                    interior.width - 68f * scale, 3f * scale),
+                new Color(0.45f, 0.94f, 1f, 1f));
+
+            DrawShadowedLabel(
+                new Rect(interior.x + 45f * scale, footerY + 2f * scale,
+                    interior.width - 90f * scale, 72f * scale),
+                "TOTAL STOKE    " + totalStoke.ToString("N0"),
+                recapFooterStyle,
+                3f * scale);
         }
+
     }
 }
