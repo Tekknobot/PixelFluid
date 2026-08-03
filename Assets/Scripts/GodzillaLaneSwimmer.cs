@@ -122,6 +122,55 @@ namespace PixelOcean
         private Coroutine hurtFlashRoutine;
         private Color normalSpriteColour = Color.white;
         private float nextVulnerableTime;
+        private bool arenaEntranceActive;
+        private float arenaEntranceTargetX;
+        private float arenaEntranceSpeed;
+
+        public bool IsArenaEntranceActive => arenaEntranceActive;
+
+        public void BeginArenaEntrance(float targetX, float speed)
+        {
+            ResolveReferences();
+            arenaEntranceTargetX = targetX;
+            arenaEntranceSpeed = Mathf.Max(0.5f, speed);
+            arenaEntranceActive = true;
+            respondingToDeath = false;
+            target = null;
+            changingLane = false;
+            attackHitApplied = false;
+            state = CreatureState.Roam;
+            nextVulnerableTime = float.PositiveInfinity;
+        }
+
+        private void UpdateArenaEntrance(Vector2 position)
+        {
+            float delta = arenaEntranceTargetX - position.x;
+            if (Mathf.Abs(delta) > 0.01f)
+            {
+                direction = Mathf.Sign(delta);
+                if (spriteRenderer != null)
+                    spriteRenderer.flipX = direction < 0f;
+            }
+
+            position.x = Mathf.MoveTowards(
+                position.x,
+                arenaEntranceTargetX,
+                arenaEntranceSpeed * Time.fixedDeltaTime);
+
+            float desiredY = UpdateLaneTransition(position.x);
+            float follow = 1f - Mathf.Exp(-verticalResponsiveness * Time.fixedDeltaTime);
+            position.y = Mathf.Lerp(position.y, desiredY, follow * waveFollow);
+            SetPosition(position);
+            ApplyWaterTilt(position.x, follow);
+
+            if (Mathf.Abs(position.x - arenaEntranceTargetX) <= 0.025f)
+            {
+                arenaEntranceActive = false;
+                nextVulnerableTime = Time.time + Mathf.Max(0f, openingInvulnerability);
+                state = CreatureState.Roam;
+                ScheduleLaneShift();
+            }
+        }
 
 
 
@@ -273,6 +322,12 @@ namespace PixelOcean
             RefreshWaterLayersIfNeeded();
             FollowRecycledSection();
             Vector2 position = body != null ? body.position : (Vector2)transform.position;
+            if (arenaEntranceActive)
+            {
+                UpdateArenaEntrance(position);
+                return;
+            }
+
             if (respondingToDeath)
                 UpdateDeathInvestigation(position);
             else
@@ -581,7 +636,7 @@ namespace PixelOcean
         /// </summary>
         public bool TakeThrownItemHit(int damage, Vector2 impactPosition)
         {
-            if (defeated || damage <= 0)
+            if (defeated || arenaEntranceActive || damage <= 0)
                 return false;
 
             // Boss armour only opens for one hit at a time. Returning false lets

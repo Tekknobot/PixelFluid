@@ -10,7 +10,7 @@ namespace PixelOcean
     public sealed class BossArenaPrison : MonoBehaviour
     {
         public static BossArenaPrison Active { get; private set; }
-        public static bool IsActive => Active != null && !Active.encounterFinished;
+        public static bool IsActive => Active != null && Active.encounterStarted && !Active.encounterFinished;
 
         public float LeftBoundary => leftX + edgePadding;
         public float RightBoundary => rightX - edgePadding;
@@ -26,6 +26,11 @@ namespace PixelOcean
         [SerializeField, Min(0.25f)] private float edgePadding = 0.8f;
         [SerializeField, Min(0.25f)] private float escapeDistance = 1.25f;
         [SerializeField, Min(0f)] private float introLockDuration = 1.25f;
+
+        [Header("Boss Entrance")]
+        [SerializeField, Min(0.5f)] private float reaperEntranceSpeed = 8.5f;
+        [SerializeField, Min(0.5f)] private float rubberDuckEntranceSpeed = 10f;
+        [SerializeField, Range(0.12f, 0.42f)] private float entranceArrivalFromCentre = 0.28f;
 
         [Header("Reaper Objective")]
         [SerializeField, Range(2, 8)] private int reaperHitsToOpenEscape = 4;
@@ -50,6 +55,9 @@ namespace PixelOcean
         private bool gateOpen;
         private bool gateOnRight;
         private bool encounterFinished;
+        private bool encounterStarted;
+        private bool entranceStarted;
+        private bool eventsSubscribed;
         private int reaperHits;
         private int ducklingsDestroyed;
         private int duckDamagePhases;
@@ -62,8 +70,8 @@ namespace PixelOcean
             UnsubscribeBossEvents();
             boss = bossBehaviour;
             theme = arenaTheme;
-            SubscribeBossEvents();
             CaptureArena();
+            BeginBossEntrance();
         }
 
         private void Awake()
@@ -73,8 +81,11 @@ namespace PixelOcean
 
         private void Start()
         {
-            SubscribeBossEvents();
-            CaptureArena();
+            if (boss != null && !entranceStarted)
+            {
+                CaptureArena();
+                BeginBossEntrance();
+            }
         }
 
         private void OnDestroy()
@@ -86,6 +97,9 @@ namespace PixelOcean
 
         private void SubscribeBossEvents()
         {
+            if (eventsSubscribed)
+                return;
+
             reaperBoss = boss as GodzillaLaneSwimmer;
             duckBoss = boss as RubberDuckBossSwimmer;
 
@@ -98,10 +112,15 @@ namespace PixelOcean
                 duckBoss.ConfigureArenaArmour(true);
                 RubberDucklingSwimmer.DestroyedByProjectile += OnDucklingDestroyed;
             }
+
+            eventsSubscribed = true;
         }
 
         private void UnsubscribeBossEvents()
         {
+            if (!eventsSubscribed)
+                return;
+
             if (reaperBoss != null)
                 reaperBoss.ArenaHitAccepted -= OnReaperHitAccepted;
             if (duckBoss != null)
@@ -109,6 +128,55 @@ namespace PixelOcean
             RubberDucklingSwimmer.DestroyedByProjectile -= OnDucklingDestroyed;
             reaperBoss = null;
             duckBoss = null;
+            eventsSubscribed = false;
+        }
+
+        private void BeginBossEntrance()
+        {
+            if (boss == null || entranceStarted)
+                return;
+
+            entranceStarted = true;
+            encounterStarted = false;
+
+            float side = boss.transform.position.x < centreX ? -1f : 1f;
+            float arrivalX = centreX + side * arenaWidth * entranceArrivalFromCentre;
+
+            reaperBoss = boss as GodzillaLaneSwimmer;
+            duckBoss = boss as RubberDuckBossSwimmer;
+
+            if (reaperBoss != null)
+            {
+                reaperBoss.BeginArenaEntrance(arrivalX, reaperEntranceSpeed);
+                return;
+            }
+
+            if (duckBoss != null)
+            {
+                duckBoss.BeginArenaEntrance(arrivalX, rubberDuckEntranceSpeed);
+                return;
+            }
+
+            BeginEncounter();
+        }
+
+        private bool IsBossStillEntering()
+        {
+            if (reaperBoss != null)
+                return reaperBoss.IsArenaEntranceActive;
+            if (duckBoss != null)
+                return duckBoss.IsArenaEntranceActive;
+            return false;
+        }
+
+        private void BeginEncounter()
+        {
+            if (encounterStarted || encounterFinished)
+                return;
+
+            encounterStarted = true;
+            startedAt = Time.time;
+            SubscribeBossEvents();
         }
 
         private void OnReaperHitAccepted(GodzillaLaneSwimmer sender)
@@ -206,7 +274,6 @@ namespace PixelOcean
 
             leftX = centreX - arenaWidth * 0.5f;
             rightX = centreX + arenaWidth * 0.5f;
-            startedAt = Time.time;
             gateOnRight = boss == null || boss.transform.position.x <= centreX;
         }
 
@@ -218,6 +285,15 @@ namespace PixelOcean
             if (boss == null)
             {
                 FinishArena(false);
+                return;
+            }
+
+            if (!encounterStarted)
+            {
+                if (!entranceStarted)
+                    BeginBossEntrance();
+                if (!IsBossStillEntering())
+                    BeginEncounter();
                 return;
             }
 
@@ -331,19 +407,52 @@ namespace PixelOcean
 
         private void OnGUI()
         {
-            if (encounterFinished || boss == null)
+            if (!encounterStarted || encounterFinished || boss == null)
                 return;
 
             EnsureStyles();
-            string bossName = theme == ArenaTheme.Reaper ? "REAPER TIDE" : "DUCK STORM";
+
+            string bossName = theme == ArenaTheme.Reaper
+                ? "REAPER TIDE"
+                : "DUCK STORM";
+
             string status = BuildStatus();
 
+            const float panelWidth = 760f;
+            const float panelHeight = 135f;
+            const float padding = 18f;
+
+            float panelX = (Screen.width - panelWidth) * 0.5f;
+
+            Rect panelRect = new Rect(
+                panelX,
+                panelY,
+                panelWidth,
+                panelHeight);
+
             Color old = GUI.color;
+
             GUI.color = new Color(0f, 0.05f, 0.09f, 0.82f);
-            GUI.Box(new Rect(Screen.width * 0.5f - 210f, panelY, 420f, 72f), GUIContent.none);
+            GUI.Box(panelRect, GUIContent.none);
             GUI.color = old;
-            GUI.Label(new Rect(Screen.width * 0.5f - 200f, panelY + 4f, 400f, 34f), bossName, titleStyle);
-            GUI.Label(new Rect(Screen.width * 0.5f - 200f, panelY + 36f, 400f, 28f), status, smallStyle);
+
+            GUI.Label(
+                new Rect(
+                    panelX + padding,
+                    panelY + 8f,
+                    panelWidth - padding * 2f,
+                    76f),
+                bossName,
+                titleStyle);
+
+            GUI.Label(
+                new Rect(
+                    panelX + padding,
+                    panelY + 66f,
+                    panelWidth - padding * 2f,
+                    36f),
+                status,
+                smallStyle);
 
             DrawEdge(12f, !gateOpen || gateOnRight);
             DrawEdge(Screen.width - 24f, !gateOpen || !gateOnRight);

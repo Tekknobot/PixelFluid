@@ -88,6 +88,26 @@ namespace PixelOcean
             bossDefeatedSunset = bossDefeatedSunset
         };
 
+        /// <summary>
+        /// Keeps the procedural sky tied to the run clock. Each surf day starts
+        /// at 6:00 AM and reaches midnight at the end of the configured day.
+        /// This also makes Continue loads and developer time jumps visually exact.
+        /// </summary>
+        private void SyncDayNightToRunTime()
+        {
+            ProceduralStarryNight sky = FindFirstObjectByType<ProceduralStarryNight>();
+            if (sky == null)
+                return;
+
+            float progress = dayEndsAt > 0f
+                ? Mathf.Clamp01(runTime / dayEndsAt)
+                : 0f;
+
+            // 0.25 = 6:00 AM. Advancing 0.75 of a full cycle reaches midnight.
+            float visualTime = Mathf.Repeat(0.25f + progress * 0.75f, 1f);
+            sky.SetTimeOfDay(visualTime);
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Install()
         {
@@ -186,6 +206,7 @@ namespace PixelOcean
                     SurfAbilityProgression.Instance.DebugUnlockAll();
             }
             RefreshLearningObjectiveForStage();
+            SyncDayNightToRunTime();
 
             SpawnPickupSet();
             SpawnOceanItems(12);
@@ -282,6 +303,7 @@ namespace PixelOcean
 
             rain = FindFirstObjectByType<ProceduralRainSystem>();
             rain?.ClearRain();
+            SyncDayNightToRunTime();
             SpawnPickupSet();
             SpawnOceanItems(12);
             if (currentDay == 1)
@@ -336,6 +358,7 @@ namespace PixelOcean
             AirTrickScoreSystem.Instance?.BeginDay(2);
             SurfAbilityProgression.Instance?.DebugUnlockAll();
             runTime = 0f;
+            SyncDayNightToRunTime();
             rescues = 0;
             finalWaveStarted = false;
             bossDefeatedSunset = false;
@@ -396,6 +419,7 @@ namespace PixelOcean
                 return;
 
             runTime += Time.deltaTime;
+            SyncDayNightToRunTime();
             UpdateDayOneMechanicUnlocks();
 
             if (runTime >= dayEndsAt && finalWaveStarted)
@@ -519,6 +543,7 @@ namespace PixelOcean
 
             float shortenedStart = Mathf.Max(0f, dayEndsAt - acceleratedSunsetSeconds);
             runTime = Mathf.Max(runTime, shortenedStart);
+            SyncDayNightToRunTime();
             objective = $"SUNSET  {Mathf.Max(0, Mathf.CeilToInt(dayEndsAt - runTime))}s";
             ShowBanner("THE DEEP RETREATS", "THE OCEAN GROWS QUIET AS SUNSET FALLS.", 5f);
         }
@@ -565,12 +590,14 @@ namespace PixelOcean
                 case Chapter.Storm: runTime = Mathf.Max(runTime, finalWaveBeginsAt + 0.05f); break;
                 case Chapter.FinalWave: runTime = Mathf.Max(runTime, dayEndsAt + 0.05f); break;
             }
+            SyncDayNightToRunTime();
         }
 
         public void DebugSpawnBoss()
         {
             if (chapter < Chapter.FinalWave)
                 runTime = Mathf.Max(runTime, finalWaveBeginsAt + 0.05f);
+            SyncDayNightToRunTime();
         }
 
         public void DebugResetCurrentDay()
