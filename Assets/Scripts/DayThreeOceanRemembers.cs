@@ -43,6 +43,8 @@ namespace PixelOcean
         private ProceduralStarryNight sky;
         private ProceduralRainSystem rain;
         private ShadowSurferEcho shadow;
+        private ShadowSurferEcho fireShadow;
+        private bool fireShadowRequested;
         private float nextEnemyAt;
         private float nextAnomalyAt;
         private float anomalyStartedAt;
@@ -78,6 +80,7 @@ namespace PixelOcean
             if (sky == null) sky = FindFirstObjectByType<ProceduralStarryNight>();
             if (rain == null) rain = FindFirstObjectByType<ProceduralRainSystem>();
             EnsureShadow();
+            UpdateFireShadow();
             UpdateEnemyRemix();
             UpdateWaveCorruption();
             UpdateWeather();
@@ -166,7 +169,10 @@ namespace PixelOcean
             skyTimeVelocity = 0f;
             RestoreWater();
             if (shadow != null) Destroy(shadow.gameObject);
+            if (fireShadow != null) Destroy(fireShadow.gameObject);
             shadow = null;
+            fireShadow = null;
+            fireShadowRequested = false;
             foreach (GameObject holder in spawnedHolders)
                 if (holder != null) Destroy(holder);
             spawnedHolders.Clear();
@@ -178,9 +184,55 @@ namespace PixelOcean
             TinyWaveSurfer player = FindFirstObjectByType<TinyWaveSurfer>();
             if (player == null || player.IsDead) return;
 
-            GameObject go = new("Shadow Surfer - The Ocean Remembers");
-            shadow = go.AddComponent<ShadowSurferEcho>();
-            shadow.Initialise(player, director);
+            shadow = CreateShadow(player, "Shadow Surfer - The Ocean Remembers", -1f, 1.10f, 0.12f, 0f);
+        }
+
+        private ShadowSurferEcho CreateShadow(
+            TinyWaveSurfer player,
+            string objectName,
+            float sideSign,
+            float followDistance,
+            float verticalOffset,
+            float phaseOffset)
+        {
+            GameObject go = new(objectName);
+            ShadowSurferEcho echo = go.AddComponent<ShadowSurferEcho>();
+            echo.Initialise(player, director);
+            echo.ConfigureFollower(sideSign, followDistance, verticalOffset, phaseOffset);
+            return echo;
+        }
+
+        private void UpdateFireShadow()
+        {
+            TinyWaveSurfer player = FindFirstObjectByType<TinyWaveSurfer>();
+            bool onFire = player != null && !player.IsDead &&
+                          AirTrickScoreSystem.Instance != null &&
+                          AirTrickScoreSystem.Instance.IsOnFire;
+
+            if (onFire)
+            {
+                fireShadowRequested = true;
+                if (fireShadow == null)
+                {
+                    fireShadow = CreateShadow(
+                        player,
+                        "Fire Shadow Surfer - The Ocean Remembers",
+                        1f,
+                        0.95f,
+                        0.18f,
+                        2.35f);
+                }
+                else if (!fireShadow.gameObject.activeSelf || fireShadow.IsSubmerging)
+                {
+                    fireShadow.Reactivate(player);
+                }
+            }
+            else if (fireShadowRequested)
+            {
+                fireShadowRequested = false;
+                if (fireShadow != null)
+                    fireShadow.SubmergeAndDisable();
+            }
         }
 
         private void UpdateEnemyRemix()
@@ -361,8 +413,15 @@ namespace PixelOcean
         private readonly Dictionary<Motion, Sprite[]> frames = new();
         private Vector3 velocity;
         private float phase;
+        private float sideSign = -1f;
+        private float normalFollowDistance = 1.1f;
+        private float followerVerticalOffset = 0.12f;
+        private bool submerging;
+        private Coroutine submergeRoutine;
         private int appliedLane = -1;
         private Motion currentMotion = Motion.Idle;
+
+        public bool IsSubmerging => submerging;
 
         public void Initialise(TinyWaveSurfer target, SurfDayProgressionDirector dayDirector)
         {
@@ -393,6 +452,73 @@ namespace PixelOcean
             ApplyFrame(Motion.Idle, 0f);
         }
 
+        public void ConfigureFollower(
+            float configuredSideSign,
+            float followDistance,
+            float verticalOffset,
+            float phaseOffset)
+        {
+            sideSign = Mathf.Sign(Mathf.Approximately(configuredSideSign, 0f) ? -1f : configuredSideSign);
+            normalFollowDistance = Mathf.Max(0.2f, followDistance);
+            followerVerticalOffset = verticalOffset;
+            phase += phaseOffset;
+        }
+
+        public void Reactivate(TinyWaveSurfer target)
+        {
+            player = target;
+            if (submergeRoutine != null)
+            {
+                StopCoroutine(submergeRoutine);
+                submergeRoutine = null;
+            }
+
+            submerging = false;
+            gameObject.SetActive(true);
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.enabled = true;
+                spriteRenderer.color = Color.white;
+            }
+
+            velocity = Vector3.zero;
+            transform.position = player.transform.position +
+                                 new Vector3(sideSign * normalFollowDistance, followerVerticalOffset, 0f);
+        }
+
+        public void SubmergeAndDisable()
+        {
+            if (!gameObject.activeSelf || submerging)
+                return;
+
+            if (submergeRoutine != null)
+                StopCoroutine(submergeRoutine);
+            submergeRoutine = StartCoroutine(SubmergeRoutine());
+        }
+
+        private IEnumerator SubmergeRoutine()
+        {
+            submerging = true;
+            Vector3 start = transform.position;
+            Vector3 end = start + Vector3.down * 1.15f;
+            const float duration = 0.65f;
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / duration));
+                transform.position = Vector3.LerpUnclamped(start, end, t);
+                yield return null;
+            }
+
+            if (spriteRenderer != null)
+                spriteRenderer.enabled = false;
+            submerging = false;
+            submergeRoutine = null;
+            gameObject.SetActive(false);
+        }
+
         private void Load(Motion key, string path)
         {
             Sprite[] loaded = Resources.LoadAll<Sprite>(path);
@@ -410,6 +536,9 @@ namespace PixelOcean
 
         private void Update()
         {
+            if (submerging)
+                return;
+
             if (player == null)
             {
                 player = FindFirstObjectByType<TinyWaveSurfer>();
@@ -423,15 +552,16 @@ namespace PixelOcean
                            director.CurrentChapter >= SurfDayProgressionDirector.Chapter.FinalWave;
 
             float side = hostile
-                ? Mathf.Sin(Time.unscaledTime * 0.72f + phase)
-                : -1f;
+                ? sideSign * Mathf.Sign(Mathf.Sin(Time.unscaledTime * 0.72f + phase))
+                : sideSign;
             float distance = hostile
-                ? 1.15f + Mathf.Abs(Mathf.Sin(Time.unscaledTime * 0.41f)) * 1.2f
-                : 1.1f;
+                ? Mathf.Max(0.65f, normalFollowDistance * 0.85f) +
+                  Mathf.Abs(Mathf.Sin(Time.unscaledTime * 0.41f + phase)) * 0.75f
+                : normalFollowDistance;
 
             Vector3 followTarget = player.transform.position + new Vector3(
                 side * distance,
-                0.12f + Mathf.Sin(Time.unscaledTime * 1.3f + phase) * 0.08f,
+                followerVerticalOffset + Mathf.Sin(Time.unscaledTime * 1.3f + phase) * 0.08f,
                 0f);
 
             transform.position = Vector3.SmoothDamp(
