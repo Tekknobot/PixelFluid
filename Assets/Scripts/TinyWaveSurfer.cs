@@ -499,6 +499,9 @@ namespace PixelOcean
         public int MaximumHealth => Mathf.Max(1, maximumHealth);
         public bool IsSwitchingWave => state == RiderState.SwitchingWave;
         public bool IsObstacleJumping => obstacleJumpActive && state == RiderState.TurningTrick;
+        public bool IsAirborneDoingTricks =>
+            state == RiderState.TurningTrick &&
+            (obstacleJumpActive || airTrickActive);
         public bool HasObstacleClearance => IsObstacleJumping &&
             obstacleJumpProgress >= obstacleClearanceStart &&
             obstacleJumpProgress <= obstacleClearanceEnd;
@@ -813,8 +816,12 @@ namespace PixelOcean
 
         public bool TakeSharkHit(Vector2 sharkPosition)
         {
-            if (state == RiderState.Dead || Time.time < invulnerableUntil)
+            if (state == RiderState.Dead ||
+                IsAirborneDoingTricks ||
+                Time.time < invulnerableUntil)
+            {
                 return false;
+            }
 
             invulnerableUntil = Time.time + hitInvulnerability;
             currentHealth = Mathf.Max(0, currentHealth - Mathf.Max(1, sharkHitDamage));
@@ -844,8 +851,11 @@ namespace PixelOcean
         /// </summary>
         public bool TakeSquidComboBeat(Vector2 squidPosition, bool applyDamage)
         {
-            if (state == RiderState.Dead)
+            if (state == RiderState.Dead ||
+                IsAirborneDoingTricks)
+            {
                 return false;
+            }
 
             if (applyDamage)
             {

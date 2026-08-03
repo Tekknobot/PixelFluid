@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace PixelOcean
@@ -31,6 +33,10 @@ namespace PixelOcean
         [SerializeField, Min(0.5f)] private float reaperEntranceSpeed = 8.5f;
         [SerializeField, Min(0.5f)] private float rubberDuckEntranceSpeed = 10f;
         [SerializeField, Range(0.12f, 0.42f)] private float entranceArrivalFromCentre = 0.28f;
+        [Tooltip("Places the boss visibly inside the arena edge before its entrance begins.")]
+        [SerializeField, Range(0.25f, 2.5f)] private float arenaSpawnInset = 0.9f;
+        [Tooltip("Time used to reveal the boss after it has been placed in the arena.")]
+        [SerializeField, Range(0.1f, 3f)] private float bossFadeInDuration = 1.0f;
 
         [Header("Reaper Objective")]
         [SerializeField, Range(2, 8)] private int reaperHitsToOpenEscape = 4;
@@ -139,8 +145,28 @@ namespace PixelOcean
             entranceStarted = true;
             encounterStarted = false;
 
+            /*
+             * Boss spawners normally create their swimmers beyond the camera so
+             * ordinary encounters can enter naturally. An arena encounter is
+             * different: the arena can lock the camera before that swimmer ever
+             * reaches it. Place the boss just inside the captured arena first,
+             * then let its normal entrance movement carry it farther inward.
+             */
             float side = boss.transform.position.x < centreX ? -1f : 1f;
-            float arrivalX = centreX + side * arenaWidth * entranceArrivalFromCentre;
+            float inset = Mathf.Clamp(
+                arenaSpawnInset,
+                0.25f,
+                Mathf.Max(0.25f, arenaWidth * 0.2f));
+
+            float startX = side < 0f
+                ? LeftBoundary + inset
+                : RightBoundary - inset;
+
+            float arrivalX =
+                centreX + side * arenaWidth * entranceArrivalFromCentre;
+
+            PlaceBossAtArenaX(startX);
+            StartCoroutine(FadeBossIntoArena());
 
             reaperBoss = boss as GodzillaLaneSwimmer;
             duckBoss = boss as RubberDuckBossSwimmer;
@@ -158,6 +184,95 @@ namespace PixelOcean
             }
 
             BeginEncounter();
+        }
+
+        private void PlaceBossAtArenaX(float worldX)
+        {
+            if (boss == null)
+                return;
+
+            Vector3 position = boss.transform.position;
+            position.x = Mathf.Clamp(worldX, LeftBoundary, RightBoundary);
+
+            Rigidbody2D body = boss.GetComponent<Rigidbody2D>();
+            if (body != null)
+            {
+                body.position = new Vector2(position.x, position.y);
+                body.linearVelocity = Vector2.zero;
+                body.angularVelocity = 0f;
+            }
+            else
+            {
+                boss.transform.position = position;
+            }
+        }
+
+        private IEnumerator FadeBossIntoArena()
+        {
+            if (boss == null)
+                yield break;
+
+            SpriteRenderer[] renderers =
+                boss.GetComponentsInChildren<SpriteRenderer>(true);
+
+            if (renderers == null || renderers.Length == 0)
+                yield break;
+
+            List<Color> targetColours =
+                new List<Color>(renderers.Length);
+
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                SpriteRenderer renderer = renderers[i];
+                Color target = renderer != null
+                    ? renderer.color
+                    : Color.white;
+
+                targetColours.Add(target);
+
+                if (renderer != null)
+                {
+                    renderer.color = new Color(
+                        target.r,
+                        target.g,
+                        target.b,
+                        0f);
+                }
+            }
+
+            float duration = Mathf.Max(0.1f, bossFadeInDuration);
+            float elapsed = 0f;
+
+            while (elapsed < duration && boss != null)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.SmoothStep(
+                    0f,
+                    1f,
+                    Mathf.Clamp01(elapsed / duration));
+
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    SpriteRenderer renderer = renderers[i];
+                    if (renderer == null)
+                        continue;
+
+                    Color target = targetColours[i];
+                    renderer.color = new Color(
+                        target.r,
+                        target.g,
+                        target.b,
+                        target.a * t);
+                }
+
+                yield return null;
+            }
+
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                if (renderers[i] != null)
+                    renderers[i].color = targetColours[i];
+            }
         }
 
         private bool IsBossStillEntering()

@@ -188,6 +188,10 @@ namespace PixelOcean
             if (data == null) yield break;
             ClearRunObjects();
             yield return null;
+            // Destroy() is deferred. Wait through the end of the frame so stale
+            // boss instances cannot make the restored boss spawner abort.
+            yield return new WaitForEndOfFrame();
+            yield return null;
 
             float deadline = Time.realtimeSinceStartup + 12f;
             while ((EndlessWaveSections.Instance == null || !EndlessWaveSections.Instance.IsReady) &&
@@ -239,6 +243,13 @@ namespace PixelOcean
             SpawnPickupSet();
             SpawnOceanItems(12);
             RestoreChapterPopulation();
+
+            if (chapter >= Chapter.FinalWave)
+            {
+                PrepareBossArenaSeaLife();
+                yield return EnsureBossEncounterAfterLoad();
+            }
+
             RefreshLearningObjectiveForStage();
             SurfAbilityProgression.Instance?.ApplyUpgradesToAllPlayers();
             ShowBanner($"DAY {currentDay} CONTINUED", CurrentObjective, 4f);
@@ -525,6 +536,8 @@ namespace PixelOcean
                 BeginChapter(Chapter.FinalWave,
                     currentDay >= 3 ? "OUTSURF YOUR SHADOW" : "THE LAST WAVE",
                     currentDay >= 3 ? "SURVIVE THE BLACK WATER." : $"SURVIVE {finalSurvivalSeconds} SECONDS.");
+                PrepareBossArenaSeaLife();
+
                 if (currentDay == 1)
                     SpawnMajor<GodzillaLaneSpawner>("Final Godzilla", spawner => spawner.SpawnGodzilla());
                 else if (currentDay == 2)
@@ -618,6 +631,65 @@ namespace PixelOcean
                     : $"SURVIVE  {Mathf.Max(0, Mathf.CeilToInt(dayEndsAt - runTime))}s";
         }
 
+
+        private void PrepareBossArenaSeaLife()
+        {
+            // The boss is the focus of Final Wave. Stop new sea hazards and make
+            // every ordinary sea creature leave the camera before the fight settles.
+            StopHostileSpawners();
+            RetreatAllHostileSeaCreatures();
+        }
+
+        private IEnumerator EnsureBossEncounterAfterLoad()
+        {
+            // Day 3 intentionally has no giant boss.
+            if (currentDay < 1 || currentDay > 2 || bossDefeatedSunset)
+                yield break;
+
+            // Allow restored spawners and deferred destruction to settle first.
+            yield return null;
+            yield return new WaitForEndOfFrame();
+            yield return null;
+
+            if (currentDay == 1)
+            {
+                GodzillaLaneSwimmer boss = FindFirstObjectByType<GodzillaLaneSwimmer>();
+                if (boss == null)
+                {
+                    SpawnMajor<GodzillaLaneSpawner>(
+                        "Restored Final Godzilla",
+                        spawner => spawner.SpawnGodzilla());
+                    yield return null;
+                    boss = FindFirstObjectByType<GodzillaLaneSwimmer>();
+                }
+
+                if (boss != null && FindFirstObjectByType<BossArenaPrison>() == null)
+                {
+                    GameObject arenaHost = new GameObject("Restored Reaper Boss Arena Prison");
+                    BossArenaPrison arena = arenaHost.AddComponent<BossArenaPrison>();
+                    arena.Configure(boss, BossArenaPrison.ArenaTheme.Reaper);
+                }
+            }
+            else
+            {
+                RubberDuckBossSwimmer boss = FindFirstObjectByType<RubberDuckBossSwimmer>();
+                if (boss == null)
+                {
+                    SpawnMajor<RubberDuckBossSpawner>(
+                        "Restored Day 2 Giant Rubber Duck Boss",
+                        spawner => spawner.SpawnRubberDuckBoss());
+                    yield return null;
+                    boss = FindFirstObjectByType<RubberDuckBossSwimmer>();
+                }
+
+                if (boss != null && FindFirstObjectByType<BossArenaPrison>() == null)
+                {
+                    GameObject arenaHost = new GameObject("Restored Rubber Duck Boss Arena Prison");
+                    BossArenaPrison arena = arenaHost.AddComponent<BossArenaPrison>();
+                    arena.Configure(boss, BossArenaPrison.ArenaTheme.RubberDuck);
+                }
+            }
+        }
 
         public void OnFinalBossDefeated()
         {
