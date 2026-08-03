@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using TMPro;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
@@ -29,6 +30,8 @@ namespace PixelOcean
         private GameObject menuRoot;
         private RectTransform logoPanel;
         private RectTransform buttonPanel;
+        private RectTransform titleCreditPanel;
+        private CanvasGroup titleCreditGroup;
         private GameObject controlsPanel;
         private GameObject settingsPanel;
         private Button playButton;
@@ -45,6 +48,7 @@ namespace PixelOcean
         private Coroutine logoRoutine;
         private bool firstMenu = true;
         private bool menuVisible;
+        private bool showingTitleMenu;
         private float inputReadyTime;
 
         // Secret controller code: UP, UP, LEFT, RIGHT, LEFT, RIGHT, LB, RB.
@@ -248,12 +252,14 @@ namespace PixelOcean
         {
             firstMenu = isMainMenu;
             menuVisible = true;
+            showingTitleMenu = isMainMenu;
             if (continueButton != null) continueButton.gameObject.SetActive(isMainMenu);
             menuRoot.SetActive(true);
             controlsPanel.SetActive(false);
             settingsPanel.SetActive(false);
             logoPanel.gameObject.SetActive(true);
             buttonPanel.gameObject.SetActive(true);
+            if (titleCreditPanel != null) titleCreditPanel.gameObject.SetActive(isMainMenu);
             Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
 
@@ -271,9 +277,13 @@ namespace PixelOcean
             Vector2 buttonsTarget = new(560f, 0f);
             Vector2 logoStart = new(-1450f, 0f);
             Vector2 buttonsStart = new(1500f, 0f);
+            Vector2 creditsTarget = new(0f, 34f);
+            Vector2 creditsStart = new(0f, -28f);
 
             logoPanel.anchoredPosition = logoStart;
             buttonPanel.anchoredPosition = buttonsStart;
+            if (titleCreditPanel != null) titleCreditPanel.anchoredPosition = creditsStart;
+            if (titleCreditGroup != null) titleCreditGroup.alpha = 0f;
 
             float elapsed = 0f;
             while (elapsed < motionDuration)
@@ -282,11 +292,19 @@ namespace PixelOcean
                 float t = EaseOutBack(Mathf.Clamp01(elapsed / motionDuration));
                 logoPanel.anchoredPosition = Vector2.LerpUnclamped(logoStart, logoTarget, t);
                 buttonPanel.anchoredPosition = Vector2.LerpUnclamped(buttonsStart, buttonsTarget, t);
+                if (showingTitleMenu && titleCreditPanel != null)
+                {
+                    float creditT = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((elapsed / motionDuration - 0.34f) / 0.66f));
+                    titleCreditPanel.anchoredPosition = Vector2.LerpUnclamped(creditsStart, creditsTarget, creditT);
+                    if (titleCreditGroup != null) titleCreditGroup.alpha = creditT;
+                }
                 yield return null;
             }
 
             logoPanel.anchoredPosition = logoTarget;
             buttonPanel.anchoredPosition = buttonsTarget;
+            if (showingTitleMenu && titleCreditPanel != null) titleCreditPanel.anchoredPosition = creditsTarget;
+            if (titleCreditGroup != null) titleCreditGroup.alpha = showingTitleMenu ? 1f : 0f;
             RefreshContinueButton();
             Select(continueButton != null && continueButton.gameObject.activeInHierarchy && continueButton.interactable ? continueButton : playButton);
         }
@@ -297,6 +315,8 @@ namespace PixelOcean
             Vector2 buttonStart = buttonPanel.anchoredPosition;
             Vector2 logoEnd = new(-1450f, 0f);
             Vector2 buttonEnd = new(1500f, 0f);
+            Vector2 creditsStart = titleCreditPanel != null ? titleCreditPanel.anchoredPosition : Vector2.zero;
+            Vector2 creditsEnd = new(0f, -28f);
 
             float elapsed = 0f;
             while (elapsed < motionDuration * 0.72f)
@@ -305,6 +325,8 @@ namespace PixelOcean
                 float t = EaseInCubic(Mathf.Clamp01(elapsed / (motionDuration * 0.72f)));
                 logoPanel.anchoredPosition = Vector2.LerpUnclamped(logoStart, logoEnd, t);
                 buttonPanel.anchoredPosition = Vector2.LerpUnclamped(buttonStart, buttonEnd, t);
+                if (titleCreditPanel != null) titleCreditPanel.anchoredPosition = Vector2.LerpUnclamped(creditsStart, creditsEnd, t);
+                if (titleCreditGroup != null) titleCreditGroup.alpha = 1f - Mathf.Clamp01(t);
                 yield return null;
             }
 
@@ -350,6 +372,7 @@ namespace PixelOcean
 
             BuildLogo(menuRoot.transform);
             BuildButtons(menuRoot.transform);
+            BuildTitleCredits(menuRoot.transform);
             BuildControls(menuRoot.transform);
             BuildSettings(menuRoot.transform);
         }
@@ -457,6 +480,60 @@ namespace PixelOcean
             return button;
         }
 
+
+        private void BuildTitleCredits(Transform parent)
+        {
+            GameObject panel = CreateUIObject(parent, "Title Credit Lines");
+            titleCreditPanel = panel.GetComponent<RectTransform>();
+            titleCreditPanel.anchorMin = new Vector2(0f, 0f);
+            titleCreditPanel.anchorMax = new Vector2(1f, 0f);
+            titleCreditPanel.pivot = new Vector2(0.5f, 0f);
+            titleCreditPanel.sizeDelta = new Vector2(-96f, 24f);
+            titleCreditPanel.anchoredPosition = new Vector2(0f, 34f);
+
+            titleCreditGroup = panel.AddComponent<CanvasGroup>();
+            titleCreditGroup.alpha = 0f;
+            titleCreditGroup.interactable = false;
+            titleCreditGroup.blocksRaycasts = false;
+
+            CreateTitleCreditLabel(panel.transform, "A ZILLATRONICS PRODUCTION", TextAnchor.MiddleLeft);
+            CreateTitleCreditLabel(panel.transform, "SURFER SLUG  //  © 2026  //  ALL RIGHTS RESERVED", TextAnchor.MiddleRight);
+        }
+
+        private void CreateTitleCreditLabel(
+            Transform parent,
+            string copy,
+            TextAnchor alignment)
+        {
+            GameObject go = CreateUIObject(parent, "Credit Label");
+
+            RectTransform rect = go.GetComponent<RectTransform>();
+            rect.anchorMin = alignment == TextAnchor.MiddleLeft
+                ? new Vector2(0f, 0f)
+                : new Vector2(0.5f, 0f);
+
+            rect.anchorMax = alignment == TextAnchor.MiddleLeft
+                ? new Vector2(0.5f, 1f)
+                : new Vector2(1f, 1f);
+
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+
+            TextMeshProUGUI label = go.AddComponent<TextMeshProUGUI>();
+            label.font = PixelFontLibrary.TmpRegular;
+            label.text = copy;
+            label.fontSize = 16f;
+            label.fontStyle = FontStyles.Normal;
+            label.alignment = alignment == TextAnchor.MiddleLeft
+                ? TextAlignmentOptions.MidlineLeft
+                : TextAlignmentOptions.MidlineRight;
+
+            label.color = new Color(0.86f, 0.88f, 0.90f, 0.72f);
+            label.raycastTarget = false;
+            label.enableWordWrapping = false;
+            label.overflowMode = TextOverflowModes.Overflow;
+        }
+
         private void BuildControls(Transform parent)
         {
             controlsPanel = CreateSubPanel(parent, "Controls Panel");
@@ -518,6 +595,7 @@ namespace PixelOcean
             logoPanel.gameObject.SetActive(false);
             buttonPanel.gameObject.SetActive(false);
             settingsPanel.SetActive(false);
+            if (titleCreditPanel != null) titleCreditPanel.gameObject.SetActive(false);
             controlsPanel.SetActive(true);
             Select(controlsPanel.GetComponentInChildren<Button>());
         }
@@ -527,6 +605,7 @@ namespace PixelOcean
             logoPanel.gameObject.SetActive(false);
             buttonPanel.gameObject.SetActive(false);
             controlsPanel.SetActive(false);
+            if (titleCreditPanel != null) titleCreditPanel.gameObject.SetActive(false);
             settingsPanel.SetActive(true);
             Select(settingsPanel.GetComponentInChildren<Selectable>());
         }
@@ -537,6 +616,7 @@ namespace PixelOcean
             settingsPanel.SetActive(false);
             logoPanel.gameObject.SetActive(true);
             buttonPanel.gameObject.SetActive(true);
+            if (titleCreditPanel != null) titleCreditPanel.gameObject.SetActive(showingTitleMenu);
             RefreshContinueButton();
             RefreshDeveloperButton();
             Select(continueButton != null && continueButton.interactable ? continueButton : playButton);
@@ -627,6 +707,8 @@ namespace PixelOcean
             Vector2 buttonStart = buttonPanel.anchoredPosition;
             Vector2 logoEnd = new(-1450f, 0f);
             Vector2 buttonEnd = new(1500f, 0f);
+            Vector2 creditsStart = titleCreditPanel != null ? titleCreditPanel.anchoredPosition : Vector2.zero;
+            Vector2 creditsEnd = new(0f, -28f);
             float duration = motionDuration * 0.72f;
             float elapsed = 0f;
 
@@ -636,6 +718,8 @@ namespace PixelOcean
                 float t = EaseInCubic(Mathf.Clamp01(elapsed / duration));
                 logoPanel.anchoredPosition = Vector2.LerpUnclamped(logoStart, logoEnd, t);
                 buttonPanel.anchoredPosition = Vector2.LerpUnclamped(buttonStart, buttonEnd, t);
+                if (titleCreditPanel != null) titleCreditPanel.anchoredPosition = Vector2.LerpUnclamped(creditsStart, creditsEnd, t);
+                if (titleCreditGroup != null) titleCreditGroup.alpha = 1f - Mathf.Clamp01(t);
                 yield return null;
             }
 
