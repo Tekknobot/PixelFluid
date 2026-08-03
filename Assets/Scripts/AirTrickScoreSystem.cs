@@ -443,7 +443,7 @@ namespace PixelOcean
             {
                 font = PixelFontLibrary.Bold,
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 64,
+                fontSize = 72,
                 fontStyle = FontStyle.Normal,
                 normal = { textColor = Color.white }
             };
@@ -451,7 +451,7 @@ namespace PixelOcean
             {
                 font = PixelFontLibrary.Bold,
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 32,
+                fontSize = 42,
                 fontStyle = FontStyle.Normal,
                 normal = { textColor = new Color(1f, 0.9f, 0.2f, 1f) }
             };
@@ -459,7 +459,7 @@ namespace PixelOcean
             {
                 font = PixelFontLibrary.Medium,
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 32,
+                fontSize = 36,
                 normal = { textColor = Color.white }
             };
         }
@@ -496,8 +496,8 @@ namespace PixelOcean
 
             if (!recapVisible) return;
 
-            float width = Mathf.Min(700f, Screen.width - 40f);
-            float height = 500f;
+            float width = Mathf.Min(920f, Screen.width - 36f);
+            float height = Mathf.Min(640f, Screen.height - 36f);
 
             Rect panel = new(
                 (Screen.width - width) * 0.5f,
@@ -507,42 +507,42 @@ namespace PixelOcean
             );
 
             Color oldColor = GUI.color;
-            GUI.color = new Color(0f, 0f, 0f, 0.82f);
+            GUI.color = new Color(0f, 0.045f, 0.075f, 0.94f);
             GUI.Box(panel, GUIContent.none);
             GUI.color = oldColor;
 
             GUI.Label(
-                new Rect(panel.x + 20f, panel.y + 25f, panel.width - 40f, 60f),
+                new Rect(panel.x + 24f, panel.y + 30f, panel.width - 48f, 78f),
                 "DAY " + recapDay + " RECAP",
                 recapTitleStyle
             );
 
             GUI.Label(
-                new Rect(panel.x + 20f, panel.y + 90f, panel.width - 40f, 50f),
+                new Rect(panel.x + 24f, panel.y + 112f, panel.width - 48f, 62f),
                 "+" + dayStoke.ToString("N0") + " STOKE",
                 recapValueStyle
             );
 
             GUI.Label(
-                new Rect(panel.x + 30f, panel.y + 155f, panel.width - 60f, 40f),
+                new Rect(panel.x + 34f, panel.y + 195f, panel.width - 68f, 50f),
                 "TRICK JUMPS  " + jumpsLanded,
                 recapSmallStyle
             );
 
             GUI.Label(
-                new Rect(panel.x + 30f, panel.y + 205f, panel.width - 60f, 40f),
+                new Rect(panel.x + 34f, panel.y + 260f, panel.width - 68f, 56f),
                 "BEST TRICK  " + bestTrick + "  +" + bestJumpScore,
                 recapSmallStyle
             );
 
             GUI.Label(
-                new Rect(panel.x + 30f, panel.y + 255f, panel.width - 60f, 40f),
+                new Rect(panel.x + 34f, panel.y + 330f, panel.width - 68f, 50f),
                 "HIGHEST AIR  " + highestAir.ToString("0.00") + "m",
                 recapSmallStyle
             );
 
             GUI.Label(
-                new Rect(panel.x + 30f, panel.y + 305f, panel.width - 60f, 50f),
+                new Rect(panel.x + 34f, panel.y + 395f, panel.width - 68f, 64f),
                 "HANDSTANDS " + handstands +
                 "   ROTATIONS " + rotations +
                 "   FLIPS " + flips,
@@ -550,7 +550,7 @@ namespace PixelOcean
             );
 
             GUI.Label(
-                new Rect(panel.x + 20f, panel.y + 390f, panel.width - 40f, 55f),
+                new Rect(panel.x + 24f, panel.yMax - 118f, panel.width - 48f, 70f),
                 "TOTAL STOKE  " + totalStoke.ToString("N0"),
                 recapValueStyle
             );
