@@ -72,6 +72,22 @@ namespace PixelOcean
         [Tooltip("Allows horizontal steering while airborne.")]
         [SerializeField, Range(0f, 1f)] private float airControl = 0.45f;
 
+        [Header("Water-Like Horizontal Motion")]
+        [Tooltip("How quickly residual board momentum settles when no direction is held. Lower than normal deceleration keeps the board gliding naturally.")]
+        [SerializeField, Range(0.25f, 12f)] private float idleWaterDrag = 2.4f;
+        [Tooltip("Reduces acceleration while reversing direction so the board has to carve through the water instead of instantly snapping around.")]
+        [SerializeField, Range(0.1f, 1f)] private float reversalResponseMultiplier = 0.48f;
+        [Tooltip("How strongly the active wave's horizontal movement gently carries Chuck while idle.")]
+        [SerializeField, Range(0f, 0.5f)] private float idleWaveDriftInfluence = 0.10f;
+        [Tooltip("Small natural left/right drift while no horizontal input is held.")]
+        [SerializeField, Range(0f, 0.5f)] private float idleDriftSpeed = 0.60f;
+        [Tooltip("Frequency of the subtle idle board drift.")]
+        [SerializeField, Range(0.05f, 2f)] private float idleDriftFrequency = 0.62f;
+        [Tooltip("Maximum passive drift speed so the ocean never takes control away from the player.")]
+        [SerializeField, Range(0.02f, 1f)] private float maximumIdleDriftSpeed = 0.22f;
+        [Tooltip("Extra board yaw while idle, making Chuck continuously correct his balance on the water.")]
+        [SerializeField, Range(0f, 8f)] private float idleBalanceLean = 1.6f;
+
         [Header("Charged Water Skid")]
         [Tooltip("Keyboard E / controller east face button (Xbox B). Hold to charge, release to skid.")]
         [SerializeField] private bool enableChargedWaterSkid = true;
@@ -2080,13 +2096,42 @@ namespace PixelOcean
 
             previousSpecialHeld = specialHeld;
 
+            bool horizontalInputActive = Mathf.Abs(horizontal) > 0.05f;
+
             if (!specialCharging && !specialSkidding)
             {
-                float targetSpeed = horizontal * playerScrollSpeed *
-                    (boostHeld ? playerBoostMultiplier : 1f);
-                float response = Mathf.Abs(targetSpeed) > 0.01f
-                    ? playerAcceleration
-                    : playerDeceleration;
+                float targetSpeed;
+                float response;
+
+                if (horizontalInputActive)
+                {
+                    targetSpeed = horizontal * playerScrollSpeed *
+                        (boostHeld ? playerBoostMultiplier : 1f);
+
+                    bool reversing = Mathf.Abs(playerHorizontalVelocity) > 0.05f &&
+                        Mathf.Sign(targetSpeed) != Mathf.Sign(playerHorizontalVelocity);
+
+                    response = playerAcceleration *
+                        (reversing ? reversalResponseMultiplier : 1f);
+                }
+                else
+                {
+                    float waveDrift = currentWave != null
+                        ? currentWave.GetGameplayWaveVelocity(localRideX).x * idleWaveDriftInfluence
+                        : 0f;
+
+                    float naturalDrift = Mathf.Sin(
+                        Time.time * idleDriftFrequency * Mathf.PI * 2f + waveIndex * 0.73f) *
+                        idleDriftSpeed;
+
+                    targetSpeed = Mathf.Clamp(
+                        waveDrift + naturalDrift,
+                        -maximumIdleDriftSpeed,
+                        maximumIdleDriftSpeed);
+
+                    response = idleWaterDrag;
+                }
+
                 playerHorizontalVelocity = Mathf.MoveTowards(
                     playerHorizontalVelocity,
                     targetSpeed,
@@ -2098,14 +2143,17 @@ namespace PixelOcean
                 {
                     float control = state == RiderState.TurningTrick ? airControl : 1f;
                     localRideX += playerHorizontalVelocity * control * dt;
-                    if (Mathf.Abs(playerHorizontalVelocity) > 0.02f)
+
+                    // Passive water drift should not repeatedly flip Chuck's facing.
+                    if (horizontalInputActive && Mathf.Abs(playerHorizontalVelocity) > 0.02f)
                         direction = Mathf.Sign(playerHorizontalVelocity);
                 }
             }
 
             RebindToNearestHorizontalSection();
 
-            bool moving = Mathf.Abs(playerHorizontalVelocity) > 0.03f &&
+            bool moving = horizontalInputActive &&
+                Mathf.Abs(playerHorizontalVelocity) > 0.03f &&
                 state == RiderState.Riding;
             bool hasPlayerActivity = moving || jumpHeld || layerUpHeld || layerDownHeld ||
                 specialCharging || specialSkidding || Mathf.Abs(trickInput) > 0.05f;
@@ -2765,7 +2813,7 @@ namespace PixelOcean
 
             float speedRatio = playerControlled
                 ? Mathf.Clamp01(
-                    Mathf.Abs(direction) * playerScrollSpeed /
+                    Mathf.Abs(playerHorizontalVelocity) /
                     Mathf.Max(
                         0.01f,
                         playerScrollSpeed * playerBoostMultiplier))
@@ -2830,10 +2878,21 @@ namespace PixelOcean
 
             ApplyFacing(xScale, yScale);
 
+            float movementDirection = playerControlled &&
+                Mathf.Abs(playerHorizontalVelocity) > 0.015f
+                    ? Mathf.Sign(playerHorizontalVelocity)
+                    : direction;
+
             float balanceLean =
-                -direction *
+                -movementDirection *
                 directionalLean *
                 speedRatio;
+
+            float idleCorrection = playerControlled &&
+                state == RiderState.Riding &&
+                speedRatio < 0.08f
+                    ? Mathf.Sin(bobPhase * 0.43f + waveIndex * 0.61f) * idleBalanceLean
+                    : 0f;
 
             float microPitch =
                 Mathf.Cos(bobPhase) *
@@ -2845,7 +2904,7 @@ namespace PixelOcean
                 Quaternion.Euler(
                     0f,
                     0f,
-                    slope + balanceLean + microPitch +
+                    slope + balanceLean + idleCorrection + microPitch +
                     (specialSkidding ? -direction * skidLeanDegrees : 0f)),
                 1f - Mathf.Exp(-surfaceFollow * 0.7f * dt));
         }

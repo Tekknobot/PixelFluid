@@ -377,6 +377,8 @@ namespace PixelOcean
         private float sideSign = -1f;
         private float normalFollowDistance = 1.1f;
         private float followerVerticalOffset = 0.12f;
+        private float shadowWaterGlideAmount = 0.10f;
+        private float shadowWaterGlideFrequency = 0.26f;
         private bool underwater;
         private Coroutine underwaterRoutine;
         private float nextUnderwaterAt;
@@ -480,8 +482,16 @@ namespace PixelOcean
                 ? Mathf.Sin(Time.unscaledTime * 0.85f + phase) * 0.035f
                 : Mathf.Sin(Time.unscaledTime * 1.3f + phase) * 0.08f;
 
+            float shadowGlide = Mathf.Sin(
+                Time.time * shadowWaterGlideFrequency * Mathf.PI * 2f + phase) *
+                shadowWaterGlideAmount;
+
+            float waveCarry = player.CurrentWave != null
+                ? player.CurrentWave.GetGameplayWaveVelocity(player.transform.position.x).x * 0.035f
+                : 0f;
+
             Vector3 followTarget = player.transform.position + new Vector3(
-                side * distance,
+                side * distance + shadowGlide + waveCarry,
                 followerVerticalOffset + underwaterDepthOffset + bob,
                 0f);
 
@@ -489,8 +499,8 @@ namespace PixelOcean
                 transform.position,
                 followTarget,
                 ref velocity,
-                finalWave ? 0.24f : 0.20f,
-                finalWave ? 8f : 9f,
+                finalWave ? 0.30f : 0.27f,
+                finalWave ? 7f : 7.5f,
                 Time.deltaTime);
 
             int targetLane = GetShadowLane(chapter);
