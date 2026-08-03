@@ -58,6 +58,12 @@ namespace PixelOcean
 
         // Secret controller code: UP, UP, LEFT, RIGHT, LEFT, RIGHT, LB, RB.
         private const float DeveloperCheatStepTimeout = 1.0f;
+        private const string MasterVolumePref = "SurferSlug.MasterVolume";
+        private const string FullscreenPref = "SurferSlug.Fullscreen";
+        private Slider masterVolumeSlider;
+        private Toggle fullscreenToggle;
+        private Button resetOptionsButton;
+        private Button optionsBackButton;
         private int developerCheatStep;
         private float developerCheatDeadline;
 
@@ -79,6 +85,7 @@ namespace PixelOcean
             }
 
             Instance = this;
+            ApplySavedOptions();
             BuildMenu();
         }
 
@@ -103,6 +110,16 @@ namespace PixelOcean
             // Do not let the hidden title menu process the same button presses.
             if (SurferSlugDeveloperMenu.IsOpen)
                 return;
+
+            if (menuVisible &&
+                ((controlsPanel != null && controlsPanel.activeSelf) ||
+                 (settingsPanel != null && settingsPanel.activeSelf)) &&
+                SubPanelBackPressed())
+            {
+                ShowMainLayout();
+                inputReadyTime = Time.unscaledTime + 0.14f;
+                return;
+            }
 
             if (menuVisible)
                 UpdateDeveloperCheat();
@@ -493,14 +510,14 @@ namespace PixelOcean
             buttonPanel = panel.GetComponent<RectTransform>();
             buttonPanel.anchorMin = buttonPanel.anchorMax = new Vector2(0.5f, 0.5f);
             buttonPanel.pivot = new Vector2(0.5f, 0.5f);
-            buttonPanel.sizeDelta = new Vector2(430f, 590f);
+            buttonPanel.sizeDelta = new Vector2(430f, 700f);
 
             buttonPanelInputGroup = panel.AddComponent<CanvasGroup>();
             buttonPanelInputGroup.interactable = true;
             buttonPanelInputGroup.blocksRaycasts = true;
 
             VerticalLayoutGroup layout = panel.AddComponent<VerticalLayoutGroup>();
-            layout.spacing = 26f;
+            layout.spacing = 16f;
             layout.padding = new RectOffset(0, 0, 0, 0);
             layout.childAlignment = TextAnchor.MiddleCenter;
             layout.childControlWidth = true;
@@ -511,11 +528,10 @@ namespace PixelOcean
             playButton = CreateSpriteButton(panel.transform, "play_button", PlayPressed);
             continueButton = CreateSpriteButton(panel.transform, "continue_button", ContinuePressed);
             controlsButton = CreateSpriteButton(panel.transform, "controls_button", ShowControls);
-            settingsButton = CreateSpriteButton(panel.transform, "settings_button", ShowSettings);
+            settingsButton = CreateSpriteButton(panel.transform, "options_button", ShowSettings);
             developerButton = CreateSpriteButton(panel.transform, "developer_button", OpenDeveloperMenu);
             quitButton = CreateSpriteButton(panel.transform, "quit_button", QuitGame);
 
-            settingsButton.gameObject.SetActive(false);
             RefreshDeveloperButton();
         }
 
@@ -617,7 +633,7 @@ namespace PixelOcean
         {
             GameObject go = CreateUIObject(parent, resourceName);
             LayoutElement le = go.AddComponent<LayoutElement>();
-            le.preferredHeight = 112f;
+            le.preferredHeight = 96f;
             le.preferredWidth = 400f;
 
             Image image = go.AddComponent<Image>();
@@ -716,14 +732,354 @@ namespace PixelOcean
 
         private void BuildSettings(Transform parent)
         {
-            settingsPanel = CreateSubPanel(parent, "Settings Panel");
-            AddText(settingsPanel.transform, "SETTINGS", 44, 90f);
-            CreateVolumeRow(settingsPanel.transform, "MASTER VOLUME");
-            CreateToggleRow(settingsPanel.transform, "FULLSCREEN", Screen.fullScreen,
-                value => Screen.fullScreen = value);
-            CreateToggleRow(settingsPanel.transform, "DIALOGUE BUBBLES", true, _ => { });
-            Button back = CreateSpriteButton(settingsPanel.transform, "back_button", ShowMainLayout);
+            settingsPanel = CreateSubPanel(parent, "Options Panel");
+
+            AddTmpHeading(settingsPanel.transform, "OPTIONS", 42f, 82f);
+            AddTmpCaption(settingsPanel.transform,
+                "USE LEFT / RIGHT TO ADJUST   •   A / ENTER TO SELECT   •   B / ESC TO GO BACK",
+                15f, 46f);
+
+            masterVolumeSlider = CreateOptionSliderRow(
+                settingsPanel.transform,
+                "MASTER VOLUME",
+                PlayerPrefs.GetFloat(MasterVolumePref, 1f),
+                SetMasterVolume);
+
+            fullscreenToggle = CreateOptionToggleRow(
+                settingsPanel.transform,
+                "FULLSCREEN",
+                PlayerPrefs.GetInt(FullscreenPref, Screen.fullScreen ? 1 : 0) != 0,
+                SetFullscreen);
+
+            resetOptionsButton = CreateOptionTextButton(
+                settingsPanel.transform,
+                "RESET DEFAULTS",
+                ResetOptionsToDefaults);
+
+            optionsBackButton = CreateSpriteButton(settingsPanel.transform, "back_button", ShowMainLayout);
+
+            ConfigureExplicitOptionNavigation();
             settingsPanel.SetActive(false);
+        }
+
+        private void ApplySavedOptions()
+        {
+            float volume = Mathf.Clamp01(PlayerPrefs.GetFloat(MasterVolumePref, 1f));
+            AudioListener.volume = volume;
+
+            bool fullscreen = PlayerPrefs.GetInt(
+                FullscreenPref,
+                Screen.fullScreen ? 1 : 0) != 0;
+
+            if (Screen.fullScreen != fullscreen)
+                Screen.fullScreen = fullscreen;
+        }
+
+        private void SetMasterVolume(float value)
+        {
+            value = Mathf.Clamp01(value);
+            AudioListener.volume = value;
+            PlayerPrefs.SetFloat(MasterVolumePref, value);
+            PlayerPrefs.Save();
+        }
+
+        private void SetFullscreen(bool value)
+        {
+            Screen.fullScreen = value;
+            PlayerPrefs.SetInt(FullscreenPref, value ? 1 : 0);
+            PlayerPrefs.Save();
+        }
+
+        private void ResetOptionsToDefaults()
+        {
+            if (masterVolumeSlider != null)
+                masterVolumeSlider.value = 1f;
+
+            if (fullscreenToggle != null)
+                fullscreenToggle.isOn = true;
+
+            SetMasterVolume(1f);
+            SetFullscreen(true);
+            Select(masterVolumeSlider);
+        }
+
+        private Slider CreateOptionSliderRow(
+            Transform parent,
+            string labelText,
+            float initialValue,
+            UnityEngine.Events.UnityAction<float> callback)
+        {
+            GameObject row = CreateUIObject(parent, labelText + " Option Row");
+            LayoutElement rowLayout = row.AddComponent<LayoutElement>();
+            rowLayout.preferredHeight = 108f;
+
+            Image rowBackground = row.AddComponent<Image>();
+            rowBackground.color = new Color(0.075f, 0.08f, 0.105f, 0.96f);
+
+            Outline rowOutline = row.AddComponent<Outline>();
+            rowOutline.effectColor = new Color(0.43f, 0.47f, 0.58f, 0.82f);
+            rowOutline.effectDistance = new Vector2(2f, -2f);
+
+            HorizontalLayoutGroup horizontal = row.AddComponent<HorizontalLayoutGroup>();
+            horizontal.padding = new RectOffset(28, 28, 18, 18);
+            horizontal.spacing = 24f;
+            horizontal.childAlignment = TextAnchor.MiddleCenter;
+            horizontal.childControlWidth = true;
+            horizontal.childControlHeight = true;
+            horizontal.childForceExpandWidth = false;
+            horizontal.childForceExpandHeight = true;
+
+            TextMeshProUGUI label = CreateTmpText(row.transform, labelText, 22f, TextAlignmentOptions.MidlineLeft);
+            LayoutElement labelLayout = label.gameObject.AddComponent<LayoutElement>();
+            labelLayout.preferredWidth = 265f;
+            labelLayout.flexibleWidth = 0f;
+
+            GameObject sliderObject = CreateUIObject(row.transform, labelText + " Slider");
+            LayoutElement sliderLayout = sliderObject.AddComponent<LayoutElement>();
+            sliderLayout.preferredWidth = 290f;
+            sliderLayout.preferredHeight = 48f;
+
+            Slider slider = sliderObject.AddComponent<Slider>();
+            slider.direction = Slider.Direction.LeftToRight;
+            slider.minValue = 0f;
+            slider.maxValue = 1f;
+            slider.wholeNumbers = false;
+
+            GameObject backgroundObject = CreateUIObject(sliderObject.transform, "Background");
+            RectTransform backgroundRect = backgroundObject.GetComponent<RectTransform>();
+            backgroundRect.anchorMin = new Vector2(0f, 0.5f);
+            backgroundRect.anchorMax = new Vector2(1f, 0.5f);
+            backgroundRect.sizeDelta = new Vector2(0f, 16f);
+            Image background = backgroundObject.AddComponent<Image>();
+            background.color = new Color(0.02f, 0.025f, 0.04f, 1f);
+
+            GameObject fillAreaObject = CreateUIObject(sliderObject.transform, "Fill Area");
+            RectTransform fillArea = fillAreaObject.GetComponent<RectTransform>();
+            fillArea.anchorMin = new Vector2(0f, 0.5f);
+            fillArea.anchorMax = new Vector2(1f, 0.5f);
+            fillArea.offsetMin = new Vector2(4f, -7f);
+            fillArea.offsetMax = new Vector2(-4f, 7f);
+
+            GameObject fillObject = CreateUIObject(fillAreaObject.transform, "Fill");
+            RectTransform fillRect = fillObject.GetComponent<RectTransform>();
+            fillRect.anchorMin = Vector2.zero;
+            fillRect.anchorMax = Vector2.one;
+            fillRect.offsetMin = Vector2.zero;
+            fillRect.offsetMax = Vector2.zero;
+            Image fill = fillObject.AddComponent<Image>();
+            fill.color = new Color(0.28f, 0.68f, 0.84f, 1f);
+
+            GameObject handleAreaObject = CreateUIObject(sliderObject.transform, "Handle Slide Area");
+            Stretch(handleAreaObject.GetComponent<RectTransform>());
+
+            GameObject handleObject = CreateUIObject(handleAreaObject.transform, "Handle");
+            RectTransform handleRect = handleObject.GetComponent<RectTransform>();
+            handleRect.sizeDelta = new Vector2(28f, 38f);
+            Image handle = handleObject.AddComponent<Image>();
+            handle.color = new Color(0.93f, 0.87f, 0.63f, 1f);
+
+            slider.fillRect = fillRect;
+            slider.handleRect = handleRect;
+            slider.targetGraphic = handle;
+            slider.transition = Selectable.Transition.ColorTint;
+            ColorBlock sliderColors = slider.colors;
+            sliderColors.normalColor = Color.white;
+            sliderColors.highlightedColor = new Color(1f, 0.93f, 0.67f, 1f);
+            sliderColors.selectedColor = new Color(1f, 0.93f, 0.67f, 1f);
+            sliderColors.pressedColor = new Color(0.62f, 0.84f, 1f, 1f);
+            slider.colors = sliderColors;
+
+            TextMeshProUGUI valueLabel = CreateTmpText(row.transform, "100%", 20f, TextAlignmentOptions.MidlineRight);
+            LayoutElement valueLayout = valueLabel.gameObject.AddComponent<LayoutElement>();
+            valueLayout.preferredWidth = 78f;
+            valueLayout.flexibleWidth = 0f;
+
+            slider.SetValueWithoutNotify(Mathf.Clamp01(initialValue));
+            valueLabel.text = Mathf.RoundToInt(slider.value * 100f) + "%";
+            slider.onValueChanged.AddListener(value =>
+            {
+                valueLabel.text = Mathf.RoundToInt(value * 100f) + "%";
+                callback?.Invoke(value);
+            });
+
+            return slider;
+        }
+
+        private Toggle CreateOptionToggleRow(
+            Transform parent,
+            string labelText,
+            bool initialValue,
+            UnityEngine.Events.UnityAction<bool> callback)
+        {
+            GameObject row = CreateUIObject(parent, labelText + " Option Row");
+            LayoutElement rowLayout = row.AddComponent<LayoutElement>();
+            rowLayout.preferredHeight = 92f;
+
+            Image rowBackground = row.AddComponent<Image>();
+            rowBackground.color = new Color(0.075f, 0.08f, 0.105f, 0.96f);
+
+            Outline rowOutline = row.AddComponent<Outline>();
+            rowOutline.effectColor = new Color(0.43f, 0.47f, 0.58f, 0.82f);
+            rowOutline.effectDistance = new Vector2(2f, -2f);
+
+            Toggle toggle = row.AddComponent<Toggle>();
+            toggle.transition = Selectable.Transition.ColorTint;
+
+            TextMeshProUGUI label = CreateTmpText(row.transform, labelText, 22f, TextAlignmentOptions.MidlineLeft);
+            RectTransform labelRect = label.rectTransform;
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = new Vector2(28f, 0f);
+            labelRect.offsetMax = new Vector2(-180f, 0f);
+
+            GameObject stateObject = CreateUIObject(row.transform, "Toggle State");
+            RectTransform stateRect = stateObject.GetComponent<RectTransform>();
+            stateRect.anchorMin = stateRect.anchorMax = new Vector2(1f, 0.5f);
+            stateRect.pivot = new Vector2(1f, 0.5f);
+            stateRect.sizeDelta = new Vector2(132f, 50f);
+            stateRect.anchoredPosition = new Vector2(-28f, 0f);
+            Image stateBackground = stateObject.AddComponent<Image>();
+            stateBackground.color = new Color(0.025f, 0.03f, 0.045f, 1f);
+
+            TextMeshProUGUI stateLabel = CreateTmpText(stateObject.transform, initialValue ? "ON" : "OFF", 22f, TextAlignmentOptions.Center);
+            Stretch(stateLabel.rectTransform);
+            stateLabel.color = initialValue
+                ? new Color(0.48f, 0.86f, 0.88f, 1f)
+                : new Color(0.62f, 0.64f, 0.69f, 1f);
+
+            toggle.targetGraphic = rowBackground;
+            toggle.graphic = null;
+            toggle.SetIsOnWithoutNotify(initialValue);
+            toggle.onValueChanged.AddListener(value =>
+            {
+                stateLabel.text = value ? "ON" : "OFF";
+                stateLabel.color = value
+                    ? new Color(0.48f, 0.86f, 0.88f, 1f)
+                    : new Color(0.62f, 0.64f, 0.69f, 1f);
+                callback?.Invoke(value);
+            });
+
+            ColorBlock colors = toggle.colors;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(1f, 0.89f, 0.57f, 1f);
+            colors.selectedColor = new Color(1f, 0.89f, 0.57f, 1f);
+            colors.pressedColor = new Color(0.66f, 0.84f, 1f, 1f);
+            toggle.colors = colors;
+
+            return toggle;
+        }
+
+        private Button CreateOptionTextButton(
+            Transform parent,
+            string text,
+            UnityEngine.Events.UnityAction action)
+        {
+            GameObject go = CreateUIObject(parent, text + " Button");
+            LayoutElement layout = go.AddComponent<LayoutElement>();
+            layout.preferredHeight = 72f;
+            layout.preferredWidth = 390f;
+
+            Image image = go.AddComponent<Image>();
+            image.color = new Color(0.10f, 0.105f, 0.135f, 1f);
+
+            Outline outline = go.AddComponent<Outline>();
+            outline.effectColor = new Color(0.48f, 0.51f, 0.62f, 0.9f);
+            outline.effectDistance = new Vector2(2f, -2f);
+
+            Button button = go.AddComponent<Button>();
+            button.targetGraphic = image;
+            button.onClick.AddListener(action);
+
+            ColorBlock colors = button.colors;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(1f, 0.87f, 0.54f, 1f);
+            colors.selectedColor = new Color(1f, 0.87f, 0.54f, 1f);
+            colors.pressedColor = new Color(0.68f, 0.84f, 1f, 1f);
+            button.colors = colors;
+
+            TextMeshProUGUI label = CreateTmpText(go.transform, text, 21f, TextAlignmentOptions.Center);
+            Stretch(label.rectTransform);
+            return button;
+        }
+
+        private TextMeshProUGUI CreateTmpText(
+            Transform parent,
+            string text,
+            float size,
+            TextAlignmentOptions alignment)
+        {
+            GameObject go = CreateUIObject(parent, text + " TMP");
+            TextMeshProUGUI label = go.AddComponent<TextMeshProUGUI>();
+            label.font = PixelFontLibrary.TmpMedium;
+            label.text = text;
+            label.fontSize = size;
+            label.fontStyle = FontStyles.Normal;
+            label.alignment = alignment;
+            label.color = new Color(0.91f, 0.91f, 0.92f, 1f);
+            label.raycastTarget = false;
+            label.enableWordWrapping = false;
+            label.overflowMode = TextOverflowModes.Overflow;
+            return label;
+        }
+
+        private void AddTmpHeading(Transform parent, string text, float size, float height)
+        {
+            TextMeshProUGUI label = CreateTmpText(parent, text, size, TextAlignmentOptions.Center);
+            label.font = PixelFontLibrary.TmpBold;
+            label.color = new Color(0.93f, 0.81f, 0.57f, 1f);
+            LayoutElement layout = label.gameObject.AddComponent<LayoutElement>();
+            layout.preferredHeight = height;
+        }
+
+        private void AddTmpCaption(Transform parent, string text, float size, float height)
+        {
+            TextMeshProUGUI label = CreateTmpText(parent, text, size, TextAlignmentOptions.Center);
+            label.font = PixelFontLibrary.TmpRegular;
+            label.color = new Color(0.66f, 0.69f, 0.75f, 1f);
+            LayoutElement layout = label.gameObject.AddComponent<LayoutElement>();
+            layout.preferredHeight = height;
+        }
+
+        private void ConfigureExplicitOptionNavigation()
+        {
+            if (masterVolumeSlider == null ||
+                fullscreenToggle == null ||
+                resetOptionsButton == null ||
+                optionsBackButton == null)
+                return;
+
+            SetSliderNavigation(masterVolumeSlider, optionsBackButton, fullscreenToggle);
+            SetVerticalNavigation(fullscreenToggle, masterVolumeSlider, resetOptionsButton);
+            SetVerticalNavigation(resetOptionsButton, fullscreenToggle, optionsBackButton);
+            SetVerticalNavigation(optionsBackButton, resetOptionsButton, masterVolumeSlider);
+        }
+
+        private static void SetSliderNavigation(
+            Slider slider,
+            Selectable up,
+            Selectable down)
+        {
+            Navigation navigation = slider.navigation;
+            navigation.mode = Navigation.Mode.Explicit;
+            navigation.selectOnUp = up;
+            navigation.selectOnDown = down;
+
+            // Do not assign left/right. Slider.OnMove handles those.
+            navigation.selectOnLeft = null;
+            navigation.selectOnRight = null;
+
+            slider.navigation = navigation;
+        }
+
+        private static void SetVerticalNavigation(Selectable selectable, Selectable up, Selectable down)
+        {
+            Navigation navigation = selectable.navigation;
+            navigation.mode = Navigation.Mode.Explicit;
+            navigation.selectOnUp = up;
+            navigation.selectOnDown = down;
+            navigation.selectOnLeft = selectable is Slider ? selectable : null;
+            navigation.selectOnRight = selectable is Slider ? selectable : null;
+            selectable.navigation = navigation;
         }
 
         private GameObject CreateSubPanel(Transform parent, string name)
@@ -765,7 +1121,7 @@ namespace PixelOcean
             controlsPanel.SetActive(false);
             if (titleCreditPanel != null) titleCreditPanel.gameObject.SetActive(false);
             settingsPanel.SetActive(true);
-            Select(settingsPanel.GetComponentInChildren<Selectable>());
+            Select(masterVolumeSlider != null ? masterVolumeSlider : settingsPanel.GetComponentInChildren<Selectable>());
         }
 
         private void ShowMainLayout()
@@ -1004,6 +1360,23 @@ namespace PixelOcean
                 if (behaviour != null) behaviour.enabled = true;
             disabledGameplayBehaviours.Clear();
         }
+
+        private bool SubPanelBackPressed()
+        {
+#if ENABLE_INPUT_SYSTEM
+            return (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) ||
+                   (Gamepad.current != null && gamepadBackPressed(Gamepad.current));
+#else
+            return Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.JoystickButton1);
+#endif
+        }
+
+#if ENABLE_INPUT_SYSTEM
+        private static bool gamepadBackPressed(Gamepad gamepad)
+        {
+            return gamepad.buttonEast.wasPressedThisFrame;
+        }
+#endif
 
         private bool PausePressed()
         {
