@@ -30,6 +30,7 @@ namespace PixelOcean
         private GameObject menuRoot;
         private RectTransform logoPanel;
         private RectTransform buttonPanel;
+        private CanvasGroup buttonPanelInputGroup;
         private RectTransform titleCreditPanel;
         private CanvasGroup titleCreditGroup;
         private GameObject controlsPanel;
@@ -49,6 +50,7 @@ namespace PixelOcean
         private Sprite[] logoFrames;
         private Coroutine motionRoutine;
         private Coroutine logoRoutine;
+        private Coroutine developerOverlayMotionRoutine;
         private bool firstMenu = true;
         private bool menuVisible;
         private bool showingTitleMenu;
@@ -97,6 +99,11 @@ namespace PixelOcean
 
         private void Update()
         {
+            // The developer overlay owns controller navigation while it is open.
+            // Do not let the hidden title menu process the same button presses.
+            if (SurferSlugDeveloperMenu.IsOpen)
+                return;
+
             if (menuVisible)
                 UpdateDeveloperCheat();
 
@@ -488,6 +495,10 @@ namespace PixelOcean
             buttonPanel.pivot = new Vector2(0.5f, 0.5f);
             buttonPanel.sizeDelta = new Vector2(430f, 590f);
 
+            buttonPanelInputGroup = panel.AddComponent<CanvasGroup>();
+            buttonPanelInputGroup.interactable = true;
+            buttonPanelInputGroup.blocksRaycasts = true;
+
             VerticalLayoutGroup layout = panel.AddComponent<VerticalLayoutGroup>();
             layout.spacing = 26f;
             layout.padding = new RectOffset(0, 0, 0, 0);
@@ -520,6 +531,86 @@ namespace PixelOcean
         private void OpenDeveloperMenu()
         {
             SurferSlugDeveloperMenu.UnlockAndOpen();
+        }
+
+        public void SetDeveloperOverlayPresentation(bool overlayVisible)
+        {
+            if (!menuVisible || logoPanel == null || buttonPanel == null)
+                return;
+
+            // Immediately hand all UI input to the developer overlay before its
+            // opening button press can also activate a title-screen selection.
+            if (buttonPanelInputGroup != null)
+            {
+                buttonPanelInputGroup.interactable = !overlayVisible;
+                buttonPanelInputGroup.blocksRaycasts = !overlayVisible;
+            }
+
+            if (overlayVisible)
+                EventSystem.current?.SetSelectedGameObject(null);
+
+            if (developerOverlayMotionRoutine != null)
+                StopCoroutine(developerOverlayMotionRoutine);
+
+            developerOverlayMotionRoutine = StartCoroutine(AnimateDeveloperOverlayPresentation(overlayVisible));
+        }
+
+        private IEnumerator AnimateDeveloperOverlayPresentation(bool overlayVisible)
+        {
+            Vector2 logoFrom = logoPanel.anchoredPosition;
+            Vector2 buttonsFrom = buttonPanel.anchoredPosition;
+            Vector2 creditsFrom = titleCreditPanel != null ? titleCreditPanel.anchoredPosition : Vector2.zero;
+            float creditsAlphaFrom = titleCreditGroup != null ? titleCreditGroup.alpha : 0f;
+
+            Vector2 logoTo = overlayVisible ? new Vector2(-1450f, 0f) : new Vector2(-390f, 0f);
+            Vector2 buttonsTo = overlayVisible ? new Vector2(1500f, 0f) : new Vector2(560f, 0f);
+            Vector2 creditsTo = overlayVisible ? new Vector2(0f, -28f) : new Vector2(0f, 34f);
+            float creditsAlphaTo = overlayVisible || !showingTitleMenu ? 0f : 1f;
+
+            float duration = overlayVisible ? motionDuration * 0.72f : motionDuration;
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float normalized = Mathf.Clamp01(elapsed / Mathf.Max(0.01f, duration));
+                float t = overlayVisible ? EaseInCubic(normalized) : EaseOutBack(normalized);
+
+                logoPanel.anchoredPosition = Vector2.LerpUnclamped(logoFrom, logoTo, t);
+                buttonPanel.anchoredPosition = Vector2.LerpUnclamped(buttonsFrom, buttonsTo, t);
+
+                if (titleCreditPanel != null)
+                    titleCreditPanel.anchoredPosition = Vector2.LerpUnclamped(creditsFrom, creditsTo, t);
+
+                if (titleCreditGroup != null)
+                    titleCreditGroup.alpha = Mathf.Lerp(creditsAlphaFrom, creditsAlphaTo, Mathf.Clamp01(normalized));
+
+                yield return null;
+            }
+
+            logoPanel.anchoredPosition = logoTo;
+            buttonPanel.anchoredPosition = buttonsTo;
+            if (titleCreditPanel != null) titleCreditPanel.anchoredPosition = creditsTo;
+            if (titleCreditGroup != null) titleCreditGroup.alpha = creditsAlphaTo;
+
+            if (!overlayVisible)
+            {
+                if (buttonPanelInputGroup != null)
+                {
+                    buttonPanelInputGroup.interactable = true;
+                    buttonPanelInputGroup.blocksRaycasts = true;
+                }
+
+                RefreshContinueButton();
+                RefreshDeveloperButton();
+                Select(continueButton != null &&
+                       continueButton.gameObject.activeInHierarchy &&
+                       continueButton.interactable
+                    ? continueButton
+                    : playButton);
+            }
+
+            developerOverlayMotionRoutine = null;
         }
 
         private Button CreateSpriteButton(Transform parent, string resourceName, UnityEngine.Events.UnityAction action)

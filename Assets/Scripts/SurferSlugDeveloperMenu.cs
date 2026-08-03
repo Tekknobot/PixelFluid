@@ -110,10 +110,12 @@ namespace PixelOcean
                 nextNavigationTime = Time.unscaledTime + 0.15f;
                 previousTimeScale = Time.timeScale;
                 Time.timeScale = 0f;
+                SurferSlugPauseMenu.Instance?.SetDeveloperOverlayPresentation(true);
             }
             else
             {
                 Time.timeScale = previousTimeScale;
+                SurferSlugPauseMenu.Instance?.SetDeveloperOverlayPresentation(false);
             }
         }
 
