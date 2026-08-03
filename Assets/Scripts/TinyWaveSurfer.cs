@@ -1326,6 +1326,40 @@ namespace PixelOcean
                 speechBubble.Show(line, duration);
         }
 
+
+        public bool TryGetVisualAnimationSnapshot(
+            out int stateHash,
+            out float normalizedTime,
+            out float playbackSpeed,
+            out bool flipX)
+        {
+            stateHash = currentAnimationStateHash;
+            normalizedTime = 0f;
+            playbackSpeed = 1f;
+            flipX = spriteRenderer != null && spriteRenderer.flipX;
+
+            if (surferAnimator == null ||
+                !surferAnimator.enabled ||
+                surferAnimator.runtimeAnimatorController == null)
+            {
+                return false;
+            }
+
+            AnimatorStateInfo info = surferAnimator.IsInTransition(0)
+                ? surferAnimator.GetNextAnimatorStateInfo(0)
+                : surferAnimator.GetCurrentAnimatorStateInfo(0);
+
+            normalizedTime = info.normalizedTime;
+            playbackSpeed = surferAnimator.speed;
+            return true;
+        }
+
+        public bool IsVisualObstacleJumpActive => obstacleJumpActive;
+        public bool IsVisualAirTrickActive => airTrickActive;
+        public bool IsVisualSpecialSkidding => specialSkidding;
+        public Vector3 VisualLocalScale => transform.localScale;
+        public Quaternion VisualRotation => transform.rotation;
+
         private void EnsureSurferAnimator()
         {
             surferAnimator = GetComponent<Animator>();
