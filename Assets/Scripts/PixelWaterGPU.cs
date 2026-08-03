@@ -307,9 +307,22 @@ namespace PixelOcean
             new float[SurfaceBinCount];        
         private readonly Vector2[] sampledVelocity = new Vector2[SurfaceBinCount];
         private readonly int[] sampledCounts = new int[SurfaceBinCount];
+        [Header("Surface Readback Performance")]
+        [Tooltip("GPU surface sampling interval for the exact wave currently carrying the player.")]
+        [SerializeField, Range(0.04f, 0.25f)] private float activeWaveReadbackInterval = 0.08f;
+        [Tooltip("GPU surface sampling interval for wave layers immediately beside the player's current layer.")]
+        [SerializeField, Range(0.08f, 0.5f)] private float adjacentWaveReadbackInterval = 0.20f;
+        [Tooltip("GPU surface sampling interval for distant visual-only wave layers.")]
+        [SerializeField, Range(0.2f, 1.5f)] private float distantWaveReadbackInterval = 0.55f;
+        [Tooltip("Fallback interval before a player surfer exists.")]
+        [SerializeField, Range(0.08f, 1f)] private float noPlayerReadbackInterval = 0.25f;
+
         private bool hasParticleSurfaceSamples;
         private bool readbackPending;
         private float nextReadbackTime;
+
+        private static TinyWaveSurfer cachedSurfacePlayer;
+        private static float nextSurfacePlayerLookupTime;
 
         private static readonly int ReadParticlesID = Shader.PropertyToID("_ReadParticles");
         private static readonly int WriteParticlesID = Shader.PropertyToID("_WriteParticles");
@@ -942,6 +955,11 @@ namespace PixelOcean
             shallowZoneWidth = Mathf.Max(0.08f, shallowZoneWidth);
             beachHeight = Mathf.Clamp(beachHeight, 0.12f, 0.80f);
             beachCurve = Mathf.Max(0.35f, beachCurve);
+
+            activeWaveReadbackInterval = Mathf.Clamp(activeWaveReadbackInterval, 0.04f, 0.25f);
+            adjacentWaveReadbackInterval = Mathf.Max(activeWaveReadbackInterval, adjacentWaveReadbackInterval);
+            distantWaveReadbackInterval = Mathf.Max(adjacentWaveReadbackInterval, distantWaveReadbackInterval);
+            noPlayerReadbackInterval = Mathf.Max(0.08f, noPlayerReadbackInterval);
         }
 
         [ContextMenu("Surf Preset/Longboard Swell")]
@@ -1688,6 +1706,32 @@ namespace PixelOcean
                 baseSurface + swell + crest);
         }
 
+        private float GetSurfaceReadbackInterval()
+        {
+            float now = Time.unscaledTime;
+
+            if (cachedSurfacePlayer == null && now >= nextSurfacePlayerLookupTime)
+            {
+                cachedSurfacePlayer = FindFirstObjectByType<TinyWaveSurfer>();
+                nextSurfacePlayerLookupTime = now + 0.75f;
+            }
+
+            if (cachedSurfacePlayer == null)
+                return noPlayerReadbackInterval;
+
+            PixelWaterGPU playerWave = cachedSurfacePlayer.CurrentWave;
+            if (playerWave == this)
+                return activeWaveReadbackInterval;
+
+            if (playerWave != null &&
+                Mathf.Abs(playerWave.IndependentLayerIndex - independentLayerIndex) <= 1)
+            {
+                return adjacentWaveReadbackInterval;
+            }
+
+            return distantWaveReadbackInterval;
+        }
+
         private void ScheduleSurfaceReadback()
         {
             if (readbackPending || Time.unscaledTime < nextReadbackTime ||
@@ -1695,11 +1739,12 @@ namespace PixelOcean
                 return;
 
             readbackPending = true;
-            nextReadbackTime = Time.unscaledTime + 0.055f;
+            nextReadbackTime = Time.unscaledTime + GetSurfaceReadbackInterval();
+
             AsyncGPUReadback.Request(particleBuffers[readIndex], request =>
             {
                 readbackPending = false;
-                if (!this || request.hasError || !request.done)
+                if (!this || request.hasError || !request.done || !isActiveAndEnabled)
                     return;
 
                 var data = request.GetData<GPUParticle>();
