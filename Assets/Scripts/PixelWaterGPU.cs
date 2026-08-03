@@ -330,6 +330,15 @@ namespace PixelOcean
         private static readonly int CellHeadsID = Shader.PropertyToID("_CellHeads");
         private static readonly int NextParticleID = Shader.PropertyToID("_NextParticle");
 
+        [Header("Stable Simulation Timing")]
+        [SerializeField, Range(1, 4)]
+        private int maximumSimulationStepsPerFrame = 2;
+
+        [SerializeField, Range(0.01f, 0.1f)]
+        private float maximumAccumulatedFrameTime = 0.05f;
+
+        private float simulationAccumulator;
+
         private void EnsureUniqueRenderingMaterial()
         {
             if (renderingMaterial == null)
@@ -1111,6 +1120,7 @@ namespace PixelOcean
                 simulationShader.FindKernel("ShiftParticles");
             readIndex = 0;
             simulationTime = 0f;
+            simulationAccumulator = 0f;
             appliedRuntimeLayerPosition = runtimeLayerPosition;
             appliedRuntimeLayerWaveDelay = runtimeLayerWaveDelay;
 
@@ -1187,13 +1197,35 @@ namespace PixelOcean
             ApplyRuntimeLayerInspectorChanges();
 
             float fixedStep = 1f / Mathf.Max(30, simulationRate);
-            float frameTime = Mathf.Min(Time.deltaTime, 1f / 20f);
-            float substepDelta = Mathf.Min(fixedStep, frameTime / Mathf.Max(1, substeps));
 
-            for (int i = 0; i < substeps; i++)
+            simulationAccumulator += Mathf.Min(
+                Time.deltaTime,
+                maximumAccumulatedFrameTime);
+
+            int simulationSteps = 0;
+
+            while (simulationAccumulator >= fixedStep &&
+                simulationSteps < maximumSimulationStepsPerFrame)
             {
-                simulationTime += substepDelta;
-                DispatchSimulation(substepDelta);
+                float substepDelta =
+                    fixedStep / Mathf.Max(1, substeps);
+
+                for (int i = 0; i < substeps; i++)
+                {
+                    simulationTime += substepDelta;
+                    DispatchSimulation(substepDelta);
+                }
+
+                simulationAccumulator -= fixedStep;
+                simulationSteps++;
+            }
+
+            // Do not let a slow frame create a growing simulation backlog.
+            if (simulationSteps >= maximumSimulationStepsPerFrame)
+            {
+                simulationAccumulator = Mathf.Min(
+                    simulationAccumulator,
+                    fixedStep);
             }
 
             ScheduleSurfaceReadback();

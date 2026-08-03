@@ -76,7 +76,7 @@ namespace PixelOcean
 
         private void TryCollect(Vector2 heartPosition)
         {
-            foreach (TinyWaveSurfer surfer in FindObjectsByType<TinyWaveSurfer>(FindObjectsSortMode.None))
+            foreach (TinyWaveSurfer surfer in GameplayTargetCache.Surfers)
             {
                 if (surfer == null || surfer.IsDead || surfer.IsSwitchingWave) continue;
                 // An inter-wave heart can be reached from either water row bordering its lane.

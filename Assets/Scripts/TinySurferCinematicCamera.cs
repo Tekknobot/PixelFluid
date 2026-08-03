@@ -25,6 +25,16 @@ namespace PixelOcean
         [SerializeField, Min(0.01f)] private float normalFollowSmoothTime = 0.28f;
         [SerializeField, Min(0f)] private float normalMaximumFollowSpeed = 25f;
 
+        [Header("Camera Stability")]
+        [Tooltip("Small vertical surfer movements inside this range do not move the camera. This prevents foam and particle noise from shaking the whole screen.")]
+        [SerializeField, Range(0f, 1f)] private float verticalFollowDeadZone = 0.20f;
+        [Tooltip("Smooths the vertical target separately before the camera follows it.")]
+        [SerializeField, Min(0.01f)] private float verticalTargetSmoothTime = 0.32f;
+        [Tooltip("Maximum speed of the stabilized vertical target. Large jumps still catch up without reacting to tiny particle spikes.")]
+        [SerializeField, Min(0.1f)] private float maximumVerticalTargetSpeed = 5f;
+        [Tooltip("How often the camera refreshes its cached list of wave simulations.")]
+        [SerializeField, Range(0.1f, 3f)] private float simulationBoundsRefreshInterval = 0.75f;
+
         [Header("Cinematic Framing")]
         [SerializeField, Min(0.1f)] private float orthographicZoom = 1.75f;
         [SerializeField, Min(5f)] private float perspectiveFieldOfView = 32f;
@@ -61,6 +71,11 @@ namespace PixelOcean
         private Vector3 smoothedLookAhead;
         private Vector3 previousSurferPosition;
         private bool hasPreviousSurferPosition;
+        private float stabilizedTargetY;
+        private float stabilizedTargetYVelocity;
+        private bool hasStabilizedTargetY;
+        private PixelWaterGPU[] cachedSimulations;
+        private float nextSimulationBoundsRefreshTime;
 
         private bool cinematicActive;
         private Vector3 storedPosition;
@@ -79,6 +94,7 @@ namespace PixelOcean
         {
             controlledCamera = GetComponent<Camera>();
             cameraDepth = transform.position.z;
+            RefreshSimulationBoundsCache();
 
             if (startInCinematicMode)
                 EnableCinematic();
@@ -116,6 +132,9 @@ namespace PixelOcean
             float activeSmoothTime;
             float activeMaximumSpeed;
 
+            if (Time.unscaledTime >= nextSimulationBoundsRefreshTime)
+                RefreshSimulationBoundsCache();
+
             if (cinematicActive)
             {
                 Vector3 estimatedVelocity = Vector3.zero;
@@ -146,14 +165,15 @@ namespace PixelOcean
                     Mathf.Infinity,
                     deltaTime);
 
+                float rawCinematicTargetY =
+                    surferPosition.y + framingOffset.y + smoothedLookAhead.y;
+
                 desiredPosition = new Vector3(
                     surferPosition.x +
                     framingOffset.x +
                     smoothedLookAhead.x,
 
-                    surferPosition.y +
-                    framingOffset.y +
-                    smoothedLookAhead.y,
+                    StabilizeVerticalTarget(rawCinematicTargetY, deltaTime),
 
                     cameraDepth);
 
@@ -170,9 +190,12 @@ namespace PixelOcean
                     Mathf.Infinity,
                     deltaTime);
 
+                float rawNormalTargetY =
+                    surferPosition.y + normalFramingOffset.y;
+
                 desiredPosition = new Vector3(
                     surferPosition.x + normalFramingOffset.x,
-                    surferPosition.y + normalFramingOffset.y,
+                    StabilizeVerticalTarget(rawNormalTargetY, deltaTime),
                     cameraDepth);
 
                 activeSmoothTime = normalFollowSmoothTime;
@@ -234,8 +257,56 @@ namespace PixelOcean
             }
         }
 
+        private float StabilizeVerticalTarget(float rawTargetY, float deltaTime)
+        {
+            if (!hasStabilizedTargetY)
+            {
+                stabilizedTargetY = rawTargetY;
+                stabilizedTargetYVelocity = 0f;
+                hasStabilizedTargetY = true;
+                return stabilizedTargetY;
+            }
+
+            float difference = rawTargetY - stabilizedTargetY;
+            float targetOutsideDeadZone = stabilizedTargetY;
+
+            if (Mathf.Abs(difference) > verticalFollowDeadZone)
+            {
+                targetOutsideDeadZone = rawTargetY -
+                    Mathf.Sign(difference) * verticalFollowDeadZone;
+            }
+
+            stabilizedTargetY = Mathf.SmoothDamp(
+                stabilizedTargetY,
+                targetOutsideDeadZone,
+                ref stabilizedTargetYVelocity,
+                verticalTargetSmoothTime,
+                maximumVerticalTargetSpeed,
+                deltaTime);
+
+            return stabilizedTargetY;
+        }
+
+        private void RefreshSimulationBoundsCache()
+        {
+            cachedSimulations = FindObjectsByType<PixelWaterGPU>(
+                FindObjectsInactive.Exclude,
+                FindObjectsSortMode.None);
+
+            nextSimulationBoundsRefreshTime =
+                Time.unscaledTime + Mathf.Max(0.1f, simulationBoundsRefreshInterval);
+        }
+
+        private void ResetCameraStability()
+        {
+            hasStabilizedTargetY = false;
+            stabilizedTargetYVelocity = 0f;
+        }
+
         private void SelectPlayerSurfer()
         {
+            TinyWaveSurfer previousSelection = surfer;
+
             TinyWaveSurfer[] surfers =
                 FindObjectsByType<TinyWaveSurfer>(
                     FindObjectsInactive.Exclude,
@@ -329,9 +400,10 @@ namespace PixelOcean
             // Clamp against the complete stack, not only the surfer's current row.
             // The lower viewport edge is pinned to the visible particle field of
             // the lowest active simulation, ignoring tank and seabed geometry.
-            PixelWaterGPU[] simulations = FindObjectsByType<PixelWaterGPU>(
-                FindObjectsInactive.Exclude,
-                FindObjectsSortMode.None);
+            if (cachedSimulations == null || cachedSimulations.Length == 0)
+                RefreshSimulationBoundsCache();
+
+            PixelWaterGPU[] simulations = cachedSimulations;
 
             Vector2 min = surfer.CurrentWave.TankMinimum;
             Vector2 max = surfer.CurrentWave.TankMaximum;
@@ -442,6 +514,7 @@ namespace PixelOcean
             smoothedLookAhead = Vector3.zero;
             previousSurferPosition = surfer.transform.position;
             hasPreviousSurferPosition = true;
+            ResetCameraStability();
         }
 
         [ContextMenu("Toggle Surfer Cinematic")]
@@ -485,6 +558,7 @@ namespace PixelOcean
             zoomVelocity = 0f;
             previousSurferPosition = surfer.transform.position;
             hasPreviousSurferPosition = true;
+            ResetCameraStability();
         }
 
         [ContextMenu("Disable Surfer Cinematic")]
@@ -511,6 +585,8 @@ namespace PixelOcean
             {
                 hasPreviousSurferPosition = false;
             }
+
+            ResetCameraStability();
         }
 
         private void DisableCompetingCameraControllers()
@@ -663,6 +739,9 @@ namespace PixelOcean
             minimumOrthographicZoom = Mathf.Max(0.1f, minimumOrthographicZoom);
             maximumOrthographicZoom = Mathf.Max(minimumOrthographicZoom, maximumOrthographicZoom);
             gamepadZoomSpeed = Mathf.Max(0.05f, gamepadZoomSpeed);
+            verticalTargetSmoothTime = Mathf.Max(0.01f, verticalTargetSmoothTime);
+            maximumVerticalTargetSpeed = Mathf.Max(0.1f, maximumVerticalTargetSpeed);
+            simulationBoundsRefreshInterval = Mathf.Max(0.1f, simulationBoundsRefreshInterval);
         }
 #endif
     }

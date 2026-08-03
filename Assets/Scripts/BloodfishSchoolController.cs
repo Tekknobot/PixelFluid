@@ -119,7 +119,7 @@ namespace PixelOcean
 
             target = null;
             float best = playerAwarenessRange;
-            foreach (TinyWaveSurfer surfer in FindObjectsByType<TinyWaveSurfer>(FindObjectsSortMode.None))
+            foreach (TinyWaveSurfer surfer in GameplayTargetCache.Surfers)
             {
                 if (surfer == null || surfer.IsDead) continue;
                 float d = Vector2.Distance(new Vector2(anchorX, GetLaneCentreY(anchorX)), surfer.transform.position);

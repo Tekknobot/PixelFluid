@@ -919,8 +919,8 @@ MonoBehaviour:
   gravity: {x: 0, y: -9.81}
   boundaryBounce: 0.08
   maximumSpeed: 20
-  substeps: 1
-  simulationRate: 120
+  substeps: 3
+  simulationRate: 60
   waveEmitterEnabled: 1
   surfWaveType: 3
   waveEmitterWidth: 2
@@ -947,6 +947,8 @@ MonoBehaviour:
   independentEmitterPushScale: 1.25
   createIndependentWaveLayers: 1
   independentLayerCount: 8
+  varyIndependentWaveProfiles: 1
+  independentProfileRandomness: 0.06
   independentLayerDelay: 0.18
   independentLayerBackOffset: 0.08
   independentLayerVerticalOffset: 0.34
@@ -1030,6 +1032,16 @@ MonoBehaviour:
   boardParticleDrain: 14
   boardSurfaceGrip: 0.08
   boardParticleRadiusScale: 0.28
+  maximumRideableSprayVelocity: 0.75
+  airborneFoamThreshold: 0.68
+  maximumRideableSurfaceOffset: 0.72
+  maximumGameplaySurfaceRise: 0.18
+  activeWaveReadbackInterval: 0.08
+  adjacentWaveReadbackInterval: 0.2
+  distantWaveReadbackInterval: 0.55
+  noPlayerReadbackInterval: 0.25
+  maximumSimulationStepsPerFrame: 2
+  maximumAccumulatedFrameTime: 0.05
 --- !u!1 &8346545720097985516
 GameObject:
   m_ObjectHideFlags: 0

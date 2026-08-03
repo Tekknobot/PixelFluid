@@ -303,7 +303,7 @@ namespace PixelOcean
         {
             TinyWaveSurfer best = null;
             float bestDistance = detectionRange;
-            foreach (TinyWaveSurfer surfer in FindObjectsByType<TinyWaveSurfer>(FindObjectsSortMode.None))
+            foreach (TinyWaveSurfer surfer in GameplayTargetCache.Surfers)
             {
                 if (surfer == null || surfer.IsDead) continue;
                 float distance = Vector2.Distance(position, surfer.transform.position);

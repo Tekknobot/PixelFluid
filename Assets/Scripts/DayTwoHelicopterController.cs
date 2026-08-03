@@ -146,7 +146,7 @@ namespace PixelOcean
 
         private void FindTarget()
         {
-            foreach (TinyWaveSurfer surfer in FindObjectsByType<TinyWaveSurfer>(FindObjectsSortMode.None))
+            foreach (TinyWaveSurfer surfer in GameplayTargetCache.Surfers)
             {
                 if (surfer != null && surfer.IsPlayerControlled && !surfer.IsDead)
                 {
