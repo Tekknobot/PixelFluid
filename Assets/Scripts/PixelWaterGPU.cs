@@ -91,6 +91,12 @@ namespace PixelOcean
         [Header("Independent Wave Simulation Layers")]
         [SerializeField] private bool createIndependentWaveLayers = true;
         [SerializeField, Range(1, 12)] private int independentLayerCount = 8;
+
+        [Header("Independent Wave Personalities")]
+        [Tooltip("Gives every independent wave line a different stable height, speed and shape without increasing simulation resolution.")]
+        [SerializeField] private bool varyIndependentWaveProfiles = true;
+        [Tooltip("Small per-run variation layered on top of each lane's authored profile.")]
+        [SerializeField, Range(0f, 0.2f)] private float independentProfileRandomness = 0.06f;
         [SerializeField, Range(0.02f, 1f)] private float independentLayerDelay = 0.22f;
         [SerializeField, Range(0f, 1.5f)] private float independentLayerBackOffset = 0.14f;
         [SerializeField, Range(0f, 0.75f)] private float independentLayerVerticalOffset = 0.34f;
@@ -102,6 +108,20 @@ namespace PixelOcean
         [SerializeField, Range(0.1f, 1f)] private float independentLayerForceFalloff = 1f;
 
         private int independentLayerIndex;
+        private bool independentProfileBaseCaptured;
+        private float profileBaseHorizontalForce;
+        private float profileBaseVerticalForce;
+        private float profileBaseFrequency;
+        private float profileBaseVariation;
+        private float profileBaseBigWaveScale;
+        private float profileBaseEmitterWidth;
+        private float profileBasePulseSharpness;
+        private float profileBaseDeepSurge;
+        private float profileBaseBodyPush;
+        private float profileBaseCrestLift;
+        private float profileRandomHeight = 1f;
+        private float profileRandomSpeed = 1f;
+        private float profileRandomShape = 1f;
         private float independentWaveDelay;
         private bool isIndependentLayerClone;
         private bool independentLayersCreated;
@@ -391,6 +411,7 @@ namespace PixelOcean
             EnsureUniqueRenderingMaterial();
             ApplyInitialTransformOrigin();
             ApplyIndependentBigWaveEmitter();
+            ApplyIndependentWaveProfile();
             RemoveTropicalSeabed();
             Initialise();
 
@@ -413,6 +434,81 @@ namespace PixelOcean
                 Destroy(runtimeLayerMaterial);
                 runtimeLayerMaterial = null;
             }
+        }
+
+        private void CaptureIndependentWaveProfileBase()
+        {
+            if (independentProfileBaseCaptured)
+                return;
+
+            independentProfileBaseCaptured = true;
+            profileBaseHorizontalForce = waveHorizontalForce;
+            profileBaseVerticalForce = waveVerticalForce;
+            profileBaseFrequency = waveFrequency;
+            profileBaseVariation = waveVerticalVariation;
+            profileBaseBigWaveScale = bigWaveScale;
+            profileBaseEmitterWidth = waveEmitterWidth;
+            profileBasePulseSharpness = wavePulseSharpness;
+            profileBaseDeepSurge = deepSurgeForce;
+            profileBaseBodyPush = bodyPushForce;
+            profileBaseCrestLift = crestLiftForce;
+
+            float randomness = Mathf.Clamp(independentProfileRandomness, 0f, 0.2f);
+            profileRandomHeight = UnityEngine.Random.Range(1f - randomness, 1f + randomness);
+            profileRandomSpeed = UnityEngine.Random.Range(1f - randomness, 1f + randomness);
+            profileRandomShape = UnityEngine.Random.Range(1f - randomness, 1f + randomness);
+        }
+
+        private void ApplyIndependentWaveProfile()
+        {
+            if (!varyIndependentWaveProfiles || independentLayerCount <= 1)
+                return;
+
+            CaptureIndependentWaveProfileBase();
+
+            // Restore the unprofiled emitter values first, making this safe when
+            // the component is disabled/re-enabled or the simulation is rebuilt.
+            waveHorizontalForce = profileBaseHorizontalForce;
+            waveVerticalForce = profileBaseVerticalForce;
+            waveFrequency = profileBaseFrequency;
+            waveVerticalVariation = profileBaseVariation;
+            bigWaveScale = profileBaseBigWaveScale;
+            waveEmitterWidth = profileBaseEmitterWidth;
+            wavePulseSharpness = profileBasePulseSharpness;
+            deepSurgeForce = profileBaseDeepSurge;
+            bodyPushForce = profileBaseBodyPush;
+            crestLiftForce = profileBaseCrestLift;
+
+            // Eight authored personalities. Additional layers wrap through the set.
+            // The sequence is intentionally non-linear so adjacent lanes do not
+            // simply become uniformly larger copies of one another.
+            float[] heightProfiles = { 0.70f, 0.88f, 1.08f, 1.30f, 0.82f, 1.48f, 1.00f, 1.68f };
+            float[] speedProfiles  = { 1.24f, 1.08f, 0.94f, 0.80f, 1.16f, 0.70f, 0.88f, 0.60f };
+            float[] pushProfiles   = { 0.84f, 0.96f, 1.06f, 1.17f, 0.91f, 1.25f, 1.02f, 1.34f };
+            float[] shapeProfiles  = { 0.88f, 0.96f, 1.07f, 1.18f, 0.92f, 1.25f, 1.02f, 1.32f };
+
+            int profileIndex = Mathf.Abs(independentLayerIndex) % heightProfiles.Length;
+            float height = heightProfiles[profileIndex] * profileRandomHeight;
+            float speed = speedProfiles[profileIndex] * profileRandomSpeed;
+            float push = pushProfiles[profileIndex] * profileRandomShape;
+            float shape = shapeProfiles[profileIndex] * profileRandomShape;
+
+            waveHorizontalForce = Mathf.Clamp(profileBaseHorizontalForce * push, 3f, 40f);
+            waveVerticalForce = Mathf.Clamp(profileBaseVerticalForce * height, 1f, 30f);
+            waveFrequency = Mathf.Clamp(profileBaseFrequency * speed, 0.05f, 3f);
+            waveVerticalVariation = Mathf.Clamp(
+                profileBaseVariation * Mathf.Lerp(0.85f, 1.30f, Mathf.InverseLerp(0.7f, 1.68f, height)),
+                0f,
+                2.5f);
+            bigWaveScale = Mathf.Clamp(profileBaseBigWaveScale * height, 0.4f, 5f);
+            waveEmitterWidth = Mathf.Clamp(profileBaseEmitterWidth * Mathf.Lerp(0.88f, 1.18f, shape - 0.8f), 0.25f, 4f);
+            wavePulseSharpness = Mathf.Clamp(profileBasePulseSharpness * shape, 0.5f, 8f);
+
+            // Scale the layered body forces with height so taller lanes have a
+            // genuinely fuller face rather than only a stretched crest.
+            deepSurgeForce = Mathf.Clamp(profileBaseDeepSurge * Mathf.Lerp(0.88f, 1.25f, height / 1.68f), 0f, 40f);
+            bodyPushForce = Mathf.Clamp(profileBaseBodyPush * Mathf.Lerp(0.90f, 1.22f, height / 1.68f), 0f, 40f);
+            crestLiftForce = Mathf.Clamp(profileBaseCrestLift * height, 0f, 45f);
         }
 
         [ContextMenu("Surf Preset/Cascade Echo Big Wave")]
@@ -697,10 +793,10 @@ namespace PixelOcean
             curlDownStrength *= forceScale;
             curlRotationStrength *= forceScale;
 
-            // Reapply the synchronized emitter after optional per-layer scaling.
-            // With the default falloff of 1, every layer emits the exact same
-            // full-sized wave.
+            // Reapply the synchronized emitter after optional per-layer scaling,
+            // then give this lane its own stable wave personality.
             ApplyIndependentBigWaveEmitter();
+            ApplyIndependentWaveProfile();
 
             if (sourceMaterial != null)
             {
