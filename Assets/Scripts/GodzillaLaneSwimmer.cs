@@ -61,6 +61,14 @@ namespace PixelOcean
         [SerializeField, Min(0.05f)] private float deathArrivalDistance = 0.7f;
         [SerializeField, Min(0f)] private float deathPauseDuration = 2.5f;
 
+        [Header("Summoned Skulls")]
+        [Tooltip("Time range between unique skull swarms.")]
+        [SerializeField] private Vector2 skullSpawnInterval = new(5.5f, 8.5f);
+        [Tooltip("Number of skulls released in one staggered spiral.")]
+        [SerializeField, Range(1, 5)] private int skullsPerWave = 3;
+        [Tooltip("Extra delay before the first skull swarm.")]
+        [SerializeField, Min(0f)] private float skullOpeningDelay = 2.25f;
+
         [Header("Water Response")]
         [SerializeField, Range(0f, 1f)] private float waveFollow = 0.88f;
         [SerializeField, Range(1f, 20f)] private float verticalResponsiveness = 7f;
@@ -113,6 +121,7 @@ namespace PixelOcean
         private float trackedSectionCentreX;
         private bool hasTrackedSectionCentre;
         private float nextWaterRefreshTime;
+        private float nextSkullSpawnTime;
 
         private readonly HashSet<GameObject> consumedProjectiles = new();
         private int currentHealth;
@@ -237,6 +246,7 @@ namespace PixelOcean
 
             state = CreatureState.Roam;
             ScheduleLaneShift();
+            ScheduleSkullWave(skullOpeningDelay);
             initialised = true;
         }
 
@@ -326,6 +336,8 @@ namespace PixelOcean
                 UpdateArenaEntrance(position);
                 return;
             }
+
+            UpdateSkullSpawner();
 
             if (respondingToDeath)
                 UpdateDeathInvestigation(position);
@@ -804,6 +816,88 @@ namespace PixelOcean
 
             if (gameObject != null)
                 Destroy(gameObject);
+        }
+
+        private void UpdateSkullSpawner()
+        {
+            if (defeated ||
+                arenaEntranceActive ||
+                respondingToDeath ||
+                Time.time < nextSkullSpawnTime)
+            {
+                return;
+            }
+
+            Sprite[] frames = Resources.LoadAll<Sprite>("Godzilla/skull_move")
+                .OrderBy(sprite =>
+                {
+                    int separator = sprite.name.LastIndexOf('_');
+                    return separator >= 0 &&
+                           int.TryParse(sprite.name[(separator + 1)..], out int number)
+                        ? number
+                        : int.MaxValue;
+                })
+                .ToArray();
+
+            if (frames.Length == 0)
+            {
+                Debug.LogWarning(
+                    "Godzilla skull sheet could not be loaded from Resources/Godzilla/skull_move.",
+                    this);
+                ScheduleSkullWave();
+                return;
+            }
+
+            int count = Mathf.Max(1, skullsPerWave);
+            for (int i = 0; i < count; i++)
+                SpawnSkull(frames, i, count);
+
+            animation?.Attack();
+            ScheduleSkullWave();
+        }
+
+        private void ScheduleSkullWave(float additionalDelay = 0f)
+        {
+            float minimum = Mathf.Max(0.75f, skullSpawnInterval.x);
+            float maximum = Mathf.Max(minimum, skullSpawnInterval.y);
+            nextSkullSpawnTime =
+                Time.time +
+                Mathf.Max(0f, additionalDelay) +
+                UnityEngine.Random.Range(minimum, maximum);
+        }
+
+        private void SpawnSkull(Sprite[] frames, int index, int count)
+        {
+            float centredIndex = index - (count - 1) * 0.5f;
+            float side = direction >= 0f ? 1f : -1f;
+
+            GameObject skull = new("Godzilla Summoned Skull");
+            skull.transform.position = transform.position + new Vector3(
+                side * (0.45f + Mathf.Abs(centredIndex) * 0.12f),
+                centredIndex * 0.22f,
+                0f);
+            skull.transform.localScale = Vector3.one;
+
+            SpriteRenderer renderer = skull.AddComponent<SpriteRenderer>();
+            renderer.sprite = frames[0];
+            if (spriteRenderer != null)
+            {
+                renderer.sortingLayerID = spriteRenderer.sortingLayerID;
+                renderer.sortingOrder = spriteRenderer.sortingOrder + 1;
+            }
+
+            InterWaveRenderItem skullRenderItem =
+                skull.AddComponent<InterWaveRenderItem>();
+            skullRenderItem.SetLane(currentLane);
+
+            GodzillaSkullSwimmer swimmer =
+                skull.AddComponent<GodzillaSkullSwimmer>();
+            swimmer.Initialise(
+                frames,
+                currentLane,
+                index,
+                count,
+                transform);
         }
 
         public int CurrentHealth => currentHealth;

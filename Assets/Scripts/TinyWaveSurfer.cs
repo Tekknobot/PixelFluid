@@ -969,7 +969,14 @@ namespace PixelOcean
             }
             else
             {
-                // Exploding ducklings are immediate threats and can be intercepted.
+                // Godzilla skulls and exploding ducklings are immediate threats.
+                foreach (GodzillaSkullSwimmer skull in FindObjectsByType<GodzillaSkullSwimmer>(FindObjectsSortMode.None))
+                {
+                    if (skull == null || !skull.isActiveAndEnabled || !skull.CanBeHit) continue;
+                    float d = Vector2.Distance(transform.position, skull.transform.position);
+                    if (d < best) { best = d; nearest = skull.transform; }
+                }
+
                 foreach (RubberDucklingSwimmer duckling in FindObjectsByType<RubberDucklingSwimmer>(FindObjectsSortMode.None))
                 {
                     if (duckling == null || !duckling.isActiveAndEnabled || !duckling.CanBeHit) continue;

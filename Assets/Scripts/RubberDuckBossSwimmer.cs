@@ -83,6 +83,18 @@ namespace PixelOcean
         [SerializeField, Min(0.05f)] private float facingDeadZone = 0.32f;
         [SerializeField, Min(0f)] private float minimumFacingHoldTime = 0.18f;
 
+        [Header("Boss Water Stability")]
+        [Tooltip("Smooth time used when the giant duck follows changing wave heights.")]
+        [SerializeField, Range(0.04f, 0.5f)] private float verticalWaterSmoothTime = 0.16f;
+        [Tooltip("Maximum vertical catch-up speed while riding the wave stack.")]
+        [SerializeField, Range(1f, 30f)] private float maximumVerticalWaterSpeed = 7.5f;
+        [Tooltip("Ignores very small sampled-height changes that otherwise create visible jitter.")]
+        [SerializeField, Range(0f, 0.15f)] private float verticalWaterDeadZone = 0.035f;
+        [Tooltip("Smooth time applied to the duck's water-slope tilt.")]
+        [SerializeField, Range(0.04f, 0.5f)] private float waterTiltSmoothTime = 0.18f;
+        [Tooltip("How often the player reference used only for visual facing is refreshed.")]
+        [SerializeField, Range(0.1f, 2f)] private float playerFacingRefreshInterval = 0.45f;
+
         [Header("Attack Audio")]
         [SerializeField] private AudioClip attackClip;
         [SerializeField, Range(0f, 1f)] private float attackVolume = 1f;
@@ -117,6 +129,12 @@ namespace PixelOcean
         private bool hasTrackedSectionCentre;
         private float nextWaterRefreshTime;
         private float nextDucklingSpawnTime;
+        private float verticalWaterVelocity;
+        private float waterTiltVelocity;
+        private float smoothedWaterTilt;
+        private TinyWaveSurfer visualFacingPlayer;
+        private float nextVisualFacingRefreshTime;
+        private float visualFacingSign = 1f;
 
         private readonly HashSet<GameObject> consumedProjectiles = new();
         private int currentHealth;
@@ -161,10 +179,9 @@ namespace PixelOcean
                 arenaEntranceSpeed * Time.fixedDeltaTime);
 
             float desiredY = UpdateLaneTransition(position.x);
-            float follow = 1f - Mathf.Exp(-verticalResponsiveness * Time.fixedDeltaTime);
-            position.y = Mathf.Lerp(position.y, desiredY, follow * waveFollow);
+            position.y = SmoothWaveHeight(position.y, desiredY);
             SetPosition(position);
-            ApplyWaterTilt(position.x, follow);
+            ApplyWaterTilt(position.x);
 
             if (Mathf.Abs(position.x - arenaEntranceTargetX) <= 0.025f)
             {
@@ -275,6 +292,7 @@ namespace PixelOcean
             body.bodyType = RigidbodyType2D.Kinematic;
             body.gravityScale = 0f;
             body.freezeRotation = true;
+            body.interpolation = RigidbodyInterpolation2D.Interpolate;
 
             Collider2D collider = GetComponent<Collider2D>();
             if (collider == null)
@@ -362,10 +380,10 @@ namespace PixelOcean
             }
 
             float desiredY = UpdateLaneTransition(position.x);
-            float follow = 1f - Mathf.Exp(-verticalResponsiveness * Time.fixedDeltaTime);
-            position.y = Mathf.Lerp(position.y, desiredY, follow * waveFollow);
+            position.y = SmoothWaveHeight(position.y, desiredY);
             SetPosition(position);
-            ApplyWaterTilt(position.x, follow);
+            UpdatePlayerFacing(position);
+            ApplyWaterTilt(position.x);
             ApplyAttackHit(position);
         }
 
@@ -1017,16 +1035,79 @@ namespace PixelOcean
             }
         }
 
-        private void ApplyWaterTilt(float worldX, float follow)
+        private float SmoothWaveHeight(float currentY, float desiredY)
+        {
+            float delta = desiredY - currentY;
+            if (Mathf.Abs(delta) <= verticalWaterDeadZone)
+                desiredY = currentY;
+
+            float smoothTime = Mathf.Max(
+                0.04f,
+                verticalWaterSmoothTime / Mathf.Max(0.1f, waveFollow));
+
+            return Mathf.SmoothDamp(
+                currentY,
+                desiredY,
+                ref verticalWaterVelocity,
+                smoothTime,
+                maximumVerticalWaterSpeed,
+                Time.fixedDeltaTime);
+        }
+
+        private void UpdatePlayerFacing(Vector2 position)
+        {
+            if (Time.time >= nextVisualFacingRefreshTime ||
+                visualFacingPlayer == null ||
+                visualFacingPlayer.IsDead)
+            {
+                nextVisualFacingRefreshTime =
+                    Time.time + Mathf.Max(0.1f, playerFacingRefreshInterval);
+
+                visualFacingPlayer = FindObjectsByType<TinyWaveSurfer>(
+                        FindObjectsInactive.Exclude,
+                        FindObjectsSortMode.None)
+                    .Where(surfer => surfer != null && !surfer.IsDead)
+                    .OrderByDescending(surfer => surfer.IsPlayerControlled)
+                    .ThenBy(surfer => Vector2.SqrMagnitude(
+                        (Vector2)surfer.transform.position - position))
+                    .FirstOrDefault();
+            }
+
+            if (visualFacingPlayer == null || spriteRenderer == null)
+                return;
+
+            float deltaX = visualFacingPlayer.transform.position.x - position.x;
+            if (Mathf.Abs(deltaX) <= facingDeadZone)
+                return;
+
+            float desiredSign = Mathf.Sign(deltaX);
+            if (!Mathf.Approximately(desiredSign, visualFacingSign) &&
+                Time.time - lastFacingChangeTime < minimumFacingHoldTime)
+            {
+                return;
+            }
+
+            visualFacingSign = desiredSign;
+            lastFacingChangeTime = Time.time;
+            spriteRenderer.flipX = visualFacingSign < 0f;
+        }
+
+        private void ApplyWaterTilt(float worldX)
         {
             float left = GetLaneCentreY(currentLane, worldX - slopeSampleDistance);
             float right = GetLaneCentreY(currentLane, worldX + slopeSampleDistance);
             float slope = Mathf.Atan2(right - left, slopeSampleDistance * 2f) * Mathf.Rad2Deg;
-            float angle = Mathf.Clamp(slope * surfaceTilt, -maximumTilt, maximumTilt);
-            transform.rotation = Quaternion.Slerp(
-                transform.rotation,
-                Quaternion.Euler(0f, 0f, angle),
-                follow);
+            float targetAngle = Mathf.Clamp(slope * surfaceTilt, -maximumTilt, maximumTilt);
+
+            smoothedWaterTilt = Mathf.SmoothDampAngle(
+                smoothedWaterTilt,
+                targetAngle,
+                ref waterTiltVelocity,
+                waterTiltSmoothTime,
+                Mathf.Infinity,
+                Time.fixedDeltaTime);
+
+            transform.rotation = Quaternion.Euler(0f, 0f, smoothedWaterTilt);
         }
 
         private void SetPosition(Vector2 position)

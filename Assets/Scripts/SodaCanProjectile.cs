@@ -145,6 +145,18 @@ namespace PixelOcean
             if (bounced || hitTransform == null)
                 return;
 
+            GodzillaSkullSwimmer skull =
+                hitTransform.GetComponentInParent<GodzillaSkullSwimmer>();
+
+            if (skull != null && skull.CanBeHit)
+            {
+                LoadSfx();
+                PlaySfx(sharkHitClip, 0.95f);
+                skull.TakeThrownItemHit(transform.position);
+                Bounce(hitTransform.position);
+                return;
+            }
+
             RubberDucklingSwimmer duckling = hitTransform.GetComponentInParent<RubberDucklingSwimmer>();
             if (duckling != null && duckling.CanBeHit)
             {
