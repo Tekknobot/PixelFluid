@@ -706,6 +706,11 @@ namespace PixelOcean
                 yield break;
 
             defeated = true;
+
+            TinySurferCinematicCamera deathCamera =
+                FindFirstObjectByType<TinySurferCinematicCamera>();
+            deathCamera?.BeginBossDeathFocus(transform);
+
             target = null;
             respondingToDeath = false;
             changingLane = false;
@@ -792,6 +797,8 @@ namespace PixelOcean
                 spriteRenderer.color = deathRed;
 
             yield return new WaitForSeconds(Mathf.Max(0f, deathDelay));
+
+            deathCamera?.EndBossDeathFocus(transform);
 
             SurfDayProgressionDirector progression = FindFirstObjectByType<SurfDayProgressionDirector>();
             progression?.OnFinalBossDefeated();

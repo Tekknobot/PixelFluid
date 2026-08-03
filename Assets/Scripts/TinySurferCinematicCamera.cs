@@ -48,6 +48,15 @@ namespace PixelOcean
         [SerializeField, Min(0f)] private float verticalLookAhead = 0.16f;
         [SerializeField, Min(0.01f)] private float lookAheadSmoothTime = 0.20f;
 
+        [Header("Boss Death Focus")]
+        [Tooltip("Orthographic size used while holding on a defeated boss.")]
+        [SerializeField, Min(0.1f)] private float bossDeathFocusZoom = 2.35f;
+        [Tooltip("Camera offset from the defeated boss during its death sequence.")]
+        [SerializeField] private Vector2 bossDeathFocusOffset = new(0f, 0.15f);
+        [Tooltip("How quickly the camera pans to and follows a defeated boss.")]
+        [SerializeField, Min(0.01f)] private float bossDeathFocusSmoothTime = 0.28f;
+        [SerializeField, Min(0f)] private float bossDeathFocusMaximumSpeed = 32f;
+
         [Header("Camera Edge Clamp")]
         [Tooltip("Keeps the viewport inside the active water simulation so empty space beyond its edges is not shown.")]
         [SerializeField] private bool clampToCurrentSimulation = true;
@@ -76,6 +85,7 @@ namespace PixelOcean
         private bool hasStabilizedTargetY;
         private PixelWaterGPU[] cachedSimulations;
         private float nextSimulationBoundsRefreshTime;
+        private Transform bossDeathFocusTarget;
 
         private bool cinematicActive;
         private Vector3 storedPosition;
@@ -122,11 +132,14 @@ namespace PixelOcean
             if (surfer == null || !surfer.isActiveAndEnabled)
                 SelectPlayerSurfer();
 
-            if (surfer == null)
+            bool focusingBoss = bossDeathFocusTarget != null;
+            if (!focusingBoss && surfer == null)
                 return;
 
             float deltaTime = Mathf.Max(Time.unscaledDeltaTime, 0.0001f);
-            Vector3 surferPosition = surfer.transform.position;
+            Vector3 surferPosition = focusingBoss
+                ? bossDeathFocusTarget.position
+                : surfer.transform.position;
 
             Vector3 desiredPosition;
             float activeSmoothTime;
@@ -135,7 +148,27 @@ namespace PixelOcean
             if (Time.unscaledTime >= nextSimulationBoundsRefreshTime)
                 RefreshSimulationBoundsCache();
 
-            if (cinematicActive)
+            if (focusingBoss)
+            {
+                smoothedLookAhead = Vector3.SmoothDamp(
+                    smoothedLookAhead,
+                    Vector3.zero,
+                    ref lookAheadVelocity,
+                    bossDeathFocusSmoothTime,
+                    Mathf.Infinity,
+                    deltaTime);
+
+                desiredPosition = new Vector3(
+                    surferPosition.x + bossDeathFocusOffset.x,
+                    StabilizeVerticalTarget(
+                        surferPosition.y + bossDeathFocusOffset.y,
+                        deltaTime),
+                    cameraDepth);
+
+                activeSmoothTime = bossDeathFocusSmoothTime;
+                activeMaximumSpeed = bossDeathFocusMaximumSpeed;
+            }
+            else if (cinematicActive)
             {
                 Vector3 estimatedVelocity = Vector3.zero;
 
@@ -222,12 +255,16 @@ namespace PixelOcean
 
             if (controlledCamera.orthographic)
             {
-                float baseZoom = cinematicActive
-                    ? orthographicZoom
-                    : normalOrthographicZoom;
-                float adjustment = cinematicActive
-                    ? cinematicZoomAdjustment
-                    : normalZoomAdjustment;
+                float baseZoom = focusingBoss
+                    ? bossDeathFocusZoom
+                    : cinematicActive
+                        ? orthographicZoom
+                        : normalOrthographicZoom;
+                float adjustment = focusingBoss
+                    ? 0f
+                    : cinematicActive
+                        ? cinematicZoomAdjustment
+                        : normalZoomAdjustment;
                 float targetZoom = Mathf.Clamp(
                     baseZoom + adjustment,
                     minimumOrthographicZoom,
@@ -243,7 +280,7 @@ namespace PixelOcean
             }
             else
             {
-                float targetFov = cinematicActive
+                float targetFov = (focusingBoss || cinematicActive)
                     ? perspectiveFieldOfView
                     : storedFieldOfView;
 
@@ -255,6 +292,30 @@ namespace PixelOcean
                     Mathf.Infinity,
                     deltaTime);
             }
+        }
+
+        public void BeginBossDeathFocus(Transform defeatedBoss)
+        {
+            if (defeatedBoss == null)
+                return;
+
+            bossDeathFocusTarget = defeatedBoss;
+            followVelocity = Vector3.zero;
+            lookAheadVelocity = Vector3.zero;
+            smoothedLookAhead = Vector3.zero;
+            ResetCameraStability();
+        }
+
+        public void EndBossDeathFocus(Transform defeatedBoss = null)
+        {
+            if (defeatedBoss != null && bossDeathFocusTarget != defeatedBoss)
+                return;
+
+            bossDeathFocusTarget = null;
+            followVelocity = Vector3.zero;
+            lookAheadVelocity = Vector3.zero;
+            smoothedLookAhead = Vector3.zero;
+            ResetCameraStability();
         }
 
         private float StabilizeVerticalTarget(float rawTargetY, float deltaTime)
