@@ -297,14 +297,14 @@ namespace PixelOcean
             titleStyle = new GUIStyle(GUI.skin.label)
             {
                 font = PixelFontLibrary.Bold,
-                fontSize = 25,
+                fontSize = 64,
                 alignment = TextAnchor.UpperCenter,
                 normal = { textColor = Color.white }
             };
             smallStyle = new GUIStyle(GUI.skin.label)
             {
                 font = PixelFontLibrary.Medium,
-                fontSize = 17,
+                fontSize = 32,
                 alignment = TextAnchor.UpperCenter,
                 normal = { textColor = Color.white }
             };
