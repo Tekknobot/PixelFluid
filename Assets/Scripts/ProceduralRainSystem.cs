@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -68,6 +69,18 @@ namespace PixelOcean
         private Material splashMaterial;
         private Texture2D rainTexture;
         private Texture2D splashTexture;
+
+        private sealed class WaveSplashLayer
+        {
+            public PixelWaterGPU Water;
+            public ParticleSystem Particles;
+            public ParticleSystemRenderer Renderer;
+            public Material Material;
+        }
+
+        private readonly List<WaveSplashLayer> waveSplashLayers = new();
+        private float nextWaveRefreshAt;
+        private float nextSurfaceSplashAt;
         private Camera gameplayCamera;
         private RainSituation currentSituation;
         private RainSituation targetSituation;
@@ -126,7 +139,9 @@ namespace PixelOcean
             UpdateRandomWeather();
             UpdateTransition(Time.deltaTime);
             FollowCamera();
+            RefreshWaveSplashLayers();
             ApplyLiveSettings();
+            EmitWaveSurfaceSplashes();
         }
 
         private void OnDestroy()
@@ -136,6 +151,14 @@ namespace PixelOcean
 
             if (rainMaterial != null) Destroy(rainMaterial);
             if (splashMaterial != null) Destroy(splashMaterial);
+            foreach (WaveSplashLayer layer in waveSplashLayers)
+            {
+                if (layer == null) continue;
+                if (layer.Material != null) Destroy(layer.Material);
+                if (layer.Particles != null) Destroy(layer.Particles.gameObject);
+            }
+            waveSplashLayers.Clear();
+
             if (rainTexture != null) Destroy(rainTexture);
             if (splashTexture != null) Destroy(splashTexture);
         }
@@ -330,6 +353,7 @@ namespace PixelOcean
             splashRenderer.sharedMaterial = splashMaterial;
             splashRenderer.renderMode = ParticleSystemRenderMode.Billboard;
             splashRenderer.sortingOrder = splashSortingOrder;
+            splashRenderer.enabled = false; // Replaced by per-wave surface splashes.
 
             rainParticles.Play();
             splashParticles.Play();
@@ -397,7 +421,7 @@ namespace PixelOcean
             if (splashParticles != null)
             {
                 ParticleSystem.EmissionModule splashEmission = splashParticles.emission;
-                splashEmission.rateOverTime = createSplashes ? currentSplashRate : 0f;
+                splashEmission.rateOverTime = 0f;
 
                 ParticleSystem.MainModule splashMain = splashParticles.main;
                 Color splashColour = baseColour;
@@ -406,6 +430,162 @@ namespace PixelOcean
             }
 
             ApplyCameraDimming();
+        }
+
+        private void RefreshWaveSplashLayers()
+        {
+            if (!createSplashes || Time.unscaledTime < nextWaveRefreshAt)
+                return;
+
+            nextWaveRefreshAt = Time.unscaledTime + 1f;
+            PixelWaterGPU[] waters = FindObjectsByType<PixelWaterGPU>(
+                FindObjectsInactive.Exclude,
+                FindObjectsSortMode.None);
+
+            for (int i = waveSplashLayers.Count - 1; i >= 0; i--)
+            {
+                WaveSplashLayer layer = waveSplashLayers[i];
+                bool stillExists = layer != null && layer.Water != null &&
+                                   System.Array.IndexOf(waters, layer.Water) >= 0;
+                if (stillExists) continue;
+
+                if (layer != null)
+                {
+                    if (layer.Material != null) Destroy(layer.Material);
+                    if (layer.Particles != null) Destroy(layer.Particles.gameObject);
+                }
+                waveSplashLayers.RemoveAt(i);
+            }
+
+            foreach (PixelWaterGPU water in waters)
+            {
+                if (water == null || waveSplashLayers.Exists(layer => layer.Water == water))
+                    continue;
+
+                waveSplashLayers.Add(CreateWaveSplashLayer(water));
+            }
+        }
+
+        private WaveSplashLayer CreateWaveSplashLayer(PixelWaterGPU water)
+        {
+            GameObject host = new GameObject($"Rain Splashes - Wave {water.IndependentLayerIndex}");
+            host.transform.SetParent(transform, false);
+
+            ParticleSystem particles = host.AddComponent<ParticleSystem>();
+            ParticleSystem.MainModule main = particles.main;
+            main.loop = false;
+            main.playOnAwake = false;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.maxParticles = 220;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(
+                splashLifetime * 0.75f,
+                splashLifetime * 1.35f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.10f, 0.34f);
+            main.startSize = new ParticleSystem.MinMaxCurve(
+                splashSize * 0.55f,
+                splashSize * 1.45f);
+            main.gravityModifier = 0.28f;
+
+            ParticleSystem.EmissionModule emission = particles.emission;
+            emission.enabled = false;
+
+            ParticleSystem.ShapeModule shape = particles.shape;
+            shape.enabled = false;
+
+            ParticleSystem.ColorOverLifetimeModule colourOverLife = particles.colorOverLifetime;
+            colourOverLife.enabled = true;
+            Gradient fade = new Gradient();
+            fade.SetKeys(
+                new[]
+                {
+                    new GradientColorKey(Color.white, 0f),
+                    new GradientColorKey(Color.white, 1f)
+                },
+                new[]
+                {
+                    new GradientAlphaKey(0f, 0f),
+                    new GradientAlphaKey(1f, 0.12f),
+                    new GradientAlphaKey(0.55f, 0.55f),
+                    new GradientAlphaKey(0f, 1f)
+                });
+            colourOverLife.color = fade;
+
+            ParticleSystemRenderer renderer = host.GetComponent<ParticleSystemRenderer>();
+            Material material = CreateParticleMaterial(
+                $"Rain Splash Wave {water.IndependentLayerIndex}",
+                splashTexture);
+            material.renderQueue = Mathf.Clamp(
+                water.GetWaveLayerRenderQueue() + 2,
+                2501,
+                4999);
+            renderer.sharedMaterial = material;
+            renderer.renderMode = ParticleSystemRenderMode.Billboard;
+            renderer.sortingOrder = splashSortingOrder;
+
+            return new WaveSplashLayer
+            {
+                Water = water,
+                Particles = particles,
+                Renderer = renderer,
+                Material = material
+            };
+        }
+
+        private void EmitWaveSurfaceSplashes()
+        {
+            if (!createSplashes || currentSplashRate <= 0.01f || gameplayCamera == null ||
+                waveSplashLayers.Count == 0 || Time.unscaledTime < nextSurfaceSplashAt)
+                return;
+
+            const float interval = 0.075f;
+            nextSurfaceSplashAt = Time.unscaledTime + interval;
+
+            float halfHeight = gameplayCamera.orthographic
+                ? gameplayCamera.orthographicSize
+                : 5f;
+            float halfWidth = halfHeight * gameplayCamera.aspect + horizontalCameraMargin;
+            float left = gameplayCamera.transform.position.x - halfWidth;
+            float right = gameplayCamera.transform.position.x + halfWidth;
+
+            float expectedPerLayer = currentSplashRate * interval /
+                                     Mathf.Max(1, waveSplashLayers.Count);
+
+            foreach (WaveSplashLayer layer in waveSplashLayers)
+            {
+                if (layer == null || layer.Water == null || layer.Particles == null)
+                    continue;
+
+                int count = Mathf.FloorToInt(expectedPerLayer);
+                if (Random.value < expectedPerLayer - count)
+                    count++;
+
+                count = Mathf.Clamp(count, 0, 5);
+                for (int i = 0; i < count; i++)
+                {
+                    float x = Random.Range(left, right);
+                    float y = layer.Water.GetGameplaySurfaceHeight(x) + 0.018f;
+                    Vector2 waveVelocity = layer.Water.GetGameplayWaveVelocity(x);
+
+                    Color colour = targetSituation == RainSituation.TropicalDownpour ||
+                                   targetSituation == RainSituation.WindDrivenRain
+                        ? stormRainColour
+                        : rainColour;
+                    colour.a = Mathf.Clamp01(currentOpacity * 0.82f);
+
+                    ParticleSystem.EmitParams emit = new ParticleSystem.EmitParams
+                    {
+                        position = new Vector3(x, y, 0f),
+                        velocity = new Vector3(
+                            waveVelocity.x * 0.05f + Random.Range(-0.10f, 0.10f),
+                            Random.Range(0.10f, 0.32f),
+                            0f),
+                        startColor = colour,
+                        startLifetime = Random.Range(splashLifetime * 0.75f, splashLifetime * 1.35f),
+                        startSize = Random.Range(splashSize * 0.55f, splashSize * 1.45f)
+                    };
+                    layer.Particles.Emit(emit, 1);
+                }
+            }
         }
 
         private void ApplyCameraDimming()
@@ -446,29 +626,44 @@ namespace PixelOcean
             if (material.HasProperty("_MainTex")) material.SetTexture("_MainTex", texture);
             if (material.HasProperty("_Surface")) material.SetFloat("_Surface", 1f);
             if (material.HasProperty("_ZWrite")) material.SetFloat("_ZWrite", 0f);
+            if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", Color.white);
+            if (material.HasProperty("_Color")) material.SetColor("_Color", Color.white);
+            if (material.HasProperty("_SrcBlend")) material.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            if (material.HasProperty("_DstBlend")) material.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            material.DisableKeyword("_ALPHATEST_ON");
             return material;
         }
 
         private static Texture2D CreateRainTexture()
         {
-            const int width = 3;
-            const int height = 16;
+            const int width = 5;
+            const int height = 24;
             Texture2D texture = new Texture2D(width, height, TextureFormat.RGBA32, false)
             {
                 name = "Procedural Rain Drop",
-                filterMode = FilterMode.Point,
+                filterMode = FilterMode.Bilinear,
                 wrapMode = TextureWrapMode.Clamp,
-                hideFlags = HideFlags.HideAndDontSave
+                hideFlags = HideFlags.HideAndDontSave,
+                alphaIsTransparency = true
             };
 
             Color[] pixels = new Color[width * height];
             for (int y = 0; y < height; y++)
             {
-                float vertical = 1f - Mathf.Abs((y / (float)(height - 1)) * 2f - 1f);
-                pixels[y * width + 1] = new Color(1f, 1f, 1f, Mathf.Lerp(0.18f, 1f, vertical));
-                pixels[y * width] = new Color(1f, 1f, 1f, 0.08f * vertical);
-                pixels[y * width + 2] = new Color(1f, 1f, 1f, 0.08f * vertical);
+                float along = y / (float)(height - 1);
+                float endFade = Mathf.SmoothStep(0f, 1f, Mathf.Min(along * 5f, (1f - along) * 4f));
+                float centre = 2f + Mathf.Lerp(-0.55f, 0.55f, along);
+
+                for (int x = 0; x < width; x++)
+                {
+                    float distance = Mathf.Abs(x - centre);
+                    float core = Mathf.Clamp01(1f - distance / 1.35f);
+                    float alpha = core * core * endFade;
+                    pixels[y * width + x] = new Color(1f, 1f, 1f, alpha);
+                }
             }
+
             texture.SetPixels(pixels);
             texture.Apply(false, true);
             return texture;
@@ -482,7 +677,8 @@ namespace PixelOcean
                 name = "Procedural Rain Splash",
                 filterMode = FilterMode.Point,
                 wrapMode = TextureWrapMode.Clamp,
-                hideFlags = HideFlags.HideAndDontSave
+                hideFlags = HideFlags.HideAndDontSave,
+                alphaIsTransparency = true
             };
 
             Color[] pixels = new Color[size * size];
@@ -493,8 +689,12 @@ namespace PixelOcean
                 {
                     Vector2 d = new Vector2(x, y) - centre;
                     float radius = d.magnitude;
-                    bool ring = radius >= 2.3f && radius <= 3.3f && y <= centre.y + 1f;
-                    pixels[y * size + x] = ring ? Color.white : Color.clear;
+                    float ring = 1f - Mathf.Clamp01(Mathf.Abs(radius - 2.8f) / 0.7f);
+                    float lowerHalf = y <= centre.y + 1f ? 1f : 0f;
+                    float sideSpray = Mathf.Clamp01(1f - Mathf.Abs(d.x) / 3.8f) *
+                                      Mathf.Clamp01((d.y + 1.5f) / 3.5f);
+                    float alpha = Mathf.Max(ring * lowerHalf, sideSpray * 0.55f);
+                    pixels[y * size + x] = new Color(1f, 1f, 1f, alpha);
                 }
             }
             texture.SetPixels(pixels);
