@@ -80,13 +80,23 @@ namespace PixelOcean
         [Tooltip("How strongly the active wave's horizontal movement gently carries Chuck while idle.")]
         [SerializeField, Range(0f, 0.5f)] private float idleWaveDriftInfluence = 0.10f;
         [Tooltip("Small natural left/right drift while no horizontal input is held.")]
-        [SerializeField, Range(0f, 0.5f)] private float idleDriftSpeed = 0.60f;
+        [SerializeField, Range(0f, 0.5f)] private float idleDriftSpeed = 0.10f;
         [Tooltip("Frequency of the subtle idle board drift.")]
-        [SerializeField, Range(0.05f, 2f)] private float idleDriftFrequency = 0.62f;
+        [SerializeField, Range(0.05f, 2f)] private float idleDriftFrequency = 0.32f;
         [Tooltip("Maximum passive drift speed so the ocean never takes control away from the player.")]
         [SerializeField, Range(0.02f, 1f)] private float maximumIdleDriftSpeed = 0.22f;
         [Tooltip("Extra board yaw while idle, making Chuck continuously correct his balance on the water.")]
         [SerializeField, Range(0f, 8f)] private float idleBalanceLean = 1.6f;
+
+        [Header("Water-Like Vertical Motion")]
+        [Tooltip("How quickly Chuck settles toward the sampled wave height while riding. Higher values follow steep waves more tightly.")]
+        [SerializeField, Range(0.03f, 0.5f)] private float verticalWaterSmoothTime = 0.11f;
+        [Tooltip("Maximum vertical catch-up speed while the wave lifts or drops beneath Chuck.")]
+        [SerializeField, Range(1f, 30f)] private float maximumVerticalWaterSpeed = 10f;
+        [Tooltip("Small height changes below this amount are absorbed before moving Chuck, reducing particle-sample jitter.")]
+        [SerializeField, Range(0f, 0.2f)] private float verticalWaterDeadZone = 0.025f;
+        [Tooltip("How strongly the wave's measured vertical velocity helps carry Chuck with rising and falling water.")]
+        [SerializeField, Range(0f, 0.5f)] private float verticalWaveVelocityInfluence = 0.10f;
 
         [Header("Charged Water Skid")]
         [Tooltip("Keyboard E / controller east face button (Xbox B). Hold to charge, release to skid.")]
@@ -436,6 +446,9 @@ namespace PixelOcean
         private bool previousLayerDownHeld;
         private bool layerSwitchInputLocked;
         private float playerHorizontalVelocity;
+        private float verticalWaterVelocity;
+        private float smoothedRideY;
+        private bool smoothedRideYInitialised;
         private float playerTrickInput;
         private float aiDecisionTimer;
         private float aiJumpPulse;
@@ -737,6 +750,8 @@ namespace PixelOcean
                     simulations.Count - 1);
 
                 currentWave = simulations[waveIndex];
+            smoothedRideYInitialised = false;
+            verticalWaterVelocity = 0f;
             }
 
             // Queue layout uses four slots per wave depth:
@@ -2835,13 +2850,39 @@ namespace PixelOcean
                 idleBobHeight *
                 (0.35f + waterMotion * 0.65f);
 
+            float waveVerticalCarry = currentWave
+                .GetGameplayWaveVelocity(localRideX).y *
+                verticalWaveVelocityInfluence;
+
+            float targetY = surfaceY + surfaceOffset + bob + waveVerticalCarry;
+
+            if (!smoothedRideYInitialised)
+            {
+                smoothedRideY = transform.position.y;
+                verticalWaterVelocity = 0f;
+                smoothedRideYInitialised = true;
+            }
+
+            float verticalDifference = targetY - smoothedRideY;
+            if (Mathf.Abs(verticalDifference) <= verticalWaterDeadZone)
+                targetY = smoothedRideY;
+
+            smoothedRideY = Mathf.SmoothDamp(
+                smoothedRideY,
+                targetY,
+                ref verticalWaterVelocity,
+                verticalWaterSmoothTime,
+                maximumVerticalWaterSpeed,
+                dt);
+
             Vector3 target = new Vector3(
                 localRideX,
-                surfaceY + surfaceOffset + bob,
+                smoothedRideY,
                 renderDepth);
 
             if (playerControlled && state == RiderState.Riding)
             {
+                // Keep horizontal control exact while filtering only the wave-driven Y motion.
                 transform.position = target;
             }
             else

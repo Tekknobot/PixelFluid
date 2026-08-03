@@ -383,6 +383,12 @@ namespace PixelOcean
         private Coroutine underwaterRoutine;
         private float nextUnderwaterAt;
         private float underwaterDepthOffset;
+        private float shadowVerticalVelocity;
+        private float smoothedShadowY;
+        private bool smoothedShadowYInitialised;
+
+        [SerializeField, Range(0.05f, 0.6f)] private float shadowVerticalSmoothTime = 0.18f;
+        [SerializeField, Range(1f, 24f)] private float shadowMaximumVerticalSpeed = 7f;
         private int appliedLane = -1;
         private Motion currentMotion = Motion.Idle;
 
@@ -490,18 +496,39 @@ namespace PixelOcean
                 ? player.CurrentWave.GetGameplayWaveVelocity(player.transform.position.x).x * 0.035f
                 : 0f;
 
-            Vector3 followTarget = player.transform.position + new Vector3(
-                side * distance + shadowGlide + waveCarry,
-                followerVerticalOffset + underwaterDepthOffset + bob,
-                0f);
+            float targetShadowY = player.transform.position.y +
+                followerVerticalOffset + underwaterDepthOffset + bob;
 
-            transform.position = Vector3.SmoothDamp(
-                transform.position,
-                followTarget,
-                ref velocity,
+            if (!smoothedShadowYInitialised)
+            {
+                smoothedShadowY = transform.position.y;
+                shadowVerticalVelocity = 0f;
+                smoothedShadowYInitialised = true;
+            }
+
+            smoothedShadowY = Mathf.SmoothDamp(
+                smoothedShadowY,
+                targetShadowY,
+                ref shadowVerticalVelocity,
+                shadowVerticalSmoothTime,
+                shadowMaximumVerticalSpeed,
+                Time.deltaTime);
+
+            Vector3 followTarget = new Vector3(
+                player.transform.position.x + side * distance + shadowGlide + waveCarry,
+                smoothedShadowY,
+                player.transform.position.z);
+
+            Vector3 currentPosition = transform.position;
+            float targetX = Mathf.SmoothDamp(
+                currentPosition.x,
+                followTarget.x,
+                ref velocity.x,
                 finalWave ? 0.30f : 0.27f,
                 finalWave ? 7f : 7.5f,
                 Time.deltaTime);
+
+            transform.position = new Vector3(targetX, smoothedShadowY, followTarget.z);
 
             int targetLane = GetShadowLane(chapter);
             if (appliedLane != targetLane)
