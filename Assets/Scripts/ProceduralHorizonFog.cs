@@ -22,7 +22,7 @@ namespace PixelOcean
 
         [Header("Wave Stack Coverage")]
         [Tooltip("How far the fully opaque fog overlaps upward into the visible bottom of the highest wave layer.")]
-        [SerializeField, Range(0f, 1f)] private float opaqueWaveOverlap = 0.23f;
+        [SerializeField, Range(0f, 1f)] private float opaqueWaveOverlap = 0.27f;
         [Tooltip("How often the active wave-layer list is refreshed. The layer positions themselves are still checked every frame.")]
         [SerializeField, Range(0.1f, 3f)] private float waveRefreshInterval = 0.75f;
 
@@ -38,14 +38,13 @@ namespace PixelOcean
         [SerializeField, Range(0f, 1f)] private float mistStrength = 0.72f;
 
         [Header("Colours")]
-
         // Top of the gradient (near the horizon)
-        [SerializeField] private Color nightHorizonColour = new(0.012f, 0.095f, 0.120f, 1f);
-        [SerializeField] private Color dayHorizonColour   = new(0.018f, 0.135f, 0.165f, 1f);
+        [SerializeField] private Color nightHorizonColour = new(0.003f, 0.030f, 0.040f, 1f);
+        [SerializeField] private Color dayHorizonColour   = new(0.006f, 0.055f, 0.070f, 1f);
 
         // Bottom of the gradient (deep ocean)
-        [SerializeField] private Color nightDeepWaterColour = new(0.003f, 0.030f, 0.040f, 1f);
-        [SerializeField] private Color dayDeepWaterColour   = new(0.006f, 0.055f, 0.070f, 1f);
+        [SerializeField] private Color nightDeepWaterColour = new(0.012f, 0.095f, 0.120f, 1f);
+        [SerializeField] private Color dayDeepWaterColour   = new(0.018f, 0.135f, 0.165f, 1f);
 
         [SerializeField, Range(0f, 1f)]
         private float colourFollowStrength = 0.8f;
