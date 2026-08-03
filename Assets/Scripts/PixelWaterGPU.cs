@@ -283,7 +283,28 @@ namespace PixelOcean
         private Vector2 surfboardHalfExtents = new(0.70f, 0.085f);
 
         private const int SurfaceBinCount = 160;
+
+        [Header("Gameplay Surface Filtering")]
+        [Tooltip("Foamy particles moving upward faster than this are treated as airborne spray.")]
+        [SerializeField, Min(0f)]
+        private float maximumRideableSprayVelocity = 0.75f;
+
+        [Tooltip("Particles with foam above this value can be rejected as mist when moving upward.")]
+        [SerializeField, Range(0f, 1f)]
+        private float airborneFoamThreshold = 0.68f;
+
+        [Tooltip("Maximum distance above the procedural wave body that a particle can still support the surfer.")]
+        [SerializeField, Range(0.1f, 2f)]
+        private float maximumRideableSurfaceOffset = 0.72f;
+
+        [Tooltip("Maximum amount the gameplay surface can rise during one GPU readback.")]
+        [SerializeField, Range(0.02f, 0.5f)]
+        private float maximumGameplaySurfaceRise = 0.18f;
+
         private readonly float[] sampledSurface = new float[SurfaceBinCount];
+        private readonly float[] previousSampledSurface = new float[SurfaceBinCount];
+        private readonly float[] maximumRideableHeightByBin =
+            new float[SurfaceBinCount];        
         private readonly Vector2[] sampledVelocity = new Vector2[SurfaceBinCount];
         private readonly int[] sampledCounts = new int[SurfaceBinCount];
         private bool hasParticleSurfaceSamples;
@@ -1689,11 +1710,24 @@ namespace PixelOcean
         private void BuildSurfaceBins(Unity.Collections.NativeArray<GPUParticle> particles)
         {
             float width = Mathf.Max(0.001f, tankMaximum.x - tankMinimum.x);
+
             for (int i = 0; i < SurfaceBinCount; i++)
             {
-                float x = Mathf.Lerp(tankMinimum.x, tankMaximum.x,
+                previousSampledSurface[i] = sampledSurface[i];
+
+                float x = Mathf.Lerp(
+                    tankMinimum.x,
+                    tankMaximum.x,
                     i / (float)(SurfaceBinCount - 1));
-                sampledSurface[i] = GetSeabedHeightAtWorldX(x) + particleRadius;
+
+                sampledSurface[i] =
+                    GetSeabedHeightAtWorldX(x) + particleRadius;
+
+                // Calculate this only once per bin, not once per particle.
+                maximumRideableHeightByBin[i] =
+                    GetProceduralSurfaceFallback(x) +
+                    maximumRideableSurfaceOffset;
+
                 sampledVelocity[i] = Vector2.zero;
                 sampledCounts[i] = 0;
             }
@@ -1701,10 +1735,24 @@ namespace PixelOcean
             for (int i = 0; i < particles.Length; i++)
             {
                 GPUParticle p = particles[i];
+
                 int bin = Mathf.Clamp(
-                    Mathf.RoundToInt((p.Position.x - tankMinimum.x) / width *
-                                     (SurfaceBinCount - 1)),
-                    0, SurfaceBinCount - 1);
+                    Mathf.RoundToInt(
+                        (p.Position.x - tankMinimum.x) /
+                        width *
+                        (SurfaceBinCount - 1)),
+                    0,
+                    SurfaceBinCount - 1);
+
+                bool airborneFoam =
+                    p.Foam >= airborneFoamThreshold &&
+                    p.Velocity.y >= maximumRideableSprayVelocity;
+
+                bool tooFarAboveWaveBody =
+                    p.Position.y > maximumRideableHeightByBin[bin];
+
+                if (airborneFoam || tooFarAboveWaveBody)
+                    continue;
 
                 if (p.Position.y >= sampledSurface[bin])
                 {
@@ -1714,19 +1762,47 @@ namespace PixelOcean
                 }
             }
 
-            // Fill occasional empty bins from neighbours and lightly smooth the noisy particle crest.
+            // Fill gaps and lightly smooth particle noise.
             for (int pass = 0; pass < 2; pass++)
             {
                 float previous = sampledSurface[0];
+
                 for (int i = 1; i < SurfaceBinCount - 1; i++)
                 {
+                    float x = Mathf.Lerp(
+                        tankMinimum.x,
+                        tankMaximum.x,
+                        i / (float)(SurfaceBinCount - 1));
+
                     float current = sampledSurface[i];
-                    float smoothed = (previous + current * 2f + sampledSurface[i + 1]) * 0.25f;
+
+                    float smoothed =
+                        (previous +
+                        current * 2f +
+                        sampledSurface[i + 1]) *
+                        0.25f;
+
                     previous = current;
+
                     sampledSurface[i] = Mathf.Max(
-                        GetSeabedHeightAtWorldX(Mathf.Lerp(tankMinimum.x, tankMaximum.x,
-                            i / (float)(SurfaceBinCount - 1))) + particleRadius,
+                        sampledSurface[i],
                         smoothed);
+                }
+            }
+
+            // Stop a single detached particle from suddenly lifting the surfer.
+            if (hasParticleSurfaceSamples)
+            {
+                for (int i = 0; i < SurfaceBinCount; i++)
+                {
+                    float previousHeight = previousSampledSurface[i];
+
+                    if (previousHeight <= 0f)
+                        continue;
+
+                    sampledSurface[i] = Mathf.Min(
+                        sampledSurface[i],
+                        previousHeight + maximumGameplaySurfaceRise);
                 }
             }
 
