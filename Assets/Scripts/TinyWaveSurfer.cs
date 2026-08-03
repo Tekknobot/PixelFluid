@@ -26,7 +26,7 @@ namespace PixelOcean
         [SerializeField, Min(1f)] private float secondsPerSimulation = 10f;
         [Tooltip("Random variation added to each surfer's layer-jump interval so they never transfer together.")]
         [SerializeField, Min(0f)] private float simulationTimeVariation = 3.5f;
-        [SerializeField, Min(0.1f)] private float switchDuration = 0.9f;
+        [SerializeField, Min(0.1f)] private float switchDuration = 0.8f;
         [SerializeField] private bool cycleContinuously = true;
         [Tooltip("Choose a different simulation layer instead of always moving to the next one.")]
         [SerializeField] private bool jumpToRandomWaveLayer = true;
