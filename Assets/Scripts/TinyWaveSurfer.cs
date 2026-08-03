@@ -480,6 +480,16 @@ namespace PixelOcean
         private bool scoredFlip;
 
         public int CurrentWaveIndex => waveIndex;
+        public int WaveCount
+        {
+            get
+            {
+                if (simulations.Count == 0)
+                    RefreshWaveList();
+
+                return simulations.Count;
+            }
+        }        
         public PixelWaterGPU CurrentWave => currentWave;
         public float TravelDirection => direction;
         public bool IsDead => state == RiderState.Dead;

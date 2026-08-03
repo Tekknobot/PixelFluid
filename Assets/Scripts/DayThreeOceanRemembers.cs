@@ -43,8 +43,6 @@ namespace PixelOcean
         private ProceduralStarryNight sky;
         private ProceduralRainSystem rain;
         private ShadowSurferEcho shadow;
-        private ShadowSurferEcho fireShadow;
-        private bool fireShadowRequested;
         private float nextEnemyAt;
         private float nextAnomalyAt;
         private float anomalyStartedAt;
@@ -80,7 +78,6 @@ namespace PixelOcean
             if (sky == null) sky = FindFirstObjectByType<ProceduralStarryNight>();
             if (rain == null) rain = FindFirstObjectByType<ProceduralRainSystem>();
             EnsureShadow();
-            UpdateFireShadow();
             UpdateEnemyRemix();
             UpdateWaveCorruption();
             UpdateWeather();
@@ -169,10 +166,7 @@ namespace PixelOcean
             skyTimeVelocity = 0f;
             RestoreWater();
             if (shadow != null) Destroy(shadow.gameObject);
-            if (fireShadow != null) Destroy(fireShadow.gameObject);
             shadow = null;
-            fireShadow = null;
-            fireShadowRequested = false;
             foreach (GameObject holder in spawnedHolders)
                 if (holder != null) Destroy(holder);
             spawnedHolders.Clear();
@@ -200,39 +194,6 @@ namespace PixelOcean
             echo.Initialise(player, director);
             echo.ConfigureFollower(sideSign, followDistance, verticalOffset, phaseOffset);
             return echo;
-        }
-
-        private void UpdateFireShadow()
-        {
-            TinyWaveSurfer player = FindFirstObjectByType<TinyWaveSurfer>();
-            bool onFire = player != null && !player.IsDead &&
-                          AirTrickScoreSystem.Instance != null &&
-                          AirTrickScoreSystem.Instance.IsOnFire;
-
-            if (onFire)
-            {
-                fireShadowRequested = true;
-                if (fireShadow == null)
-                {
-                    fireShadow = CreateShadow(
-                        player,
-                        "Fire Shadow Surfer - The Ocean Remembers",
-                        1f,
-                        0.95f,
-                        0.18f,
-                        2.35f);
-                }
-                else if (!fireShadow.gameObject.activeSelf || fireShadow.IsSubmerging)
-                {
-                    fireShadow.Reactivate(player);
-                }
-            }
-            else if (fireShadowRequested)
-            {
-                fireShadowRequested = false;
-                if (fireShadow != null)
-                    fireShadow.SubmergeAndDisable();
-            }
         }
 
         private void UpdateEnemyRemix()
@@ -416,12 +377,12 @@ namespace PixelOcean
         private float sideSign = -1f;
         private float normalFollowDistance = 1.1f;
         private float followerVerticalOffset = 0.12f;
-        private bool submerging;
-        private Coroutine submergeRoutine;
+        private bool underwater;
+        private Coroutine underwaterRoutine;
+        private float nextUnderwaterAt;
+        private float underwaterDepthOffset;
         private int appliedLane = -1;
         private Motion currentMotion = Motion.Idle;
-
-        public bool IsSubmerging => submerging;
 
         public void Initialise(TinyWaveSurfer target, SurfDayProgressionDirector dayDirector)
         {
@@ -450,6 +411,7 @@ namespace PixelOcean
             Load(Motion.Death, "Shadow/shadow_death");
 
             ApplyFrame(Motion.Idle, 0f);
+            nextUnderwaterAt = Time.unscaledTime + UnityEngine.Random.Range(7f, 12f);
         }
 
         public void ConfigureFollower(
@@ -462,61 +424,6 @@ namespace PixelOcean
             normalFollowDistance = Mathf.Max(0.2f, followDistance);
             followerVerticalOffset = verticalOffset;
             phase += phaseOffset;
-        }
-
-        public void Reactivate(TinyWaveSurfer target)
-        {
-            player = target;
-            if (submergeRoutine != null)
-            {
-                StopCoroutine(submergeRoutine);
-                submergeRoutine = null;
-            }
-
-            submerging = false;
-            gameObject.SetActive(true);
-            if (spriteRenderer != null)
-            {
-                spriteRenderer.enabled = true;
-                spriteRenderer.color = Color.white;
-            }
-
-            velocity = Vector3.zero;
-            transform.position = player.transform.position +
-                                 new Vector3(sideSign * normalFollowDistance, followerVerticalOffset, 0f);
-        }
-
-        public void SubmergeAndDisable()
-        {
-            if (!gameObject.activeSelf || submerging)
-                return;
-
-            if (submergeRoutine != null)
-                StopCoroutine(submergeRoutine);
-            submergeRoutine = StartCoroutine(SubmergeRoutine());
-        }
-
-        private IEnumerator SubmergeRoutine()
-        {
-            submerging = true;
-            Vector3 start = transform.position;
-            Vector3 end = start + Vector3.down * 1.15f;
-            const float duration = 0.65f;
-            float elapsed = 0f;
-
-            while (elapsed < duration)
-            {
-                elapsed += Time.unscaledDeltaTime;
-                float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / duration));
-                transform.position = Vector3.LerpUnclamped(start, end, t);
-                yield return null;
-            }
-
-            if (spriteRenderer != null)
-                spriteRenderer.enabled = false;
-            submerging = false;
-            submergeRoutine = null;
-            gameObject.SetActive(false);
         }
 
         private void Load(Motion key, string path)
@@ -536,60 +443,153 @@ namespace PixelOcean
 
         private void Update()
         {
-            if (submerging)
-                return;
-
             if (player == null)
             {
                 player = FindFirstObjectByType<TinyWaveSurfer>();
                 if (player == null)
                     return;
+
                 playerSpriteRenderer = player.GetComponent<SpriteRenderer>();
                 ApplyWithinLaneSorting();
             }
 
-            bool hostile = director != null &&
-                           director.CurrentChapter >= SurfDayProgressionDirector.Chapter.FinalWave;
+            SurfDayProgressionDirector.Chapter chapter = director != null
+                ? director.CurrentChapter
+                : SurfDayProgressionDirector.Chapter.Dawn;
+
+            bool finalWave = chapter >= SurfDayProgressionDirector.Chapter.FinalWave;
 
             float side = sideSign;
-
-            if (hostile)
+            if (chapter >= SurfDayProgressionDirector.Chapter.StrangeTide && !underwater)
             {
-                // Stay on the usual side most of the time.
-                // Only cross in front briefly and occasionally.
-                float crossWave = Mathf.Sin(Time.unscaledTime * 0.14f + phase);
-
-                if (crossWave > 0.94f)
+                float crossWave = Mathf.Sin(Time.unscaledTime * 0.10f + phase);
+                if (crossWave > 0.985f)
                     side = -sideSign;
             }
-            float distance = hostile
-                ? Mathf.Max(0.65f, normalFollowDistance * 0.85f) +
-                  Mathf.Abs(Mathf.Sin(Time.unscaledTime * 0.41f + phase)) * 0.75f
-                : normalFollowDistance;
+
+            float distance = normalFollowDistance;
+            if (chapter >= SurfDayProgressionDirector.Chapter.Storm)
+            {
+                distance = Mathf.Max(0.75f, normalFollowDistance * 0.92f) +
+                           Mathf.Abs(Mathf.Sin(Time.unscaledTime * 0.28f + phase)) * 0.28f;
+            }
+
+            UpdateUnderwaterBehaviour(finalWave);
+
+            float bob = underwater
+                ? Mathf.Sin(Time.unscaledTime * 0.85f + phase) * 0.035f
+                : Mathf.Sin(Time.unscaledTime * 1.3f + phase) * 0.08f;
 
             Vector3 followTarget = player.transform.position + new Vector3(
                 side * distance,
-                followerVerticalOffset + Mathf.Sin(Time.unscaledTime * 1.3f + phase) * 0.08f,
+                followerVerticalOffset + underwaterDepthOffset + bob,
                 0f);
 
             transform.position = Vector3.SmoothDamp(
                 transform.position,
                 followTarget,
                 ref velocity,
-                hostile ? 0.12f : 0.18f,
-                hostile ? 14f : 10f,
+                finalWave ? 0.24f : 0.20f,
+                finalWave ? 8f : 9f,
                 Time.deltaTime);
 
-            if (appliedLane != player.CurrentWaveIndex)
+            int targetLane = GetShadowLane(chapter);
+            if (appliedLane != targetLane)
             {
-                appliedLane = player.CurrentWaveIndex;
+                appliedLane = targetLane;
                 renderItem.SetLane(appliedLane);
             }
 
-            SyncVisualsToPlayer();
+            SyncVisualsToPlayer(chapter);
         }
 
-        private void SyncVisualsToPlayer()
+        private int GetShadowLane(SurfDayProgressionDirector.Chapter chapter)
+        {
+            int playerLane = Mathf.Max(0, player.CurrentWaveIndex);
+            int waveCount = Mathf.Max(1, player.WaveCount);
+
+            if (chapter >= SurfDayProgressionDirector.Chapter.StrangeTide &&
+                chapter < SurfDayProgressionDirector.Chapter.FinalWave)
+            {
+                // Use the next wave when possible.
+                // At the last wave, use the previous wave instead.
+                return playerLane < waveCount - 1
+                    ? playerLane + 1
+                    : Mathf.Max(0, playerLane - 1);
+            }
+
+            return Mathf.Clamp(playerLane, 0, waveCount - 1);
+        }
+
+        private void UpdateUnderwaterBehaviour(bool finalWave)
+        {
+            if (!finalWave)
+            {
+                if (underwaterRoutine != null)
+                {
+                    StopCoroutine(underwaterRoutine);
+                    underwaterRoutine = null;
+                }
+
+                underwater = false;
+                underwaterDepthOffset = Mathf.MoveTowards(
+                    underwaterDepthOffset,
+                    0f,
+                    Time.deltaTime * 2.5f);
+
+                nextUnderwaterAt = Time.unscaledTime + UnityEngine.Random.Range(7f, 12f);
+                return;
+            }
+
+            if (!underwater && underwaterRoutine == null &&
+                Time.unscaledTime >= nextUnderwaterAt)
+            {
+                underwaterRoutine = StartCoroutine(UnderwaterPassRoutine());
+            }
+        }
+
+        private IEnumerator UnderwaterPassRoutine()
+        {
+            underwater = true;
+
+            const float descendDuration = 0.85f;
+            float elapsed = 0f;
+            while (elapsed < descendDuration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / descendDuration));
+                underwaterDepthOffset = Mathf.Lerp(0f, -1.35f, t);
+                yield return null;
+            }
+
+            float submergedDuration = UnityEngine.Random.Range(3f, 5f);
+            elapsed = 0f;
+            while (elapsed < submergedDuration)
+            {
+                elapsed += Time.deltaTime;
+                underwaterDepthOffset = -1.35f +
+                                        Mathf.Sin(Time.time * 0.9f + phase) * 0.05f;
+                yield return null;
+            }
+
+            const float riseDuration = 1.0f;
+            elapsed = 0f;
+            float startDepth = underwaterDepthOffset;
+            while (elapsed < riseDuration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / riseDuration));
+                underwaterDepthOffset = Mathf.Lerp(startDepth, 0f, t);
+                yield return null;
+            }
+
+            underwaterDepthOffset = 0f;
+            underwater = false;
+            underwaterRoutine = null;
+            nextUnderwaterAt = Time.unscaledTime + UnityEngine.Random.Range(8f, 15f);
+        }
+
+        private void SyncVisualsToPlayer(SurfDayProgressionDirector.Chapter chapter)
         {
             if (spriteRenderer == null || player == null)
                 return;
@@ -609,7 +609,12 @@ namespace PixelOcean
 
             Motion motion = ResolveMotion(stateHash, hasAnimatorState);
             currentMotion = motion;
-            ApplyFrame(motion, normalizedTime);
+
+            float predictionLead = chapter >= SurfDayProgressionDirector.Chapter.DangerousWater
+                ? 0.10f
+                : 0f;
+
+            ApplyFrame(motion, normalizedTime + predictionLead);
         }
 
         private void ApplyWithinLaneSorting()
