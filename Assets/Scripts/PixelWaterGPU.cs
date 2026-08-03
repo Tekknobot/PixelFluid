@@ -287,19 +287,19 @@ namespace PixelOcean
         [Header("Gameplay Surface Filtering")]
         [Tooltip("Foamy particles moving upward faster than this are treated as airborne spray.")]
         [SerializeField, Min(0f)]
-        private float maximumRideableSprayVelocity = 0.75f;
+        private float maximumRideableSprayVelocity = 0.15f;
 
         [Tooltip("Particles with foam above this value can be rejected as mist when moving upward.")]
         [SerializeField, Range(0f, 1f)]
-        private float airborneFoamThreshold = 0.68f;
+        private float airborneFoamThreshold = 0.20f;
 
         [Tooltip("Maximum distance above the procedural wave body that a particle can still support the surfer.")]
         [SerializeField, Range(0.1f, 2f)]
-        private float maximumRideableSurfaceOffset = 0.72f;
+        private float maximumRideableSurfaceOffset = 0.25f;
 
         [Tooltip("Maximum amount the gameplay surface can rise during one GPU readback.")]
         [SerializeField, Range(0.02f, 0.5f)]
-        private float maximumGameplaySurfaceRise = 0.18f;
+        private float maximumGameplaySurfaceRise = 0.06f;
 
         private readonly float[] sampledSurface = new float[SurfaceBinCount];
         private readonly float[] previousSampledSurface = new float[SurfaceBinCount];
@@ -1745,7 +1745,7 @@ namespace PixelOcean
                     SurfaceBinCount - 1);
 
                 bool airborneFoam =
-                    p.Foam >= airborneFoamThreshold &&
+                    p.Foam >= airborneFoamThreshold ||
                     p.Velocity.y >= maximumRideableSprayVelocity;
 
                 bool tooFarAboveWaveBody =
