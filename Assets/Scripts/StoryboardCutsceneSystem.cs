@@ -133,6 +133,41 @@ namespace PixelOcean
                 });
         }
 
+        /// <summary>
+        /// Plays the three-board Day 3 introduction before the Shadow Surfer and
+        /// corrupted ocean systems become active. Artwork is loaded from
+        /// Resources/Storyboards/Day3.
+        /// </summary>
+        public static IEnumerator PlayDayThreeOpening()
+        {
+            StoryboardCutsceneSystem system = EnsureInstance();
+            yield return system.PlaySequence(
+                new[]
+                {
+                    "Storyboards/Day3/board_1",
+                    "Storyboards/Day3/board_2",
+                    "Storyboards/Day3/board_3"
+                },
+                new[]
+                {
+                    "I'M SURE I SAW SOMEONE.",
+                    "WHY ARE YOU FOLLOWING ME?",
+                    "WHO ARE YOU?"
+                });
+        }
+
+        private static Sprite LoadStoryboardSprite(string resourcePath)
+        {
+            Sprite board = Resources.Load<Sprite>(resourcePath);
+            if (board != null)
+                return board;
+
+            // Some Pixel Lab boards import as Multiple sprites. In that case,
+            // Resources.Load<Sprite>() may not return the first sub-sprite.
+            Sprite[] boards = Resources.LoadAll<Sprite>(resourcePath);
+            return boards != null && boards.Length > 0 ? boards[0] : null;
+        }
+
         public IEnumerator PlaySequence(
             string[] resourcePaths,
             string[] lines)
@@ -191,7 +226,7 @@ namespace PixelOcean
 
             for (int i = 0; i < pageCount; i++)
             {
-                Sprite board = Resources.Load<Sprite>(resourcePaths[i]);
+                Sprite board = LoadStoryboardSprite(resourcePaths[i]);
 
                 if (board == null)
                 {

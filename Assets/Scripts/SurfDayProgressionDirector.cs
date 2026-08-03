@@ -426,6 +426,11 @@ namespace PixelOcean
             ClearRunObjects();
             yield return null;
 
+            // Keep the cleared ocean frozen behind the storyboard. Day 3 state,
+            // the Shadow Surfer, enemies and pickups begin only after all three
+            // boards and their dialogue have finished.
+            yield return StoryboardCutsceneSystem.PlayDayThreeOpening();
+
             currentDay = 3;
             AirTrickScoreSystem.Instance?.BeginDay(3);
             SurfAbilityProgression.Instance?.DebugUnlockAll();
