@@ -31,6 +31,18 @@ namespace PixelOcean
             instance.SetVisible(true);
         }
 
+        /// <summary>
+        /// Closes the developer overlay through its normal visibility path so
+        /// time scale, pause-menu presentation, and controller ownership are restored.
+        /// </summary>
+        public static void Close()
+        {
+            if (instance == null)
+                return;
+
+            instance.SetVisible(false);
+        }
+
         private bool visible;
         private bool godMode;
         private bool infiniteLives;

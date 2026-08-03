@@ -66,6 +66,7 @@ namespace PixelOcean
         private Button optionsBackButton;
         private int developerCheatStep;
         private float developerCheatDeadline;
+        private bool developerUnlocked;
 
         private static readonly HashSet<string> SimulationTypeNames = new(StringComparer.Ordinal)
         {
@@ -109,7 +110,10 @@ namespace PixelOcean
             // The developer overlay owns controller navigation while it is open.
             // Do not let the hidden title menu process the same button presses.
             if (SurferSlugDeveloperMenu.IsOpen)
+            {
+                UpdateDeveloperCheat();
                 return;
+            }
 
             if (menuVisible &&
                 ((controlsPanel != null && controlsPanel.activeSelf) ||
@@ -191,8 +195,25 @@ namespace PixelOcean
                 if (developerCheatStep >= 8)
                 {
                     ResetDeveloperCheat();
+
+                    if (developerUnlocked)
+                    {
+                        developerUnlocked = false;
+
+                        if (developerButton != null)
+                            developerButton.gameObject.SetActive(false);
+                    }
+                    else
+                    {
+                        developerUnlocked = true;
+
+                        if (developerButton != null)
+                            developerButton.gameObject.SetActive(true);
+
+                        SurferSlugDeveloperMenu.UnlockAndOpen();
+                    }
+
                     RefreshDeveloperButton();
-                    SurferSlugDeveloperMenu.UnlockAndOpen();
                 }
                 return;
             }
@@ -535,13 +556,12 @@ namespace PixelOcean
             RefreshDeveloperButton();
         }
 
-
         private void RefreshDeveloperButton()
         {
             if (developerButton == null)
                 return;
 
-            developerButton.gameObject.SetActive(SurferSlugDeveloperMenu.IsUnlocked);
+            developerButton.gameObject.SetActive(developerUnlocked);
         }
 
         private void OpenDeveloperMenu()
