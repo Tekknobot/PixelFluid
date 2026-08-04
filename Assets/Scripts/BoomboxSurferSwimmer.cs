@@ -21,7 +21,7 @@ namespace PixelOcean
         public event Action<BoomboxSurferSwimmer> Released;
 
         [Header("Surfing Movement")]
-        [SerializeField] private Vector2 speedRange = new(0.34f, 0.52f);
+        [SerializeField] private Vector2 speedRange = new(0.64f, 3.92f);
         [SerializeField, Range(0f, 0.4f)] private float laneWander = 0.12f;
         [SerializeField, Min(0.1f)] private float verticalResponsiveness = 5.5f;
         [SerializeField] private Vector2 bobHeightRange = new(0.025f, 0.07f);

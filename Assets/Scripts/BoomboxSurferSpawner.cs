@@ -117,12 +117,17 @@ namespace PixelOcean
         /// Earlier chapters lock the mechanic and release an active board.
         /// </summary>
         public static bool RestoreForStage(
+            int currentDay,
             SurfDayProgressionDirector.Chapter chapter,
             bool showHudNotice)
         {
+            // Music is unlocked during Day 1's Strange Tide chapter and remains
+            // permanently available on every later day. Day 2 restarts at Dawn,
+            // so comparing only the chapter enum would incorrectly lock it again
+            // when loading or beginning a later day.
             bool shouldBeUnlocked =
-                chapter >=
-                SurfDayProgressionDirector.Chapter.StrangeTide;
+                currentDay >= 2 ||
+                chapter >= SurfDayProgressionDirector.Chapter.StrangeTide;
 
             if (!shouldBeUnlocked)
             {

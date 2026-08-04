@@ -265,21 +265,24 @@ namespace PixelOcean
             RefreshLearningObjectiveForStage();
             SyncDayNightToRunTime();
 
+            // Continue can be selected before the normal press-to-spawn listener has
+            // created Chuck. Restore or create the player first so any boss arena is
+            // captured around the actual saved spawn position instead of scene zero.
+            TinyWaveSurfer restoredPlayer = null;
+            yield return EnsurePlayerReadyForLoadedRun(data, player => restoredPlayer = player);
+
             BoomboxSurferSpawner.RestoreForStage(
+                currentDay,
                 chapter,
                 showHudNotice:
-                    chapter >= Chapter.StrangeTide);
+                    currentDay >= 2 || chapter >= Chapter.StrangeTide);
 
             SpawnPickupSet();
             SpawnOceanItems(12);
             RestoreChapterPopulation();
 
-            if (currentDay >= 4)
-            {
-                TinyWaveSurfer restoredSurfer = FindFirstObjectByType<TinyWaveSurfer>();
-                if (restoredSurfer != null)
-                    DayFourConspiracyEncounter.Begin(this, restoredSurfer);
-            }
+            if (currentDay >= 4 && restoredPlayer != null)
+                DayFourConspiracyEncounter.Begin(this, restoredPlayer);
 
             if (chapter >= Chapter.FinalWave)
             {
@@ -293,6 +296,59 @@ namespace PixelOcean
             RefreshLearningObjectiveForStage();
             SurfAbilityProgression.Instance?.ApplyUpgradesToAllPlayers();
             ShowBanner($"DAY {currentDay} CONTINUED", CurrentObjective, 4f);
+        }
+
+        private IEnumerator EnsurePlayerReadyForLoadedRun(
+            SurfStageSaveSystem.SaveData data,
+            System.Action<TinyWaveSurfer> completed)
+        {
+            TinyWaveSurfer player = FindPlayerControlledSurfer();
+
+            // A Continue load bypasses the normal press-to-spawn flow. Explicitly
+            // create Chuck once the water world is ready so boss restoration never
+            // depends on a later random input press.
+            if (player == null)
+            {
+                TinyWaveSurferBootstrap.SpawnPlayerSurfer();
+
+                float deadline = Time.realtimeSinceStartup + 5f;
+                while (player == null && Time.realtimeSinceStartup < deadline)
+                {
+                    yield return null;
+                    player = FindPlayerControlledSurfer();
+                }
+            }
+
+            if (player == null)
+            {
+                Debug.LogError(
+                    "Saved run could not restore Chuck before rebuilding the chapter.",
+                    this);
+                completed?.Invoke(null);
+                yield break;
+            }
+
+            // Apply the saved lane and X position before any arena captures its
+            // centre. Respawn first so death/disabled state cannot block placement.
+            player.RespawnForManagedRun();
+            yield return null;
+            player.RestorePersistentState(data);
+            yield return new WaitForFixedUpdate();
+
+            completed?.Invoke(player);
+        }
+
+        private static TinyWaveSurfer FindPlayerControlledSurfer()
+        {
+            foreach (TinyWaveSurfer surfer in FindObjectsByType<TinyWaveSurfer>(
+                         FindObjectsInactive.Exclude,
+                         FindObjectsSortMode.None))
+            {
+                if (surfer != null && surfer.IsPlayerControlled)
+                    return surfer;
+            }
+
+            return null;
         }
 
         private void RestoreChapterPopulation()
@@ -902,6 +958,7 @@ namespace PixelOcean
             bool saveWhenReady)
         {
             BoomboxSurferSpawner.RestoreForStage(
+                currentDay,
                 Chapter.FinalWave,
                 showHudNotice: grantCompleteDeveloperLoadout);
 
@@ -1507,6 +1564,7 @@ namespace PixelOcean
             // Strange Tide unlocks the player-controlled board summon.
             // The board itself appears only when the player presses LB / M.
             BoomboxSurferSpawner.RestoreForStage(
+                currentDay,
                 chapter,
                 showHudNotice: true);
         }

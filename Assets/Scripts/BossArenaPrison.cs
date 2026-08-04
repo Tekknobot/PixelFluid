@@ -425,7 +425,7 @@ namespace PixelOcean
         private void CaptureArena()
         {
             gameplayCamera = Camera.main;
-            player = FindFirstObjectByType<TinyWaveSurfer>();
+            player = FindPlayerControlledSurfer();
             centreX = player != null ? player.transform.position.x : transform.position.x;
 
             if (gameplayCamera != null && gameplayCamera.orthographic)
@@ -466,8 +466,8 @@ namespace PixelOcean
                 duckBoss.CloseArenaVulnerability();
             }
 
-            if (player == null || player.IsDead)
-                player = FindFirstObjectByType<TinyWaveSurfer>();
+            if (player == null || player.IsDead || !player.IsPlayerControlled)
+                player = FindPlayerControlledSurfer();
             if (player == null)
                 return;
 
@@ -503,6 +503,19 @@ namespace PixelOcean
                 if (p.x <= leftX - escapeDistance)
                     FinishArena(true);
             }
+        }
+
+        private static TinyWaveSurfer FindPlayerControlledSurfer()
+        {
+            foreach (TinyWaveSurfer surfer in FindObjectsByType<TinyWaveSurfer>(
+                         FindObjectsInactive.Exclude,
+                         FindObjectsSortMode.None))
+            {
+                if (surfer != null && surfer.IsPlayerControlled)
+                    return surfer;
+            }
+
+            return null;
         }
 
         private void SetPlayerPosition(Vector3 position)
