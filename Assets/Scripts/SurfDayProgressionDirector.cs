@@ -59,6 +59,7 @@ namespace PixelOcean
         private string learningObjective = string.Empty;
         private bool finalWaveStarted;
         private bool changingDay;
+        private bool facilityEncounterStarted;
         private int currentDay = 1;
         private ProceduralRainSystem rain;
         private GUIStyle titleStyle;
@@ -206,6 +207,7 @@ namespace PixelOcean
             finalWaveStarted = data.finalWaveStarted || chapter >= Chapter.FinalWave;
             bossDefeatedSunset = data.bossDefeatedSunset;
             changingDay = false;
+            facilityEncounterStarted = false;
             banner = string.Empty;
             bannerUntil = 0f;
             rain = FindFirstObjectByType<ProceduralRainSystem>();
@@ -509,6 +511,22 @@ namespace PixelOcean
             }
         }
 
+        public void CompleteDayThreeAtFacility()
+        {
+            if (currentDay < 3 || chapter == Chapter.Complete)
+                return;
+
+            facilityEncounterStarted = false;
+            BeginChapter(Chapter.Complete,
+                "DAY 3 COMPLETE",
+                "YOU FOUND WHAT WAS HIDDEN BEYOND THE WAVES.");
+            objective = "SECRET FACILITY DISCOVERED";
+            learningObjective = string.Empty;
+            AirTrickScoreSystem.Instance?.ShowDayRecap(3, 10f);
+            rain?.ClearRain();
+            QueueCheckpoint();
+        }
+
         private void Update()
         {
             if (chapter == Chapter.Complete || EndlessWaveSections.Instance == null)
@@ -534,11 +552,15 @@ namespace PixelOcean
                     changingDay = true;
                     StartCoroutine(BeginDayThree());
                 }
-                else if (currentDay >= 3)
+                else if (currentDay >= 3 && !facilityEncounterStarted)
                 {
-                    BeginChapter(Chapter.Complete, "THREE DAYS SURVIVED", "YOU OUTSURFED WHAT THE OCEAN REMEMBERED.");
-                    AirTrickScoreSystem.Instance?.ShowDayRecap(3, 10f);
+                    facilityEncounterStarted = true;
+                    objective = "FOLLOW THE LIGHTS ON THE HORIZON";
+                    learningObjective = string.Empty;
+                    banner = "SOMETHING IS OUT THERE";
+                    bannerUntil = Time.unscaledTime + 4f;
                     rain?.ClearRain();
+                    SecretFacilityEncounter.Begin(this, player);
                 }
                 return;
             }
