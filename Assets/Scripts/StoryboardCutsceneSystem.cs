@@ -156,6 +156,33 @@ namespace PixelOcean
                 });
         }
 
+
+        /// <summary>
+        /// Plays the five-board Day 4 opening after Chuck discovers the offshore
+        /// outpost. Artwork is loaded from Resources/Storyboards/Day4.
+        /// </summary>
+        public static IEnumerator PlayDayFourOpening()
+        {
+            StoryboardCutsceneSystem system = EnsureInstance();
+            yield return system.PlaySequence(
+                new[]
+                {
+                    "Storyboards/Day4/board_1",
+                    "Storyboards/Day4/board_2",
+                    "Storyboards/Day4/board_3",
+                    "Storyboards/Day4/board_4",
+                    "Storyboards/Day4/board_5"
+                },
+                new[]
+                {
+                    "THAT WASN'T JUST A STATION...",
+                    "THERE'S SOMETHING BEYOND IT.",
+                    "I'M GETTING CLOSER.",
+                    "WHAT IS IT TRANSMITTING?",
+                    "I HAVE TO REACH THAT ISLAND."
+                });
+        }
+
         private static Sprite LoadStoryboardSprite(string resourcePath)
         {
             Sprite board = Resources.Load<Sprite>(resourcePath);

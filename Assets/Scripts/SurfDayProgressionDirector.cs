@@ -592,6 +592,10 @@ namespace PixelOcean
             DestroyAll<DayFourConspiracyEncounter>();
             yield return null;
 
+            // Keep the cleared ocean frozen behind the five-board Day 4 opening.
+            // Day 4 world objects and encounters are created only after it finishes.
+            yield return StoryboardCutsceneSystem.PlayDayFourOpening();
+
             currentDay = 4;
             AirTrickScoreSystem.Instance?.BeginDay(4);
             SurfAbilityProgression.Instance?.DebugUnlockAll();

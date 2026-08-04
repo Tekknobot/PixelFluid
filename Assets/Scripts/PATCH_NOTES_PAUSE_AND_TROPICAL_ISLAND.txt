@@ -1,0 +1,11 @@
+PAUSE MENU
+- Sprite buttons now use a solid opaque backing Image as the Button target graphic.
+- Artwork is rendered in a non-raycast child image.
+- Selected, highlighted, pressed, and disabled colours are now clearly distinct.
+
+TROPICAL ISLAND
+- tropical_island_0 is visible normally from the beginning of the game.
+- It remains visible through Days 1 and 2 and the first eight minutes of Day 3.
+- During the final four minutes of Day 3 it subtly moves away and fades out.
+- It remains absent throughout Day 4 and all later days.
+- Its authored scale is never modified.

@@ -312,6 +312,16 @@ namespace PixelOcean
             showingTitleMenu = isMainMenu;
             if (continueButton != null) continueButton.gameObject.SetActive(isMainMenu);
             menuRoot.SetActive(true);
+
+            // A previous sub-panel or developer overlay must never leave the main
+            // pause-menu column visually enabled but unable to receive input.
+            if (buttonPanelInputGroup != null)
+            {
+                buttonPanelInputGroup.alpha = 1f;
+                buttonPanelInputGroup.interactable = true;
+                buttonPanelInputGroup.blocksRaycasts = true;
+            }
+
             controlsPanel.SetActive(false);
             settingsPanel.SetActive(false);
             logoPanel.gameObject.SetActive(true);
@@ -428,6 +438,7 @@ namespace PixelOcean
             Stretch(menuRoot.GetComponent<RectTransform>());
             Image dim = menuRoot.AddComponent<Image>();
             dim.color = screenDim;
+            dim.raycastTarget = false;
 
             BuildLogo(menuRoot.transform);
             BuildButtons(menuRoot.transform);
@@ -861,24 +872,42 @@ namespace PixelOcean
         private Button CreateSpriteButton(Transform parent, string resourceName, UnityEngine.Events.UnityAction action)
         {
             GameObject go = CreateUIObject(parent, resourceName);
-            LayoutElement le = go.AddComponent<LayoutElement>();
-            le.preferredHeight = 96f;
-            le.preferredWidth = 400f;
 
+            LayoutElement layoutElement = go.AddComponent<LayoutElement>();
+            layoutElement.preferredHeight = 96f;
+            layoutElement.preferredWidth = 400f;
+
+            // The supplied PNG is the button graphic. Do not place a generated
+            // rectangle behind it and do not render it through a translucent child.
             Image image = go.AddComponent<Image>();
-            Sprite[] sprites = Resources.LoadAll<Sprite>("SurferSlugUI/Buttons/" + resourceName);
+            Sprite[] sprites = Resources.LoadAll<Sprite>(
+                "SurferSlugUI/Buttons/" + resourceName);
             image.sprite = sprites.Length > 0 ? sprites[0] : null;
             image.preserveAspect = true;
+            image.color = Color.white;
+            image.raycastTarget = true;
 
             Button button = go.AddComponent<Button>();
+            button.targetGraphic = image;
             button.transition = Selectable.Transition.ColorTint;
+            button.interactable = true;
+
+            // ColorTint multiplies the source sprite. Every state therefore keeps
+            // alpha at one; only RGB changes so the authored PNG never looks washed out.
             ColorBlock colors = button.colors;
             colors.normalColor = Color.white;
-            colors.highlightedColor = new Color(1f, 0.86f, 0.50f, 1f);
-            colors.selectedColor = new Color(1f, 0.86f, 0.50f, 1f);
-            colors.pressedColor = new Color(0.72f, 0.82f, 1f, 1f);
-            colors.fadeDuration = 0.08f;
+            colors.highlightedColor = new Color(1f, 0.82f, 0.28f, 1f);
+            colors.selectedColor = new Color(1f, 0.68f, 0.12f, 1f);
+            colors.pressedColor = new Color(0.72f, 0.9f, 1f, 1f);
+            colors.disabledColor = new Color(0.42f, 0.42f, 0.42f, 1f);
+            colors.colorMultiplier = 1.35f;
+            colors.fadeDuration = 0.045f;
             button.colors = colors;
+
+            Navigation navigation = button.navigation;
+            navigation.mode = Navigation.Mode.Automatic;
+            button.navigation = navigation;
+
             button.onClick.AddListener(action);
             return button;
         }
@@ -1367,11 +1396,12 @@ namespace PixelOcean
 
         private void RefreshContinueButton()
         {
-            if (continueButton == null) return;
-            bool hasSave = SurfStageSaveSystem.HasSave;
-            continueButton.interactable = hasSave;
-            Image image = continueButton.GetComponent<Image>();
-            if (image != null) image.color = hasSave ? Color.white : new Color(0.42f, 0.42f, 0.42f, 0.75f);
+            if (continueButton == null)
+                return;
+
+            // Let Selectable apply its configured normal/disabled state. Directly
+            // changing Image.color here permanently multiplied later highlights.
+            continueButton.interactable = SurfStageSaveSystem.HasSave;
         }
 
         private void PlayPressed()
@@ -1626,14 +1656,30 @@ namespace PixelOcean
 
         private void EnsureEventSystem()
         {
-            if (FindFirstObjectByType<EventSystem>() != null) return;
-            GameObject go = new("Menu EventSystem");
-            go.transform.SetParent(transform, false);
-            go.AddComponent<EventSystem>();
+            EventSystem eventSystem = FindFirstObjectByType<EventSystem>();
+            if (eventSystem == null)
+            {
+                GameObject go = new("Menu EventSystem");
+                go.transform.SetParent(transform, false);
+                eventSystem = go.AddComponent<EventSystem>();
+            }
+
+            eventSystem.sendNavigationEvents = true;
+            eventSystem.pixelDragThreshold = Mathf.Max(5, eventSystem.pixelDragThreshold);
+
 #if ENABLE_INPUT_SYSTEM
-            go.AddComponent<InputSystemUIInputModule>();
+            InputSystemUIInputModule inputModule = eventSystem.GetComponent<InputSystemUIInputModule>();
+            if (inputModule == null)
+                inputModule = eventSystem.gameObject.AddComponent<InputSystemUIInputModule>();
+
+            // Avoid two active UI modules competing for pointer and submit events.
+            StandaloneInputModule legacyModule = eventSystem.GetComponent<StandaloneInputModule>();
+            if (legacyModule != null)
+                legacyModule.enabled = false;
 #else
-            go.AddComponent<StandaloneInputModule>();
+            StandaloneInputModule inputModule = eventSystem.GetComponent<StandaloneInputModule>();
+            if (inputModule == null)
+                inputModule = eventSystem.gameObject.AddComponent<StandaloneInputModule>();
 #endif
         }
 

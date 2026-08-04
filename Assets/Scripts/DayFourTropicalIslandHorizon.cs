@@ -4,10 +4,10 @@ using UnityEngine;
 namespace PixelOcean
 {
     /// <summary>
-    /// Controls the existing tropical_island_0 child beneath the Starry Night
-    /// background. It remains hidden until eight minutes into Day 4, then fades
-    /// onto the horizon and uses extremely subtle opposite-direction parallax.
-    /// The island's authored scale is never changed.
+    /// Controls the authored tropical_island_0 child beneath Starry Night.
+    /// It is visible normally through Days 1 and 2, remains visible during the
+    /// beginning of Day 3, then drifts away and fades during the final portion
+    /// of Day 3. It remains absent from Day 4 onward. Its scale is never changed.
     /// </summary>
     [DefaultExecutionOrder(10020)]
     [DisallowMultipleComponent]
@@ -17,15 +17,18 @@ namespace PixelOcean
         [SerializeField] private string islandObjectName = "tropical_island_0";
         [SerializeField, Min(0.1f)] private float searchInterval = 0.5f;
 
-        [Header("Day 4 Reveal")]
-        [SerializeField, Min(0f)] private float revealAtSeconds = 8f * 60f;
-        [SerializeField, Min(0.1f)] private float revealDuration = 24f;
+        [Header("Day 3 Departure")]
+        [Tooltip("The tropical island begins receding eight minutes into Day 3.")]
+        [SerializeField, Min(0f)] private float departureAtSeconds = 8f * 60f;
+        [Tooltip("It finishes disappearing at the twelve-minute end of Day 3.")]
+        [SerializeField, Min(0.1f)] private float departureDuration = 4f * 60f;
+        [SerializeField, Min(0f)] private float departureHorizontalDistance = 5.5f;
+        [SerializeField, Min(0f)] private float departureVerticalDistance = 0.55f;
 
-        [Header("Very Distant Parallax")]
-        [Tooltip("Fraction of player travel applied in the opposite direction. Keep extremely small.")]
-        [SerializeField, Range(0f, 0.05f)] private float parallaxFactor = 0.012f;
-        [SerializeField, Min(0f)] private float maximumHorizontalOffset = 3.5f;
-        [SerializeField, Min(0.1f)] private float parallaxSmoothTime = 1.8f;
+        [Header("Subtle Player Parallax")]
+        [SerializeField, Range(0f, 0.05f)] private float parallaxFactor = 0.01f;
+        [SerializeField, Min(0f)] private float maximumParallaxOffset = 2.5f;
+        [SerializeField, Min(0.1f)] private float movementSmoothTime = 1.8f;
 
         private SurfDayProgressionDirector director;
         private TinyWaveSurfer surfer;
@@ -35,8 +38,8 @@ namespace PixelOcean
         private Vector3 authoredLocalPosition;
         private Vector3 authoredLocalScale;
         private float playerAnchorX;
-        private float currentOffset;
-        private float offsetVelocity;
+        private Vector2 currentOffset;
+        private Vector2 offsetVelocity;
         private float nextSearchAt;
         private bool captured;
 
@@ -62,35 +65,34 @@ namespace PixelOcean
                     nextSearchAt = Time.unscaledTime + searchInterval;
                     TryFindIsland();
                 }
-
                 return;
             }
 
-            // Never alter the artist-authored scale, even if another system touches it.
             island.localScale = authoredLocalScale;
 
             int day = director != null ? director.CurrentDay : 1;
             float runTime = director != null ? director.RunTime : 0f;
 
-            float visibility;
-            if (day < 4)
+            float departure = 0f;
+            float visibility = 1f;
+
+            if (day == 3)
             {
+                departure = Mathf.SmoothStep(0f, 1f,
+                    Mathf.InverseLerp(
+                        departureAtSeconds,
+                        departureAtSeconds + departureDuration,
+                        runTime));
+                visibility = 1f - departure;
+            }
+            else if (day >= 4)
+            {
+                departure = 1f;
                 visibility = 0f;
-            }
-            else if (day == 4)
-            {
-                visibility = Mathf.SmoothStep(
-                    0f,
-                    1f,
-                    Mathf.InverseLerp(revealAtSeconds, revealAtSeconds + revealDuration, runTime));
-            }
-            else
-            {
-                visibility = 1f;
             }
 
             ApplyVisibility(visibility);
-            UpdateParallax(visibility);
+            UpdatePosition(departure, visibility);
         }
 
         private void TryFindIsland()
@@ -108,37 +110,50 @@ namespace PixelOcean
             authoredLocalPosition = island.localPosition;
             authoredLocalScale = island.localScale;
             playerAnchorX = surfer != null ? surfer.transform.position.x : 0f;
-            currentOffset = 0f;
-            offsetVelocity = 0f;
+            currentOffset = Vector2.zero;
+            offsetVelocity = Vector2.zero;
             captured = true;
         }
 
-        private void UpdateParallax(float visibility)
+        private void UpdatePosition(float departure, float visibility)
         {
             if (!captured)
                 return;
 
-            float targetOffset = 0f;
+            float playerOffset = 0f;
             if (visibility > 0.001f && surfer != null)
             {
                 float playerTravel = surfer.transform.position.x - playerAnchorX;
-                targetOffset = Mathf.Clamp(
+                playerOffset = Mathf.Clamp(
                     -playerTravel * parallaxFactor,
-                    -maximumHorizontalOffset,
-                    maximumHorizontalOffset);
+                    -maximumParallaxOffset,
+                    maximumParallaxOffset);
             }
 
-            currentOffset = Mathf.SmoothDamp(
+            // Recede opposite Chuck's current travel direction. When he is nearly
+            // stationary, use the right side so the landmark still leaves by sunset.
+            float travelSign = 1f;
+            if (surfer != null)
+            {
+                float travel = surfer.transform.position.x - playerAnchorX;
+                if (Mathf.Abs(travel) > 0.1f)
+                    travelSign = Mathf.Sign(travel);
+            }
+
+            Vector2 targetOffset = new(
+                playerOffset - travelSign * departureHorizontalDistance * departure,
+                departureVerticalDistance * departure);
+
+            currentOffset = Vector2.SmoothDamp(
                 currentOffset,
                 targetOffset,
                 ref offsetVelocity,
-                parallaxSmoothTime,
+                movementSmoothTime,
                 Mathf.Infinity,
                 Time.unscaledDeltaTime);
 
-            Vector3 position = authoredLocalPosition;
-            position.x += currentOffset;
-            island.localPosition = position;
+            island.localPosition = authoredLocalPosition +
+                new Vector3(currentOffset.x, currentOffset.y, 0f);
         }
 
         private void ApplyVisibility(float alpha)
@@ -198,7 +213,7 @@ namespace PixelOcean
             if (UnityEngine.Object.FindFirstObjectByType<DayFourTropicalIslandHorizon>() != null)
                 return;
 
-            GameObject host = new("Day 4 Tropical Island Horizon");
+            GameObject host = new("Tropical Island Timeline");
             host.AddComponent<DayFourTropicalIslandHorizon>();
         }
     }
