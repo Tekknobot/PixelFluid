@@ -16,6 +16,27 @@ namespace PixelOcean
     [RequireComponent(typeof(GraphicRaycaster))]
     public sealed class SurferSlugMinimalHud : MonoBehaviour
     {
+        public static SurferSlugMinimalHud Instance { get; private set; }
+
+        private static string queuedNotice = string.Empty;
+        private static float queuedNoticeDuration;
+
+        public static void ShowNotice(string message, float duration = 4f)
+        {
+            if (string.IsNullOrWhiteSpace(message))
+                return;
+
+            if (Instance != null)
+            {
+                Instance.noticeText = message;
+                Instance.noticeUntil =
+                    Time.unscaledTime + Mathf.Max(0.1f, duration);
+                return;
+            }
+
+            queuedNotice = message;
+            queuedNoticeDuration = Mathf.Max(0.1f, duration);
+        }
         [Header("Layout")]
         [SerializeField] private Vector2 referenceResolution = new(1920f, 1080f);
         [SerializeField] private Vector2 safeMargin = new(30f, 22f);
@@ -53,11 +74,20 @@ namespace PixelOcean
         private CanvasGroup chapterGroup;
         private TMP_FontAsset font;
         private CanvasGroup hudGroup;
+        private string noticeText = string.Empty;
+        private float noticeUntil;
         private string inventoryFingerprint = string.Empty;
         private readonly List<GameObject> inventorySlots = new();
 
         private void Awake()
         {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            Instance = this;
             font = PixelFontLibrary.TmpMedium;
 
             if (font == null)
@@ -70,6 +100,22 @@ namespace PixelOcean
 
             BuildHud();
             SetHudVisible(false, true);
+
+            if (!string.IsNullOrEmpty(queuedNotice))
+            {
+                noticeText = queuedNotice;
+                noticeUntil =
+                    Time.unscaledTime +
+                    Mathf.Max(0.1f, queuedNoticeDuration);
+                queuedNotice = string.Empty;
+                queuedNoticeDuration = 0f;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this)
+                Instance = null;
         }
 
         private void Update()
@@ -380,11 +426,39 @@ namespace PixelOcean
                 livesLabel.text = $"LIVES  {remaining}/{maximum}";
             }
 
-            bool showBanner = progression != null && progression.IsBannerVisible;
+            bool showNotice =
+                Time.unscaledTime < noticeUntil &&
+                !string.IsNullOrEmpty(noticeText);
+
+            bool showProgressionBanner =
+                progression != null &&
+                progression.IsBannerVisible;
+
+            bool showBanner =
+                showNotice ||
+                showProgressionBanner;
+
             if (chapterGroup != null)
-                chapterGroup.alpha = Mathf.MoveTowards(chapterGroup.alpha, showBanner ? 1f : 0f, Time.unscaledDeltaTime * 5f);
+            {
+                chapterGroup.alpha = Mathf.MoveTowards(
+                    chapterGroup.alpha,
+                    showBanner ? 1f : 0f,
+                    Time.unscaledDeltaTime * 5f);
+            }
+
             if (chapterLabel != null && showBanner)
-                chapterLabel.text = progression.CurrentBanner;
+            {
+                chapterLabel.text = showNotice
+                    ? noticeText
+                    : progression.CurrentBanner;
+            }
+
+            if (!showNotice &&
+                Time.unscaledTime >= noticeUntil &&
+                !string.IsNullOrEmpty(noticeText))
+            {
+                noticeText = string.Empty;
+            }
         }
 
         private void RefreshStoke()

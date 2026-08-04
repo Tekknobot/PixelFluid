@@ -188,6 +188,9 @@ namespace PixelOcean
                 case 2:
                     SurfAbilityProgression.Instance?.DebugUnlockAll();
                     BoomboxSurferSpawner.UnlockSummoning();
+                    SurferSlugMinimalHud.ShowNotice(
+                        "ALL MECHANICS UNLOCKED\nMUSIC BOARD: LB / M TO TOGGLE",
+                        4.5f);
                     unlockNoticeUntil =
                         Time.unscaledTime + 2.25f;
                     break;
@@ -223,6 +226,11 @@ namespace PixelOcean
                 case 8:
                     SetVisible(false);
                     BoomboxSurferSpawner.DebugToggleBoard();
+                    SurferSlugMinimalHud.ShowNotice(
+                        BoomboxSurferSpawner.IsBoardActive
+                            ? "MUSIC BOARD SUMMONED\nLB / M TO RELEASE"
+                            : "MUSIC BOARD RELEASED\nLB / M TO SUMMON",
+                        3.5f);
                     break;
             }
         }

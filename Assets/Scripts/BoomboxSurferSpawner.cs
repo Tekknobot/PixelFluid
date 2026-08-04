@@ -110,6 +110,41 @@ namespace PixelOcean
             instance?.ReleaseBoard();
         }
 
+
+        /// <summary>
+        /// Synchronizes music-board availability to the current story stage.
+        /// Strange Tide and every later chapter allow LB / M summoning.
+        /// Earlier chapters lock the mechanic and release an active board.
+        /// </summary>
+        public static bool RestoreForStage(
+            SurfDayProgressionDirector.Chapter chapter,
+            bool showHudNotice)
+        {
+            bool shouldBeUnlocked =
+                chapter >=
+                SurfDayProgressionDirector.Chapter.StrangeTide;
+
+            if (!shouldBeUnlocked)
+            {
+                LockAndRelease();
+                return false;
+            }
+
+            bool newlyUnlocked = !summoningUnlocked;
+            UnlockSummoning();
+
+            if (showHudNotice)
+            {
+                SurferSlugMinimalHud.ShowNotice(
+                    newlyUnlocked
+                        ? "MUSIC BOARD UNLOCKED\nLB / M TO TOGGLE SUMMON"
+                        : "MUSIC BOARD AVAILABLE\nLB / M TO TOGGLE SUMMON",
+                    4.5f);
+            }
+
+            return true;
+        }
+
         /// <summary>
         /// Developer-menu entry point. Ensures the summon controller exists,
         /// unlocks the mechanic, then summons or releases the music board.

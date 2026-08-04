@@ -241,6 +241,11 @@ namespace PixelOcean
             RefreshLearningObjectiveForStage();
             SyncDayNightToRunTime();
 
+            BoomboxSurferSpawner.RestoreForStage(
+                chapter,
+                showHudNotice:
+                    chapter >= Chapter.StrangeTide);
+
             SpawnPickupSet();
             SpawnOceanItems(12);
             RestoreChapterPopulation();
@@ -656,6 +661,10 @@ namespace PixelOcean
             bool showReadyBanner,
             bool saveWhenReady)
         {
+            BoomboxSurferSpawner.RestoreForStage(
+                Chapter.FinalWave,
+                showHudNotice: grantCompleteDeveloperLoadout);
+
             // Always yield once so callers can safely store the returned Coroutine
             // before any fast path (notably Day 3) completes.
             yield return null;
@@ -1230,9 +1239,11 @@ namespace PixelOcean
 
         private void SpawnBoombox()
         {
-            // Strange Tide now unlocks the player's music summon instead of
-            // forcing the boombox board to appear. LB / M toggles it.
-            BoomboxSurferSpawner.UnlockSummoning();
+            // Strange Tide unlocks the player-controlled board summon.
+            // The board itself appears only when the player presses LB / M.
+            BoomboxSurferSpawner.RestoreForStage(
+                chapter,
+                showHudNotice: true);
         }
 
         private void SpawnUfo()
