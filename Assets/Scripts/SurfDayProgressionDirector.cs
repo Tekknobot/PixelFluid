@@ -270,9 +270,16 @@ namespace PixelOcean
         {
             if (currentDay >= 3)
             {
-                objective = chapter >= Chapter.FinalWave
-                    ? "OUTSURF YOUR SHADOW. SURVIVE THE OCEAN."
-                    : "THE OCEAN IS REPLAYING WHAT YOU SURVIVED.";
+                objective = chapter switch
+                {
+                    Chapter.Dawn => "RIDE INTO THE RETURNING CURRENT.",
+                    Chapter.FirstRescue => "SAVE THE FAMILIAR VOICE IN THE WATER.",
+                    Chapter.DangerousWater => "SURVIVE THE THREATS THE OCEAN REMEMBERS.",
+                    Chapter.StrangeTide => "WATCH THE SHADOW. KEEP MOVING FORWARD.",
+                    Chapter.Storm => "FOLLOW THE SIGNAL THROUGH THE BLACK WATER.",
+                    Chapter.FinalWave => "SURVIVE UNTIL THE OCEAN FALLS SILENT.",
+                    _ => "SEARCH THE HORIZON."
+                };
                 if (chapter >= Chapter.FirstRescue) SpawnRescueSet(1);
                 if (chapter >= Chapter.Storm)
                     EnsureRain().SetSituation(ProceduralRainSystem.RainSituation.HeavyRain);
@@ -460,8 +467,8 @@ namespace PixelOcean
             chapter = Chapter.Dawn;
             changingDay = false;
             SyncDayNightToRunTime();
-            BeginChapter(Chapter.Dawn, "DAY 3 — ECHOES", "THE OCEAN IS REPLAYING WHAT YOU SURVIVED.");
-            learningObjective = "Watch the Shadow. Survive the changing water.";
+            BeginChapter(Chapter.Dawn, "DAY 3 — THE OCEAN REMEMBERS", "RIDE INTO THE RETURNING CURRENT.");
+            learningObjective = "Notice what the ocean brings back.";
             SpawnPickupSet();
             SpawnOceanItems(12);
             SurfStageSaveSystem.Save(this);
@@ -569,8 +576,8 @@ namespace PixelOcean
             {
                 finalWaveStarted = true;
                 BeginChapter(Chapter.FinalWave,
-                    currentDay >= 3 ? "OUTSURF YOUR SHADOW" : "THE LAST WAVE",
-                    currentDay >= 3 ? "SURVIVE THE BLACK WATER." : $"SURVIVE {finalSurvivalSeconds} SECONDS.");
+                    currentDay >= 3 ? "THE LAST ECHO" : "THE LAST WAVE",
+                    currentDay >= 3 ? "SURVIVE UNTIL THE OCEAN FALLS SILENT." : $"SURVIVE {finalSurvivalSeconds} SECONDS.");
                 if (pendingBossEncounter == null)
                 {
                     pendingBossEncounter = StartCoroutine(
@@ -586,8 +593,8 @@ namespace PixelOcean
             if (runTime >= stormBeginsAt && chapter < Chapter.Storm)
             {
                 BeginChapter(Chapter.Storm,
-                    currentDay >= 3 ? "BLACK WATER" : "STORM FRONT",
-                    currentDay >= 3 ? "THE WAVES NO LONGER FOLLOW THE SKY." : "KEEP MOVING. RESCUE ANYONE LEFT OUT THERE.");
+                    currentDay >= 3 ? "SIGNAL IN THE STORM" : "STORM FRONT",
+                    currentDay >= 3 ? "FOLLOW THE DISTANT LIGHT THROUGH THE BLACK WATER." : "KEEP MOVING. RESCUE ANYONE LEFT OUT THERE.");
                 EnsureRain().SetSituation(ProceduralRainSystem.RainSituation.HeavyRain);
                 if (currentDay == 1)
                     SpawnMajor<GiantSquidLaneSpawner>("Storm Squid", spawner => spawner.SpawnSquid(true));
@@ -607,8 +614,8 @@ namespace PixelOcean
             if (runTime >= strangeTideBeginsAt && chapter < Chapter.StrangeTide)
             {
                 BeginChapter(Chapter.StrangeTide,
-                    currentDay >= 3 ? "THE OCEAN REMEMBERS" : "STRANGE TIDE",
-                    currentDay >= 3 ? "YOUR SHADOW HAS ENTERED THE WATER." : "SOMETHING IS WATCHING THE WATER.");
+                    currentDay >= 3 ? "THE SHADOW RETURNS" : "STRANGE TIDE",
+                    currentDay >= 3 ? "IT COPIES YOU. DO NOT LET IT TURN YOU BACK." : "SOMETHING IS WATCHING THE WATER.");
                 if (currentDay == 1)
                     UnlockAbility(SurfAbility.Rotation | SurfAbility.Flip |
                         SurfAbility.DoubleChain | SurfAbility.TripleChain,
@@ -633,8 +640,8 @@ namespace PixelOcean
             if (runTime >= dangerBeginsAt && chapter < Chapter.DangerousWater)
             {
                 BeginChapter(Chapter.DangerousWater,
-                    currentDay >= 3 ? "THE CURRENT SHIFTS" : "DANGEROUS WATER",
-                    currentDay >= 3 ? "FAMILIAR THREATS RETURN IN THE WRONG ORDER." : "SAVE 3 SWIMMERS. USE CANS TO FIGHT BACK.");
+                    currentDay >= 3 ? "MEMORY CURRENT" : "DANGEROUS WATER",
+                    currentDay >= 3 ? "OLD THREATS RETURN IN THE WRONG ORDER." : "SAVE 3 SWIMMERS. USE CANS TO FIGHT BACK.");
                 if (currentDay == 1)
                     UnlockAbility(SurfAbility.ChargedJump,
                         "CHARGED JUMP UNLOCKED",
@@ -656,16 +663,22 @@ namespace PixelOcean
 
             if (runTime >= rescueBeginsAt && chapter < Chapter.FirstRescue)
             {
-                BeginChapter(Chapter.FirstRescue, "DISTRESS CALL", "FIND AND SAVE THE STRUGGLING SWIMMER.");
+                BeginChapter(Chapter.FirstRescue,
+                    currentDay >= 3 ? "A FAMILIAR VOICE" : "DISTRESS CALL",
+                    currentDay >= 3 ? "SAVE THE SWIMMER THE OCEAN BROUGHT BACK." : "FIND AND SAVE THE STRUGGLING SWIMMER.");
                 SpawnRescueSet(1);
             }
 
             if (chapter == Chapter.DangerousWater)
-                objective = $"RESCUES  {rescues}/{rescuesRequired}";
+                objective = currentDay >= 3
+                    ? "SURVIVE THE THREATS THE OCEAN REMEMBERS."
+                    : $"RESCUES  {rescues}/{rescuesRequired}";
             else if (chapter == Chapter.FinalWave)
-                objective = bossDefeatedSunset
-                    ? $"SUNSET  {Mathf.Max(0, Mathf.CeilToInt(dayEndsAt - runTime))}s"
-                    : $"SURVIVE  {Mathf.Max(0, Mathf.CeilToInt(dayEndsAt - runTime))}s";
+                objective = currentDay >= 3
+                    ? $"LAST ECHO  {Mathf.Max(0, Mathf.CeilToInt(dayEndsAt - runTime))}s"
+                    : bossDefeatedSunset
+                        ? $"SUNSET  {Mathf.Max(0, Mathf.CeilToInt(dayEndsAt - runTime))}s"
+                        : $"SURVIVE  {Mathf.Max(0, Mathf.CeilToInt(dayEndsAt - runTime))}s";
         }
 
 

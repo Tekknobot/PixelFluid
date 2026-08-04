@@ -227,6 +227,10 @@ namespace PixelOcean
             swimmer.AddComponent<InterWaveRenderItem>();
             swimmer.AddComponent<AudioSource>();
 
+            CircleCollider2D interactionTrigger = swimmer.AddComponent<CircleCollider2D>();
+            interactionTrigger.isTrigger = true;
+            interactionTrigger.radius = 0.48f;
+
             swimmer.AddComponent<BoomboxSurferAnimation>()
                 .SetFrames(frames);
 

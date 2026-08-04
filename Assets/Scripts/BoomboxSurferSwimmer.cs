@@ -3,6 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 using Random = UnityEngine.Random;
 
 namespace PixelOcean
@@ -32,9 +35,9 @@ namespace PixelOcean
         [SerializeField, Range(0f, 1f)] private float grooveTowardPlayerChance = 0.65f;
 
         [Header("Natural Player Following")]
-        [SerializeField, Min(0.5f)] private float comfortableFollowDistance = 3.25f;
-        [SerializeField, Min(1f)] private float maximumFollowDistance = 7.5f;
-        [SerializeField, Range(1f, 4f)] private float catchUpSpeedMultiplier = 2.1f;
+        [SerializeField, Min(0.5f)] private float comfortableFollowDistance = 2.25f;
+        [SerializeField, Min(1f)] private float maximumFollowDistance = 10.5f;
+        [SerializeField, Range(1f, 4f)] private float catchUpSpeedMultiplier = 1.65f;
         [SerializeField, Min(0.1f)] private float waterSectionRefreshInterval = 0.5f;
 
         [Header("Death Surfer Spatial Music")]
@@ -44,6 +47,11 @@ namespace PixelOcean
         [SerializeField, Range(0f, 1f)] private float spatialBlend = 0.72f;
         [SerializeField, Range(0f, 1f)] private float stereoPanStrength = 0.55f;
         [SerializeField] private Vector2 lowPassCutoffRange = new(1200f, 22000f);
+
+        [Header("Cassette Track Switching")]
+        [SerializeField, Min(0.05f)] private float cassetteInsertDelay = 0.22f;
+        [SerializeField, Min(0.1f)] private float trackSwitchCooldown = 0.45f;
+        [SerializeField, Range(0f, 1f)] private float cassetteVolume = 0.9f;
 
         [Header("Summon / Release Presentation")]
         [SerializeField, Range(0.1f, 2f)] private float releaseDuration = 0.55f;
@@ -55,6 +63,13 @@ namespace PixelOcean
         private InterWaveRenderItem renderItem;
         private AudioSource musicSource;
         private AudioLowPassFilter lowPassFilter;
+        private AudioSource cassetteSource;
+        private AudioClip cassetteInsertClip;
+        private AudioClip[] musicTracks;
+        private int currentTrackIndex;
+        private float nextTrackSwitchTime;
+        private bool playerTouching;
+        private Coroutine cassetteRoutine;
         private Transform player;
         private int laneIndex;
         private int targetLaneIndex;
@@ -101,7 +116,10 @@ namespace PixelOcean
             body.position = position;
             transform.position = position;
 
-            musicSource.clip = musicClip;
+            LoadCassetteLibrary(musicClip);
+            musicSource.clip = musicTracks != null && musicTracks.Length > 0
+                ? musicTracks[currentTrackIndex]
+                : musicClip;
             musicSource.loop = true;
             musicSource.playOnAwake = false;
             musicSource.spatialBlend = spatialBlend;
@@ -235,6 +253,19 @@ namespace PixelOcean
         }
 
         private void Awake() => ResolveReferences();
+
+        private void Update()
+        {
+            if (!initialised || releasing || !playerTouching || Time.unscaledTime < nextTrackSwitchTime)
+                return;
+
+            int direction = ReadCassetteDirection();
+            if (direction == 0)
+                return;
+
+            nextTrackSwitchTime = Time.unscaledTime + trackSwitchCooldown;
+            SwitchCassette(direction);
+        }
         private void Start() { if (!initialised) Initialise(1, Resources.Load<AudioClip>("Audio/Music/Death Surfer")); }
 
         private void ResolveReferences()
@@ -246,6 +277,15 @@ namespace PixelOcean
             spriteRenderer = GetComponent<SpriteRenderer>();
             renderItem = GetComponent<InterWaveRenderItem>();
             musicSource = GetComponent<AudioSource>();
+            AudioSource[] sources = GetComponents<AudioSource>();
+            cassetteSource = sources.Length > 1 ? sources[1] : gameObject.AddComponent<AudioSource>();
+            cassetteSource.playOnAwake = false;
+            cassetteSource.loop = false;
+            cassetteSource.spatialBlend = spatialBlend;
+            cassetteSource.rolloffMode = AudioRolloffMode.Linear;
+            cassetteSource.minDistance = Mathf.Max(0.05f, fullVolumeDistance);
+            cassetteSource.maxDistance = Mathf.Max(cassetteSource.minDistance + 0.1f, silentDistance);
+            cassetteSource.volume = cassetteVolume;
             lowPassFilter = GetComponent<AudioLowPassFilter>();
             if (lowPassFilter == null)
                 lowPassFilter = gameObject.AddComponent<AudioLowPassFilter>();
@@ -415,6 +455,111 @@ namespace PixelOcean
             musicSource.panStereo = Mathf.Clamp(horizontal / Mathf.Max(1f, silentDistance), -1f, 1f) * stereoPanStrength;
             if (lowPassFilter != null)
                 lowPassFilter.cutoffFrequency = Mathf.Lerp(lowPassCutoffRange.y, lowPassCutoffRange.x, t);
+        }
+
+
+        private void LoadCassetteLibrary(AudioClip initialClip)
+        {
+            cassetteInsertClip = Resources.Load<AudioClip>("Audio/SFX/cassette_insert");
+
+            AudioClip deathSurfer = Resources.Load<AudioClip>("Audio/Music/Death Surfer");
+            AudioClip highLife = Resources.Load<AudioClip>("Audio/Music/Daft Punk - 8 - High Life");
+            AudioClip windItUp = Resources.Load<AudioClip>("Audio/Music/The Prodigy - 3 - Wind It Up");
+
+            musicTracks = new[] { deathSurfer ?? initialClip, highLife, windItUp }
+                .Where(clip => clip != null)
+                .Distinct()
+                .ToArray();
+
+            currentTrackIndex = 0;
+            if (initialClip != null)
+            {
+                int match = Array.IndexOf(musicTracks, initialClip);
+                if (match >= 0)
+                    currentTrackIndex = match;
+            }
+        }
+
+        private void SwitchCassette(int step)
+        {
+            if (musicTracks == null || musicTracks.Length < 2)
+                return;
+
+            currentTrackIndex = (currentTrackIndex + step + musicTracks.Length) % musicTracks.Length;
+
+            if (cassetteRoutine != null)
+                StopCoroutine(cassetteRoutine);
+            cassetteRoutine = StartCoroutine(InsertCassetteRoutine(musicTracks[currentTrackIndex]));
+        }
+
+        private IEnumerator InsertCassetteRoutine(AudioClip nextTrack)
+        {
+            if (musicSource != null)
+                musicSource.Pause();
+
+            if (cassetteSource != null && cassetteInsertClip != null)
+                cassetteSource.PlayOneShot(cassetteInsertClip, cassetteVolume);
+
+            yield return new WaitForSecondsRealtime(cassetteInsertDelay);
+
+            if (musicSource != null && nextTrack != null && !releasing)
+            {
+                musicSource.clip = nextTrack;
+                musicSource.time = 0f;
+                musicSource.Play();
+            }
+
+            cassetteRoutine = null;
+        }
+
+        private static int ReadCassetteDirection()
+        {
+#if ENABLE_INPUT_SYSTEM
+            Gamepad gamepad = Gamepad.current;
+            if (gamepad == null)
+                return 0;
+
+            bool noHorizontal = !gamepad.dpad.left.isPressed && !gamepad.dpad.right.isPressed;
+            bool noButtons = !gamepad.buttonSouth.isPressed && !gamepad.buttonNorth.isPressed &&
+                             !gamepad.buttonEast.isPressed && !gamepad.buttonWest.isPressed &&
+                             !gamepad.leftShoulder.isPressed && !gamepad.rightShoulder.isPressed;
+
+            if (!noHorizontal || !noButtons)
+                return 0;
+
+            if (gamepad.dpad.up.wasPressedThisFrame && !gamepad.dpad.down.isPressed)
+                return 1;
+            if (gamepad.dpad.down.wasPressedThisFrame && !gamepad.dpad.up.isPressed)
+                return -1;
+#endif
+            return 0;
+        }
+
+        private void OnTriggerEnter2D(Collider2D other)
+        {
+            TinyWaveSurfer surfer = other.GetComponentInParent<TinyWaveSurfer>();
+            if (surfer == null || surfer.IsDead || !surfer.IsPlayerControlled)
+                return;
+
+            player = surfer.transform;
+            playerTouching = true;
+        }
+
+        private void OnTriggerStay2D(Collider2D other)
+        {
+            TinyWaveSurfer surfer = other.GetComponentInParent<TinyWaveSurfer>();
+            if (surfer != null && !surfer.IsDead && surfer.IsPlayerControlled)
+            {
+                player = surfer.transform;
+                playerTouching = true;
+            }
+        }
+
+        private void OnTriggerExit2D(Collider2D other)
+        {
+            TinyWaveSurfer surfer = other.GetComponentInParent<TinyWaveSurfer>();
+            if (surfer != null && surfer.transform == player)
+                playerTouching = false;
         }
 
         private float GetMinimumX(int lane) => Mathf.Max(waterLayers[lane].TankMinimum.x, waterLayers[lane + 1].TankMinimum.x) + 0.15f;

@@ -1,0 +1,14 @@
+DAY 3 CHAPTER UI PATCH
+
+Updated SurfDayProgressionDirector so Day 3's chapter banners and HUD objectives form a coherent progression toward the secret facility:
+
+DAWN: DAY 3 — THE OCEAN REMEMBERS
+FIRST RESCUE: A FAMILIAR VOICE
+DANGEROUS WATER: MEMORY CURRENT
+STRANGE TIDE: THE SHADOW RETURNS
+STORM: SIGNAL IN THE STORM
+FINAL WAVE: THE LAST ECHO
+MIDNIGHT DISCOVERY: SOMETHING IS OUT THERE / FOLLOW THE LIGHTS ON THE HORIZON
+COMPLETION: SECRET FACILITY DISCOVERED
+
+Saved Day 3 runs now restore an objective appropriate to their exact chapter instead of always displaying the same generic Shadow Surfer objective.
