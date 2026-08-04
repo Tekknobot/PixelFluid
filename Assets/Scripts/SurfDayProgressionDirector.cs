@@ -29,7 +29,17 @@ namespace PixelOcean
         [SerializeField, Min(30f)] private float strangeTideBeginsAt = 260f; // 260
         [SerializeField, Min(40f)] private float stormBeginsAt = 430f;
         [SerializeField, Min(5f)] private float finalWaveBeginsAt = 480f; // 480
-        [SerializeField, Min(60f)] private float dayEndsAt = 720f; // 720
+        [SerializeField, Min(60f)] private float dayEndsAt = 720f; // atmospheric fallback
+
+        [Header("Journey Distance")]
+        [SerializeField, Min(10f)] private float rescueDistance = 120f;
+        [SerializeField, Min(20f)] private float dangerDistance = 320f;
+        [SerializeField, Min(30f)] private float strangeTideDistance = 600f;
+        [SerializeField, Min(40f)] private float stormDistance = 850f;
+        [SerializeField, Min(50f)] private float finalWaveDistance = 1050f;
+        [SerializeField, Min(60f)] private float dayEndDistance = 1300f;
+        [SerializeField, Min(0.001f)] private float distanceDeadZone = 0.015f;
+        [SerializeField, Min(0.25f)] private float teleportRejectDistance = 8f;
 
         [Header("Day 1 Mechanic Introduction")]
         [SerializeField, Min(0f)] private float handstandUnlockAt = 150f;
@@ -52,6 +62,9 @@ namespace PixelOcean
         private readonly List<GameObject> progressionSpawners = new();
         private Chapter chapter;
         private float runTime;
+        private float distanceTravelled;
+        private float previousPlayerX;
+        private bool hasPreviousPlayerX;
         private int rescues;
         private float bannerUntil;
         private string banner = string.Empty;
@@ -69,9 +82,15 @@ namespace PixelOcean
         public Chapter CurrentChapter => chapter;
         public int Rescues => rescues;
         public float RunTime => runTime;
+        public float DistanceTravelled => distanceTravelled;
+        public float DayDistance => dayEndDistance;
+        public float NormalizedJourneyProgress => dayEndDistance > 0f ? Mathf.Clamp01(distanceTravelled / dayEndDistance) : 0f;
+        public float DistanceToNextChapter => Mathf.Max(0f, GetDistanceThresholdForChapter(GetNextChapter(chapter)) - distanceTravelled);
         public int CurrentDay => currentDay;
         public float DayDuration => dayEndsAt;
-        public float NormalizedDayProgress => dayEndsAt > 0f ? Mathf.Clamp01(runTime / dayEndsAt) : 0f;
+        public float NormalizedDayProgress => Mathf.Max(
+            dayEndsAt > 0f ? Mathf.Clamp01(runTime / dayEndsAt) : 0f,
+            NormalizedJourneyProgress);
         public string CurrentObjective => string.IsNullOrWhiteSpace(learningObjective)
             ? objective
             : objective + "\nLEARN  •  " + learningObjective;
@@ -84,6 +103,7 @@ namespace PixelOcean
             day = currentDay,
             chapter = (int)chapter,
             runTime = runTime,
+            distanceTravelled = distanceTravelled,
             rescues = rescues,
             finalWaveStarted = finalWaveStarted,
             bossDefeatedSunset = bossDefeatedSunset
@@ -203,6 +223,8 @@ namespace PixelOcean
             currentDay = Mathf.Max(1, data.day);
             chapter = (Chapter)Mathf.Clamp(data.chapter, 0, (int)Chapter.FinalWave);
             runTime = Mathf.Max(0f, data.runTime);
+            distanceTravelled = Mathf.Max(0f, data.distanceTravelled);
+            hasPreviousPlayerX = false;
             rescues = Mathf.Max(0, data.rescues);
             finalWaveStarted = data.finalWaveStarted || chapter >= Chapter.FinalWave;
             bossDefeatedSunset = data.bossDefeatedSunset;
@@ -387,6 +409,8 @@ namespace PixelOcean
                 yield return null;
 
             runTime = 0f;
+            distanceTravelled = 0f;
+            hasPreviousPlayerX = false;
             currentDay = 1; // 1
             changingDay = false;
             rescues = 0;
@@ -659,10 +683,11 @@ namespace PixelOcean
                 return;
 
             runTime += Time.deltaTime;
+            TrackJourneyDistance(player);
             SyncDayNightToRunTime();
             UpdateDayOneMechanicUnlocks();
 
-            if (runTime >= dayEndsAt && finalWaveStarted)
+            if ((distanceTravelled >= dayEndDistance || runTime >= dayEndsAt) && finalWaveStarted)
             {
                 if (currentDay == 1 && !changingDay)
                 {
@@ -692,7 +717,7 @@ namespace PixelOcean
                 return;
             }
 
-            if (runTime >= finalWaveBeginsAt && chapter < Chapter.FinalWave)
+            if ((distanceTravelled >= finalWaveDistance || runTime >= finalWaveBeginsAt) && chapter < Chapter.FinalWave)
             {
                 finalWaveStarted = true;
                 BeginChapter(Chapter.FinalWave,
@@ -710,7 +735,7 @@ namespace PixelOcean
                 return;
             }
 
-            if (runTime >= stormBeginsAt && chapter < Chapter.Storm)
+            if ((distanceTravelled >= stormDistance || runTime >= stormBeginsAt) && chapter < Chapter.Storm)
             {
                 BeginChapter(Chapter.Storm,
                     currentDay >= 4 ? "ENCRYPTED WEATHER" : currentDay == 3 ? "SIGNAL IN THE STORM" : "STORM FRONT",
@@ -731,7 +756,7 @@ namespace PixelOcean
                 return;
             }
 
-            if (runTime >= strangeTideBeginsAt && chapter < Chapter.StrangeTide)
+            if ((distanceTravelled >= strangeTideDistance || runTime >= strangeTideBeginsAt) && chapter < Chapter.StrangeTide)
             {
                 BeginChapter(Chapter.StrangeTide,
                     currentDay >= 4 ? "RECOVERY SIGNAL" : currentDay == 3 ? "THE SHADOW RETURNS" : "STRANGE TIDE",
@@ -762,7 +787,7 @@ namespace PixelOcean
                 return;
             }
 
-            if (runTime >= dangerBeginsAt && chapter < Chapter.DangerousWater)
+            if ((distanceTravelled >= dangerDistance || runTime >= dangerBeginsAt) && chapter < Chapter.DangerousWater)
             {
                 BeginChapter(Chapter.DangerousWater,
                     currentDay >= 4 ? "CLASSIFIED CURRENT" : currentDay == 3 ? "MEMORY CURRENT" : "DANGEROUS WATER",
@@ -786,7 +811,7 @@ namespace PixelOcean
                 return;
             }
 
-            if (runTime >= rescueBeginsAt && chapter < Chapter.FirstRescue)
+            if ((distanceTravelled >= rescueDistance || runTime >= rescueBeginsAt) && chapter < Chapter.FirstRescue)
             {
                 BeginChapter(Chapter.FirstRescue,
                     currentDay >= 4 ? "NO AUTHORIZED TRAFFIC" : currentDay == 3 ? "A FAMILIAR VOICE" : "DISTRESS CALL",
@@ -810,6 +835,51 @@ namespace PixelOcean
                         : $"SURVIVE  {Mathf.Max(0, Mathf.CeilToInt(dayEndsAt - runTime))}s";
         }
 
+
+        private void TrackJourneyDistance(TinyWaveSurfer player)
+        {
+            float currentX = player.transform.position.x;
+            if (!hasPreviousPlayerX)
+            {
+                previousPlayerX = currentX;
+                hasPreviousPlayerX = true;
+                return;
+            }
+
+            float delta = Mathf.Abs(currentX - previousPlayerX);
+            previousPlayerX = currentX;
+            if (delta < distanceDeadZone || delta > teleportRejectDistance)
+                return;
+
+            distanceTravelled += delta;
+        }
+
+        private Chapter GetNextChapter(Chapter value)
+        {
+            return value switch
+            {
+                Chapter.Dawn => Chapter.FirstRescue,
+                Chapter.FirstRescue => Chapter.DangerousWater,
+                Chapter.DangerousWater => Chapter.StrangeTide,
+                Chapter.StrangeTide => Chapter.Storm,
+                Chapter.Storm => Chapter.FinalWave,
+                _ => Chapter.Complete
+            };
+        }
+
+        private float GetDistanceThresholdForChapter(Chapter value)
+        {
+            return value switch
+            {
+                Chapter.FirstRescue => rescueDistance,
+                Chapter.DangerousWater => dangerDistance,
+                Chapter.StrangeTide => strangeTideDistance,
+                Chapter.Storm => stormDistance,
+                Chapter.FinalWave => finalWaveDistance,
+                Chapter.Complete => dayEndDistance,
+                _ => 0f
+            };
+        }
 
         private void PrepareBossArenaSeaLife()
         {
@@ -843,6 +913,7 @@ namespace PixelOcean
             bossDefeatedSunset = false;
             changingDay = false;
             runTime = Mathf.Max(runTime, finalWaveBeginsAt + 0.05f);
+                    distanceTravelled = Mathf.Max(distanceTravelled, finalWaveDistance + 0.05f);
 
             RefreshLearningObjectiveForStage();
             SyncDayNightToRunTime();
@@ -1065,26 +1136,32 @@ namespace PixelOcean
                 case Chapter.Dawn:
                     targetChapter = Chapter.FirstRescue;
                     runTime = Mathf.Max(runTime, rescueBeginsAt + 0.05f);
+                    distanceTravelled = Mathf.Max(distanceTravelled, rescueDistance + 0.05f);
                     break;
                 case Chapter.FirstRescue:
                     targetChapter = Chapter.DangerousWater;
                     runTime = Mathf.Max(runTime, dangerBeginsAt + 0.05f);
+                    distanceTravelled = Mathf.Max(distanceTravelled, dangerDistance + 0.05f);
                     break;
                 case Chapter.DangerousWater:
                     targetChapter = Chapter.StrangeTide;
                     runTime = Mathf.Max(runTime, strangeTideBeginsAt + 0.05f);
+                    distanceTravelled = Mathf.Max(distanceTravelled, strangeTideDistance + 0.05f);
                     break;
                 case Chapter.StrangeTide:
                     targetChapter = Chapter.Storm;
                     runTime = Mathf.Max(runTime, stormBeginsAt + 0.05f);
+                    distanceTravelled = Mathf.Max(distanceTravelled, stormDistance + 0.05f);
                     break;
                 case Chapter.Storm:
                     targetChapter = Chapter.FinalWave;
                     runTime = Mathf.Max(runTime, finalWaveBeginsAt + 0.05f);
+                    distanceTravelled = Mathf.Max(distanceTravelled, finalWaveDistance + 0.05f);
                     break;
                 case Chapter.FinalWave:
                     targetChapter = Chapter.Complete;
                     runTime = Mathf.Max(runTime, dayEndsAt + 0.05f);
+                    distanceTravelled = Mathf.Max(distanceTravelled, dayEndDistance + 0.05f);
                     break;
             }
 
@@ -1119,6 +1196,7 @@ namespace PixelOcean
                 day = currentDay,
                 chapter = (int)Chapter.Dawn,
                 runTime = 0f,
+                distanceTravelled = 0f,
                 rescues = 0,
                 finalWaveStarted = false,
                 bossDefeatedSunset = false,
@@ -1157,6 +1235,7 @@ namespace PixelOcean
                 day = currentDay + 1,
                 chapter = (int)Chapter.Dawn,
                 runTime = 0f,
+                distanceTravelled = 0f,
                 rescues = 0,
                 finalWaveStarted = false,
                 bossDefeatedSunset = false,

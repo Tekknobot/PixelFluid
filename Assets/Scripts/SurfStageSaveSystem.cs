@@ -24,6 +24,7 @@ namespace PixelOcean
             public int day = 1;
             public int chapter;
             public float runTime;
+            public float distanceTravelled;
             public int rescues;
             public bool finalWaveStarted;
             public bool bossDefeatedSunset;

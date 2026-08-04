@@ -311,10 +311,18 @@ namespace PixelOcean
         private void BuildDayPanel(RectTransform panel)
         {
             dayPhaseLabel = CreateText("DAY 1  •  DAWN", panel, 32, TextAnchor.UpperCenter, foregroundColour);
-            Stretch(dayPhaseLabel.rectTransform, new Vector2(0f, 0.58f), new Vector2(0.72f, 1f), new Vector2(18f, 0f), new Vector2(0f, -10f));
-
-            timeLabel = CreateText("7:03 AM", panel, 32, TextAnchor.UpperCenter, foregroundColour);
-            Stretch(timeLabel.rectTransform, new Vector2(0.72f, 0.58f), Vector2.one, Vector2.zero, new Vector2(-16f, -10f));
+            Stretch(dayPhaseLabel.rectTransform,
+                new Vector2(0f, 0.58f),
+                new Vector2(0.65f, 1f),
+                new Vector2(18f, 0f),
+                new Vector2(0f, -10f));
+                
+            timeLabel = CreateText("7:03 AM", panel, 16, TextAnchor.UpperCenter, foregroundColour);
+            Stretch(timeLabel.rectTransform,
+                new Vector2(0.65f, 0.58f),
+                Vector2.one,
+                Vector2.zero,
+                new Vector2(-16f, -10f));
 
             RectTransform track = CreateRect("Day Track", panel, Vector2.zero);
             track.anchorMin = new Vector2(0f, 0.37f);
@@ -516,7 +524,13 @@ namespace PixelOcean
             string phase = GetDayPhase(visualTime);
             int currentDay = progression != null ? Mathf.Max(1, progression.CurrentDay) : 1;
             if (dayPhaseLabel != null) dayPhaseLabel.text = $"DAY {currentDay}  •  {phase}";
-            if (timeLabel != null) timeLabel.text = $"{hour12}:{minute:00} {(hour24 < 12 ? "AM" : "PM")}";
+            if (timeLabel != null)
+            {
+                string clock = $"{hour12}:{minute:00} {(hour24 < 12 ? "AM" : "PM")}";
+                timeLabel.text = progression != null
+                    ? $"{clock}  •  {Mathf.RoundToInt(progression.DistanceTravelled)} / {Mathf.RoundToInt(progression.DayDistance)} m"
+                    : clock;
+            }
         }
 
         private static string GetDayPhase(float time)

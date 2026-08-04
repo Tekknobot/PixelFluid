@@ -336,7 +336,7 @@ namespace PixelOcean
             if (director != null)
             {
                 GUILayout.Label(
-                    $"DAY {director.CurrentDay}  •  {director.CurrentChapter}\nTIME {director.RunTime:0.0}s",
+                    $"DAY {director.CurrentDay}  •  {director.CurrentChapter}\nTIME {director.RunTime:0.0}s  •  DIST {director.DistanceTravelled:0}/{director.DayDistance:0}m",
                     infoStyle);
             }
 
