@@ -481,6 +481,8 @@ namespace PixelOcean
             AirTrickScoreSystem.Instance?.BeginDay(2);
             SurfAbilityProgression.Instance?.DebugUnlockAll();
             runTime = 0f;
+            distanceTravelled = 0f;
+            hasPreviousPlayerX = false;
             SyncDayNightToRunTime();
             rescues = 0;
             finalWaveStarted = false;
@@ -519,6 +521,8 @@ namespace PixelOcean
             AirTrickScoreSystem.Instance?.BeginDay(3);
             SurfAbilityProgression.Instance?.DebugUnlockAll();
             runTime = 0f;
+            distanceTravelled = 0f;
+            hasPreviousPlayerX = false;
             rescues = 0;
             finalWaveStarted = false;
             bossDefeatedSunset = false;
@@ -624,6 +628,8 @@ namespace PixelOcean
             AirTrickScoreSystem.Instance?.BeginDay(4);
             SurfAbilityProgression.Instance?.DebugUnlockAll();
             runTime = 0f;
+            distanceTravelled = 0f;
+            hasPreviousPlayerX = false;
             rescues = 0;
             finalWaveStarted = false;
             bossDefeatedSunset = false;
@@ -687,7 +693,7 @@ namespace PixelOcean
             SyncDayNightToRunTime();
             UpdateDayOneMechanicUnlocks();
 
-            if ((distanceTravelled >= dayEndDistance || runTime >= dayEndsAt) && finalWaveStarted)
+            if (distanceTravelled >= dayEndDistance && finalWaveStarted)
             {
                 if (currentDay == 1 && !changingDay)
                 {
@@ -717,7 +723,7 @@ namespace PixelOcean
                 return;
             }
 
-            if ((distanceTravelled >= finalWaveDistance || runTime >= finalWaveBeginsAt) && chapter < Chapter.FinalWave)
+            if (distanceTravelled >= finalWaveDistance && chapter < Chapter.FinalWave)
             {
                 finalWaveStarted = true;
                 BeginChapter(Chapter.FinalWave,
@@ -831,7 +837,7 @@ namespace PixelOcean
                     : currentDay == 3
                         ? $"LAST ECHO  {Mathf.Max(0, Mathf.CeilToInt(dayEndsAt - runTime))}s"
                         : bossDefeatedSunset
-                        ? $"SUNSET  {Mathf.Max(0, Mathf.CeilToInt(dayEndsAt - runTime))}s"
+                        ? $"SUNSET RUN  {Mathf.Max(0, Mathf.CeilToInt(dayEndDistance - distanceTravelled))} m"
                         : $"SURVIVE  {Mathf.Max(0, Mathf.CeilToInt(dayEndsAt - runTime))}s";
         }
 
@@ -1090,7 +1096,7 @@ namespace PixelOcean
             float shortenedStart = Mathf.Max(0f, dayEndsAt - acceleratedSunsetSeconds);
             runTime = Mathf.Max(runTime, shortenedStart);
             SyncDayNightToRunTime();
-            objective = $"SUNSET  {Mathf.Max(0, Mathf.CeilToInt(dayEndsAt - runTime))}s";
+            objective = $"SUNSET RUN  {Mathf.Max(0, Mathf.CeilToInt(dayEndDistance - distanceTravelled))} m";
             ShowBanner("THE DEEP RETREATS", "THE OCEAN GROWS QUIET AS SUNSET FALLS.", 5f);
             QueueCheckpoint();
         }
