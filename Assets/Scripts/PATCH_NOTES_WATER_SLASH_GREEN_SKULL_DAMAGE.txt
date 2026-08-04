@@ -1,0 +1,6 @@
+WATER SLASH / GREEN SKULL DAMAGE PATCH
+
+- WaterSlashProjectile now detects GodzillaSkullSwimmer on the hit collider or its parent.
+- Normal water slashes destroy a green skull and then perform their normal impact fade.
+- Flow Finisher slashes destroy green skulls and continue travelling as before.
+- Uses the skull's existing TakeThrownItemHit method, preserving its projectile-destroyed event and explosion effect.

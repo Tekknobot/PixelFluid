@@ -177,6 +177,10 @@ namespace PixelOcean
             else if (other.GetComponent<JellyfishSwimmer>() is { } jelly) { jelly.TakeThrownItemHit(hit); hitSomething = true; }
             else if (other.GetComponent<BloodfishSwimmer>() is { } fish) { fish.TakeThrownItemHit(hit); hitSomething = true; }
             else if (other.GetComponent<StingrayLaneSwimmer>() is { } ray) { ray.TakeSodaCanHit(hit); hitSomething = true; }
+            else if (other.GetComponentInParent<GodzillaSkullSwimmer>() is { CanBeHit: true } skull)
+            {
+                hitSomething = skull.TakeThrownItemHit(hit);
+            }
             else if (other.GetComponent<RubberDucklingSwimmer>() is { } duckling) { duckling.TakeThrownItemHit(hit); hitSomething = true; }
             else if (other.GetComponent<RubberDuckBossSwimmer>() is { } duckBoss) { duckBoss.TakeThrownItemHit(finisher ? 3 : 1, hit); hitSomething = true; }
             else if (other.GetComponent<GodzillaLaneSwimmer>() is { } godzilla) { godzilla.TakeThrownItemHit(finisher ? 3 : 1, hit); hitSomething = true; }
