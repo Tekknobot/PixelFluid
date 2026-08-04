@@ -885,6 +885,8 @@ namespace PixelOcean
             BeginRetreat<StingrayLaneSwimmer>();
             BeginRetreat<BloodfishSwimmer>();
             BeginRetreat<RubberDucklingSwimmer>();
+            BeginRetreat<GiantTurtleSwimmer>();
+            BeginRetreat<SeaTurtleSwimmer>();
         }
 
         public void DebugNextChapter()

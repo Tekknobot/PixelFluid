@@ -145,6 +145,18 @@ namespace PixelOcean
             if (bounced || hitTransform == null)
                 return;
 
+            GiantTurtleSwimmer giantTurtle =
+                hitTransform.GetComponentInParent<GiantTurtleSwimmer>();
+
+            if (giantTurtle != null)
+            {
+                LoadSfx();
+                PlaySfx(sharkHitClip, 0.8f);
+                giantTurtle.TakeThrownItemHit(transform.position);
+                Bounce(giantTurtle.transform.position);
+                return;
+            }
+
             GodzillaSkullSwimmer skull =
                 hitTransform.GetComponentInParent<GodzillaSkullSwimmer>();
 
