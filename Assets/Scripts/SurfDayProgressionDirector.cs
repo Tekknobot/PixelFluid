@@ -252,6 +252,13 @@ namespace PixelOcean
             SpawnOceanItems(12);
             RestoreChapterPopulation();
 
+            if (currentDay >= 4)
+            {
+                TinyWaveSurfer restoredSurfer = FindFirstObjectByType<TinyWaveSurfer>();
+                if (restoredSurfer != null)
+                    DayFourConspiracyEncounter.Begin(this, restoredSurfer);
+            }
+
             if (chapter >= Chapter.FinalWave)
             {
                 yield return BuildBossEncounter(
@@ -268,7 +275,34 @@ namespace PixelOcean
 
         private void RestoreChapterPopulation()
         {
-            if (currentDay >= 3)
+            if (currentDay >= 4)
+            {
+                objective = chapter switch
+                {
+                    Chapter.Dawn => "THE OUTPOST IS TRANSMITTING BEYOND THE WAVES.",
+                    Chapter.FirstRescue => "RESCUE THE SWIMMER NEAR THE RESTRICTED ROUTE.",
+                    Chapter.DangerousWater => "FOLLOW THE OUTPOST TRANSMISSION.",
+                    Chapter.StrangeTide => "TRACK THE RECOVERY SIGNAL.",
+                    Chapter.Storm => "KEEP THE SIGNAL THROUGH THE DISTORTED WEATHER.",
+                    Chapter.FinalWave => "REACH THE CLASSIFIED ISLAND.",
+                    _ => "FOLLOW THE TRANSMISSION."
+                };
+                SpawnMajor<WhaleLaneSpawner>("Restored Day Four Whale", spawner => spawner.SpawnWhale(true));
+                SpawnMajor<StingrayLaneSpawner>("Restored Day Four Stingray", spawner => spawner.SpawnStingray(true));
+                if (chapter >= Chapter.FirstRescue) SpawnRescueSet(1);
+                if (chapter >= Chapter.DangerousWater)
+                    SpawnMajor<TransparentSquidLaneSpawner>("Restored Day Four Squid", spawner => spawner.SpawnTransparentSquid(true));
+                if (chapter >= Chapter.StrangeTide)
+                {
+                    SpawnUfo();
+                    SpawnHelicopter();
+                }
+                if (chapter >= Chapter.Storm)
+                    EnsureRain().SetSituation(ProceduralRainSystem.RainSituation.HeavyRain);
+                return;
+            }
+
+            if (currentDay == 3)
             {
                 objective = chapter switch
                 {
@@ -508,6 +542,8 @@ namespace PixelOcean
             DestroyAll<RubberDucklingSwimmer>();
             DestroyAll<BoomboxSurferSwimmer>();
             DestroyAll<BossArenaPrison>();
+            DestroyAll<SecretFacilityEncounter>();
+            DestroyAll<DayFourConspiracyEncounter>();
         }
 
         private static void DestroyAll<T>() where T : Component
@@ -530,6 +566,81 @@ namespace PixelOcean
             objective = "SECRET FACILITY DISCOVERED";
             learningObjective = string.Empty;
             AirTrickScoreSystem.Instance?.ShowDayRecap(3, 10f);
+            rain?.ClearRain();
+            QueueCheckpoint();
+
+            if (!changingDay)
+            {
+                changingDay = true;
+                StartCoroutine(BeginDayFour());
+            }
+        }
+
+        private IEnumerator BeginDayFour()
+        {
+            yield return new WaitForSecondsRealtime(10f);
+            if (SurfDayUpgradeScreen.Instance != null)
+                yield return SurfDayUpgradeScreen.Instance.ShowAndWait();
+
+            ShowBanner("THE SIGNAL CONTINUES", "DAY 4 — PROJECT HORIZON", 4f);
+            rain?.ClearRain();
+            yield return new WaitForSecondsRealtime(3f);
+
+            ClearRunObjects();
+            DestroyAll<SecretFacilityEncounter>();
+            DestroyAll<DayThreeOceanRemembers>();
+            DestroyAll<DayFourConspiracyEncounter>();
+            yield return null;
+
+            currentDay = 4;
+            AirTrickScoreSystem.Instance?.BeginDay(4);
+            SurfAbilityProgression.Instance?.DebugUnlockAll();
+            runTime = 0f;
+            rescues = 0;
+            finalWaveStarted = false;
+            bossDefeatedSunset = false;
+            chapter = Chapter.Dawn;
+            changingDay = false;
+            facilityEncounterStarted = false;
+            SyncDayNightToRunTime();
+            BeginChapter(Chapter.Dawn,
+                "DAY 4 — PROJECT HORIZON",
+                "THE OUTPOST IS TRANSMITTING SOMEWHERE BEYOND THE WAVES.");
+            learningObjective = "Stay near the signal and watch the horizon.";
+            SpawnPickupSet();
+            SpawnOceanItems(12);
+            SpawnMajor<WhaleLaneSpawner>("Day Four Dawn Whale", spawner => spawner.SpawnWhale(true));
+            SpawnMajor<StingrayLaneSpawner>("Day Four Dawn Stingray", spawner => spawner.SpawnStingray(true));
+
+            TinyWaveSurfer surfer = FindFirstObjectByType<TinyWaveSurfer>();
+            if (surfer != null)
+                DayFourConspiracyEncounter.Begin(this, surfer);
+
+            SurfStageSaveSystem.Save(this);
+        }
+
+        public void AnnounceDayFourIsland()
+        {
+            if (currentDay < 4 || chapter == Chapter.Complete)
+                return;
+
+            objective = "FOLLOW THE TRANSMISSION TO THE ISLAND";
+            learningObjective = string.Empty;
+            ShowBanner("THE SOURCE", "A CLASSIFIED ISLAND EMERGES ON THE HORIZON.", 5f);
+            QueueCheckpoint();
+        }
+
+        public void CompleteDayFourAtIsland()
+        {
+            if (currentDay < 4 || chapter == Chapter.Complete)
+                return;
+
+            BeginChapter(Chapter.Complete,
+                "DAY 4 COMPLETE",
+                "THE OUTPOST LEADS TO A FACILITY THAT DOES NOT EXIST.");
+            objective = "CLASSIFIED RESEARCH ISLAND FOUND";
+            learningObjective = string.Empty;
+            AirTrickScoreSystem.Instance?.ShowDayRecap(4, 10f);
             rain?.ClearRain();
             QueueCheckpoint();
         }
@@ -559,7 +670,7 @@ namespace PixelOcean
                     changingDay = true;
                     StartCoroutine(BeginDayThree());
                 }
-                else if (currentDay >= 3 && !facilityEncounterStarted)
+                else if (currentDay == 3 && !facilityEncounterStarted)
                 {
                     facilityEncounterStarted = true;
                     objective = "FOLLOW THE LIGHTS ON THE HORIZON";
@@ -569,6 +680,11 @@ namespace PixelOcean
                     rain?.ClearRain();
                     SecretFacilityEncounter.Begin(this, player);
                 }
+                else if (currentDay >= 4)
+                {
+                    objective = "REACH THE CLASSIFIED ISLAND";
+                    learningObjective = string.Empty;
+                }
                 return;
             }
 
@@ -576,8 +692,8 @@ namespace PixelOcean
             {
                 finalWaveStarted = true;
                 BeginChapter(Chapter.FinalWave,
-                    currentDay >= 3 ? "THE LAST ECHO" : "THE LAST WAVE",
-                    currentDay >= 3 ? "SURVIVE UNTIL THE OCEAN FALLS SILENT." : $"SURVIVE {finalSurvivalSeconds} SECONDS.");
+                    currentDay >= 4 ? "THE ISLAND ON THE HORIZON" : currentDay == 3 ? "THE LAST ECHO" : "THE LAST WAVE",
+                    currentDay >= 4 ? "FOLLOW THE TRANSMISSION TO ITS SOURCE." : currentDay == 3 ? "SURVIVE UNTIL THE OCEAN FALLS SILENT." : $"SURVIVE {finalSurvivalSeconds} SECONDS.");
                 if (pendingBossEncounter == null)
                 {
                     pendingBossEncounter = StartCoroutine(
@@ -593,8 +709,8 @@ namespace PixelOcean
             if (runTime >= stormBeginsAt && chapter < Chapter.Storm)
             {
                 BeginChapter(Chapter.Storm,
-                    currentDay >= 3 ? "SIGNAL IN THE STORM" : "STORM FRONT",
-                    currentDay >= 3 ? "FOLLOW THE DISTANT LIGHT THROUGH THE BLACK WATER." : "KEEP MOVING. RESCUE ANYONE LEFT OUT THERE.");
+                    currentDay >= 4 ? "ENCRYPTED WEATHER" : currentDay == 3 ? "SIGNAL IN THE STORM" : "STORM FRONT",
+                    currentDay >= 4 ? "THE TRANSMISSION IS DISTORTING THE SEA AND SKY." : currentDay == 3 ? "FOLLOW THE DISTANT LIGHT THROUGH THE BLACK WATER." : "KEEP MOVING. RESCUE ANYONE LEFT OUT THERE.");
                 EnsureRain().SetSituation(ProceduralRainSystem.RainSituation.HeavyRain);
                 if (currentDay == 1)
                     SpawnMajor<GiantSquidLaneSpawner>("Storm Squid", spawner => spawner.SpawnSquid(true));
@@ -614,8 +730,8 @@ namespace PixelOcean
             if (runTime >= strangeTideBeginsAt && chapter < Chapter.StrangeTide)
             {
                 BeginChapter(Chapter.StrangeTide,
-                    currentDay >= 3 ? "THE SHADOW RETURNS" : "STRANGE TIDE",
-                    currentDay >= 3 ? "IT COPIES YOU. DO NOT LET IT TURN YOU BACK." : "SOMETHING IS WATCHING THE WATER.");
+                    currentDay >= 4 ? "RECOVERY SIGNAL" : currentDay == 3 ? "THE SHADOW RETURNS" : "STRANGE TIDE",
+                    currentDay >= 4 ? "ALIEN MACHINERY IS ACTIVE BENEATH THE TRANSMISSION." : currentDay == 3 ? "IT COPIES YOU. DO NOT LET IT TURN YOU BACK." : "SOMETHING IS WATCHING THE WATER.");
                 if (currentDay == 1)
                     UnlockAbility(SurfAbility.Rotation | SurfAbility.Flip |
                         SurfAbility.DoubleChain | SurfAbility.TripleChain,
@@ -626,6 +742,11 @@ namespace PixelOcean
                     SpawnUfo();
                 else if (currentDay == 2)
                     SpawnHelicopter();
+                else if (currentDay >= 4)
+                {
+                    SpawnUfo();
+                    SpawnHelicopter();
+                }
                 if (currentDay == 1)
                     SpawnJellyfishEncounter("Strange Tide Jellyfish", 2);
                 else
@@ -640,8 +761,8 @@ namespace PixelOcean
             if (runTime >= dangerBeginsAt && chapter < Chapter.DangerousWater)
             {
                 BeginChapter(Chapter.DangerousWater,
-                    currentDay >= 3 ? "MEMORY CURRENT" : "DANGEROUS WATER",
-                    currentDay >= 3 ? "OLD THREATS RETURN IN THE WRONG ORDER." : "SAVE 3 SWIMMERS. USE CANS TO FIGHT BACK.");
+                    currentDay >= 4 ? "CLASSIFIED CURRENT" : currentDay == 3 ? "MEMORY CURRENT" : "DANGEROUS WATER",
+                    currentDay >= 4 ? "THE OUTPOST SIGNAL IS DRAWING PREDATORS AND MACHINES." : currentDay == 3 ? "OLD THREATS RETURN IN THE WRONG ORDER." : "SAVE 3 SWIMMERS. USE CANS TO FIGHT BACK.");
                 if (currentDay == 1)
                     UnlockAbility(SurfAbility.ChargedJump,
                         "CHARGED JUMP UNLOCKED",
@@ -664,19 +785,23 @@ namespace PixelOcean
             if (runTime >= rescueBeginsAt && chapter < Chapter.FirstRescue)
             {
                 BeginChapter(Chapter.FirstRescue,
-                    currentDay >= 3 ? "A FAMILIAR VOICE" : "DISTRESS CALL",
-                    currentDay >= 3 ? "SAVE THE SWIMMER THE OCEAN BROUGHT BACK." : "FIND AND SAVE THE STRUGGLING SWIMMER.");
+                    currentDay >= 4 ? "NO AUTHORIZED TRAFFIC" : currentDay == 3 ? "A FAMILIAR VOICE" : "DISTRESS CALL",
+                    currentDay >= 4 ? "RESCUE THE SWIMMER CAUGHT NEAR THE RESTRICTED ROUTE." : currentDay == 3 ? "SAVE THE SWIMMER THE OCEAN BROUGHT BACK." : "FIND AND SAVE THE STRUGGLING SWIMMER.");
                 SpawnRescueSet(1);
             }
 
             if (chapter == Chapter.DangerousWater)
-                objective = currentDay >= 3
-                    ? "SURVIVE THE THREATS THE OCEAN REMEMBERS."
-                    : $"RESCUES  {rescues}/{rescuesRequired}";
+                objective = currentDay >= 4
+                    ? "FOLLOW THE OUTPOST TRANSMISSION."
+                    : currentDay == 3
+                        ? "SURVIVE THE THREATS THE OCEAN REMEMBERS."
+                        : $"RESCUES  {rescues}/{rescuesRequired}";
             else if (chapter == Chapter.FinalWave)
-                objective = currentDay >= 3
-                    ? $"LAST ECHO  {Mathf.Max(0, Mathf.CeilToInt(dayEndsAt - runTime))}s"
-                    : bossDefeatedSunset
+                objective = currentDay >= 4
+                    ? $"ISLAND SIGNAL  {Mathf.Max(0, Mathf.CeilToInt(dayEndsAt - runTime))}s"
+                    : currentDay == 3
+                        ? $"LAST ECHO  {Mathf.Max(0, Mathf.CeilToInt(dayEndsAt - runTime))}s"
+                        : bossDefeatedSunset
                         ? $"SUNSET  {Mathf.Max(0, Mathf.CeilToInt(dayEndsAt - runTime))}s"
                         : $"SURVIVE  {Mathf.Max(0, Mathf.CeilToInt(dayEndsAt - runTime))}s";
         }
@@ -734,16 +859,20 @@ namespace PixelOcean
                 yield return null;
             }
 
-            // Day 3 deliberately uses the Shadow Surfer rather than a giant boss.
+            // Day 3 uses the Shadow Surfer. Day 4 is an environmental pursuit
+            // toward the research island and deliberately has no giant boss.
             if (currentDay >= 3)
             {
-                DayThreeOceanRemembers dayThree =
-                    FindFirstObjectByType<DayThreeOceanRemembers>();
-
-                if (dayThree == null)
+                if (currentDay == 3)
                 {
-                    GameObject host = new GameObject("Day Three Ocean Remembers");
-                    dayThree = host.AddComponent<DayThreeOceanRemembers>();
+                    DayThreeOceanRemembers dayThree =
+                        FindFirstObjectByType<DayThreeOceanRemembers>();
+
+                    if (dayThree == null)
+                    {
+                        GameObject host = new GameObject("Day Three Ocean Remembers");
+                        dayThree = host.AddComponent<DayThreeOceanRemembers>();
+                    }
                 }
 
                 FinishBossEncounterBuild(showReadyBanner, saveWhenReady);
@@ -1010,6 +1139,12 @@ namespace PixelOcean
             {
                 changingDay = true;
                 StartCoroutine(BeginDayThree());
+                return;
+            }
+            if (currentDay == 3 && !changingDay)
+            {
+                changingDay = true;
+                StartCoroutine(BeginDayFour());
                 return;
             }
 

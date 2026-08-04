@@ -79,10 +79,31 @@ namespace PixelOcean
         private float updateTimer;
         private float timeOfDay;
         private Camera gameplayCamera;
+        private float externalVisibility = 1f;
 
         public float TimeOfDay => timeOfDay;
         public bool IsNight => timeOfDay < 0.225f || timeOfDay > 0.775f;
         public bool IsDay => timeOfDay > 0.30f && timeOfDay < 0.70f;
+
+        /// <summary>
+        /// Allows story encounters to fade the generated sky without changing
+        /// the authored transform, time of day, or generated texture.
+        /// </summary>
+        public void SetExternalVisibility(float visibility)
+        {
+            externalVisibility = Mathf.Clamp01(visibility);
+            ApplyExternalVisibility();
+        }
+
+        private void ApplyExternalVisibility()
+        {
+            if (spriteRenderer == null)
+                return;
+
+            Color colour = spriteRenderer.color;
+            colour.a = externalVisibility;
+            spriteRenderer.color = colour;
+        }
 
         private struct StarData
         {
@@ -126,6 +147,7 @@ namespace PixelOcean
 
             updateTimer = 0f;
             RenderSky(useUnscaledTime ? Time.unscaledTime : Time.time);
+            ApplyExternalVisibility();
         }
 
         private void LateUpdate()
@@ -173,6 +195,7 @@ namespace PixelOcean
             generatedSprite.name = "Procedural Day Night Sprite";
             spriteRenderer.sprite = generatedSprite;
             spriteRenderer.sortingOrder = sortingOrder;
+            ApplyExternalVisibility();
 
             transform.localScale = Vector3.one;
         }

@@ -1,0 +1,9 @@
+DAY 4 TROPICAL ISLAND HORIZON
+
+- Targets the existing tropical_island_0 child under the Starry Night background.
+- Does not resize or otherwise change the island's authored scale.
+- Keeps the island hidden before Day 4 and through the first eight minutes of Day 4.
+- Fades the island into view over 24 seconds at the eight-minute mark.
+- Adds extremely subtle opposite-direction parallax based on Chuck's horizontal travel.
+- Smooths and clamps the parallax so the island remains a distant horizon landmark.
+- Day 5 and later keep the island visible.
