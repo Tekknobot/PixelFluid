@@ -1,0 +1,9 @@
+SHADOW COLLISION ITEM COLLECTION
+
+- Removed all item-attraction and item-pulling behavior from ShadowSurferEcho.
+- The Shadow now has a small trigger collider.
+- An ocean item is collected only when it physically touches the Shadow.
+- Collection calls OceanItemBehaviour.Collect(player), which uses Chuck's
+  normal CollectThrowableItem inventory path.
+- The item's sprite is therefore added to the player's throwable inventory.
+- Enemy attraction remains unchanged and separate from item collection.

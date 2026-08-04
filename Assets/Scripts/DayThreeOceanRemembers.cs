@@ -390,13 +390,11 @@ namespace PixelOcean
         [SerializeField, Range(0.05f, 0.6f)] private float shadowVerticalSmoothTime = 0.18f;
         [SerializeField, Range(1f, 24f)] private float shadowMaximumVerticalSpeed = 7f;
 
-        [Header("Shadow Magnet")]
-        [Tooltip("Maximum distance at which the Shadow pulls ocean items toward itself.")]
-        [SerializeField, Range(1f, 12f)] private float itemMagnetRadius = 5.5f;
-        [Tooltip("Speed used to pull collectible ocean items toward the Shadow.")]
-        [SerializeField, Range(0.1f, 12f)] private float itemMagnetSpeed = 4.5f;
-        [Tooltip("Distance at which a pulled item is deposited into Chuck's inventory.")]
-        [SerializeField, Range(0.1f, 1.5f)] private float itemCollectionDistance = 0.48f;
+        [Header("Shadow Item Collection")]
+        [Tooltip("Trigger radius used by the Shadow to collect items only when it physically touches them.")]
+        [SerializeField, Range(0.1f, 1.5f)] private float itemCollectionRadius = 0.42f;
+
+        [Header("Shadow Enemy Attraction")]
         [Tooltip("Radius in which ordinary sea enemies are gently drawn toward the Shadow.")]
         [SerializeField, Range(1f, 14f)] private float enemyAttractionRadius = 6.5f;
         [Tooltip("Subtle pull applied to enemies without overriding their own AI.")]
@@ -423,6 +421,17 @@ namespace PixelOcean
             renderItem = gameObject.AddComponent<InterWaveRenderItem>();
             appliedLane = Mathf.Max(0, target.CurrentWaveIndex);
             renderItem.SetLane(appliedLane);
+
+            Rigidbody2D shadowBody = gameObject.AddComponent<Rigidbody2D>();
+            shadowBody.bodyType = RigidbodyType2D.Kinematic;
+            shadowBody.gravityScale = 0f;
+            shadowBody.freezeRotation = true;
+            shadowBody.interpolation = RigidbodyInterpolation2D.Interpolate;
+
+            CircleCollider2D collectionTrigger =
+                gameObject.AddComponent<CircleCollider2D>();
+            collectionTrigger.isTrigger = true;
+            collectionTrigger.radius = itemCollectionRadius;
 
             Load(Motion.Idle, "Shadow/shadow_idle");
             Load(Motion.Move, "Shadow/shadow_move");
@@ -554,10 +563,10 @@ namespace PixelOcean
             }
 
             SyncVisualsToPlayer(chapter);
-            UpdateShadowMagnet();
+            UpdateShadowSupport();
         }
 
-        private void UpdateShadowMagnet()
+        private void UpdateShadowSupport()
         {
             if (player == null ||
                 player.IsDead ||
@@ -569,8 +578,6 @@ namespace PixelOcean
             nextMagnetRefreshTime =
                 Time.unscaledTime + Mathf.Max(0.05f, magnetRefreshInterval);
 
-            PullAndCollectOceanItems();
-
             PullThreats<SharkLaneSwimmer>();
             PullThreats<GiantSquidLaneSwimmer>();
             PullThreats<BloodSharkLaneSwimmer>();
@@ -580,46 +587,37 @@ namespace PixelOcean
             PullThreats<JellyfishSwimmer>();
         }
 
-        private void PullAndCollectOceanItems()
+        private void OnTriggerEnter2D(Collider2D other)
         {
-            OceanItemBehaviour[] items =
-                FindObjectsByType<OceanItemBehaviour>(
-                    FindObjectsInactive.Exclude,
-                    FindObjectsSortMode.None);
+            TryCollectTouchedItem(other);
+        }
 
-            Vector2 shadowPosition = transform.position;
-            float radiusSquared = itemMagnetRadius * itemMagnetRadius;
+        private void OnTriggerStay2D(Collider2D other)
+        {
+            // Stay also catches an item that begins a frame already overlapping
+            // the Shadow after a section recycle or spawn.
+            TryCollectTouchedItem(other);
+        }
 
-            foreach (OceanItemBehaviour item in items)
+        private void TryCollectTouchedItem(Collider2D other)
+        {
+            if (player == null ||
+                player.IsDead ||
+                other == null)
             {
-                if (item == null || !item.isActiveAndEnabled)
-                    continue;
-
-                Vector2 itemPosition = item.transform.position;
-                Vector2 offset = shadowPosition - itemPosition;
-                float distanceSquared = offset.sqrMagnitude;
-
-                if (distanceSquared > radiusSquared)
-                    continue;
-
-                float distance = Mathf.Sqrt(distanceSquared);
-                if (distance <= itemCollectionDistance)
-                {
-                    item.Collect(player);
-                    continue;
-                }
-
-                Vector2 targetPosition = Vector2.MoveTowards(
-                    itemPosition,
-                    shadowPosition,
-                    itemMagnetSpeed * magnetRefreshInterval);
-
-                Rigidbody2D itemBody = item.GetComponent<Rigidbody2D>();
-                if (itemBody != null)
-                    itemBody.position = targetPosition;
-                else
-                    item.transform.position = targetPosition;
+                return;
             }
+
+            OceanItemBehaviour item =
+                other.GetComponentInParent<OceanItemBehaviour>();
+
+            if (item == null)
+                return;
+
+            // OceanItemBehaviour.Collect uses Chuck's normal collection method,
+            // so the touched sprite is added to the player's throwable inventory
+            // exactly as though Chuck collected it himself.
+            item.Collect(player);
         }
 
         private void PullThreats<T>() where T : MonoBehaviour
