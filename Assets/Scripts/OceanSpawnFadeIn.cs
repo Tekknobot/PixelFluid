@@ -119,8 +119,8 @@ namespace PixelOcean
             FadeNew<TransparentSquidLaneSwimmer>();
             FadeNew<StingrayLaneSwimmer>();
             FadeNew<BloodfishSwimmer>();
-            FadeNew<GodzillaLaneSwimmer>();
-            FadeNew<RubberDuckBossSwimmer>();
+            // Arena bosses use BossArenaPrison's placement-aware fade. Applying the
+            // generic ocean fade here can race it and capture a zero-alpha target.
             FadeNew<RubberDucklingSwimmer>();
             FadeNew<AlienUfoController>();
             FadeNew<DayTwoHelicopterController>();

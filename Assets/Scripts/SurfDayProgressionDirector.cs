@@ -1059,8 +1059,12 @@ namespace PixelOcean
             {
                 GameObject arenaHost = new GameObject(arenaName);
                 arena = arenaHost.AddComponent<BossArenaPrison>();
-                arena.Configure(boss, theme);
             }
+
+            // Merely finding an arena is not enough: a stale arena can be bound to
+            // a previous boss and leave the new duck stranded beyond its walls.
+            if (!arena.ControlsBoss(boss))
+                arena.Configure(boss, theme);
         }
 
         private void FinishBossEncounterBuild(

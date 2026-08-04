@@ -20,6 +20,10 @@ namespace PixelOcean
         public float CameraRightBoundary => rightX;
         public float CentreX => centreX;
 
+        /// <summary>Returns true only when this arena is controlling the supplied boss.</summary>
+        public bool ControlsBoss(MonoBehaviour candidate) =>
+            candidate != null && boss == candidate && !encounterFinished;
+
         public enum ArenaTheme { Reaper, RubberDuck }
 
         [Header("Arena")]
@@ -73,9 +77,32 @@ namespace PixelOcean
 
         public void Configure(MonoBehaviour bossBehaviour, ArenaTheme arenaTheme)
         {
+            if (bossBehaviour == null)
+                return;
+
+            // The spawner and progression director can both discover the same arena.
+            // Do not restart an entrance that is already correctly configured.
+            if (ControlsBoss(bossBehaviour) && entranceStarted)
+                return;
+
             UnsubscribeBossEvents();
+
             boss = bossBehaviour;
             theme = arenaTheme;
+
+            // A stale arena from a previous/rebuilt encounter must be reusable.
+            reaperBoss = null;
+            duckBoss = null;
+            gateOpen = false;
+            encounterFinished = false;
+            encounterStarted = false;
+            entranceStarted = false;
+            eventsSubscribed = false;
+            reaperHits = 0;
+            ducklingsDestroyed = 0;
+            duckDamagePhases = 0;
+            duckWindowOpen = false;
+
             CaptureArena();
             BeginBossEntrance();
         }
@@ -232,6 +259,10 @@ namespace PixelOcean
 
                 if (renderer != null)
                 {
+                    // Boss spawners may keep the renderer disabled while the boss
+                    // is still at its ordinary off-screen entry point. It becomes
+                    // visible only after PlaceBossAtArenaX has put it inside.
+                    renderer.enabled = true;
                     renderer.color = new Color(
                         target.r,
                         target.g,

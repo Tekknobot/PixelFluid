@@ -74,6 +74,11 @@ namespace PixelOcean
             SpriteRenderer renderer = spawnedBoss.AddComponent<SpriteRenderer>();
             renderer.sprite = movement[0];
 
+            // Prevent a one-frame flash at the swimmer's normal off-screen spawn.
+            // BossArenaPrison enables and fades the renderer only after relocating
+            // the duck just inside the captured arena boundary.
+            renderer.enabled = false;
+
             spawnedBoss.AddComponent<InterWaveRenderItem>();
 
             RubberDuckBossAnimation animation =
@@ -99,19 +104,25 @@ namespace PixelOcean
             if (swimmer == null)
                 return;
 
-            BossArenaPrison activeArena = BossArenaPrison.Active;
-            if (activeArena != null)
-                return;
+            BossArenaPrison arena = BossArenaPrison.Active;
+            if (arena == null)
+                arena = FindFirstObjectByType<BossArenaPrison>();
 
-            GameObject arenaHost =
-                new GameObject("Rubber Duck Boss Arena Prison");
+            if (arena == null)
+            {
+                GameObject arenaHost =
+                    new GameObject("Rubber Duck Boss Arena Prison");
+                arena = arenaHost.AddComponent<BossArenaPrison>();
+            }
 
-            BossArenaPrison arena =
-                arenaHost.AddComponent<BossArenaPrison>();
-
-            arena.Configure(
-                swimmer,
-                BossArenaPrison.ArenaTheme.RubberDuck);
+            // An arena left behind by a rebuild or another boss is not sufficient.
+            // It must explicitly own this duck so it relocates and fades it inside.
+            if (!arena.ControlsBoss(swimmer))
+            {
+                arena.Configure(
+                    swimmer,
+                    BossArenaPrison.ArenaTheme.RubberDuck);
+            }
         }
 
         private static Sprite[] LoadOrdered(string path) => Resources.LoadAll<Sprite>(path)
