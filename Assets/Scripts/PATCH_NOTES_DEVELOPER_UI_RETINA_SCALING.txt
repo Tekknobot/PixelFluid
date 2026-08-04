@@ -1,0 +1,10 @@
+DEVELOPER UI RETINA SCALING
+
+Updated SurferSlugDeveloperMenu.cs only.
+
+- Developer IMGUI now scales from a 1920x1080 reference resolution.
+- High-resolution and Retina displays enlarge the complete overlay uniformly.
+- Panel, fonts, buttons, spacing, notice text, and mouse hit testing scale together.
+- Scaling never shrinks below the existing size on lower-resolution displays.
+- Maximum scaling is capped at 2x to prevent an oversized menu on extreme resolutions.
+- No developer-mode behavior or gameplay systems were changed.

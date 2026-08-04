@@ -1,0 +1,9 @@
+Developer panel TMP/Canvas conversion
+
+- Replaced the IMGUI developer overlay with a runtime Canvas.
+- Uses the project's existing PixeloidSans-Bold SDF through PixelFontLibrary.TmpSemiBold.
+- Does not use the previous Pixelify developer-panel font.
+- CanvasScaler targets 1920x1080 and scales correctly on Retina/high-DPI displays.
+- Preserved keyboard, controller, mouse, pause, progression, boss, ability, god mode,
+  infinite lives, and music-board behavior.
+- Added clearer section hierarchy, selected-state highlighting, and session status.
