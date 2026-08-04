@@ -463,6 +463,10 @@ namespace PixelOcean
         private bool previousLayerUpHeld;
         private bool previousLayerDownHeld;
         private bool layerSwitchInputLocked;
+        // Edge wraps require the entire input combination to return to neutral.
+        // This prevents one held Up/Down direction from replaying the same wrap
+        // immediately after Chuck lands on the opposite edge lane.
+        private bool edgeWrapReleaseRequired;
         private float playerHorizontalVelocity;
         private float landingMomentumCarryTimer;
         private float verticalWaterVelocity;
@@ -2317,11 +2321,23 @@ namespace PixelOcean
                     ReleaseChargedForwardJump();
             }
 
-            // Release Jump before another normal jump or wave-switch jump can
-            // begin. The direction may remain held, which makes the combination
-            // responsive without allowing repeated automatic layer changes.
-            if (!jumpHeld)
+            // Ordinary lane changes only require Jump to be released. Edge wraps
+            // are stricter: both Jump and the vertical direction must return to
+            // neutral before another wrap can begin. This removes the duplicate
+            // edge-switch replay caused by a held D-pad/stick direction.
+            bool verticalDirectionHeld = layerUpHeld || layerDownHeld;
+            if (edgeWrapReleaseRequired)
+            {
+                if (!jumpHeld && !verticalDirectionHeld && !specialHeld)
+                {
+                    edgeWrapReleaseRequired = false;
+                    layerSwitchInputLocked = false;
+                }
+            }
+            else if (!jumpHeld)
+            {
                 layerSwitchInputLocked = false;
+            }
 
             previousJumpHeld = jumpHeld;
             previousLayerUpHeld = layerUpHeld;
@@ -2655,6 +2671,12 @@ namespace PixelOcean
                 currentIndex = Mathf.Clamp(waveIndex, 0, simulations.Count - 1);
 
             int nextIndex = currentIndex + step;
+            bool wrapsEdge = nextIndex < 0 || nextIndex >= simulations.Count;
+
+            // A completed edge wrap must be followed by a full neutral input
+            // before another one is accepted.
+            if (wrapsEdge && edgeWrapReleaseRequired)
+                return;
 
             // Wrap only when pressing outward at either end of the full stack.
             if (nextIndex < 0)
@@ -2667,6 +2689,9 @@ namespace PixelOcean
                 return;
 
             layerSwitchInputLocked = true;
+            if (wrapsEdge)
+                edgeWrapReleaseRequired = true;
+
             currentWave = nextWave;
             waveIndex = nextIndex;
 
@@ -3518,14 +3543,27 @@ namespace PixelOcean
             float eased =
                 t * t * (3f - 2f * t);
 
+            // The destination wave keeps simulating while Chuck crosses lanes.
+            // Following a position sampled only at takeoff caused a second visible
+            // correction when Riding resumed. Refresh the landing surface during
+            // the transfer so the switch is one continuous movement.
+            Vector3 liveSwitchTarget = switchTarget;
+            if (currentWave != null)
+            {
+                liveSwitchTarget.y =
+                    currentWave.GetGameplaySurfaceHeight(liveSwitchTarget.x) +
+                    surfaceOffset;
+                liveSwitchTarget.z = renderDepth;
+            }
+
             Vector3 p = Vector3.Lerp(
                 switchStart,
-                switchTarget,
+                liveSwitchTarget,
                 eased);
 
             float layerDistance =
                 Mathf.Abs(
-                    switchTarget.y -
+                    liveSwitchTarget.y -
                     switchStart.y);
 
             // Normal changes use a light hop. Glide transfers stay much
@@ -3558,13 +3596,36 @@ namespace PixelOcean
             localRideX =
                 playerControlled && lockPlayerToScreenX
                     ? playerScreenX
-                    : switchTarget.x;
+                    : liveSwitchTarget.x;
 
             if (playerControlled && lockPlayerToScreenX)
-                switchTarget.x = playerScreenX;
+                localRideX = playerScreenX;
 
-            transform.position = switchTarget;
+            // Commit the destination exactly once at the current simulated
+            // surface. FollowSurface therefore has no leftover correction to
+            // perform on the next frame.
+            Vector3 committedLanding = liveSwitchTarget;
+            committedLanding.x = localRideX;
+            if (currentWave != null)
+            {
+                committedLanding.y =
+                    currentWave.GetGameplaySurfaceHeight(localRideX) +
+                    surfaceOffset;
+                committedLanding.z = renderDepth;
+            }
+
+            switchTarget = committedLanding;
+            transform.position = committedLanding;
             transform.rotation = Quaternion.identity;
+
+            // FollowSurface keeps its own smoothed vertical position. If that
+            // cache still contains the source lane height, the first Riding
+            // frame performs a second visible tween after the lane-switch tween.
+            // Commit the landing into the ride solver so there is exactly one
+            // movement and Chuck is already locked to the destination wave.
+            smoothedRideY = committedLanding.y;
+            verticalWaterVelocity = 0f;
+            smoothedRideYInitialised = true;
 
             state = RiderState.Riding;
             stateTimer = 0f;
