@@ -1,0 +1,7 @@
+Boss health and arena camera patch
+
+- Adds a world-space health bar to Godzilla/Reaper and Rubber Duck bosses.
+- Health bars read the bosses existing CurrentHealth/MaximumHealth properties.
+- Bars remain tied to the boss lane/sorting and disappear on defeat.
+- Arena width now defaults to 1.65 camera widths, allowing healthy camera follow movement.
+- Boss and player remain constrained by the same arena boundaries.

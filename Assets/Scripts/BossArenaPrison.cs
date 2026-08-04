@@ -29,6 +29,8 @@ namespace PixelOcean
         [Header("Arena")]
         [SerializeField] private ArenaTheme theme = ArenaTheme.Reaper;
         [SerializeField, Min(6f)] private float arenaWidth = 16f;
+        [Tooltip("Arena width measured in visible camera widths. Values above 1 allow meaningful camera travel.")]
+        [SerializeField, Range(1.15f, 3f)] private float arenaWidthInCameraWidths = 1.65f;
         [SerializeField, Min(0.25f)] private float edgePadding = 0.8f;
         [SerializeField, Min(0.25f)] private float escapeDistance = 1.25f;
         [SerializeField, Min(0f)] private float introLockDuration = 1.25f;
@@ -104,6 +106,7 @@ namespace PixelOcean
             duckWindowOpen = false;
 
             CaptureArena();
+            EnsureBossHealthBar();
             BeginBossEntrance();
         }
 
@@ -406,6 +409,19 @@ namespace PixelOcean
             return min <= max ? Mathf.Clamp(desiredCameraX, min, max) : CentreX;
         }
 
+
+        private void EnsureBossHealthBar()
+        {
+            if (boss == null)
+                return;
+
+            BossHealthBar healthBar = boss.GetComponent<BossHealthBar>();
+            if (healthBar == null)
+                healthBar = boss.gameObject.AddComponent<BossHealthBar>();
+
+            healthBar.Bind(boss);
+        }
+
         private void CaptureArena()
         {
             gameplayCamera = Camera.main;
@@ -415,7 +431,8 @@ namespace PixelOcean
             if (gameplayCamera != null && gameplayCamera.orthographic)
             {
                 float cameraWidth = gameplayCamera.orthographicSize * 2f * gameplayCamera.aspect;
-                arenaWidth = Mathf.Max(6f, cameraWidth - edgePadding * 0.5f);
+                float desiredWidth = cameraWidth * Mathf.Max(1.15f, arenaWidthInCameraWidths);
+                arenaWidth = Mathf.Max(6f, arenaWidth, desiredWidth);
             }
 
             leftX = centreX - arenaWidth * 0.5f;
