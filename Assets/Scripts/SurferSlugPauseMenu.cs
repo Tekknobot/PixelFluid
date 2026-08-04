@@ -118,6 +118,9 @@ namespace PixelOcean
                 return;
             }
 
+
+            UpdateSaveWarningSelectionOutline();
+
             if (menuVisible && saveWarningPanel != null && saveWarningPanel.activeSelf && SubPanelBackPressed())
             {
                 HideSaveWarning();
@@ -609,6 +612,32 @@ namespace PixelOcean
 
             outline.effectColor = new Color(0f, 0f, 0f, 0.65f);
             outline.effectDistance = new Vector2(3f, -3f);
+        }
+
+
+        private void UpdateSaveWarningSelectionOutline()
+        {
+            if (saveWarningPanel == null || !saveWarningPanel.activeSelf)
+                return;
+
+            HighlightButton(cancelNewGameButton);
+            HighlightButton(confirmNewGameButton);
+        }
+
+        private static void HighlightButton(Button button)
+        {
+            if (button == null)
+                return;
+
+            Outline outline = button.GetComponent<Outline>();
+            if (outline == null)
+                outline = button.gameObject.AddComponent<Outline>();
+
+            bool selected = UnityEngine.EventSystems.EventSystem.current != null &&
+                            UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject == button.gameObject;
+
+            outline.effectColor = selected ? Color.white : new Color(0f,0f,0f,0.65f);
+            outline.effectDistance = selected ? new Vector2(5f,-5f) : new Vector2(3f,-3f);
         }
 
         private void ShowSaveWarning()
