@@ -1,6 +1,9 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace PixelOcean
 {
@@ -12,6 +15,8 @@ namespace PixelOcean
 
     public sealed class BoomboxSurferSwimmer : MonoBehaviour
     {
+        public event Action<BoomboxSurferSwimmer> Released;
+
         [Header("Surfing Movement")]
         [SerializeField] private Vector2 speedRange = new(0.34f, 0.52f);
         [SerializeField, Range(0f, 0.4f)] private float laneWander = 0.12f;
@@ -34,6 +39,10 @@ namespace PixelOcean
         [SerializeField, Range(0f, 1f)] private float stereoPanStrength = 0.55f;
         [SerializeField] private Vector2 lowPassCutoffRange = new(1200f, 22000f);
 
+        [Header("Summon / Release Presentation")]
+        [SerializeField, Range(0.1f, 2f)] private float releaseDuration = 0.55f;
+        [SerializeField, Range(0f, 3f)] private float releaseDriftSpeed = 0.8f;
+
         private readonly List<PixelWaterGPU> waterLayers = new();
         private Rigidbody2D body;
         private SpriteRenderer spriteRenderer;
@@ -53,6 +62,9 @@ namespace PixelOcean
         private float laneChangeElapsed;
         private bool changingLane;
         private bool initialised;
+        private bool releasing;
+
+        public bool IsReleasing => releasing;
 
         public void Initialise(int requestedLane, AudioClip musicClip)
         {
@@ -98,6 +110,123 @@ namespace PixelOcean
             initialised = true;
         }
 
+        public void InitialiseSummoned(
+            int requestedLane,
+            AudioClip musicClip,
+            Transform summonedBy,
+            Vector3 summonPosition)
+        {
+            Initialise(requestedLane, musicClip);
+
+            if (!initialised)
+                return;
+
+            player = summonedBy;
+
+            Vector2 position = summonPosition;
+            float minimumX = GetMinimumX(laneIndex);
+            float maximumX = GetMaximumX(laneIndex);
+            position.x = Mathf.Clamp(
+                position.x,
+                minimumX,
+                maximumX);
+            position.y =
+                GetLaneCentreY(laneIndex, position.x) +
+                laneOffset;
+
+            body.position = position;
+            transform.position = position;
+
+            if (summonedBy != null)
+            {
+                direction =
+                    summonedBy.position.x >= position.x
+                        ? 1f
+                        : -1f;
+            }
+        }
+
+        public void BeginRelease()
+        {
+            if (releasing)
+                return;
+
+            StartCoroutine(ReleaseRoutine());
+        }
+
+        private IEnumerator ReleaseRoutine()
+        {
+            releasing = true;
+            changingLane = false;
+
+            float elapsed = 0f;
+            Color startColour =
+                spriteRenderer != null
+                    ? spriteRenderer.color
+                    : Color.white;
+            float startVolume =
+                musicSource != null
+                    ? musicSource.volume
+                    : 0f;
+
+            while (elapsed < releaseDuration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.Clamp01(
+                    elapsed /
+                    Mathf.Max(0.01f, releaseDuration));
+                float eased =
+                    Mathf.SmoothStep(0f, 1f, t);
+
+                Vector2 position =
+                    body != null
+                        ? body.position
+                        : (Vector2)transform.position;
+
+                position.x +=
+                    direction *
+                    releaseDriftSpeed *
+                    Time.unscaledDeltaTime;
+                position.y -=
+                    releaseDriftSpeed *
+                    0.18f *
+                    Time.unscaledDeltaTime;
+
+                if (body != null)
+                    body.position = position;
+                transform.position = position;
+
+                if (musicSource != null)
+                    musicSource.volume =
+                        Mathf.Lerp(
+                            startVolume,
+                            0f,
+                            eased);
+
+                if (spriteRenderer != null)
+                {
+                    Color faded = startColour;
+                    faded.a =
+                        Mathf.Lerp(
+                            startColour.a,
+                            0f,
+                            eased);
+                    spriteRenderer.color = faded;
+                }
+
+                yield return null;
+            }
+
+            Released?.Invoke(this);
+            Destroy(gameObject);
+        }
+
+        private void OnDestroy()
+        {
+            Released?.Invoke(this);
+            Released = null;
+        }
+
         private void Awake() => ResolveReferences();
         private void Start() { if (!initialised) Initialise(1, Resources.Load<AudioClip>("Audio/Music/Death Surfer")); }
 
@@ -119,8 +248,12 @@ namespace PixelOcean
 
         private void FixedUpdate()
         {
-            if (!initialised || waterLayers.Count < 2)
+            if (!initialised ||
+                releasing ||
+                waterLayers.Count < 2)
+            {
                 return;
+            }
 
             FindPlayer();
             Vector2 position = body.position;

@@ -1,0 +1,13 @@
+PLAYER MUSIC BOARD SUMMON
+
+Controls:
+- Xbox / controller LB: summon or release the boombox surfboard
+- Keyboard M: summon or release the boombox surfboard
+
+Behavior:
+- Strange Tide unlocks the summon; it no longer forces the board to spawn.
+- First press summons the board beside Chuck on Chuck's current lane.
+- Music retains its spatial distance, stereo pan, and low-pass presentation.
+- Second press releases it with a short audio fade, sprite fade, and drift.
+- Water Slash remains RB / keyboard R.
+- Existing SpawnOnce calls remain compatible for developer testing.

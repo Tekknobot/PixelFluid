@@ -1,0 +1,16 @@
+DEVELOPER MUSIC BOARD + UNLOCK NOTICE
+
+Developer menu:
+- Added Toggle Music Board [LB / M].
+- This action unlocks the board controller and summons/releases it immediately.
+
+Unlock All Mechanics:
+- Still unlocks every SurfAbility.
+- Also unlocks LB / M music-board summoning.
+- Chuck shows:
+    ALL MECHANICS UNLOCKED
+    LB / M: MUSIC BOARD
+
+Additional:
+- Developer board toggle shows summoned/released feedback.
+- Added UnityEngine.Random alias to BoomboxSurferSwimmer.

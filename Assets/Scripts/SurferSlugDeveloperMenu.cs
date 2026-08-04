@@ -9,7 +9,7 @@ namespace PixelOcean
     [DisallowMultipleComponent]
     public sealed class SurferSlugDeveloperMenu : MonoBehaviour
     {
-        private const int MenuItemCount = 8;
+        private const int MenuItemCount = 9;
         private const string DeveloperUnlockedKey = "SurferSlug.DeveloperUnlocked";
 
         private static SurferSlugDeveloperMenu instance;
@@ -187,25 +187,42 @@ namespace PixelOcean
                     break;
                 case 2:
                     SurfAbilityProgression.Instance?.DebugUnlockAll();
+                    BoomboxSurferSpawner.UnlockSummoning();
+                    unlockNoticeUntil =
+                        Time.unscaledTime + 2.25f;
                     break;
+
                 case 3:
                     AirTrickScoreSystem.Instance?.DebugMaxFlow();
                     break;
+
                 case 4:
                     SetVisible(false);
-                    FindFirstObjectByType<SurfDayProgressionDirector>()?.DebugNextChapter();
+                    FindFirstObjectByType<SurfDayProgressionDirector>()?
+                        .DebugNextChapter();
                     break;
+
                 case 5:
                     SetVisible(false);
-                    FindFirstObjectByType<SurfDayProgressionDirector>()?.DebugSpawnBoss();
+                    FindFirstObjectByType<SurfDayProgressionDirector>()?
+                        .DebugSpawnBoss();
                     break;
+
                 case 6:
                     SetVisible(false);
-                    FindFirstObjectByType<SurfDayProgressionDirector>()?.DebugNextDay();
+                    FindFirstObjectByType<SurfDayProgressionDirector>()?
+                        .DebugNextDay();
                     break;
+
                 case 7:
                     SetVisible(false);
-                    FindFirstObjectByType<SurfDayProgressionDirector>()?.DebugResetCurrentDay();
+                    FindFirstObjectByType<SurfDayProgressionDirector>()?
+                        .DebugResetCurrentDay();
+                    break;
+
+                case 8:
+                    SetVisible(false);
+                    BoomboxSurferSpawner.DebugToggleBoard();
                     break;
             }
         }
@@ -275,7 +292,7 @@ namespace PixelOcean
             }
 
             const float panelWidth = 430f;
-            const float panelHeight = 610f;
+            const float panelHeight = 655f;
 
             Rect panel = new Rect(
                 (Screen.width - panelWidth) * 0.5f,
@@ -302,6 +319,9 @@ namespace PixelOcean
             DrawMenuButton(5, "Spawn Current Day Boss");
             DrawMenuButton(6, "Next Day");
             DrawMenuButton(7, "Reset Current Day");
+            DrawMenuButton(
+                8,
+                "Toggle Music Board  [LB / M]");
 
             GUILayout.Space(10f);
             SurfDayProgressionDirector director = FindFirstObjectByType<SurfDayProgressionDirector>();

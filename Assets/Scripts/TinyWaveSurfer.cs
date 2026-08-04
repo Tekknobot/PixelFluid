@@ -88,6 +88,16 @@ namespace PixelOcean
         [Tooltip("Extra board yaw while idle, making Chuck continuously correct his balance on the water.")]
         [SerializeField, Range(0f, 8f)] private float idleBalanceLean = 1.6f;
 
+        [Header("Air Trick Landing Momentum")]
+        [Tooltip("How much airborne horizontal speed is retained when the board reconnects with the wave.")]
+        [SerializeField, Range(0f, 1.5f)] private float landingMomentumRetention = 0.92f;
+        [Tooltip("Seconds of reduced water drag after landing so momentum carries through instead of stopping immediately.")]
+        [SerializeField, Range(0f, 2f)] private float landingMomentumCarryDuration = 0.72f;
+        [Tooltip("Drag used during the short post-landing carry window.")]
+        [SerializeField, Range(0.05f, 8f)] private float landingMomentumDrag = 0.85f;
+        [Tooltip("Maximum carried landing speed, expressed as a multiple of normal player speed.")]
+        [SerializeField, Range(0.5f, 3f)] private float maximumLandingSpeedMultiplier = 1.45f;
+
         [Header("Water-Like Vertical Motion")]
         [Tooltip("How quickly Chuck settles toward the sampled wave height while riding. Higher values follow steep waves more tightly.")]
         [SerializeField, Range(0.03f, 0.5f)] private float verticalWaterSmoothTime = 0.11f;
@@ -110,6 +120,12 @@ namespace PixelOcean
         [SerializeField, Range(0f, 0.2f)] private float chargeShakeAmount = 0.035f;
         [SerializeField, Range(1f, 80f)] private float chargeShakeFrequency = 32f;
         [SerializeField, Range(0f, 45f)] private float skidLeanDegrees = 18f;
+        [Tooltip("Allows Chuck to keep steering and carrying speed while charging the water skid.")]
+        [SerializeField] private bool allowMovementWhileCharging = true;
+        [Tooltip("Movement speed multiplier while the skid is charging.")]
+        [SerializeField, Range(0.1f, 1f)] private float chargingMovementMultiplier = 0.72f;
+        [Tooltip("Acceleration multiplier while steering during a charge.")]
+        [SerializeField, Range(0.1f, 1f)] private float chargingAccelerationMultiplier = 0.62f;
 
         [Header("Player Air Tricks")]
         [Tooltip("Maximum extra rotation controlled with the right stick while airborne.")]
@@ -198,6 +214,8 @@ namespace PixelOcean
         [SerializeField, Min(1)] private int maximumHealth = 3;
         [SerializeField, Min(1)] private int sharkHitDamage = 1;
         [SerializeField, Min(0f)] private float hitInvulnerability = 0.8f;
+        [Tooltip("Extra protection after finishing a lane switch so overlapping enemies cannot hit Chuck on the arrival frame.")]
+        [SerializeField, Min(0f)] private float laneSwitchLandingInvulnerability = 0.65f;
         [SerializeField, Min(0.02f)] private float hitFlashDuration = 0.34f;
         [SerializeField, Min(0.01f)] private float hitFlashInterval = 0.055f;
         [SerializeField, Min(0f)] private float hitBumpDistance = 0.24f;
@@ -446,6 +464,7 @@ namespace PixelOcean
         private bool previousLayerDownHeld;
         private bool layerSwitchInputLocked;
         private float playerHorizontalVelocity;
+        private float landingMomentumCarryTimer;
         private float verticalWaterVelocity;
         private float smoothedRideY;
         private bool smoothedRideYInitialised;
@@ -523,10 +542,39 @@ namespace PixelOcean
         public float TravelDirection => direction;
         public bool IsDead => state == RiderState.Dead;
         public bool IsPlayerControlled => playerControlled && !aiControlled;
+
+        /// <summary>
+        /// Shows a short visible gameplay notification through the surfer's
+        /// existing speech-bubble presentation.
+        /// </summary>
+        public void ShowGameplayNotification(
+            string message,
+            float duration = 3f)
+        {
+            if (string.IsNullOrWhiteSpace(message))
+                return;
+
+            if (speechBubble == null)
+            {
+                speechBubble =
+                    GetComponent<SurferSpeechBubble>();
+
+                if (speechBubble == null)
+                {
+                    speechBubble =
+                        gameObject.AddComponent<SurferSpeechBubble>();
+                }
+            }
+
+            speechBubble.Show(message, duration);
+        }
+
         public bool IsAIControlled => aiControlled;
         public int CurrentHealth => currentHealth;
         public int MaximumHealth => Mathf.Max(1, maximumHealth);
         public bool IsSwitchingWave => state == RiderState.SwitchingWave;
+        public bool IsLaneSwitchInvulnerable =>
+            state == RiderState.SwitchingWave;
         public bool IsObstacleJumping => obstacleJumpActive && state == RiderState.TurningTrick;
         public bool IsAirborneDoingTricks =>
             state == RiderState.TurningTrick &&
@@ -848,6 +896,7 @@ namespace PixelOcean
         public bool TakeSharkHit(Vector2 sharkPosition)
         {
             if (state == RiderState.Dead ||
+                IsLaneSwitchInvulnerable ||
                 IsAirborneDoingTricks ||
                 Time.time < invulnerableUntil)
             {
@@ -883,6 +932,7 @@ namespace PixelOcean
         public bool TakeSquidComboBeat(Vector2 squidPosition, bool applyDamage)
         {
             if (state == RiderState.Dead ||
+                IsLaneSwitchInvulnerable ||
                 IsAirborneDoingTricks)
             {
                 return false;
@@ -1526,8 +1576,11 @@ namespace PixelOcean
 
         public bool DieFromShark(Vector2 sharkPosition)
         {
-            if (state == RiderState.Dead)
+            if (state == RiderState.Dead ||
+                IsLaneSwitchInvulnerable)
+            {
                 return false;
+            }
 
             state = RiderState.Dead;
             playerIdleTimer = 0f;
@@ -1553,8 +1606,11 @@ namespace PixelOcean
 
         public bool DieFromAbduction(Vector2 ufoPosition)
         {
-            if (state == RiderState.Dead)
+            if (state == RiderState.Dead ||
+                IsLaneSwitchInvulnerable)
+            {
                 return false;
+            }
 
             state = RiderState.Dead;
             playerIdleTimer = 0f;
@@ -1912,6 +1968,8 @@ namespace PixelOcean
             transform.localScale = livingScale;
             direction = 1f;
             state = RiderState.Riding;
+            playerHorizontalVelocity = 0f;
+            landingMomentumCarryTimer = 0f;
             UpdateAnimation(false, true);
             deathTimer = 0f;
             respawnTimer = 0f;
@@ -2120,6 +2178,13 @@ namespace PixelOcean
 
             bool horizontalInputActive = Mathf.Abs(horizontal) > 0.05f;
 
+            if (landingMomentumCarryTimer > 0f)
+            {
+                landingMomentumCarryTimer = Mathf.Max(
+                    0f,
+                    landingMomentumCarryTimer - dt);
+            }
+
             if (!specialCharging && !specialSkidding)
             {
                 float targetSpeed;
@@ -2151,7 +2216,9 @@ namespace PixelOcean
                         -maximumIdleDriftSpeed,
                         maximumIdleDriftSpeed);
 
-                    response = idleWaterDrag;
+                    response = landingMomentumCarryTimer > 0f
+                        ? landingMomentumDrag
+                        : idleWaterDrag;
                 }
 
                 playerHorizontalVelocity = Mathf.MoveTowards(
@@ -2471,12 +2538,51 @@ namespace PixelOcean
             if (specialHeld && !specialSkidding)
             {
                 specialCharging = true;
-                specialChargeTime = Mathf.Min(maximumSkidChargeTime, specialChargeTime + dt);
-                playerHorizontalVelocity = Mathf.MoveTowards(
-                    playerHorizontalVelocity, 0f, playerDeceleration * 2f * dt);
+                specialChargeTime = Mathf.Min(
+                    maximumSkidChargeTime,
+                    specialChargeTime + dt);
 
-                if (Mathf.Abs(horizontalInput) >= gamepadDeadZone)
-                    direction = Mathf.Sign(horizontalInput);
+                if (allowMovementWhileCharging)
+                {
+                    bool hasChargeInput =
+                        Mathf.Abs(horizontalInput) >= gamepadDeadZone;
+
+                    float chargeTargetSpeed = hasChargeInput
+                        ? horizontalInput *
+                          playerScrollSpeed *
+                          chargingMovementMultiplier
+                        : playerHorizontalVelocity;
+
+                    float chargeResponse =
+                        playerAcceleration *
+                        chargingAccelerationMultiplier;
+
+                    playerHorizontalVelocity = Mathf.MoveTowards(
+                        playerHorizontalVelocity,
+                        chargeTargetSpeed,
+                        chargeResponse * dt);
+
+                    if (hasChargeInput)
+                        direction = Mathf.Sign(horizontalInput);
+
+                    // Charging previously changed velocity but returned before
+                    // the normal movement block could apply it to the surfer.
+                    // Apply the charged movement here so Chuck physically keeps
+                    // gliding and steering while the button is held.
+                    localRideX += playerHorizontalVelocity * dt;
+                    localRideX = ClampPlayerXToSandbox(localRideX);
+                    RebindToNearestHorizontalSection();
+                }
+                else
+                {
+                    playerHorizontalVelocity = Mathf.MoveTowards(
+                        playerHorizontalVelocity,
+                        0f,
+                        playerDeceleration * 2f * dt);
+
+                    if (Mathf.Abs(horizontalInput) >= gamepadDeadZone)
+                        direction = Mathf.Sign(horizontalInput);
+                }
 
                 return;
             }
@@ -2624,6 +2730,7 @@ namespace PixelOcean
         public void StopArenaHorizontalMomentum()
         {
             playerHorizontalVelocity = 0f;
+            landingMomentumCarryTimer = 0f;
             specialSkidding = false;
             specialCharging = false;
             specialChargeTime = 0f;
@@ -3305,7 +3412,26 @@ namespace PixelOcean
             currentAirTrickStateHash = 0;
             queuedAirTrickStateHash = 0;
 
-            playerHorizontalVelocity = obstacleAirHorizontalVelocity;
+            float maximumLandingSpeed =
+                playerScrollSpeed *
+                Mathf.Max(0.5f, maximumLandingSpeedMultiplier);
+
+            playerHorizontalVelocity = Mathf.Clamp(
+                obstacleAirHorizontalVelocity *
+                landingMomentumRetention,
+                -maximumLandingSpeed,
+                maximumLandingSpeed);
+
+            if (Mathf.Abs(playerHorizontalVelocity) > 0.03f)
+            {
+                direction = Mathf.Sign(playerHorizontalVelocity);
+                landingMomentumCarryTimer =
+                    Mathf.Max(0f, landingMomentumCarryDuration);
+            }
+            else
+            {
+                landingMomentumCarryTimer = 0f;
+            }
 
             if (playerControlled && AirTrickScoreSystem.Instance != null)
             {
@@ -3442,6 +3568,10 @@ namespace PixelOcean
 
             state = RiderState.Riding;
             stateTimer = 0f;
+
+            invulnerableUntil = Mathf.Max(
+                invulnerableUntil,
+                Time.time + Mathf.Max(0f, laneSwitchLandingInvulnerability));
 
             if (glideWaveSwitchActive)
             {

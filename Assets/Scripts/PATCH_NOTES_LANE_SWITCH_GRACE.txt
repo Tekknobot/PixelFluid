@@ -1,0 +1,16 @@
+LANE SWITCH LANDING GRACE
+
+All previous combined changes are retained:
+- Reliable Rubber Duck boss spawning and arena construction
+- Full invulnerability during RiderState.SwitchingWave
+- Shadow Surfer item magnet and enemy attraction
+- Air-trick landing momentum carry
+
+New:
+- Chuck receives an additional configurable grace period after arriving on the
+  destination lane.
+- This prevents an enemy already overlapping the arrival point from dealing
+  damage on the first grounded frame.
+
+Default:
+Lane Switch Landing Invulnerability: 0.65 seconds

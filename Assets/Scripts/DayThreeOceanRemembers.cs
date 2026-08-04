@@ -389,6 +389,22 @@ namespace PixelOcean
 
         [SerializeField, Range(0.05f, 0.6f)] private float shadowVerticalSmoothTime = 0.18f;
         [SerializeField, Range(1f, 24f)] private float shadowMaximumVerticalSpeed = 7f;
+
+        [Header("Shadow Magnet")]
+        [Tooltip("Maximum distance at which the Shadow pulls ocean items toward itself.")]
+        [SerializeField, Range(1f, 12f)] private float itemMagnetRadius = 5.5f;
+        [Tooltip("Speed used to pull collectible ocean items toward the Shadow.")]
+        [SerializeField, Range(0.1f, 12f)] private float itemMagnetSpeed = 4.5f;
+        [Tooltip("Distance at which a pulled item is deposited into Chuck's inventory.")]
+        [SerializeField, Range(0.1f, 1.5f)] private float itemCollectionDistance = 0.48f;
+        [Tooltip("Radius in which ordinary sea enemies are gently drawn toward the Shadow.")]
+        [SerializeField, Range(1f, 14f)] private float enemyAttractionRadius = 6.5f;
+        [Tooltip("Subtle pull applied to enemies without overriding their own AI.")]
+        [SerializeField, Range(0.05f, 3f)] private float enemyAttractionSpeed = 0.55f;
+        [Tooltip("How often magnet candidates are refreshed.")]
+        [SerializeField, Range(0.05f, 1f)] private float magnetRefreshInterval = 0.18f;
+
+        private float nextMagnetRefreshTime;
         private int appliedLane = -1;
         private Motion currentMotion = Motion.Idle;
 
@@ -538,6 +554,120 @@ namespace PixelOcean
             }
 
             SyncVisualsToPlayer(chapter);
+            UpdateShadowMagnet();
+        }
+
+        private void UpdateShadowMagnet()
+        {
+            if (player == null ||
+                player.IsDead ||
+                Time.unscaledTime < nextMagnetRefreshTime)
+            {
+                return;
+            }
+
+            nextMagnetRefreshTime =
+                Time.unscaledTime + Mathf.Max(0.05f, magnetRefreshInterval);
+
+            PullAndCollectOceanItems();
+
+            PullThreats<SharkLaneSwimmer>();
+            PullThreats<GiantSquidLaneSwimmer>();
+            PullThreats<BloodSharkLaneSwimmer>();
+            PullThreats<TransparentSquidLaneSwimmer>();
+            PullThreats<StingrayLaneSwimmer>();
+            PullThreats<BloodfishSwimmer>();
+            PullThreats<JellyfishSwimmer>();
+        }
+
+        private void PullAndCollectOceanItems()
+        {
+            OceanItemBehaviour[] items =
+                FindObjectsByType<OceanItemBehaviour>(
+                    FindObjectsInactive.Exclude,
+                    FindObjectsSortMode.None);
+
+            Vector2 shadowPosition = transform.position;
+            float radiusSquared = itemMagnetRadius * itemMagnetRadius;
+
+            foreach (OceanItemBehaviour item in items)
+            {
+                if (item == null || !item.isActiveAndEnabled)
+                    continue;
+
+                Vector2 itemPosition = item.transform.position;
+                Vector2 offset = shadowPosition - itemPosition;
+                float distanceSquared = offset.sqrMagnitude;
+
+                if (distanceSquared > radiusSquared)
+                    continue;
+
+                float distance = Mathf.Sqrt(distanceSquared);
+                if (distance <= itemCollectionDistance)
+                {
+                    item.Collect(player);
+                    continue;
+                }
+
+                Vector2 targetPosition = Vector2.MoveTowards(
+                    itemPosition,
+                    shadowPosition,
+                    itemMagnetSpeed * magnetRefreshInterval);
+
+                Rigidbody2D itemBody = item.GetComponent<Rigidbody2D>();
+                if (itemBody != null)
+                    itemBody.position = targetPosition;
+                else
+                    item.transform.position = targetPosition;
+            }
+        }
+
+        private void PullThreats<T>() where T : MonoBehaviour
+        {
+            T[] threats = FindObjectsByType<T>(
+                FindObjectsInactive.Exclude,
+                FindObjectsSortMode.None);
+
+            Vector2 shadowPosition = transform.position;
+            float radiusSquared =
+                enemyAttractionRadius * enemyAttractionRadius;
+
+            foreach (T threat in threats)
+            {
+                if (threat == null || !threat.isActiveAndEnabled)
+                    continue;
+
+                Vector2 threatPosition = threat.transform.position;
+                Vector2 offset = shadowPosition - threatPosition;
+
+                if (offset.sqrMagnitude > radiusSquared ||
+                    offset.sqrMagnitude < 0.01f)
+                {
+                    continue;
+                }
+
+                // This is intentionally a gentle positional influence. The enemy
+                // keeps its normal pursuit, attack, lane and animation logic, but
+                // its route bends toward the Shadow like a decoy magnet.
+                Vector2 pulledPosition = Vector2.MoveTowards(
+                    threatPosition,
+                    shadowPosition,
+                    enemyAttractionSpeed * magnetRefreshInterval);
+
+                Rigidbody2D threatBody = threat.GetComponent<Rigidbody2D>();
+                if (threatBody != null &&
+                    threatBody.bodyType == RigidbodyType2D.Kinematic)
+                {
+                    threatBody.position = pulledPosition;
+                }
+                else
+                {
+                    threat.transform.position = new Vector3(
+                        pulledPosition.x,
+                        pulledPosition.y,
+                        threat.transform.position.z);
+                }
+            }
         }
 
         private int GetShadowLane(SurfDayProgressionDirector.Chapter chapter)

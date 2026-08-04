@@ -1,0 +1,21 @@
+UNIFIED BOSS ENCOUNTER PATCH
+
+SurfDayProgressionDirector now uses one shared BuildBossEncounter coroutine for:
+- Normal Final Wave progression
+- Continue/load restoration at Final Wave
+- Developer Spawn Boss
+
+The shared path:
+- Applies the correct stage mechanics
+- Gives the complete combat loadout only for Developer Spawn Boss
+- Sets Final Wave state and synchronizes day/night
+- Stops hostile spawners and retreats ordinary sea life
+- Optionally clears stale bosses, minions, spawners and arenas
+- Creates the correct Day 1 or Day 2 boss
+- Waits for the asynchronous Rubber Duck spawner to finish
+- Verifies the boss exists
+- Verifies or repairs BossArenaPrison
+- Applies upgrades to active players
+- Saves only after the encounter is ready
+
+DebugNextChapter was left unchanged.
