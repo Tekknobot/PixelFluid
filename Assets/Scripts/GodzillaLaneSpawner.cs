@@ -36,6 +36,11 @@ namespace PixelOcean
             SpriteRenderer renderer = spawnedGodzilla.AddComponent<SpriteRenderer>();
             renderer.sprite = movement[0];
 
+            // Keep the Reaper invisible at its ordinary off-screen spawn point.
+            // BossArenaPrison enables it only after relocating it inside the arena,
+            // then fades every boss renderer from zero alpha.
+            renderer.enabled = false;
+
             spawnedGodzilla.AddComponent<InterWaveRenderItem>();
             GodzillaSpriteAnimation animation = spawnedGodzilla.AddComponent<GodzillaSpriteAnimation>();
             animation.SetFrames(movement, attack);

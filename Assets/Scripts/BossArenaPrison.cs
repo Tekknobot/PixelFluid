@@ -28,9 +28,9 @@ namespace PixelOcean
 
         [Header("Arena")]
         [SerializeField] private ArenaTheme theme = ArenaTheme.Reaper;
-        [SerializeField, Min(6f)] private float arenaWidth = 16f;
+        [SerializeField, Min(6f)] private float arenaWidth = 18f;
         [Tooltip("Arena width measured in visible camera widths. Values above 1 allow meaningful camera travel.")]
-        [SerializeField, Range(1.15f, 3f)] private float arenaWidthInCameraWidths = 1.65f;
+        [SerializeField, Range(1.15f, 3f)] private float arenaWidthInCameraWidths = 1.85f;
         [SerializeField, Min(0.25f)] private float edgePadding = 0.8f;
         [SerializeField, Min(0.25f)] private float escapeDistance = 1.25f;
         [SerializeField, Min(0f)] private float introLockDuration = 1.25f;
@@ -431,7 +431,7 @@ namespace PixelOcean
             if (gameplayCamera != null && gameplayCamera.orthographic)
             {
                 float cameraWidth = gameplayCamera.orthographicSize * 2f * gameplayCamera.aspect;
-                float desiredWidth = cameraWidth * Mathf.Max(1.15f, arenaWidthInCameraWidths);
+                float desiredWidth = cameraWidth * Mathf.Max(1.85f, arenaWidthInCameraWidths);
                 arenaWidth = Mathf.Max(6f, arenaWidth, desiredWidth);
             }
 

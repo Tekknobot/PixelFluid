@@ -10,7 +10,7 @@ namespace PixelOcean
     public sealed class BossHealthBar : MonoBehaviour
     {
         [Header("Placement")]
-        [SerializeField] private Vector3 localOffset = new(0f, 1.05f, 0f);
+        [SerializeField] private Vector3 localOffset = new(0f, 2.3125f, 0f);
         [SerializeField] private Vector2 barSize = new(1.35f, 0.11f);
 
         [Header("Appearance")]

@@ -490,10 +490,9 @@ namespace PixelOcean
             Image alertBarImage = alertBar.AddComponent<Image>();
             alertBarImage.color = new Color(0.88f, 0.19f, 0.09f, 1f);
 
-            Text alertLabel = AddText(alertBar.transform, "WARNING", 28, 74f);
-            alertLabel.color = Color.white;
-            alertLabel.alignment = TextAnchor.MiddleCenter;
-            alertLabel.fontStyle = FontStyle.Bold;
+            TextMeshProUGUI alertLabel = CreateWarningTmpText(
+                alertBar.transform, "WARNING", 30f, 74f,
+                PixelFontLibrary.TmpBold, TextAlignmentOptions.Center, Color.white);
             Stretch(alertLabel.rectTransform);
 
             GameObject content = CreateUIObject(card.transform, "Warning Content");
@@ -509,22 +508,18 @@ namespace PixelOcean
             contentLayout.childForceExpandWidth = true;
             contentLayout.childForceExpandHeight = false;
 
-            Text title = AddText(content.transform, "START A NEW GAME?", 38, 62f);
-            title.color = Color.white;
-            title.fontStyle = FontStyle.Bold;
-            title.alignment = TextAnchor.MiddleCenter;
+            TextMeshProUGUI title = CreateWarningTmpText(
+                content.transform, "START A NEW GAME?", 40f, 62f,
+                PixelFontLibrary.TmpBold, TextAlignmentOptions.Center, Color.white);
 
-            Text message = AddText(
+            TextMeshProUGUI message = CreateWarningTmpText(
                 content.transform,
                 "A SAVE FILE ALREADY EXISTS.\nSTARTING A NEW GAME WILL ERASE YOUR CURRENT PROGRESS.",
-                22,
-                104f);
-
-            message.color = new Color(1f, 0.86f, 0.68f, 1f);
-            message.alignment = TextAnchor.MiddleCenter;
-            message.horizontalOverflow = HorizontalWrapMode.Wrap;
-            message.verticalOverflow = VerticalWrapMode.Truncate;
-            message.lineSpacing = 1.1f;
+                23f, 104f, PixelFontLibrary.TmpRegular,
+                TextAlignmentOptions.Center, new Color(1f, 0.86f, 0.68f, 1f));
+            message.enableWordWrapping = true;
+            message.overflowMode = TextOverflowModes.Truncate;
+            message.lineSpacing = 8f;
 
             GameObject divider = CreateUIObject(card.transform, "Divider");
             LayoutElement dividerElement = divider.AddComponent<LayoutElement>();
@@ -566,6 +561,7 @@ namespace PixelOcean
                 new Color(0.78f, 0.16f, 0.08f, 1f),
                 Color.white);
 
+            ConfigureWarningButtonNavigation();
             saveWarningPanel.SetActive(false);
         }
 
@@ -579,7 +575,7 @@ namespace PixelOcean
 
             Image image = button.GetComponent<Image>();
             if (image != null)
-                image.color = normalColor;
+                image.color = Color.white;
 
             ColorBlock colors = button.colors;
             colors.normalColor = normalColor;
@@ -595,23 +591,27 @@ namespace PixelOcean
             colors.fadeDuration = 0.08f;
             button.colors = colors;
 
-            Text label = button.GetComponentInChildren<Text>(true);
+            TextMeshProUGUI label = button.GetComponentInChildren<TextMeshProUGUI>(true);
             if (label != null)
             {
+                label.font = PixelFontLibrary.TmpSemiBold != null
+                    ? PixelFontLibrary.TmpSemiBold
+                    : TMP_Settings.defaultFontAsset;
                 label.color = textColor;
-                label.fontStyle = FontStyle.Bold;
-                label.resizeTextForBestFit = true;
-                label.resizeTextMinSize = 16;
-                label.resizeTextMaxSize = 24;
-                label.alignment = TextAnchor.MiddleCenter;
+                label.fontStyle = FontStyles.Normal;
+                label.enableAutoSizing = true;
+                label.fontSizeMin = 16f;
+                label.fontSizeMax = 25f;
+                label.alignment = TextAlignmentOptions.Center;
             }
 
             Outline outline = button.GetComponent<Outline>();
             if (outline == null)
                 outline = button.gameObject.AddComponent<Outline>();
 
-            outline.effectColor = new Color(0f, 0f, 0f, 0.65f);
+            outline.effectColor = new Color(0f, 0f, 0f, 0.78f);
             outline.effectDistance = new Vector2(3f, -3f);
+            outline.useGraphicAlpha = false;
         }
 
 
@@ -636,8 +636,45 @@ namespace PixelOcean
             bool selected = UnityEngine.EventSystems.EventSystem.current != null &&
                             UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject == button.gameObject;
 
-            outline.effectColor = selected ? Color.white : new Color(0f,0f,0f,0.65f);
-            outline.effectDistance = selected ? new Vector2(5f,-5f) : new Vector2(3f,-3f);
+            outline.effectColor = selected
+                ? Color.white
+                : new Color(0f, 0f, 0f, 0.78f);
+            outline.effectDistance = selected
+                ? new Vector2(7f, -7f)
+                : new Vector2(3f, -3f);
+            outline.useGraphicAlpha = false;
+
+            RectTransform rect = button.transform as RectTransform;
+            if (rect != null)
+            {
+                Vector3 targetScale = selected ? Vector3.one * 1.045f : Vector3.one;
+                rect.localScale = Vector3.Lerp(
+                    rect.localScale,
+                    targetScale,
+                    1f - Mathf.Exp(-18f * Time.unscaledDeltaTime));
+            }
+        }
+
+        private void ConfigureWarningButtonNavigation()
+        {
+            if (cancelNewGameButton == null || confirmNewGameButton == null)
+                return;
+
+            Navigation cancelNavigation = cancelNewGameButton.navigation;
+            cancelNavigation.mode = Navigation.Mode.Explicit;
+            cancelNavigation.selectOnLeft = confirmNewGameButton;
+            cancelNavigation.selectOnRight = confirmNewGameButton;
+            cancelNavigation.selectOnUp = confirmNewGameButton;
+            cancelNavigation.selectOnDown = confirmNewGameButton;
+            cancelNewGameButton.navigation = cancelNavigation;
+
+            Navigation confirmNavigation = confirmNewGameButton.navigation;
+            confirmNavigation.mode = Navigation.Mode.Explicit;
+            confirmNavigation.selectOnLeft = cancelNewGameButton;
+            confirmNavigation.selectOnRight = cancelNewGameButton;
+            confirmNavigation.selectOnUp = cancelNewGameButton;
+            confirmNavigation.selectOnDown = cancelNewGameButton;
+            confirmNewGameButton.navigation = confirmNavigation;
         }
 
         private void ShowSaveWarning()
@@ -1731,11 +1768,51 @@ namespace PixelOcean
         private Button CreatePlainButton(Transform parent, string text, UnityEngine.Events.UnityAction action)
         {
             GameObject go = CreateUIObject(parent, text + " Button");
-            LayoutElement le = go.AddComponent<LayoutElement>(); le.preferredHeight = 72f;
-            Image img = go.AddComponent<Image>(); img.color = new Color(0.16f, 0.15f, 0.18f, 1f);
-            Button button = go.AddComponent<Button>(); button.onClick.AddListener(action);
-            Text label = AddText(go.transform, text, 25, 0f); Stretch(label.rectTransform);
+            LayoutElement layout = go.AddComponent<LayoutElement>();
+            layout.preferredHeight = 72f;
+
+            Image image = go.AddComponent<Image>();
+            image.color = Color.white;
+
+            Button button = go.AddComponent<Button>();
+            button.targetGraphic = image;
+            button.onClick.AddListener(action);
+
+            TextMeshProUGUI label = CreateWarningTmpText(
+                go.transform, text, 25f, 0f, PixelFontLibrary.TmpSemiBold,
+                TextAlignmentOptions.Center, Color.white);
+            Stretch(label.rectTransform);
             return button;
+        }
+
+        private TextMeshProUGUI CreateWarningTmpText(
+            Transform parent,
+            string text,
+            float fontSize,
+            float preferredHeight,
+            TMP_FontAsset font,
+            TextAlignmentOptions alignment,
+            Color color)
+        {
+            GameObject go = CreateUIObject(parent, text + " TMP");
+            if (preferredHeight > 0f)
+            {
+                LayoutElement layout = go.AddComponent<LayoutElement>();
+                layout.preferredHeight = preferredHeight;
+                layout.minHeight = preferredHeight;
+            }
+
+            TextMeshProUGUI label = go.AddComponent<TextMeshProUGUI>();
+            label.font = font != null ? font : TMP_Settings.defaultFontAsset;
+            label.text = text;
+            label.fontSize = fontSize;
+            label.fontStyle = FontStyles.Normal;
+            label.alignment = alignment;
+            label.color = color;
+            label.raycastTarget = false;
+            label.enableWordWrapping = false;
+            label.overflowMode = TextOverflowModes.Overflow;
+            return label;
         }
 
         private void CreateVolumeRow(Transform parent, string label)
