@@ -1,0 +1,6 @@
+PATCH SUMMARY
+
+- Boombox now remains near Chuck while retaining natural independent swimming, bobbing, lane changes, and spatial audio.
+- Boombox refreshes its nearest recycled water section so it is not trapped in an old endless-world segment.
+- PLAY now displays a controller-friendly warning when a Continue save exists. KEEP SAVE cancels; START NEW proceeds.
+- Added RuntimeUiResolutionStandards to normalize every runtime screen-space CanvasScaler to a 1920x1080 reference with balanced width/height matching for HD, QHD, 4K, ultrawide, and high-resolution screens.

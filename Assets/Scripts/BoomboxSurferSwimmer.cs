@@ -31,6 +31,12 @@ namespace PixelOcean
         [SerializeField, Min(1f)] private float playerGrooveRange = 4.5f;
         [SerializeField, Range(0f, 1f)] private float grooveTowardPlayerChance = 0.65f;
 
+        [Header("Natural Player Following")]
+        [SerializeField, Min(0.5f)] private float comfortableFollowDistance = 3.25f;
+        [SerializeField, Min(1f)] private float maximumFollowDistance = 7.5f;
+        [SerializeField, Range(1f, 4f)] private float catchUpSpeedMultiplier = 2.1f;
+        [SerializeField, Min(0.1f)] private float waterSectionRefreshInterval = 0.5f;
+
         [Header("Death Surfer Spatial Music")]
         [SerializeField, Range(0f, 1f)] private float maximumVolume = 0.9f;
         [SerializeField, Min(0f)] private float fullVolumeDistance = 1.25f;
@@ -63,6 +69,7 @@ namespace PixelOcean
         private bool changingLane;
         private bool initialised;
         private bool releasing;
+        private float nextWaterRefreshTime;
 
         public bool IsReleasing => releasing;
 
@@ -256,14 +263,46 @@ namespace PixelOcean
             }
 
             FindPlayer();
+            RefreshWaterLayersWhenNeeded();
+
             Vector2 position = body.position;
-            position.x += direction * speed * Time.fixedDeltaTime;
+            float movementSpeed = speed;
+
+            if (player != null)
+            {
+                float horizontalDelta = player.position.x - position.x;
+                float absoluteDelta = Mathf.Abs(horizontalDelta);
+
+                // The board still swims independently nearby, but turns and catches up
+                // before it can be left behind by the endless world recycling.
+                if (absoluteDelta > comfortableFollowDistance)
+                    direction = Mathf.Sign(horizontalDelta);
+
+                if (absoluteDelta > maximumFollowDistance)
+                {
+                    float catchUp = Mathf.InverseLerp(
+                        maximumFollowDistance,
+                        maximumFollowDistance * 2f,
+                        absoluteDelta);
+                    movementSpeed *= Mathf.Lerp(1f, catchUpSpeedMultiplier, catchUp);
+                }
+            }
+
+            position.x += direction * movementSpeed * Time.fixedDeltaTime;
 
             int boundsLane = changingLane ? Mathf.Min(laneIndex, targetLaneIndex) : laneIndex;
             float minX = GetMinimumX(boundsLane);
             float maxX = GetMaximumX(boundsLane);
-            if (position.x <= minX) { position.x = minX; direction = 1f; }
-            else if (position.x >= maxX) { position.x = maxX; direction = -1f; }
+            if (position.x <= minX)
+            {
+                position.x = minX;
+                direction = player != null && player.position.x < position.x ? -1f : 1f;
+            }
+            else if (position.x >= maxX)
+            {
+                position.x = maxX;
+                direction = player != null && player.position.x > position.x ? 1f : -1f;
+            }
 
             if (!changingLane && Time.time >= nextLaneChangeTime)
                 BeginLaneChange();
@@ -279,6 +318,26 @@ namespace PixelOcean
             transform.rotation = Quaternion.Euler(0f, 0f,
                 Mathf.Sin(Time.time * bobSpeed * 0.72f + bobPhase) * maximumTilt);
             UpdateSpatialMusic(position);
+        }
+
+
+        private void RefreshWaterLayersWhenNeeded()
+        {
+            if (Time.time < nextWaterRefreshTime)
+                return;
+
+            nextWaterRefreshTime = Time.time + Mathf.Max(0.1f, waterSectionRefreshInterval);
+            float sampleX = player != null ? player.position.x : transform.position.x;
+            var nearest = EndlessWaveSections.LayersNearest(sampleX);
+            if (nearest == null || nearest.Count < 2)
+                return;
+
+            waterLayers.Clear();
+            waterLayers.AddRange(nearest);
+            int laneCount = waterLayers.Count - 1;
+            laneIndex = Mathf.Clamp(laneIndex, 0, laneCount - 1);
+            targetLaneIndex = Mathf.Clamp(targetLaneIndex, 0, laneCount - 1);
+            renderItem.SetLane(changingLane ? targetLaneIndex : laneIndex);
         }
 
         private void FindPlayer()

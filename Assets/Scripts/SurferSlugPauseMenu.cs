@@ -35,6 +35,9 @@ namespace PixelOcean
         private CanvasGroup titleCreditGroup;
         private GameObject controlsPanel;
         private GameObject settingsPanel;
+        private GameObject saveWarningPanel;
+        private Button confirmNewGameButton;
+        private Button cancelNewGameButton;
         private Button playButton;
         private Button continueButton;
         private Button controlsButton;
@@ -112,6 +115,12 @@ namespace PixelOcean
             if (SurferSlugDeveloperMenu.IsOpen)
             {
                 UpdateDeveloperCheat();
+                return;
+            }
+
+            if (menuVisible && saveWarningPanel != null && saveWarningPanel.activeSelf && SubPanelBackPressed())
+            {
+                HideSaveWarning();
                 return;
             }
 
@@ -425,8 +434,208 @@ namespace PixelOcean
             BuildTitleCredits(menuRoot.transform);
             BuildControls(menuRoot.transform);
             BuildSettings(menuRoot.transform);
+            BuildSaveWarning(menuRoot.transform);
         }
 
+
+        private void BuildSaveWarning(Transform parent)
+        {
+            saveWarningPanel = CreateUIObject(parent, "Existing Save Warning");
+            Stretch(saveWarningPanel.GetComponent<RectTransform>());
+
+            Image blocker = saveWarningPanel.AddComponent<Image>();
+            blocker.color = new Color(0f, 0.015f, 0.025f, 0.9f);
+            blocker.raycastTarget = true;
+
+            GameObject card = CreateUIObject(saveWarningPanel.transform, "Warning Card");
+            RectTransform cardRect = card.GetComponent<RectTransform>();
+            cardRect.anchorMin = cardRect.anchorMax = new Vector2(0.5f, 0.5f);
+            cardRect.pivot = new Vector2(0.5f, 0.5f);
+            cardRect.sizeDelta = new Vector2(760f, 430f);
+
+            Image cardImage = card.AddComponent<Image>();
+            cardImage.color = new Color(0.025f, 0.045f, 0.06f, 1f);
+
+            Outline cardOutline = card.AddComponent<Outline>();
+            cardOutline.effectColor = new Color(0.95f, 0.34f, 0.18f, 0.95f);
+            cardOutline.effectDistance = new Vector2(4f, -4f);
+
+            VerticalLayoutGroup layout = card.AddComponent<VerticalLayoutGroup>();
+            layout.padding = new RectOffset(54, 54, 0, 44);
+            layout.spacing = 18f;
+            layout.childAlignment = TextAnchor.UpperCenter;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+
+            GameObject alertBar = CreateUIObject(card.transform, "Alert Bar");
+            LayoutElement alertBarElement = alertBar.AddComponent<LayoutElement>();
+            alertBarElement.preferredHeight = 74f;
+
+            Image alertBarImage = alertBar.AddComponent<Image>();
+            alertBarImage.color = new Color(0.88f, 0.19f, 0.09f, 1f);
+
+            Text alertLabel = AddText(alertBar.transform, "WARNING", 28, 74f);
+            alertLabel.color = Color.white;
+            alertLabel.alignment = TextAnchor.MiddleCenter;
+            alertLabel.fontStyle = FontStyle.Bold;
+            Stretch(alertLabel.rectTransform);
+
+            GameObject content = CreateUIObject(card.transform, "Warning Content");
+            LayoutElement contentElement = content.AddComponent<LayoutElement>();
+            contentElement.preferredHeight = 194f;
+
+            VerticalLayoutGroup contentLayout = content.AddComponent<VerticalLayoutGroup>();
+            contentLayout.padding = new RectOffset(8, 8, 18, 0);
+            contentLayout.spacing = 12f;
+            contentLayout.childAlignment = TextAnchor.UpperCenter;
+            contentLayout.childControlWidth = true;
+            contentLayout.childControlHeight = true;
+            contentLayout.childForceExpandWidth = true;
+            contentLayout.childForceExpandHeight = false;
+
+            Text title = AddText(content.transform, "START A NEW GAME?", 38, 62f);
+            title.color = Color.white;
+            title.fontStyle = FontStyle.Bold;
+            title.alignment = TextAnchor.MiddleCenter;
+
+            Text message = AddText(
+                content.transform,
+                "A SAVE FILE ALREADY EXISTS.\nSTARTING A NEW GAME WILL ERASE YOUR CURRENT PROGRESS.",
+                22,
+                104f);
+
+            message.color = new Color(1f, 0.86f, 0.68f, 1f);
+            message.alignment = TextAnchor.MiddleCenter;
+            message.horizontalOverflow = HorizontalWrapMode.Wrap;
+            message.verticalOverflow = VerticalWrapMode.Truncate;
+            message.lineSpacing = 1.1f;
+
+            GameObject divider = CreateUIObject(card.transform, "Divider");
+            LayoutElement dividerElement = divider.AddComponent<LayoutElement>();
+            dividerElement.preferredHeight = 3f;
+
+            Image dividerImage = divider.AddComponent<Image>();
+            dividerImage.color = new Color(1f, 1f, 1f, 0.12f);
+
+            GameObject row = CreateUIObject(card.transform, "Warning Actions");
+            LayoutElement rowElement = row.AddComponent<LayoutElement>();
+            rowElement.preferredHeight = 86f;
+
+            HorizontalLayoutGroup rowLayout = row.AddComponent<HorizontalLayoutGroup>();
+            rowLayout.spacing = 22f;
+            rowLayout.padding = new RectOffset(10, 10, 4, 4);
+            rowLayout.childAlignment = TextAnchor.MiddleCenter;
+            rowLayout.childControlWidth = true;
+            rowLayout.childControlHeight = true;
+            rowLayout.childForceExpandWidth = true;
+            rowLayout.childForceExpandHeight = true;
+
+            cancelNewGameButton = CreatePlainButton(
+                row.transform,
+                "KEEP SAVE",
+                HideSaveWarning);
+
+            confirmNewGameButton = CreatePlainButton(
+                row.transform,
+                "ERASE & START NEW",
+                ConfirmNewGame);
+
+            StyleWarningButton(
+                cancelNewGameButton,
+                new Color(0.1f, 0.29f, 0.38f, 1f),
+                Color.white);
+
+            StyleWarningButton(
+                confirmNewGameButton,
+                new Color(0.78f, 0.16f, 0.08f, 1f),
+                Color.white);
+
+            saveWarningPanel.SetActive(false);
+        }
+
+        private static void StyleWarningButton(
+            Button button,
+            Color normalColor,
+            Color textColor)
+        {
+            if (button == null)
+                return;
+
+            Image image = button.GetComponent<Image>();
+            if (image != null)
+                image.color = normalColor;
+
+            ColorBlock colors = button.colors;
+            colors.normalColor = normalColor;
+            colors.highlightedColor = Color.Lerp(normalColor, Color.white, 0.16f);
+            colors.pressedColor = Color.Lerp(normalColor, Color.black, 0.18f);
+            colors.selectedColor = Color.Lerp(normalColor, Color.white, 0.1f);
+            colors.disabledColor = new Color(
+                normalColor.r,
+                normalColor.g,
+                normalColor.b,
+                0.45f);
+            colors.colorMultiplier = 1f;
+            colors.fadeDuration = 0.08f;
+            button.colors = colors;
+
+            Text label = button.GetComponentInChildren<Text>(true);
+            if (label != null)
+            {
+                label.color = textColor;
+                label.fontStyle = FontStyle.Bold;
+                label.resizeTextForBestFit = true;
+                label.resizeTextMinSize = 16;
+                label.resizeTextMaxSize = 24;
+                label.alignment = TextAnchor.MiddleCenter;
+            }
+
+            Outline outline = button.GetComponent<Outline>();
+            if (outline == null)
+                outline = button.gameObject.AddComponent<Outline>();
+
+            outline.effectColor = new Color(0f, 0f, 0f, 0.65f);
+            outline.effectDistance = new Vector2(3f, -3f);
+        }
+
+        private void ShowSaveWarning()
+        {
+            if (saveWarningPanel == null)
+                return;
+
+            saveWarningPanel.SetActive(true);
+            if (buttonPanelInputGroup != null)
+            {
+                buttonPanelInputGroup.interactable = false;
+                buttonPanelInputGroup.blocksRaycasts = false;
+            }
+            Select(cancelNewGameButton);
+            inputReadyTime = Time.unscaledTime + 0.12f;
+        }
+
+        private void HideSaveWarning()
+        {
+            if (saveWarningPanel != null)
+                saveWarningPanel.SetActive(false);
+
+            if (buttonPanelInputGroup != null)
+            {
+                buttonPanelInputGroup.interactable = true;
+                buttonPanelInputGroup.blocksRaycasts = true;
+            }
+            Select(playButton);
+            inputReadyTime = Time.unscaledTime + 0.12f;
+        }
+
+        private void ConfirmNewGame()
+        {
+            if (saveWarningPanel != null)
+                saveWarningPanel.SetActive(false);
+
+            StartCoroutine(StartNewAndResume());
+        }
 
         private void BuildRigidAbyssBands(Transform parent)
         {
@@ -1172,6 +1381,13 @@ namespace PixelOcean
                 ResumeGame();
                 return;
             }
+
+            if (SurfStageSaveSystem.HasSave)
+            {
+                ShowSaveWarning();
+                return;
+            }
+
             StartCoroutine(StartNewAndResume());
         }
 
