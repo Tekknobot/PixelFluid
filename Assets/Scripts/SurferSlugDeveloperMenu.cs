@@ -11,16 +11,17 @@ namespace PixelOcean
     [DisallowMultipleComponent]
     public sealed class SurferSlugDeveloperMenu : MonoBehaviour
     {
-        private const int MenuItemCount = 9;
+        private const int MenuItemCount = 8;
         private const string DeveloperUnlockedKey = "SurferSlug.DeveloperUnlocked";
 
-        private static readonly Color PanelColor = new(0f, 0.035f, 0.065f, 0.97f);
-        private static readonly Color ButtonColor = new(0.045f, 0.105f, 0.14f, 0.96f);
-        private static readonly Color SelectedColor = new(0.08f, 0.29f, 0.37f, 1f);
-        private static readonly Color AccentColor = new(0.31f, 0.84f, 0.95f, 1f);
-        private static readonly Color MutedColor = new(0.68f, 0.78f, 0.84f, 1f);
-        private static readonly Color OnColor = new(0.42f, 0.95f, 0.58f, 1f);
-        private static readonly Color OffColor = new(0.72f, 0.76f, 0.79f, 1f);
+        private static readonly Color PanelColor = new(0.015f, 0.11f, 0.15f, 0.985f);
+        private static readonly Color ButtonColor = new(0.025f, 0.20f, 0.25f, 0.98f);
+        private static readonly Color SelectedColor = new(0.04f, 0.40f, 0.46f, 1f);
+        private static readonly Color AccentColor = new(0.20f, 0.92f, 0.92f, 1f);
+        private static readonly Color MutedColor = new(0.70f, 0.88f, 0.88f, 1f);
+        private static readonly Color OnColor = new(0.30f, 1f, 0.66f, 1f);
+        private static readonly Color OffColor = new(1f, 0.64f, 0.34f, 1f);
+        private static readonly Color SandColor = new(1f, 0.88f, 0.58f, 1f);
 
         private static SurferSlugDeveloperMenu instance;
         public static bool IsOpen => instance != null && instance.visible;
@@ -60,6 +61,8 @@ namespace PixelOcean
         private TMP_Text[] buttonLabels;
         private Image[] buttonBackgrounds;
         private Button[] buttons;
+        private GameObject[] selectionFrames;
+        private TMP_Text[] stateBadges;
         private TMP_FontAsset developerFont;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -260,21 +263,21 @@ namespace PixelOcean
             RectTransform panelRect = panelRoot.GetComponent<RectTransform>();
             panelRect.anchorMin = panelRect.anchorMax = new Vector2(0.5f, 0.5f);
             panelRect.pivot = new Vector2(0.5f, 0.5f);
-            panelRect.sizeDelta = new Vector2(620f, 900f);
+            panelRect.sizeDelta = new Vector2(650f, 820f);
             panelRoot.GetComponent<Image>().color = PanelColor;
 
             VerticalLayoutGroup layout = panelRoot.AddComponent<VerticalLayoutGroup>();
-            layout.padding = new RectOffset(30, 30, 24, 24);
-            layout.spacing = 8f;
+            layout.padding = new RectOffset(28, 28, 22, 22);
+            layout.spacing = 7f;
             layout.childControlHeight = true;
             layout.childControlWidth = true;
             layout.childForceExpandHeight = false;
             layout.childForceExpandWidth = true;
 
-            CreateText("Title", panelRoot.transform, "DEVELOPER TOOLS", 34f, TextAlignmentOptions.Left, Color.white, 48f);
+            CreateText("Title", panelRoot.transform, "SURF LAB  //  DEVELOPER TOOLS", 28f, TextAlignmentOptions.Left, SandColor, 42f);
             CreateText("Instructions", panelRoot.transform,
                 "F10 TO TOGGLE   •   D-PAD / STICK TO SELECT   •   A TO USE   •   B TO CLOSE",
-                15f, TextAlignmentOptions.Left, MutedColor, 28f);
+                13f, TextAlignmentOptions.Left, MutedColor, 24f);
 
             CreateDivider(panelRoot.transform);
             CreateSection("PLAYER STATUS");
@@ -296,10 +299,10 @@ namespace PixelOcean
             spacer.GetComponent<LayoutElement>().flexibleHeight = 1f;
 
             CreateDivider(panelRoot.transform);
-            statusText = CreateText("Session Status", panelRoot.transform, string.Empty, 17f,
-                TextAlignmentOptions.Center, Color.white, 54f);
+            statusText = CreateText("Session Status", panelRoot.transform, string.Empty, 15f,
+                TextAlignmentOptions.Center, MutedColor, 48f);
 
-            noticeText = CreateText("Developer Notice", canvasObject.transform, "DEVELOPER MODE ENABLED", 24f,
+            noticeText = CreateText("Developer Notice", canvasObject.transform, "SURF LAB ENABLED", 20f,
                 TextAlignmentOptions.Center, Color.white, 50f);
             RectTransform noticeRect = noticeText.rectTransform;
             noticeRect.anchorMin = new Vector2(0.5f, 0f);
@@ -311,7 +314,7 @@ namespace PixelOcean
 
         private void CreateSection(string label)
         {
-            CreateText(label, panelRoot.transform, label, 16f, TextAlignmentOptions.Left, AccentColor, 28f);
+            CreateText(label, panelRoot.transform, label, 14f, TextAlignmentOptions.Left, AccentColor, 24f);
         }
 
         private void CreateMenuButton(int index)
@@ -319,13 +322,15 @@ namespace PixelOcean
             buttonLabels ??= new TMP_Text[MenuItemCount];
             buttonBackgrounds ??= new Image[MenuItemCount];
             buttons ??= new Button[MenuItemCount];
+            selectionFrames ??= new GameObject[MenuItemCount];
+            stateBadges ??= new TMP_Text[MenuItemCount];
 
             GameObject buttonObject = new($"Developer Button {index}", typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
             buttonObject.transform.SetParent(panelRoot.transform, false);
 
             LayoutElement element = buttonObject.GetComponent<LayoutElement>();
-            element.preferredHeight = 52f;
-            element.minHeight = 52f;
+            element.preferredHeight = 48f;
+            element.minHeight = 48f;
 
             Image background = buttonObject.GetComponent<Image>();
             background.color = ButtonColor;
@@ -333,6 +338,15 @@ namespace PixelOcean
 
             Button button = buttonObject.GetComponent<Button>();
             button.targetGraphic = background;
+            ColorBlock buttonColors = button.colors;
+            buttonColors.normalColor = Color.white;
+            buttonColors.highlightedColor = new Color(1f, 1f, 1f, 1f);
+            buttonColors.selectedColor = new Color(1f, 1f, 1f, 1f);
+            buttonColors.pressedColor = new Color(0.78f, 0.92f, 0.92f, 1f);
+            buttonColors.disabledColor = new Color(1f, 1f, 1f, 0.45f);
+            buttonColors.colorMultiplier = 1f;
+            buttonColors.fadeDuration = 0.06f;
+            button.colors = buttonColors;
             int capturedIndex = index;
             button.onClick.AddListener(() =>
             {
@@ -341,10 +355,22 @@ namespace PixelOcean
             });
             buttons[index] = button;
 
-            TMP_Text label = CreateText("Label", buttonObject.transform, string.Empty, 18f,
-                TextAlignmentOptions.MidlineLeft, Color.white, 52f);
-            Stretch(label.rectTransform, Vector2.zero, Vector2.one, new Vector2(18f, 0f), new Vector2(-18f, 0f));
+            TMP_Text label = CreateText("Label", buttonObject.transform, string.Empty, 16f,
+                TextAlignmentOptions.MidlineLeft, Color.white, 48f);
+            Stretch(label.rectTransform, Vector2.zero, new Vector2(index < 2 ? 0.76f : 1f, 1f), new Vector2(16f, 0f), new Vector2(index < 2 ? -6f : -16f, 0f));
             buttonLabels[index] = label;
+
+            if (index < 2)
+            {
+                TMP_Text badge = CreateText("State Badge", buttonObject.transform, "OFF", 13f,
+                    TextAlignmentOptions.Center, OffColor, 48f);
+                Stretch(badge.rectTransform, new Vector2(0.76f, 0f), Vector2.one,
+                    new Vector2(4f, 7f), new Vector2(-12f, -7f));
+                badge.fontStyle = FontStyles.Bold;
+                stateBadges[index] = badge;
+            }
+
+            selectionFrames[index] = CreateSelectionFrame(buttonObject.transform);
         }
 
         private void RefreshInterface()
@@ -354,8 +380,8 @@ namespace PixelOcean
 
             string[] labels =
             {
-                $"GOD MODE                                      {(godMode ? "ON" : "OFF")}",
-                $"INFINITE LIVES                                {(infiniteLives ? "ON" : "OFF")}",
+                "GOD MODE",
+                "INFINITE LIVES",
                 "UNLOCK ALL MECHANICS",
                 "MAX FLOW / ON FIRE",
                 "ADVANCE TO NEXT CHAPTER",
@@ -369,16 +395,18 @@ namespace PixelOcean
                 if (buttonLabels[i] == null)
                     continue;
 
+                bool selected = selectedIndex == i;
                 buttonLabels[i].font = developerFont;
-                buttonLabels[i].text = (selectedIndex == i ? "▶  " : "    ") + labels[i];
-                buttonLabels[i].color = selectedIndex == i ? Color.white : new Color(0.9f, 0.94f, 0.96f, 1f);
-                buttonBackgrounds[i].color = selectedIndex == i ? SelectedColor : ButtonColor;
+                buttonLabels[i].text = (selected ? "▶  " : "   ") + labels[i];
+                buttonLabels[i].color = selected ? Color.white : new Color(0.88f, 0.97f, 0.97f, 1f);
+                buttonBackgrounds[i].color = selected ? SelectedColor : ButtonColor;
+
+                if (selectionFrames != null && selectionFrames[i] != null)
+                    selectionFrames[i].SetActive(selected);
             }
 
-            if (buttonLabels[0] != null)
-                buttonLabels[0].color = godMode ? OnColor : (selectedIndex == 0 ? Color.white : OffColor);
-            if (buttonLabels[1] != null)
-                buttonLabels[1].color = infiniteLives ? OnColor : (selectedIndex == 1 ? Color.white : OffColor);
+            RefreshStateBadge(0, godMode);
+            RefreshStateBadge(1, infiniteLives);
 
             SurfDayProgressionDirector director = FindFirstObjectByType<SurfDayProgressionDirector>();
             if (statusText != null)
@@ -394,6 +422,40 @@ namespace PixelOcean
                 noticeText.font = developerFont;
                 noticeText.gameObject.SetActive(Time.unscaledTime < unlockNoticeUntil);
             }
+        }
+
+        private void RefreshStateBadge(int index, bool enabledState)
+        {
+            if (stateBadges == null || index < 0 || index >= stateBadges.Length || stateBadges[index] == null)
+                return;
+
+            TMP_Text badge = stateBadges[index];
+            badge.font = developerFont;
+            badge.text = enabledState ? "●  ON" : "○  OFF";
+            badge.color = enabledState ? OnColor : OffColor;
+        }
+
+        private static GameObject CreateSelectionFrame(Transform parent)
+        {
+            GameObject frame = new("Selected White Border", typeof(RectTransform));
+            frame.transform.SetParent(parent, false);
+            RectTransform frameRect = frame.GetComponent<RectTransform>();
+            Stretch(frameRect, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+
+            CreateFrameEdge("Top", frame.transform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -3f), Vector2.zero);
+            CreateFrameEdge("Bottom", frame.transform, new Vector2(0f, 0f), new Vector2(1f, 0f), Vector2.zero, new Vector2(0f, 3f));
+            CreateFrameEdge("Left", frame.transform, new Vector2(0f, 0f), new Vector2(0f, 1f), Vector2.zero, new Vector2(3f, 0f));
+            CreateFrameEdge("Right", frame.transform, new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(-3f, 0f), Vector2.zero);
+            frame.SetActive(false);
+            return frame;
+        }
+
+        private static void CreateFrameEdge(string name, Transform parent, Vector2 anchorMin, Vector2 anchorMax, Vector2 offsetMin, Vector2 offsetMax)
+        {
+            Image edge = CreateImage(name, parent, Color.white);
+            edge.raycastTarget = false;
+            RectTransform rect = edge.rectTransform;
+            Stretch(rect, anchorMin, anchorMax, offsetMin, offsetMax);
         }
 
         private TMP_Text CreateText(string name, Transform parent, string value, float size,

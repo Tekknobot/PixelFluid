@@ -1,0 +1,8 @@
+WARNING / DEVELOPER UI PATCH
+
+- Save overwrite warning selected button now uses a true four-sided white border.
+- Developer panel redesigned with a surf/ocean palette.
+- Developer panel font sizes reduced for readability and spacing.
+- God Mode and Infinite Lives now show explicit green ON / orange OFF badges.
+- Selected developer option receives a clear white four-sided border.
+- Fixed developer menu item count to match the eight actual actions.

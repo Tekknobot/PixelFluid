@@ -548,7 +548,7 @@ namespace PixelOcean
 
             confirmNewGameButton = CreatePlainButton(
                 row.transform,
-                "ERASE & START NEW",
+                "ERASE START NEW",
                 ConfirmNewGame);
 
             StyleWarningButton(
@@ -612,8 +612,41 @@ namespace PixelOcean
             outline.effectColor = new Color(0f, 0f, 0f, 0.78f);
             outline.effectDistance = new Vector2(3f, -3f);
             outline.useGraphicAlpha = false;
+
+            EnsureWarningSelectionFrame(button);
         }
 
+
+        private static void EnsureWarningSelectionFrame(Button button)
+        {
+            if (button == null || button.transform.Find("Selected White Border") != null)
+                return;
+
+            GameObject frame = new("Selected White Border", typeof(RectTransform));
+            frame.transform.SetParent(button.transform, false);
+            RectTransform frameRect = frame.GetComponent<RectTransform>();
+            Stretch(frameRect);
+
+            CreateWarningFrameEdge("Top", frame.transform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -5f), Vector2.zero);
+            CreateWarningFrameEdge("Bottom", frame.transform, new Vector2(0f, 0f), new Vector2(1f, 0f), Vector2.zero, new Vector2(0f, 5f));
+            CreateWarningFrameEdge("Left", frame.transform, new Vector2(0f, 0f), new Vector2(0f, 1f), Vector2.zero, new Vector2(5f, 0f));
+            CreateWarningFrameEdge("Right", frame.transform, new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(-5f, 0f), Vector2.zero);
+            frame.SetActive(false);
+        }
+
+        private static void CreateWarningFrameEdge(string name, Transform parent, Vector2 anchorMin, Vector2 anchorMax, Vector2 offsetMin, Vector2 offsetMax)
+        {
+            GameObject edgeObject = new(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            edgeObject.transform.SetParent(parent, false);
+            Image edge = edgeObject.GetComponent<Image>();
+            edge.color = Color.white;
+            edge.raycastTarget = false;
+            RectTransform rect = edge.rectTransform;
+            rect.anchorMin = anchorMin;
+            rect.anchorMax = anchorMax;
+            rect.offsetMin = offsetMin;
+            rect.offsetMax = offsetMax;
+        }
 
         private void UpdateSaveWarningSelectionOutline()
         {
@@ -643,6 +676,10 @@ namespace PixelOcean
                 ? new Vector2(7f, -7f)
                 : new Vector2(3f, -3f);
             outline.useGraphicAlpha = false;
+
+            Transform frame = button.transform.Find("Selected White Border");
+            if (frame != null)
+                frame.gameObject.SetActive(selected);
 
             RectTransform rect = button.transform as RectTransform;
             if (rect != null)
