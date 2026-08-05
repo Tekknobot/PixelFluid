@@ -8,7 +8,7 @@ namespace PixelOcean
 {
     /// <summary>
     /// Runtime-built pixel HUD: objective/lives, day clock, and throwable inventory.
-    /// Everything is kept in one Canvas so no gameplay UI overlaps.
+    /// Everything is kept in one Canvas so no gameplay UI overlaps ever.
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Canvas))]
