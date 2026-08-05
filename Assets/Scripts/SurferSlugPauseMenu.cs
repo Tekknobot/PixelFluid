@@ -826,7 +826,7 @@ namespace PixelOcean
             logoImage.preserveAspect = true;
             logoImage.raycastTarget = false;
 
-            logoFrames = Resources.LoadAll<Sprite>("SurferSlugUI/surfer_slug_logotype-sheet");
+            logoFrames = Resources.LoadAll<Sprite>("SurferSlugUI/they_surf_logotype");
             Array.Sort(logoFrames, (a, b) => string.CompareOrdinal(a.name, b.name));
             if (logoFrames.Length > 0)
             {
