@@ -339,6 +339,7 @@ namespace PixelOcean
             player.RespawnForManagedRun();
             yield return null;
             player.RestorePersistentState(data);
+            GameplayTargetCache.Refresh();
             yield return new WaitForFixedUpdate();
             BindStoryCamera(player);
 
@@ -510,6 +511,7 @@ namespace PixelOcean
             }
 
             BindStoryCamera(storyPlayer);
+            GameplayTargetCache.Refresh();
 
             runTime = 0f;
             distanceTravelled = 0f;

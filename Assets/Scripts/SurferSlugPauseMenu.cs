@@ -1835,8 +1835,12 @@ namespace PixelOcean
                 if (behaviour == null || !behaviour.enabled || behaviour == this || behaviour.transform.IsChildOf(transform))
                     continue;
                 Type type = behaviour.GetType();
-                if (type.Namespace != typeof(SurferSlugPauseMenu).Namespace || SimulationTypeNames.Contains(type.Name))
+                if (type.Namespace != typeof(SurferSlugPauseMenu).Namespace ||
+                    SimulationTypeNames.Contains(type.Name) ||
+                    behaviour is RaceSurferSkin)
+                {
                     continue;
+                }
                 behaviour.enabled = false;
                 disabledGameplayBehaviours.Add(behaviour);
             }

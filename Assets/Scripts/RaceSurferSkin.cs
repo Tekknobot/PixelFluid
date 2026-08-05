@@ -53,6 +53,13 @@ namespace PixelOcean
             LoadSheets();
         }
 
+        private void OnEnable()
+        {
+            if (surfer == null) surfer = GetComponent<TinyWaveSurfer>();
+            if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();
+            ApplyCurrentSurferFrame();
+        }
+
         private void LoadSheets()
         {
             if (string.Equals(surferName, "Chuck", StringComparison.OrdinalIgnoreCase))
@@ -84,6 +91,11 @@ namespace PixelOcean
         // enabled as the authoritative player/AI animation state machine; this component
         // only replaces the final rendered sprite with the selected surfer's equivalent.
         private void LateUpdate()
+        {
+            ApplyCurrentSurferFrame();
+        }
+
+        private void ApplyCurrentSurferFrame()
         {
             if (string.Equals(surferName, "Chuck", StringComparison.OrdinalIgnoreCase) ||
                 spriteRenderer == null ||

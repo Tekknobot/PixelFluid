@@ -40,6 +40,11 @@ namespace PixelOcean
         private SurferSlugPauseMenu selectionMenu;
         private GameObject ecosystemRoot;
         private float nextEcosystemSpawnTime;
+        private bool hasStoryProgressionSnapshot;
+        private SurfAbility storyUnlockedSnapshot;
+        private int storyJumpUpgradeSnapshot;
+        private int storySlashUpgradeSnapshot;
+        private int storySkidUpgradeSnapshot;
 
         public bool IsSelectionVisible => selectionRoot != null;
 
@@ -172,6 +177,7 @@ namespace PixelOcean
         {
             GameModeSession.SelectRaceMode();
             ExitRaceMode(false);
+            CaptureStoryProgression();
             RaceActive = true;
             raceTimeRemaining = PrototypeRaceSeconds;
             SurfAbilityProgression.Instance?.DebugUnlockAll();
@@ -303,6 +309,9 @@ namespace PixelOcean
             if (destroyRacers)
                 DestroyExistingSurfers();
 
+            RestoreStoryProgression();
+            GameplayTargetCache.Refresh();
+
             foreach (MonoBehaviour behaviour in FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             {
                 if (behaviour == null || behaviour == this) continue;
@@ -310,6 +319,32 @@ namespace PixelOcean
                 if (n.Contains("Spawner", StringComparison.OrdinalIgnoreCase) || n.Contains("ProgressionDirector", StringComparison.OrdinalIgnoreCase))
                     behaviour.enabled = GameModeSession.IsStory;
             }
+        }
+
+        private void CaptureStoryProgression()
+        {
+            SurfAbilityProgression progression = SurfAbilityProgression.Instance;
+            if (progression == null)
+                return;
+
+            storyUnlockedSnapshot = progression.Unlocked;
+            storyJumpUpgradeSnapshot = progression.JumpUpgradeLevel;
+            storySlashUpgradeSnapshot = progression.WaterSlashUpgradeLevel;
+            storySkidUpgradeSnapshot = progression.SkidUpgradeLevel;
+            hasStoryProgressionSnapshot = true;
+        }
+
+        private void RestoreStoryProgression()
+        {
+            if (!hasStoryProgressionSnapshot || SurfAbilityProgression.Instance == null)
+                return;
+
+            SurfAbilityProgression.Instance.RestoreExact(
+                storyUnlockedSnapshot,
+                storyJumpUpgradeSnapshot,
+                storySlashUpgradeSnapshot,
+                storySkidUpgradeSnapshot);
+            hasStoryProgressionSnapshot = false;
         }
 
         private void FinishRace()
