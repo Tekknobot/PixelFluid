@@ -109,6 +109,7 @@ namespace PixelOcean
             ExitRaceMode(false);
             RaceActive = true;
             raceTimeRemaining = PrototypeRaceSeconds;
+            SurfAbilityProgression.Instance?.DebugUnlockAll();
             DisableStoryAndSpawners();
             DestroyExistingSurfers();
             SpawnRoster(selectedSurfer);
@@ -162,19 +163,42 @@ namespace PixelOcean
             float speed = master != null ? master.SinglePlayerScrollSpeed : 2.5f;
             float boost = master != null ? master.SinglePlayerBoostMultiplier : 1.6f;
 
+            List<PixelWaterGPU> nearbyLayers = EndlessWaveSections.LayersNearest(0f);
+            int waveCount = Mathf.Max(1, nearbyLayers != null ? nearbyLayers.Count : 0);
+            List<int> shuffledWaves = Enumerable.Range(0, waveCount)
+                .OrderBy(_ => UnityEngine.Random.value)
+                .ToList();
+
             string[] spawnOrder = Roster.OrderByDescending(n => string.Equals(n, selected, StringComparison.OrdinalIgnoreCase)).ToArray();
+            float startX = DetermineRaceStartX(master);
+
             for (int i = 0; i < spawnOrder.Length; i++)
             {
                 string name = spawnOrder[i];
                 bool player = string.Equals(name, selected, StringComparison.OrdinalIgnoreCase);
+                int randomWave = i < shuffledWaves.Count
+                    ? shuffledWaves[i]
+                    : UnityEngine.Random.Range(0, waveCount);
+
                 GameObject go = new GameObject(player ? "Race Player - " + name : "Race AI - " + name);
                 TinyWaveSurfer surfer = go.AddComponent<TinyWaveSurfer>();
-                surfer.ConfigureGeneratedSurfer(i, true, 0.95f, Color.white, Color.white, 100 + i, 0.2f + i * 0.1f, i * 0.08f);
+                surfer.ConfigureGeneratedSurfer(randomWave, true, 0.95f, Color.white, Color.white, 100 + i, 0.2f + i * 0.1f, i * 0.08f);
                 surfer.ConfigureRaceSurfer(!player, speed * (player ? 1f : UnityEngine.Random.Range(0.93f, 1.07f)), boost);
+                surfer.ForceRaceStartingLine(startX, randomWave);
+
                 RaceSurferSkin skin = go.AddComponent<RaceSurferSkin>();
                 skin.Configure(name);
-                racers.Add(new Racer { Name = name, Surfer = surfer, LastX = go.transform.position.x, Player = player });
+                racers.Add(new Racer { Name = name, Surfer = surfer, LastX = startX, Player = player });
             }
+        }
+
+        private static float DetermineRaceStartX(PixelWaterGPU master)
+        {
+            if (master != null)
+                return Mathf.Lerp(master.TankMinimum.x, master.TankMaximum.x, 0.28f);
+
+            Camera camera = Camera.main;
+            return camera != null ? camera.transform.position.x - 2f : -2f;
         }
 
         public void ExitRaceMode(bool destroyRacers)
@@ -321,9 +345,9 @@ namespace PixelOcean
             RectTransform root = raceHud.GetComponent<RectTransform>();
             root.anchorMin = Vector2.zero; root.anchorMax = Vector2.one; root.offsetMin = root.offsetMax = Vector2.zero;
             TextMeshProUGUI modeLabel = CreateText(raceHud.transform, "RACE MODE", 24, TextAlignmentOptions.Top);
-            modeLabel.rectTransform.anchorMin = new Vector2(0.4f, 0.94f); modeLabel.rectTransform.anchorMax = new Vector2(0.6f, 0.99f); modeLabel.rectTransform.offsetMin = modeLabel.rectTransform.offsetMax = Vector2.zero;
+            modeLabel.rectTransform.anchorMin = new Vector2(0.4f, 0.95f); modeLabel.rectTransform.anchorMax = new Vector2(0.6f, 0.995f); modeLabel.rectTransform.offsetMin = modeLabel.rectTransform.offsetMax = Vector2.zero;
             timerLabel = CreateText(raceHud.transform, "1:15", 40, TextAlignmentOptions.Top);
-            timerLabel.rectTransform.anchorMin = new Vector2(0.35f, 0.86f); timerLabel.rectTransform.anchorMax = new Vector2(0.65f, 0.98f); timerLabel.rectTransform.offsetMin = timerLabel.rectTransform.offsetMax = Vector2.zero;
+            timerLabel.rectTransform.anchorMin = new Vector2(0.35f, 0.845f); timerLabel.rectTransform.anchorMax = new Vector2(0.65f, 0.92f); timerLabel.rectTransform.offsetMin = timerLabel.rectTransform.offsetMax = Vector2.zero;
             standingsLabel = CreateText(raceHud.transform, string.Empty, 23, TextAlignmentOptions.TopLeft);
             standingsLabel.rectTransform.anchorMin = new Vector2(0.02f, 0.68f); standingsLabel.rectTransform.anchorMax = new Vector2(0.28f, 0.94f); standingsLabel.rectTransform.offsetMin = standingsLabel.rectTransform.offsetMax = Vector2.zero;
         }

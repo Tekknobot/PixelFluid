@@ -1,0 +1,7 @@
+RACE MODE DAMAGE / MENU FOCUS / HUD PATCH
+
+- Sharks and giant squids now choose the nearest living surfer instead of always preferring the player. AI racers can therefore be attacked and damaged normally.
+- Race Mode button now has a pointer-down fallback so mouse activation opens selection immediately.
+- Main title menu restores keyboard/controller selection automatically whenever the EventSystem loses focus.
+- Race Mode opening is guarded against duplicate pointer/button submit events.
+- Added vertical separation between the RACE MODE heading and countdown timer.

@@ -1,5 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
+using System;
+using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -481,6 +484,10 @@ namespace PixelOcean
         private float aiHorizontal = 1f;
         private int aiLayerDirection;
         private float aiTrick;
+        private float aiAirActionTimer;
+        private int aiAirActionStep;
+        private float aiHazardScanTimer;
+        private int aiPreferredLane = -1;
         private float deathTimer;
         private float respawnTimer;
         private bool managedDeathReported;
@@ -2038,6 +2045,24 @@ namespace PixelOcean
         }
 
 
+        public void ForceRaceStartingLine(float worldX, int requestedWave)
+        {
+            randomizeInitialOceanSpawn = false;
+            RefreshWaveList();
+            if (simulations.Count == 0)
+                return;
+
+            int safeWave = Mathf.Clamp(requestedWave, 0, simulations.Count - 1);
+            PickWave(safeWave, true);
+            localRideX = ClampPlayerXToSandbox(worldX);
+
+            Vector3 position = GetStartingPosition(currentWave);
+            position.x = localRideX;
+            transform.position = position;
+            transform.rotation = Quaternion.identity;
+            ApplyCurrentWaveSorting(true);
+        }
+
         public void ConfigureRaceSurfer(bool controlledByAI, float scrollSpeed, float boostMultiplier)
         {
             ConfigureSinglePlayer(scrollSpeed, boostMultiplier);
@@ -2049,6 +2074,15 @@ namespace PixelOcean
             enableOnFireSpriteEffect = false;
             randomizeInitialOceanSpawn = false;
             respawnAfterDeath = true;
+
+            // Race mode always uses the complete movement/trick loadout.
+            // Water Slash and Flow Finisher remain intentionally disabled above.
+            enableForwardObstacleJump = true;
+            enableChargedWaterSkid = true;
+            aiAirActionTimer = Random.Range(0.18f, 0.32f);
+            aiAirActionStep = 0;
+            aiHazardScanTimer = 0f;
+            aiPreferredLane = CurrentWaveIndex;
             if (controlledByAI)
             {
                 aiDecisionTimer = Random.Range(0.35f, 0.9f);
@@ -2903,6 +2937,25 @@ namespace PixelOcean
             aiJumpPulse = Mathf.Max(0f, aiJumpPulse - dt);
             aiAttackPulse = Mathf.Max(0f, aiAttackPulse - dt);
             aiSpecialHold = Mathf.Max(0f, aiSpecialHold - dt);
+            aiHazardScanTimer -= dt;
+
+            // Race AI actively chains the same airborne trick inputs available
+            // to the player. A short release between pulses keeps input edges valid.
+            if (raceModeSurfer && state == RiderState.TurningTrick && obstacleJumpActive)
+            {
+                aiAirActionTimer -= dt;
+                if (aiAirActionTimer <= 0f && aerialTrickChainCount < 3)
+                {
+                    aiAirActionStep++;
+                    aiTrick = aiAirActionStep % 2 == 0 ? 1f : -1f;
+                    if ((aiAirActionStep & 1) == 0)
+                        aiAttackPulse = 0.09f;
+                    else
+                        aiSpecialHold = 0.09f;
+                    aiAirActionTimer = Random.Range(0.24f, 0.38f);
+                }
+                return;
+            }
 
             if (currentWave != null && !raceModeSurfer)
             {
@@ -2913,37 +2966,172 @@ namespace PixelOcean
                 if (localRideX >= rightTurn) aiHorizontal = -1f;
             }
 
-            if (aiDecisionTimer > 0f || state != RiderState.Riding)
+            if (state != RiderState.Riding)
                 return;
 
-            aiDecisionTimer = raceModeSurfer ? Random.Range(0.45f, 1.15f) : Random.Range(0.7f, 2.2f);
+            if (raceModeSurfer && aiHazardScanTimer <= 0f)
+            {
+                aiHazardScanTimer = Random.Range(0.10f, 0.18f);
+                aiPreferredLane = FindSafestRaceLane();
+
+                if (aiPreferredLane >= 0 && aiPreferredLane != CurrentWaveIndex && simulations.Count > 1)
+                {
+                    aiLayerDirection = GetShortestLaneDirection(CurrentWaveIndex, aiPreferredLane, simulations.Count);
+                    aiJumpPulse = 0.14f;
+                    aiDecisionTimer = Random.Range(0.28f, 0.48f);
+                    return;
+                }
+
+                if (RaceHazardAhead(CurrentWaveIndex, 3.2f))
+                {
+                    aiJumpPulse = 0.16f;
+                    aiTrick = Random.value < 0.5f ? -1f : 1f;
+                    aiAirActionTimer = Random.Range(0.18f, 0.28f);
+                    aiAirActionStep = 0;
+                    aiDecisionTimer = Random.Range(0.35f, 0.6f);
+                    return;
+                }
+            }
+
+            if (aiDecisionTimer > 0f)
+                return;
+
+            aiDecisionTimer = raceModeSurfer ? Random.Range(0.38f, 0.9f) : Random.Range(0.7f, 2.2f);
             aiLayerDirection = 0;
             aiTrick = Random.Range(-1f, 1f);
 
             if (raceModeSurfer) aiHorizontal = 1f;
 
             float choice = Random.value;
-            if (choice < 0.24f)
+            if (choice < 0.30f)
             {
-                aiJumpPulse = 0.12f;
+                aiJumpPulse = 0.14f;
+                aiAirActionTimer = Random.Range(0.18f, 0.30f);
+                aiAirActionStep = 0;
             }
-            else if (choice < 0.45f && simulations.Count > 1)
+            else if (choice < 0.53f && simulations.Count > 1)
             {
-                aiLayerDirection = Random.value < 0.5f ? -1 : 1;
-                aiJumpPulse = 0.12f;
+                int destination = FindSafestRaceLane();
+                if (destination == CurrentWaveIndex)
+                    destination = Random.Range(0, simulations.Count);
+                aiLayerDirection = GetShortestLaneDirection(CurrentWaveIndex, destination, simulations.Count);
+                aiJumpPulse = 0.14f;
             }
-            else if (choice < 0.62f && throwableItems.Count > 0)
+            else if (choice < 0.68f && throwableItems.Count > 0)
             {
                 aiAttackPulse = 0.12f;
             }
-            else if (choice < 0.76f && enableChargedWaterSkid)
+            else if (choice < 0.90f && enableChargedWaterSkid)
             {
-                aiSpecialHold = Random.Range(0.25f, maximumSkidChargeTime);
+                // Charge longer on a clear lane, shorter when traffic is close.
+                aiSpecialHold = RaceHazardAhead(CurrentWaveIndex, 4.5f)
+                    ? Random.Range(0.22f, 0.45f)
+                    : Random.Range(Mathf.Max(0.35f, maximumSkidChargeTime * 0.55f), maximumSkidChargeTime);
             }
-            else if (choice < 0.88f && !raceModeSurfer)
+            else if (!raceModeSurfer)
             {
                 aiHorizontal *= -1f;
             }
+        }
+
+        private int FindSafestRaceLane()
+        {
+            if (simulations.Count <= 1)
+                return CurrentWaveIndex;
+
+            int bestLane = CurrentWaveIndex;
+            float bestScore = float.PositiveInfinity;
+            for (int lane = 0; lane < simulations.Count; lane++)
+            {
+                float score = ScoreRaceLaneDanger(lane);
+                score += Mathf.Abs(lane - CurrentWaveIndex) * 0.18f;
+                if (lane == CurrentWaveIndex) score -= 0.12f;
+                if (score < bestScore)
+                {
+                    bestScore = score;
+                    bestLane = lane;
+                }
+            }
+            return bestLane;
+        }
+
+        private float ScoreRaceLaneDanger(int lane)
+        {
+            float score = 0f;
+            Vector3 position = transform.position;
+            foreach (MonoBehaviour behaviour in FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
+            {
+                if (!IsRaceAvoidanceHazard(behaviour)) continue;
+                Vector3 hazard = behaviour.transform.position;
+                float ahead = hazard.x - position.x;
+                if (ahead < -0.75f || ahead > 6.5f) continue;
+                int hazardLane = EstimateRaceLane(hazard);
+                if (hazardLane != lane) continue;
+                score += Mathf.Lerp(5f, 0.25f, Mathf.Clamp01(ahead / 6.5f));
+            }
+
+            foreach (TinyWaveSurfer other in FindObjectsByType<TinyWaveSurfer>(FindObjectsSortMode.None))
+            {
+                if (other == null || other == this || other.IsDead || other.CurrentWaveIndex != lane) continue;
+                float ahead = other.transform.position.x - position.x;
+                if (ahead > -0.35f && ahead < 2.2f)
+                    score += Mathf.Lerp(2.2f, 0.2f, Mathf.Clamp01(ahead / 2.2f));
+            }
+            return score;
+        }
+
+        private bool RaceHazardAhead(int lane, float distance)
+        {
+            Vector3 position = transform.position;
+            foreach (MonoBehaviour behaviour in FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
+            {
+                if (!IsRaceAvoidanceHazard(behaviour)) continue;
+                Vector3 hazard = behaviour.transform.position;
+                float ahead = hazard.x - position.x;
+                if (ahead >= 0f && ahead <= distance && EstimateRaceLane(hazard) == lane)
+                    return true;
+            }
+            return false;
+        }
+
+        private int EstimateRaceLane(Vector3 worldPosition)
+        {
+            int nearest = 0;
+            float best = float.PositiveInfinity;
+            for (int i = 0; i < simulations.Count; i++)
+            {
+                PixelWaterGPU wave = simulations[i];
+                if (wave == null) continue;
+                float centreY = (wave.TankMinimum.y + wave.TankMaximum.y) * 0.5f;
+                float difference = Mathf.Abs(worldPosition.y - centreY);
+                if (difference < best)
+                {
+                    best = difference;
+                    nearest = i;
+                }
+            }
+            return nearest;
+        }
+
+        private static int GetShortestLaneDirection(int from, int to, int count)
+        {
+            if (count <= 1 || from == to) return 0;
+            int direct = to - from;
+            int wrapped = direct > 0 ? direct - count : direct + count;
+            return Mathf.Abs(direct) <= Mathf.Abs(wrapped) ? Math.Sign(direct) : Math.Sign(wrapped);
+        }
+
+        private static bool IsRaceAvoidanceHazard(MonoBehaviour behaviour)
+        {
+            if (behaviour == null || !behaviour.isActiveAndEnabled || behaviour is TinyWaveSurfer)
+                return false;
+            string typeName = behaviour.GetType().Name;
+            return typeName.Contains("Shark", StringComparison.OrdinalIgnoreCase) ||
+                   typeName.Contains("Squid", StringComparison.OrdinalIgnoreCase) ||
+                   typeName.Contains("Jellyfish", StringComparison.OrdinalIgnoreCase) ||
+                   typeName.Contains("Stingray", StringComparison.OrdinalIgnoreCase) ||
+                   typeName.Contains("Bloodfish", StringComparison.OrdinalIgnoreCase) ||
+                   typeName.Contains("Turtle", StringComparison.OrdinalIgnoreCase);
         }
         private void UpdateRide(float dt)
         {
