@@ -100,6 +100,53 @@ namespace PixelOcean
 
         public bool CinematicActive => cinematicActive;
 
+        /// <summary>
+        /// Rebinds the camera after a Story/Race mode transition and clears every
+        /// piece of smoothing and clamp state that belonged to the old surfer.
+        /// </summary>
+        public void SetFollowTarget(TinyWaveSurfer target, bool snapImmediately = true)
+        {
+            surfer = target;
+            bossDeathFocusTarget = null;
+            followVelocity = Vector3.zero;
+            lookAheadVelocity = Vector3.zero;
+            smoothedLookAhead = Vector3.zero;
+            zoomVelocity = 0f;
+            hasPreviousSurferPosition = false;
+            ResetCameraStability();
+            RefreshSimulationBoundsCache();
+            nextSimulationBoundsRefreshTime = 0f;
+
+            if (controlledCamera == null)
+                controlledCamera = GetComponent<Camera>();
+
+            if (target == null || controlledCamera == null || !snapImmediately)
+                return;
+
+            // Restore the exact zoom for the active camera state before calculating
+            // clamp extents. Smooth zooming through an oversized viewport was what
+            // caused the old clamp to collapse to centre/lowest-Y after transitions.
+            if (controlledCamera.orthographic)
+            {
+                controlledCamera.orthographicSize = cinematicActive
+                    ? Mathf.Clamp(orthographicZoom + cinematicZoomAdjustment, minimumOrthographicZoom, maximumOrthographicZoom)
+                    : Mathf.Clamp(normalOrthographicZoom + normalZoomAdjustment, minimumOrthographicZoom, maximumOrthographicZoom);
+            }
+
+            Vector2 offset = cinematicActive ? framingOffset : normalFramingOffset;
+            Vector3 desired = new Vector3(
+                target.transform.position.x + offset.x,
+                target.transform.position.y + offset.y,
+                cameraDepth);
+
+            if (clampToCurrentSimulation)
+                desired = ClampInsideSimulation(desired);
+
+            transform.position = ClampInsideBossArena(desired);
+            previousSurferPosition = target.transform.position;
+            hasPreviousSurferPosition = true;
+        }
+
         private void Awake()
         {
             controlledCamera = GetComponent<Camera>();
@@ -366,39 +413,33 @@ namespace PixelOcean
 
         private void SelectPlayerSurfer()
         {
-            TinyWaveSurfer previousSelection = surfer;
-
             TinyWaveSurfer[] surfers =
                 FindObjectsByType<TinyWaveSurfer>(
                     FindObjectsInactive.Exclude,
                     FindObjectsSortMode.None);
 
-            surfer = null;
+            TinyWaveSurfer fallback = null;
 
+            // The selected human racer or Story Chuck always wins camera priority.
             foreach (TinyWaveSurfer candidate in surfers)
             {
-                if (candidate == null || !candidate.isActiveAndEnabled)
-                    continue;
-
-                // Keep watching the AI through its death animation and respawn.
-                if (candidate.IsAIControlled)
-                {
-                    surfer = candidate;
-                    return;
-                }
-
-                if (candidate.IsDead)
+                if (candidate == null || !candidate.isActiveAndEnabled || candidate.IsDead)
                     continue;
 
                 if (candidate.IsPlayerControlled)
                 {
-                    surfer = candidate;
+                    SetFollowTarget(candidate, false);
                     return;
                 }
 
-                if (surfer == null)
-                    surfer = candidate;
+                if (fallback == null)
+                    fallback = candidate;
             }
+
+            if (fallback != null)
+                SetFollowTarget(fallback, false);
+            else
+                surfer = null;
         }
 
         private void RefreshSurferList()
@@ -534,13 +575,15 @@ namespace PixelOcean
             float minY = lowestVisibleWaveBottom + halfHeight + 0.16f;
             float maxY = max.y - halfHeight - clampInset;
 
-            desired.x = minX <= maxX
-                ? Mathf.Clamp(desired.x, minX, maxX)
-                : (min.x + max.x) * 0.5f;
+            // During a mode transition the camera zoom and water cache can be
+            // between configurations for a frame. Never collapse to world-centre
+            // or the lowest possible Y when the viewport temporarily exceeds the
+            // bounds; preserve the correctly framed target until valid bounds return.
+            if (minX <= maxX)
+                desired.x = Mathf.Clamp(desired.x, minX, maxX);
 
-            desired.y = minY <= maxY
-                ? Mathf.Clamp(desired.y, minY, maxY)
-                : minY;
+            if (minY <= maxY)
+                desired.y = Mathf.Clamp(desired.y, minY, maxY);
 
             return desired;
         }

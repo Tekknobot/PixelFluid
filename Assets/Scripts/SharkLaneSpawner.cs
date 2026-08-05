@@ -44,8 +44,23 @@ namespace PixelOcean
                 return;
             }
 
+            // The Shark prefab can retain an obsolete/broken Animator Controller.
+            // Clear it on the loaded prefab before Instantiate so Unity does not
+            // validate and log the invalid controller during cloning. Sharks use
+            // SharkSpriteAnimation, not Mecanim, for all runtime animation.
+            Animator prefabAnimator = prefab.GetComponent<Animator>();
+            if (prefabAnimator != null)
+            {
+                prefabAnimator.runtimeAnimatorController = null;
+                prefabAnimator.enabled = false;
+            }
+
             spawnedShark = Instantiate(prefab, transform);
             spawnedShark.name = "Shark - Inter-Wave Swimmer";
+
+            Animator spawnedAnimator = spawnedShark.GetComponent<Animator>();
+            if (spawnedAnimator != null)
+                Destroy(spawnedAnimator);
 
             SharkLaneSwimmer swimmer = spawnedShark.GetComponent<SharkLaneSwimmer>();
             if (swimmer == null)

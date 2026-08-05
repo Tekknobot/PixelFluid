@@ -41,9 +41,12 @@ namespace PixelOcean
 
         public static void SelectStoryMode()
         {
-            RaceModeManager.EnsureInstance().ExitRaceMode(true);
+            // Set the destination mode before Race cleanup restores spawners.
+            // ExitRaceMode checks IsStory when deciding what may be re-enabled.
             CurrentMode = Mode.Story;
+            RaceModeManager.EnsureInstance().ExitRaceMode(true);
             SetStoryPresentation(true);
+            TinyWaveSurferBootstrap.ResetSpawnState();
         }
 
         public static void SelectRaceMode()
@@ -65,7 +68,11 @@ namespace PixelOcean
         {
             foreach (SurfDayProgressionDirector x in FindObjectsByType<SurfDayProgressionDirector>(FindObjectsInactive.Include, FindObjectsSortMode.None)) x.enabled = enabled;
             foreach (StoryboardCutsceneSystem x in FindObjectsByType<StoryboardCutsceneSystem>(FindObjectsInactive.Include, FindObjectsSortMode.None)) x.enabled = enabled;
-            foreach (SurferSlugMinimalHud x in FindObjectsByType<SurferSlugMinimalHud>(FindObjectsInactive.Include, FindObjectsSortMode.None)) x.enabled = enabled;
+            foreach (SurferSlugMinimalHud x in FindObjectsByType<SurferSlugMinimalHud>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                x.enabled = true;
+                x.SetStoryHudActive(enabled);
+            }
         }
 
         public static void RemoveGameplayPopulation()

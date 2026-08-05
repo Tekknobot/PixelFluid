@@ -314,7 +314,7 @@ namespace PixelOcean
             firstMenu = isMainMenu;
             menuVisible = true;
             showingTitleMenu = isMainMenu;
-            if (continueButton != null) continueButton.gameObject.SetActive(isMainMenu);
+            if (continueButton != null) continueButton.gameObject.SetActive(SurfStageSaveSystem.HasSave);
             menuRoot.SetActive(true);
 
             // A previous sub-panel or developer overlay must never leave the main
@@ -1619,7 +1619,9 @@ namespace PixelOcean
 
             // Let Selectable apply its configured normal/disabled state. Directly
             // changing Image.color here permanently multiplied later highlights.
-            continueButton.interactable = SurfStageSaveSystem.HasSave;
+            bool hasSave = SurfStageSaveSystem.HasSave;
+            continueButton.gameObject.SetActive(hasSave);
+            continueButton.interactable = hasSave;
         }
 
         private void PlayPressed()

@@ -120,7 +120,16 @@ namespace PixelOcean
 
         private void Update()
         {
-            if (GameModeSession.IsRace || !GameModeSession.HasChosenMode) return;
+            if (GameModeSession.IsRace || !GameModeSession.HasChosenMode)
+            {
+                SetStoryHudActive(false);
+                return;
+            }
+
+            Canvas canvas = GetComponent<Canvas>();
+            if (canvas != null && !canvas.enabled) canvas.enabled = true;
+            GraphicRaycaster raycaster = GetComponent<GraphicRaycaster>();
+            if (raycaster != null && !raycaster.enabled) raycaster.enabled = true;
             if (player == null || !player.IsPlayerControlled)
                 player = FindPlayer();
             if (dayNight == null)
@@ -146,6 +155,25 @@ namespace PixelOcean
             RefreshFlow();
             RefreshDayDisplay();
             RefreshInventory();
+        }
+
+        public void SetStoryHudActive(bool active)
+        {
+            if (hudGroup == null)
+                BuildHud();
+
+            SetHudVisible(active && GameModeSession.IsStory, true);
+
+            Canvas canvas = GetComponent<Canvas>();
+            if (canvas != null)
+                canvas.enabled = active && GameModeSession.IsStory;
+
+            GraphicRaycaster raycaster = GetComponent<GraphicRaycaster>();
+            if (raycaster != null)
+                raycaster.enabled = active && GameModeSession.IsStory;
+
+            if (!active)
+                player = null;
         }
 
         private void SetHudVisible(bool visible, bool immediate = false)

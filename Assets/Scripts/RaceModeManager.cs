@@ -178,6 +178,7 @@ namespace PixelOcean
             DisableStoryAndSpawners();
             DestroyExistingSurfers();
             SpawnRoster(selectedSurfer);
+            BindCameraToSelectedRacer();
             SetupRaceEcosystem();
             BuildRaceHud();
             StartMusic();
@@ -254,6 +255,31 @@ namespace PixelOcean
                 RaceSurferSkin skin = go.AddComponent<RaceSurferSkin>();
                 skin.Configure(name);
                 racers.Add(new Racer { Name = name, Surfer = surfer, LastX = startX, Player = player });
+            }
+        }
+
+        private void BindCameraToSelectedRacer()
+        {
+            Racer selected = racers.FirstOrDefault(r => r.Player && r.Surfer != null);
+            if (selected == null)
+                return;
+
+            Camera camera = Camera.main;
+            if (camera == null)
+                return;
+
+            BeachCameraFollow legacyFollow = camera.GetComponent<BeachCameraFollow>();
+            if (legacyFollow != null)
+            {
+                legacyFollow.Target = null;
+                legacyFollow.enabled = false;
+            }
+
+            TinySurferCinematicCamera follow = camera.GetComponent<TinySurferCinematicCamera>();
+            if (follow != null)
+            {
+                follow.enabled = true;
+                follow.SetFollowTarget(selected.Surfer, true);
             }
         }
 

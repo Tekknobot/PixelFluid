@@ -340,6 +340,7 @@ namespace PixelOcean
             yield return null;
             player.RestorePersistentState(data);
             yield return new WaitForFixedUpdate();
+            BindStoryCamera(player);
 
             completed?.Invoke(player);
         }
@@ -355,6 +356,27 @@ namespace PixelOcean
             }
 
             return null;
+        }
+
+        private static void BindStoryCamera(TinyWaveSurfer player)
+        {
+            if (player == null || Camera.main == null)
+                return;
+
+            Camera camera = Camera.main;
+            BeachCameraFollow legacyFollow = camera.GetComponent<BeachCameraFollow>();
+            if (legacyFollow != null)
+            {
+                legacyFollow.Target = null;
+                legacyFollow.enabled = false;
+            }
+
+            TinySurferCinematicCamera follow = camera.GetComponent<TinySurferCinematicCamera>();
+            if (follow != null)
+            {
+                follow.enabled = true;
+                follow.SetFollowTarget(player, true);
+            }
         }
 
         private void RestoreChapterPopulation()
@@ -469,6 +491,25 @@ namespace PixelOcean
             while ((EndlessWaveSections.Instance == null || !EndlessWaveSections.Instance.IsReady) &&
                    Time.realtimeSinceStartup < deadline)
                 yield return null;
+
+            TinyWaveSurferBootstrap.ResetSpawnState();
+            TinyWaveSurferBootstrap.SpawnPlayerSurfer();
+            TinyWaveSurfer storyPlayer = null;
+            float playerDeadline = Time.realtimeSinceStartup + 5f;
+            while (storyPlayer == null && Time.realtimeSinceStartup < playerDeadline)
+            {
+                storyPlayer = FindPlayerControlledSurfer();
+                if (storyPlayer == null)
+                    yield return null;
+            }
+
+            if (storyPlayer == null)
+            {
+                Debug.LogError("Fresh Story run could not create Chuck before population setup.", this);
+                yield break;
+            }
+
+            BindStoryCamera(storyPlayer);
 
             runTime = 0f;
             distanceTravelled = 0f;

@@ -4280,6 +4280,11 @@ namespace PixelOcean
             listenerObject.AddComponent<TinyWaveSurferSpawnListener>();
         }
 
+        public static void ResetSpawnState()
+        {
+            surferSpawned = false;
+        }
+
         public static void SpawnAIPlayerSurfer()
         {
             if (surferSpawned) return;
@@ -4296,23 +4301,27 @@ namespace PixelOcean
 
         public static void SpawnPlayerSurfer()
         {
-            if (surferSpawned)
-                return;
-
             PixelWaterGPU master =
                 Object.FindFirstObjectByType<PixelWaterGPU>();
 
             if (master == null || !master.SinglePlayerModeEnabled)
                 return;
 
-            if (Object.FindObjectsByType<TinyWaveSurfer>(
-                    FindObjectsInactive.Exclude,
-                    FindObjectsSortMode.None).Length > 0)
+            // Race AI objects must never satisfy the Story-player existence check.
+            foreach (TinyWaveSurfer existing in Object.FindObjectsByType<TinyWaveSurfer>(
+                         FindObjectsInactive.Exclude,
+                         FindObjectsSortMode.None))
             {
-                surferSpawned = true;
-                return;
+                if (existing != null && existing.IsPlayerControlled)
+                {
+                    surferSpawned = true;
+                    return;
+                }
             }
 
+            // The static guard can survive a mode change while its old surfer is
+            // destroyed at end-of-frame. If no human surfer exists, it is stale.
+            surferSpawned = false;
             surferSpawned = true;
 
             GameObject go =
