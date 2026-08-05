@@ -80,6 +80,11 @@ namespace PixelOcean
         private float timeOfDay;
         private Camera gameplayCamera;
         private float externalVisibility = 1f;
+        private bool externalTimeOverrideActive;
+        private float externalTimeStart;
+        private float externalTimeTarget;
+        private float externalTimeTransitionDuration;
+        private float externalTimeTransitionElapsed;
 
         public float TimeOfDay => timeOfDay;
         public bool IsNight => timeOfDay < 0.225f || timeOfDay > 0.775f;
@@ -135,7 +140,25 @@ namespace PixelOcean
         {
 
             float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
-            if (runCycle)
+            if (externalTimeOverrideActive)
+            {
+                externalTimeTransitionElapsed += Time.unscaledDeltaTime;
+                float duration = Mathf.Max(0.01f, externalTimeTransitionDuration);
+                float t = Mathf.SmoothStep(0f, 1f,
+                    Mathf.Clamp01(externalTimeTransitionElapsed / duration));
+
+                // Move around the clock using the shortest path, including across midnight.
+                float signedClockDelta = Mathf.DeltaAngle(
+                    externalTimeStart * 360f,
+                    externalTimeTarget * 360f) / 360f;
+                timeOfDay = Mathf.Repeat(
+                    externalTimeStart + signedClockDelta * t,
+                    1f);
+
+                if (externalTimeTransitionElapsed >= duration)
+                    timeOfDay = externalTimeTarget;
+            }
+            else if (runCycle)
             {
                 float secondsPerDay = Mathf.Max(1f, fullDayLengthMinutes * 60f);
                 timeOfDay = Mathf.Repeat(timeOfDay + dt * editorFastForwardMultiplier / secondsPerDay, 1f);
@@ -471,9 +494,32 @@ namespace PixelOcean
 
         public void SetTimeOfDay(float normalizedTime)
         {
+            // Story/director updates must not overwrite the locked Race atmosphere.
+            if (externalTimeOverrideActive)
+                return;
+
             timeOfDay = Mathf.Repeat(normalizedTime, 1f);
             updateTimer = 0f;
             RenderSky(useUnscaledTime ? Time.unscaledTime : Time.time);
+        }
+
+        public void BeginExternalTimeTransition(
+            float normalizedTarget,
+            float transitionSeconds = 2.5f)
+        {
+            externalTimeOverrideActive = true;
+            externalTimeStart = timeOfDay;
+            externalTimeTarget = Mathf.Repeat(normalizedTarget, 1f);
+            externalTimeTransitionDuration = Mathf.Max(0.01f, transitionSeconds);
+            externalTimeTransitionElapsed = 0f;
+            updateTimer = 0f;
+        }
+
+        public void ClearExternalTimeOverride()
+        {
+            externalTimeOverrideActive = false;
+            externalTimeTransitionElapsed = 0f;
+            updateTimer = 0f;
         }
 
         [ContextMenu("Set Time: Dawn")]

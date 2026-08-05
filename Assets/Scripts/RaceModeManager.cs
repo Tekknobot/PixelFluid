@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
@@ -38,6 +39,16 @@ namespace PixelOcean
         private float raceTimeRemaining;
         private const float PrototypeRaceSeconds = 180f;
         private AudioSource musicSource;
+        private Coroutine musicFadeCoroutine;
+        private float nextRaceWeatherChangeTime;
+        private ProceduralRainSystem raceRain;
+        private ProceduralStarryNight raceSky;
+        [Header("Race Atmosphere")]
+        [SerializeField, Min(0.1f)] private float raceMusicFadeOutSeconds = 2.5f;
+        [SerializeField, Min(0.1f)] private float raceTimeTransitionSeconds = 3.5f;
+        [SerializeField, Min(5f)] private float minimumRaceWeatherDuration = 24f;
+        [SerializeField, Min(5f)] private float maximumRaceWeatherDuration = 52f;
+        [SerializeField, Range(0f, 1f)] private float raceClearWeatherChance = 0.30f;
         private SurferSlugPauseMenu selectionMenu;
         private GameObject ecosystemRoot;
         private float nextEcosystemSpawnTime;
@@ -192,6 +203,7 @@ namespace PixelOcean
             SpawnRoster(selectedSurfer);
             BindCameraToSelectedRacer();
             SetupRaceEcosystem();
+            RandomizeRaceAtmosphere();
             BuildRaceHud();
             StartMusic();
         }
@@ -223,6 +235,7 @@ namespace PixelOcean
             }
             RefreshHud();
             UpdateRaceEcosystem();
+            UpdateRaceWeatherPattern();
             if (raceTimeRemaining <= 0f) FinishRace();
         }
 
@@ -324,7 +337,11 @@ namespace PixelOcean
             if (selectionRoot != null) { Destroy(selectionRoot); selectionRoot = null; }
             if (raceHud != null) { Destroy(raceHud); raceHud = null; }
             if (ecosystemRoot != null) { Destroy(ecosystemRoot); ecosystemRoot = null; }
-            if (musicSource != null) musicSource.Stop();
+            if (raceSky == null)
+                raceSky = FindFirstObjectByType<ProceduralStarryNight>();
+            raceSky?.ClearExternalTimeOverride();
+            raceSky = null;
+            StopMusicImmediately();
 
             if (destroyRacers)
                 DestroyExistingSurfers();
@@ -374,12 +391,69 @@ namespace PixelOcean
             if (timerLabel != null) timerLabel.text = "RACE COMPLETE";
             if (standingsLabel != null)
                 standingsLabel.text = string.Join("\n", racers.Select((r, i) => $"{i + 1}. {r.Name.ToUpperInvariant()}  {r.Distance:0.0}m"));
-            if (musicSource != null) musicSource.Stop();
+            BeginMusicFadeOut();
             if (ecosystemRoot != null)
             {
                 Destroy(ecosystemRoot);
                 ecosystemRoot = null;
             }
+        }
+
+        private void RandomizeRaceAtmosphere()
+        {
+            raceSky = FindFirstObjectByType<ProceduralStarryNight>();
+            if (raceSky != null)
+            {
+                // Any point in the full day/night cycle can be selected for a race.
+                float randomTime = UnityEngine.Random.value;
+                raceSky.BeginExternalTimeTransition(
+                    randomTime,
+                    raceTimeTransitionSeconds);
+            }
+
+            raceRain = FindFirstObjectByType<ProceduralRainSystem>();
+            if (raceRain == null)
+            {
+                raceRain = new GameObject("Race Weather System")
+                    .AddComponent<ProceduralRainSystem>();
+            }
+
+            ApplyRandomRaceWeather();
+        }
+
+        private void UpdateRaceWeatherPattern()
+        {
+            if (!RaceActive || Time.time < nextRaceWeatherChangeTime)
+                return;
+
+            if (raceRain == null)
+                raceRain = FindFirstObjectByType<ProceduralRainSystem>();
+
+            ApplyRandomRaceWeather();
+        }
+
+        private void ApplyRandomRaceWeather()
+        {
+            if (raceRain == null)
+                return;
+
+            ProceduralRainSystem.RainSituation situation;
+            if (UnityEngine.Random.value < raceClearWeatherChance)
+            {
+                situation = ProceduralRainSystem.RainSituation.Clear;
+            }
+            else
+            {
+                int count = Enum.GetValues(
+                    typeof(ProceduralRainSystem.RainSituation)).Length;
+                situation = (ProceduralRainSystem.RainSituation)
+                    UnityEngine.Random.Range(1, count);
+            }
+
+            raceRain.SetSituation(situation);
+            nextRaceWeatherChangeTime = Time.time + UnityEngine.Random.Range(
+                Mathf.Min(minimumRaceWeatherDuration, maximumRaceWeatherDuration),
+                Mathf.Max(minimumRaceWeatherDuration, maximumRaceWeatherDuration));
         }
 
         private void SetupRaceEcosystem()
@@ -476,10 +550,77 @@ namespace PixelOcean
 
         private void StartMusic()
         {
-            if (musicSource == null) musicSource = gameObject.AddComponent<AudioSource>();
-            musicSource.clip = Resources.Load<AudioClip>("Audio/Music/Death Surfer");
-            musicSource.loop = true; musicSource.playOnAwake = false; musicSource.spatialBlend = 0f; musicSource.volume = 0.8f;
-            if (musicSource.clip != null) musicSource.Play();
+            if (musicSource == null)
+                musicSource = gameObject.AddComponent<AudioSource>();
+
+            if (musicFadeCoroutine != null)
+            {
+                StopCoroutine(musicFadeCoroutine);
+                musicFadeCoroutine = null;
+            }
+
+            musicSource.clip = Resources.Load<AudioClip>(
+                "Audio/Music/Death Surfer");
+            musicSource.loop = true;
+            musicSource.playOnAwake = false;
+            musicSource.spatialBlend = 0f;
+            musicSource.volume = 0.8f;
+
+            if (musicSource.clip != null)
+                musicSource.Play();
+        }
+
+        private void BeginMusicFadeOut()
+        {
+            if (musicSource == null || !musicSource.isPlaying)
+                return;
+
+            if (musicFadeCoroutine != null)
+                StopCoroutine(musicFadeCoroutine);
+
+            musicFadeCoroutine = StartCoroutine(FadeOutRaceMusic());
+        }
+
+        private IEnumerator FadeOutRaceMusic()
+        {
+            float duration = Mathf.Max(0.05f, raceMusicFadeOutSeconds);
+            float startingVolume = musicSource != null
+                ? musicSource.volume
+                : 0f;
+            float elapsed = 0f;
+
+            while (musicSource != null && musicSource.isPlaying && elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                musicSource.volume = Mathf.Lerp(
+                    startingVolume,
+                    0f,
+                    Mathf.Clamp01(elapsed / duration));
+                yield return null;
+            }
+
+            if (musicSource != null)
+            {
+                musicSource.Stop();
+                musicSource.volume = 0.8f;
+            }
+
+            musicFadeCoroutine = null;
+        }
+
+        private void StopMusicImmediately()
+        {
+            if (musicFadeCoroutine != null)
+            {
+                StopCoroutine(musicFadeCoroutine);
+                musicFadeCoroutine = null;
+            }
+
+            if (musicSource != null)
+            {
+                musicSource.Stop();
+                musicSource.volume = 0.8f;
+            }
         }
 
         private void BuildRaceHud()
