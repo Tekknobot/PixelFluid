@@ -181,6 +181,10 @@ namespace PixelOcean
 
         private IEnumerator Start()
         {
+            // The title screen owns mode choice. Do not create a story ecosystem before Play/Continue.
+            if (!GameModeSession.IsStory)
+                yield break;
+
             yield return BeginRun(false);
             // Never overwrite an existing disk save merely because the title scene loaded.
             if (!SurfStageSaveSystem.HasSave)
@@ -200,6 +204,7 @@ namespace PixelOcean
 
         public IEnumerator StartNewRunFromMenu()
         {
+            GameModeSession.SelectStoryMode();
             SurfStageSaveSystem.Delete();
             yield return BeginRun(true);
             SurfStageSaveSystem.Save(this);
@@ -208,6 +213,7 @@ namespace PixelOcean
         public IEnumerator LoadSavedRun(SurfStageSaveSystem.SaveData data)
         {
             if (data == null) yield break;
+            GameModeSession.SelectStoryMode();
             ClearRunObjects();
             yield return null;
             // Destroy() is deferred. Wait through the end of the frame so stale

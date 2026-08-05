@@ -40,6 +40,7 @@ namespace PixelOcean
         private Button cancelNewGameButton;
         private Button playButton;
         private Button continueButton;
+        private Button raceModeButton;
         private Button controlsButton;
         private Button settingsButton;
         private Button developerButton;
@@ -338,6 +339,7 @@ namespace PixelOcean
             motionRoutine = StartCoroutine(ShowAnimated());
             RefreshContinueButton();
             RefreshDeveloperButton();
+            ConfigureMainMenuNavigation();
             inputReadyTime = Time.unscaledTime + motionDuration + 0.12f;
         }
 
@@ -871,12 +873,14 @@ namespace PixelOcean
 
             playButton = CreateSpriteButton(panel.transform, "play_button", PlayPressed);
             continueButton = CreateSpriteButton(panel.transform, "continue_button", ContinuePressed);
+            raceModeButton = CreateSpriteButton(panel.transform, "race_mode_button", OpenRaceModeSelection);
             controlsButton = CreateSpriteButton(panel.transform, "controls_button", ShowControls);
             settingsButton = CreateSpriteButton(panel.transform, "options_button", ShowSettings);
             developerButton = CreateSpriteButton(panel.transform, "developer_button", OpenDeveloperMenu);
             quitButton = CreateSpriteButton(panel.transform, "quit_button", QuitGame);
 
             RefreshDeveloperButton();
+            ConfigureMainMenuNavigation();
         }
 
         private void RefreshDeveloperButton()
@@ -885,6 +889,63 @@ namespace PixelOcean
                 return;
 
             developerButton.gameObject.SetActive(developerUnlocked);
+            ConfigureMainMenuNavigation();
+        }
+
+        private void ConfigureMainMenuNavigation()
+        {
+            if (buttonPanel == null)
+                return;
+
+            List<Button> visibleButtons = new();
+            Button[] ordered =
+            {
+                playButton, continueButton, raceModeButton, controlsButton,
+                settingsButton, developerButton, quitButton
+            };
+
+            foreach (Button button in ordered)
+            {
+                if (button != null && button.gameObject.activeInHierarchy && button.interactable)
+                    visibleButtons.Add(button);
+            }
+
+            for (int i = 0; i < visibleButtons.Count; i++)
+            {
+                Button current = visibleButtons[i];
+                Navigation navigation = current.navigation;
+                navigation.mode = Navigation.Mode.Explicit;
+                navigation.selectOnUp = visibleButtons[(i - 1 + visibleButtons.Count) % visibleButtons.Count];
+                navigation.selectOnDown = visibleButtons[(i + 1) % visibleButtons.Count];
+                navigation.selectOnLeft = null;
+                navigation.selectOnRight = null;
+                current.navigation = navigation;
+            }
+        }
+
+        private void OpenRaceModeSelection()
+        {
+            GameModeSession.ReturnToModeSelect();
+            RaceModeManager manager = RaceModeManager.EnsureInstance();
+            if (manager.IsSelectionVisible)
+                return;
+
+            manager.ShowSelection(this);
+        }
+
+        public void BeginRaceMode(string selectedSurfer)
+        {
+            StartCoroutine(StartRaceAndResume(selectedSurfer));
+        }
+
+        private IEnumerator StartRaceAndResume(string selectedSurfer)
+        {
+            GameModeSession.SelectRaceMode();
+            yield return HideMenuForOpeningTransition();
+            RaceModeManager manager = RaceModeManager.EnsureInstance();
+            manager.BeginRace(selectedSurfer);
+            yield return FadeStartupBlack(1f, 0f, 0.7f);
+            FinishOpeningTransition();
         }
 
         private void OpenDeveloperMenu()
@@ -1526,6 +1587,7 @@ namespace PixelOcean
 
         private IEnumerator StartNewAndResume()
         {
+            GameModeSession.SelectStoryMode();
             // Keep the dedicated black layer visible while the front-end UI exits.
             yield return HideMenuForOpeningTransition();
 
@@ -1557,6 +1619,7 @@ namespace PixelOcean
 
         private IEnumerator LoadAndResume(SurfStageSaveSystem.SaveData data)
         {
+            GameModeSession.SelectStoryMode();
             // Continue skips the opening boards but still prevents a one-frame view
             // of the ocean before the saved state is ready.
             yield return HideMenuForOpeningTransition();

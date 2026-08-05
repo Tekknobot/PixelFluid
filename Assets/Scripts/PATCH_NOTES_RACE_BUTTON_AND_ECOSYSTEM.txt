@@ -1,0 +1,10 @@
+RACE MODE BUTTON + RANDOM ECOSYSTEM PATCH
+
+- Replaced automatic main-menu navigation with explicit wrapped navigation.
+- Race Mode now has a guarded selection state so repeated submit/click events cannot cancel or duplicate it.
+- Added a race-only randomized water ecosystem.
+- Ecosystem randomly spawns sharks, giant squids, whales, and jellyfish schools.
+- Spawns are distributed across available endless-wave sections and enter from section edges where supported.
+- Population is capped and replenished periodically during the race.
+- Godzilla/Reaper and Rubber Duck bosses are explicitly removed and never added to the race pool.
+- Boombox surfers remain disabled; race music still plays directly.

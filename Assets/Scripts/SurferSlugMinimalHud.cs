@@ -120,6 +120,7 @@ namespace PixelOcean
 
         private void Update()
         {
+            if (GameModeSession.IsRace || !GameModeSession.HasChosenMode) return;
             if (player == null || !player.IsPlayerControlled)
                 player = FindPlayer();
             if (dayNight == null)

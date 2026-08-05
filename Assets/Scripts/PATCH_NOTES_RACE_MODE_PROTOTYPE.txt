@@ -1,0 +1,15 @@
+RACE MODE PROTOTYPE
+
+- Added the authored race_mode_button to the main title menu.
+- Added a keyboard/gamepad surfer selection screen for Chuck, Fred, Josh, and Jason.
+- Moved Fred/Josh/Jason sheets into Resources/RaceSurfers so runtime race skins can load them.
+- Added three AI racers using TinyWaveSurfer movement, lane switching, jumps, tricks, throwing, and charged skid logic.
+- Disabled Water Slash and Flow Finisher for every racer, including Chuck.
+- Disabled story/population spawners during races and removes any active boombox surfer.
+- Plays Death Surfer directly as non-spatial looping race music.
+- Added a 75-second prototype race HUD with live distance standings and final results.
+- Selected surfer is spawned first so existing camera/player discovery favours the human racer.
+
+Prototype notes:
+- Distance is accumulated from horizontal movement so endless-section recycling does not reset progress.
+- Race mode currently remains in the gameplay scene after results; a rematch/results menu can be added later.

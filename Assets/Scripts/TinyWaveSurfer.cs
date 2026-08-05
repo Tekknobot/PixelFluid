@@ -55,6 +55,7 @@ namespace PixelOcean
         [Header("Player Control")]
         [SerializeField] private bool playerControlled;
         [SerializeField] private bool aiControlled;
+        private bool raceModeSurfer;
         [SerializeField, Min(0.25f)] private float playerScrollSpeed = 2.4f;
         [SerializeField, Range(1f, 4f)] private float playerBoostMultiplier = 1.75f;
         [Tooltip("World-space padding that keeps the surfer clear of the camera's left and right screen edges.")]
@@ -2037,6 +2038,25 @@ namespace PixelOcean
         }
 
 
+        public void ConfigureRaceSurfer(bool controlledByAI, float scrollSpeed, float boostMultiplier)
+        {
+            ConfigureSinglePlayer(scrollSpeed, boostMultiplier);
+            aiControlled = controlledByAI;
+            raceModeSurfer = true;
+            enableWaterSlash = false;
+            pendingFinisherLanes.Clear();
+            specialAttackActive = false;
+            enableOnFireSpriteEffect = false;
+            randomizeInitialOceanSpawn = false;
+            respawnAfterDeath = true;
+            if (controlledByAI)
+            {
+                aiDecisionTimer = Random.Range(0.35f, 0.9f);
+                aiHorizontal = 1f;
+                gameObject.name = "Race AI Surfer";
+            }
+        }
+
         public void ConfigureAIPlayer(float scrollSpeed, float boostMultiplier)
         {
             ConfigureSinglePlayer(scrollSpeed, boostMultiplier);
@@ -2884,7 +2904,7 @@ namespace PixelOcean
             aiAttackPulse = Mathf.Max(0f, aiAttackPulse - dt);
             aiSpecialHold = Mathf.Max(0f, aiSpecialHold - dt);
 
-            if (currentWave != null)
+            if (currentWave != null && !raceModeSurfer)
             {
                 float width = Mathf.Max(0.01f, currentWave.TankMaximum.x - currentWave.TankMinimum.x);
                 float leftTurn = currentWave.TankMinimum.x + width * 0.16f;
@@ -2896,9 +2916,11 @@ namespace PixelOcean
             if (aiDecisionTimer > 0f || state != RiderState.Riding)
                 return;
 
-            aiDecisionTimer = Random.Range(0.7f, 2.2f);
+            aiDecisionTimer = raceModeSurfer ? Random.Range(0.45f, 1.15f) : Random.Range(0.7f, 2.2f);
             aiLayerDirection = 0;
             aiTrick = Random.Range(-1f, 1f);
+
+            if (raceModeSurfer) aiHorizontal = 1f;
 
             float choice = Random.value;
             if (choice < 0.24f)
@@ -2918,7 +2940,7 @@ namespace PixelOcean
             {
                 aiSpecialHold = Random.Range(0.25f, maximumSkidChargeTime);
             }
-            else if (choice < 0.88f)
+            else if (choice < 0.88f && !raceModeSurfer)
             {
                 aiHorizontal *= -1f;
             }
