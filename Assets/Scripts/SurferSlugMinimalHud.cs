@@ -78,6 +78,7 @@ namespace PixelOcean
         private float noticeUntil;
         private string inventoryFingerprint = string.Empty;
         private readonly List<GameObject> inventorySlots = new();
+        private bool presentationSuppressed;
 
         private void Awake()
         {
@@ -120,6 +121,12 @@ namespace PixelOcean
 
         private void Update()
         {
+            if (presentationSuppressed)
+            {
+                SetHudVisible(false, true);
+                return;
+            }
+
             if (GameModeSession.IsRace || !GameModeSession.HasChosenMode)
             {
                 SetStoryHudActive(false);
@@ -157,23 +164,80 @@ namespace PixelOcean
             RefreshInventory();
         }
 
+        public void SuppressPresentation(bool suppress)
+        {
+            presentationSuppressed = suppress;
+        }
+
+        public void SetPresentationSuppressed(bool suppressed)
+        {
+            bool wasSuppressed = presentationSuppressed;
+            presentationSuppressed = suppressed;
+
+            if (suppressed)
+            {
+                SetHudVisible(false, true);
+
+                Canvas canvas = GetComponent<Canvas>();
+                if (canvas != null)
+                    canvas.enabled = false;
+
+                GraphicRaycaster raycaster = GetComponent<GraphicRaycaster>();
+                if (raycaster != null)
+                    raycaster.enabled = false;
+
+                return;
+            }
+
+            // When the menu transition releases the HUD, reset its alpha before
+            // re-enabling the canvas. This prevents one stale fully-visible frame.
+            if (wasSuppressed && hudGroup != null)
+            {
+                hudGroup.alpha = 0f;
+                hudGroup.interactable = false;
+                hudGroup.blocksRaycasts = false;
+            }
+
+            Canvas releasedCanvas = GetComponent<Canvas>();
+            if (releasedCanvas != null)
+                releasedCanvas.enabled = GameModeSession.IsStory;
+
+            GraphicRaycaster releasedRaycaster = GetComponent<GraphicRaycaster>();
+            if (releasedRaycaster != null)
+                releasedRaycaster.enabled = GameModeSession.IsStory;
+        }
+
         public void SetStoryHudActive(bool active)
         {
             if (hudGroup == null)
                 BuildHud();
 
-            SetHudVisible(active && GameModeSession.IsStory, true);
+            bool shouldBeActive =
+                active &&
+                GameModeSession.IsStory &&
+                !presentationSuppressed;
 
             Canvas canvas = GetComponent<Canvas>();
             if (canvas != null)
-                canvas.enabled = active && GameModeSession.IsStory;
+                canvas.enabled = shouldBeActive;
 
             GraphicRaycaster raycaster = GetComponent<GraphicRaycaster>();
             if (raycaster != null)
-                raycaster.enabled = active && GameModeSession.IsStory;
+                raycaster.enabled = shouldBeActive;
 
-            if (!active)
+            if (shouldBeActive)
+            {
+                // Never force the HUD directly to alpha 1. Begin at zero and let
+                // Update/SetHudVisible perform the smooth fade-in.
+                hudGroup.alpha = 0f;
+                hudGroup.interactable = false;
+                hudGroup.blocksRaycasts = false;
+            }
+            else
+            {
+                SetHudVisible(false, true);
                 player = null;
+            }
         }
 
         private void SetHudVisible(bool visible, bool immediate = false)

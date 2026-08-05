@@ -207,7 +207,7 @@ namespace PixelOcean
                 buttons.Count > 0 ? buttons[0].gameObject : null);
         }
 
-        public void BeginRace(string selectedSurfer)
+        public void BeginRace(string selectedSurfer, bool showHudImmediately = true)
         {
             GameModeSession.SelectRaceMode();
             ExitRaceMode(false);
@@ -222,7 +222,14 @@ namespace PixelOcean
             SetupRaceEcosystem();
             RandomizeRaceAtmosphere();
             BuildRaceHud();
+            SetRaceHudVisible(showHudImmediately);
             StartMusic();
+        }
+
+        public void SetRaceHudVisible(bool visible)
+        {
+            if (raceHud != null)
+                raceHud.SetActive(visible);
         }
 
         private void Update()

@@ -1,0 +1,6 @@
+HUD AFTER MENU TRANSITION
+
+- Story HUD is explicitly suppressed before Start/Continue begins.
+- Story HUD is released only after the black/title-band reveal finishes.
+- Race HUD is built hidden and becomes visible only after the opening reveal finishes.
+- Prevents normal-mode and race-mode UI from flashing over the pause-menu exit animation.

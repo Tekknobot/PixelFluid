@@ -1138,8 +1138,9 @@ namespace PixelOcean
             GameModeSession.SelectRaceMode();
             yield return HideMenuForOpeningTransition();
             RaceModeManager manager = RaceModeManager.EnsureInstance();
-            manager.BeginRace(selectedSurfer);
+            manager.BeginRace(selectedSurfer, false);
             yield return FadeStartupBlack(1f, 0f, 0.7f);
+            manager.SetRaceHudVisible(true);
             FinishOpeningTransition();
         }
 
@@ -1806,6 +1807,7 @@ namespace PixelOcean
 
         private IEnumerator StartNewAndResume()
         {
+            SurferSlugMinimalHud.Instance?.SetPresentationSuppressed(true);
             GameModeSession.SelectStoryMode();
             // Keep the dedicated black layer visible while the front-end UI exits.
             yield return HideMenuForOpeningTransition();
@@ -1823,6 +1825,8 @@ namespace PixelOcean
             yield return StoryboardCutsceneSystem.PlayDayOneOpening();
 
             yield return FadeStartupBlack(1f, 0f, 0.85f);
+            SurferSlugMinimalHud.Instance?.SetPresentationSuppressed(false);
+            SurferSlugMinimalHud.Instance?.SetStoryHudActive(true);
             FinishOpeningTransition();
         }
 
@@ -1838,6 +1842,7 @@ namespace PixelOcean
 
         private IEnumerator LoadAndResume(SurfStageSaveSystem.SaveData data)
         {
+            SurferSlugMinimalHud.Instance?.SetPresentationSuppressed(true);
             GameModeSession.SelectStoryMode();
             // Continue skips the opening boards but still prevents a one-frame view
             // of the ocean before the saved state is ready.
@@ -1853,6 +1858,8 @@ namespace PixelOcean
             surfer?.RestorePersistentState(data);
 
             yield return FadeStartupBlack(1f, 0f, 0.85f);
+            SurferSlugMinimalHud.Instance?.SetPresentationSuppressed(false);
+            SurferSlugMinimalHud.Instance?.SetStoryHudActive(true);
             FinishOpeningTransition();
         }
 
