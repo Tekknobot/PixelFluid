@@ -83,9 +83,9 @@ namespace PixelOcean
         private AudioSource flowAudioSource;
 
         [Header("Popup Tiers")]
-        [SerializeField, Min(1)] private int cleanTierMinimum = 350;
-        [SerializeField, Min(1)] private int radicalTierMinimum = 450;
-        [SerializeField, Min(1)] private int legendaryTierMinimum = 650;
+        [SerializeField, Min(1)] private int cleanTierMinimum = 500;
+        [SerializeField, Min(1)] private int radicalTierMinimum = 1500;
+        [SerializeField, Min(1)] private int legendaryTierMinimum = 4500;
         [SerializeField] private Color baseTierColour       = Color.white;
         [SerializeField] private Color cleanTierColour      = new Color32(0,255,255,255);     // Aqua
         [SerializeField] private Color radicalTierColour    = new Color32(255,70,180,255);    // Hot Pink

@@ -1,46 +1,43 @@
 fileFormatVersion: 2
-guid: 8877bec2d54db374399a73976600a500
+guid: 691dd40d8964ddb4797b5c8523f13e69
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -7011025835322549587
-    second: controls_diagram_0
+      213: 2834761428258904182
+    second: controls_diagram2_0
   - first:
-      213: -3300309535618820462
-    second: controls_diagram_1
+      213: 484959689115527665
+    second: controls_diagram2_1
   - first:
-      213: 2471215847102302627
-    second: controls_diagram_2
+      213: -6454235329679901037
+    second: controls_diagram2_2
   - first:
-      213: -4302820875605869491
-    second: controls_diagram_3
+      213: 4838942560528850895
+    second: controls_diagram2_3
   - first:
-      213: -3046933842214353175
-    second: controls_diagram_4
+      213: 8080407591787992007
+    second: controls_diagram2_4
   - first:
-      213: -8415597651916804068
-    second: controls_diagram_5
+      213: 6427329519607183507
+    second: controls_diagram2_5
   - first:
-      213: 7993165070232260946
-    second: controls_diagram_6
+      213: 2901363301917174731
+    second: controls_diagram2_6
   - first:
-      213: 581610567808654718
-    second: controls_diagram_7
+      213: 5824495285678827117
+    second: controls_diagram2_7
   - first:
-      213: -771515830168764530
-    second: controls_diagram_8
+      213: 5827929452583933699
+    second: controls_diagram2_8
   - first:
-      213: -2842546759686229649
-    second: controls_diagram_9
+      213: -2661562717321246006
+    second: controls_diagram2_9
   - first:
-      213: 2866551476604146363
-    second: controls_diagram_10
+      213: -1888636954709583940
+    second: controls_diagram2_10
   - first:
-      213: 981311755983636674
-    second: controls_diagram_11
-  - first:
-      213: -4944237065728814767
-    second: controls_diagram_12
+      213: 7518963974059203946
+    second: controls_diagram2_11
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -149,7 +146,29 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: controls_diagram_0
+      name: controls_diagram2_0
+      rect:
+        serializedVersion: 2
+        x: 7
+        y: 206
+        width: 51
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 678d952ff78175720800000000000000
+      internalID: 2834761428258904182
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: controls_diagram2_1
       rect:
         serializedVersion: 2
         x: 66
@@ -164,14 +183,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: daa53861625d3be90800000000000000
-      internalID: -7011025835322549587
+      spriteID: 1f96d10944ceab600800000000000000
+      internalID: 484959689115527665
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: controls_diagram_1
+      name: controls_diagram2_2
       rect:
         serializedVersion: 2
         x: 83
@@ -186,14 +205,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 2961b9096f1f232d0800000000000000
-      internalID: -3300309535618820462
+      spriteID: 39e37a5e923fd66a0800000000000000
+      internalID: -6454235329679901037
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: controls_diagram_2
+      name: controls_diagram2_3
       rect:
         serializedVersion: 2
         x: 89
@@ -208,14 +227,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 3a949d948b58b4220800000000000000
-      internalID: 2471215847102302627
+      spriteID: fcf57d8fe90672340800000000000000
+      internalID: 4838942560528850895
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: controls_diagram_3
+      name: controls_diagram2_4
       rect:
         serializedVersion: 2
         x: 130
@@ -230,14 +249,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: d4c7061063f4944c0800000000000000
-      internalID: -4302820875605869491
+      spriteID: 7c394e494ef532070800000000000000
+      internalID: 8080407591787992007
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: controls_diagram_4
+      name: controls_diagram2_5
       rect:
         serializedVersion: 2
         x: 180
@@ -252,14 +271,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 9e682b850dd17b5d0800000000000000
-      internalID: -3046933842214353175
+      spriteID: 39871960526723950800000000000000
+      internalID: 6427329519607183507
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: controls_diagram_5
+      name: controls_diagram2_6
       rect:
         serializedVersion: 2
         x: 180
@@ -274,19 +293,19 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: c1033e8f58ac53b80800000000000000
-      internalID: -8415597651916804068
+      spriteID: bcba02f0d86b34820800000000000000
+      internalID: 2901363301917174731
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: controls_diagram_6
+      name: controls_diagram2_7
       rect:
         serializedVersion: 2
         x: 5
         y: 41
-        width: 233
+        width: 248
         height: 165
       alignment: 0
       pivot: {x: 0, y: 0}
@@ -296,80 +315,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 2511142284d6dee60800000000000000
-      internalID: 7993165070232260946
+      spriteID: d66e2d25a93c4d050800000000000000
+      internalID: 5824495285678827117
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: controls_diagram_7
-      rect:
-        serializedVersion: 2
-        x: 208
-        y: 183
-        width: 35
-        height: 12
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: e7d19dbdabb421800800000000000000
-      internalID: 581610567808654718
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: controls_diagram_8
-      rect:
-        serializedVersion: 2
-        x: 224
-        y: 172
-        width: 29
-        height: 12
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: e8f333ca0760b45f0800000000000000
-      internalID: -771515830168764530
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: controls_diagram_9
-      rect:
-        serializedVersion: 2
-        x: 243
-        y: 183
-        width: 7
-        height: 12
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: f61f67358ce3d88d0800000000000000
-      internalID: -2842546759686229649
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: controls_diagram_10
+      name: controls_diagram2_8
       rect:
         serializedVersion: 2
         x: 82
@@ -384,14 +337,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: bb29c5d516908c720800000000000000
-      internalID: 2866551476604146363
+      spriteID: 3075d4d95f6f0e050800000000000000
+      internalID: 5827929452583933699
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: controls_diagram_11
+      name: controls_diagram2_9
       rect:
         serializedVersion: 2
         x: 160
@@ -406,14 +359,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 2c8c155c7d15e9d00800000000000000
-      internalID: 981311755983636674
+      spriteID: acac4a66fca301bd0800000000000000
+      internalID: -2661562717321246006
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: controls_diagram_12
+      name: controls_diagram2_10
       rect:
         serializedVersion: 2
         x: 184
@@ -428,8 +381,30 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 1511aeb959a826bb0800000000000000
-      internalID: -4944237065728814767
+      spriteID: cb71cd432b63ac5e0800000000000000
+      internalID: -1888636954709583940
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: controls_diagram2_11
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 18
+        width: 40
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a6d12c0b5e9b85860800000000000000
+      internalID: 7518963974059203946
       vertices: []
       indices: 
       edges: []
@@ -448,19 +423,18 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      controls_diagram_0: -7011025835322549587
-      controls_diagram_1: -3300309535618820462
-      controls_diagram_10: 2866551476604146363
-      controls_diagram_11: 981311755983636674
-      controls_diagram_12: -4944237065728814767
-      controls_diagram_2: 2471215847102302627
-      controls_diagram_3: -4302820875605869491
-      controls_diagram_4: -3046933842214353175
-      controls_diagram_5: -8415597651916804068
-      controls_diagram_6: 7993165070232260946
-      controls_diagram_7: 581610567808654718
-      controls_diagram_8: -771515830168764530
-      controls_diagram_9: -2842546759686229649
+      controls_diagram2_0: 2834761428258904182
+      controls_diagram2_1: 484959689115527665
+      controls_diagram2_10: -1888636954709583940
+      controls_diagram2_11: 7518963974059203946
+      controls_diagram2_2: -6454235329679901037
+      controls_diagram2_3: 4838942560528850895
+      controls_diagram2_4: 8080407591787992007
+      controls_diagram2_5: 6427329519607183507
+      controls_diagram2_6: 2901363301917174731
+      controls_diagram2_7: 5824495285678827117
+      controls_diagram2_8: 5827929452583933699
+      controls_diagram2_9: -2661562717321246006
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
