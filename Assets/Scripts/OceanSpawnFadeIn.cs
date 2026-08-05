@@ -11,13 +11,71 @@ namespace PixelOcean
 
         private readonly List<SpriteRenderer> renderers = new();
         private readonly List<Color> targetColors = new();
+        private bool prepared;
+
+        public void Configure(float fadeDuration)
+        {
+            duration = Mathf.Max(0.05f, fadeDuration);
+
+            // AddComponent invokes Awake immediately. Awake may already have
+            // captured the authored renderer colours and set their alpha to zero.
+            // Re-capturing here would store zero as the target alpha and leave the
+            // creature permanently invisible.
+            if (!prepared)
+                PrepareExistingRenderersAtZeroAlpha();
+        }
+
+        private void Awake()
+        {
+            // If the spawner has already created its children, hide them before
+            // Unity gets a chance to render the first visible frame.
+            PrepareExistingRenderersAtZeroAlpha();
+        }
+
+        private void PrepareExistingRenderersAtZeroAlpha()
+        {
+            renderers.Clear();
+            targetColors.Clear();
+            GetComponentsInChildren(true, renderers);
+
+            foreach (SpriteRenderer renderer in renderers)
+            {
+                if (renderer == null)
+                    continue;
+
+                Color target = renderer.color;
+                targetColors.Add(target);
+                renderer.color = new Color(target.r, target.g, target.b, 0f);
+            }
+
+            prepared = renderers.Count > 0;
+        }
 
         private IEnumerator Start()
         {
-            // Spawners often add renderers one frame after creating their root.
+            // Some spawners create child renderers during their own Start method.
+            // Capture those late additions before beginning the visible fade.
             yield return null;
 
-            GetComponentsInChildren(true, renderers);
+            if (!prepared)
+            {
+                PrepareExistingRenderersAtZeroAlpha();
+            }
+            else
+            {
+                List<SpriteRenderer> latest = new();
+                GetComponentsInChildren(true, latest);
+                foreach (SpriteRenderer renderer in latest)
+                {
+                    if (renderer == null || renderers.Contains(renderer))
+                        continue;
+
+                    Color target = renderer.color;
+                    renderers.Add(renderer);
+                    targetColors.Add(target);
+                    renderer.color = new Color(target.r, target.g, target.b, 0f);
+                }
+            }
 
             if (renderers.Count == 0)
             {
@@ -25,48 +83,20 @@ namespace PixelOcean
                 yield break;
             }
 
-            targetColors.Clear();
-
-            foreach (SpriteRenderer renderer in renderers)
-            {
-                Color target = renderer.color;
-                targetColors.Add(target);
-
-                renderer.color = new Color(
-                    target.r,
-                    target.g,
-                    target.b,
-                    0f
-                );
-            }
-
             float elapsed = 0f;
-
             while (elapsed < duration)
             {
                 elapsed += Time.deltaTime;
-
-                float t = Mathf.SmoothStep(
-                    0f,
-                    1f,
-                    Mathf.Clamp01(elapsed / duration)
-                );
+                float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / duration));
 
                 for (int i = 0; i < renderers.Count; i++)
                 {
                     SpriteRenderer renderer = renderers[i];
-
                     if (renderer == null)
                         continue;
 
                     Color target = targetColors[i];
-
-                    renderer.color = new Color(
-                        target.r,
-                        target.g,
-                        target.b,
-                        target.a * t
-                    );
+                    renderer.color = new Color(target.r, target.g, target.b, target.a * t);
                 }
 
                 yield return null;
@@ -85,9 +115,7 @@ namespace PixelOcean
     [DefaultExecutionOrder(30000)]
     public sealed class OceanSpawnFadeInstaller : MonoBehaviour
     {
-        // Track the actual GameObjects instead of obsolete integer IDs.
         private readonly HashSet<GameObject> seen = new();
-
         private float nextScan;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -119,8 +147,8 @@ namespace PixelOcean
             FadeNew<TransparentSquidLaneSwimmer>();
             FadeNew<StingrayLaneSwimmer>();
             FadeNew<BloodfishSwimmer>();
-            // Arena bosses use BossArenaPrison's placement-aware fade. Applying the
-            // generic ocean fade here can race it and capture a zero-alpha target.
+            FadeNew<SeaTurtleSwimmer>();
+            FadeNew<GiantTurtleSwimmer>();
             FadeNew<RubberDucklingSwimmer>();
             FadeNew<AlienUfoController>();
             FadeNew<DayTwoHelicopterController>();
@@ -131,8 +159,7 @@ namespace PixelOcean
         {
             T[] components = FindObjectsByType<T>(
                 FindObjectsInactive.Exclude,
-                FindObjectsSortMode.None
-            );
+                FindObjectsSortMode.None);
 
             foreach (T component in components)
             {
@@ -140,11 +167,12 @@ namespace PixelOcean
                     continue;
 
                 GameObject target = component.gameObject;
-
                 if (!seen.Add(target))
                     continue;
 
-                if (target.GetComponent<OceanSpawnFadeIn>() != null)
+                // Race Mode may fade an entire school/group from its root.
+                // Do not layer another fade onto each child.
+                if (target.GetComponentInParent<OceanSpawnFadeIn>() != null)
                     continue;
 
                 target.AddComponent<OceanSpawnFadeIn>();

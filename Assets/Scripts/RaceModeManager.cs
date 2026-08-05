@@ -52,6 +52,23 @@ namespace PixelOcean
         private SurferSlugPauseMenu selectionMenu;
         private GameObject ecosystemRoot;
         private float nextEcosystemSpawnTime;
+
+        [Header("Race Ecosystem Difficulty")]
+        [SerializeField, Range(1, 12)] private int openingEnemyCap = 6;
+        [SerializeField, Range(1, 16)] private int earlyEnemyCap = 9;
+        [SerializeField, Range(1, 20)] private int midEnemyCap = 12;
+        [SerializeField, Range(1, 24)] private int finalEnemyCap = 15;
+        [SerializeField, Min(0.5f)] private float openingSpawnInterval = 4.5f;
+        [SerializeField, Min(0.5f)] private float earlySpawnInterval = 3.5f;
+        [SerializeField, Min(0.5f)] private float midSpawnInterval = 2.6f;
+        [SerializeField, Min(0.5f)] private float finalSpawnInterval = 1.8f;
+        [SerializeField, Range(0f, 1f)] private float openingPhaseEnd = 0.10f;
+        [SerializeField, Range(0f, 1f)] private float earlyPhaseEnd = 0.27f;
+        [SerializeField, Range(0f, 1f)] private float midPhaseEnd = 0.55f;
+        [SerializeField, Range(1, 6)] private int maximumSpawnsPerPulse = 3;
+        [SerializeField, Min(0.05f)] private float raceCreatureFadeInDuration = 0.85f;
+        [SerializeField, Range(2, 8)] private int raceTurtleSchoolMinimum = 3;
+        [SerializeField, Range(3, 12)] private int raceTurtleSchoolMaximum = 6;
         private bool hasStoryProgressionSnapshot;
         private SurfAbility storyUnlockedSnapshot;
         private int storyJumpUpgradeSnapshot;
@@ -463,10 +480,17 @@ namespace PixelOcean
 
             ecosystemRoot = new GameObject("Race Mode Random Ecosystem");
             DontDestroyOnLoad(ecosystemRoot);
-            nextEcosystemSpawnTime = Time.time + 1.5f;
+            nextEcosystemSpawnTime = Time.time + 0.75f;
 
-            // Seed the water immediately with a varied, boss-free group.
-            SpawnRandomWaterEnemy();
+            // Guarantee the signature Race Mode ecosystem appears immediately.
+            // These used to be hidden behind a ten-way random roll, so an entire
+            // race could pass without showing one of them.
+            SpawnSpecificRaceCreature(3); // Jellyfish school
+            SpawnSpecificRaceCreature(4); // Blood shark
+            SpawnSpecificRaceCreature(7); // Bloodfish school
+            SpawnSpecificRaceCreature(8); // Baby sea turtle school
+
+            // Add two random creatures so the opening still changes each race.
             SpawnRandomWaterEnemy();
             SpawnRandomWaterEnemy();
         }
@@ -476,19 +500,73 @@ namespace PixelOcean
             if (ecosystemRoot == null || Time.time < nextEcosystemSpawnTime)
                 return;
 
-            int activeEnemies =
+            GetRaceEcosystemDifficulty(out int enemyCap, out float spawnInterval);
+            int activeEnemies = CountActiveRaceEnemies();
+            int missing = Mathf.Max(0, enemyCap - activeEnemies);
+            int spawnCount = Mathf.Min(missing, Mathf.Max(1, maximumSpawnsPerPulse));
+
+            for (int i = 0; i < spawnCount; i++)
+                SpawnRandomWaterEnemy();
+
+            float jitter = UnityEngine.Random.Range(0.82f, 1.18f);
+            nextEcosystemSpawnTime = Time.time + spawnInterval * jitter;
+        }
+
+        private void GetRaceEcosystemDifficulty(out int enemyCap, out float spawnInterval)
+        {
+            float progress = 1f - raceTimeRemaining / Mathf.Max(1f, PrototypeRaceSeconds);
+            progress = Mathf.Clamp01(progress);
+
+            float openingEnd = Mathf.Clamp01(openingPhaseEnd);
+            float earlyEnd = Mathf.Max(openingEnd, Mathf.Clamp01(earlyPhaseEnd));
+            float midEnd = Mathf.Max(earlyEnd, Mathf.Clamp01(midPhaseEnd));
+
+            if (progress < openingEnd)
+            {
+                enemyCap = openingEnemyCap;
+                spawnInterval = openingSpawnInterval;
+            }
+            else if (progress < earlyEnd)
+            {
+                enemyCap = earlyEnemyCap;
+                spawnInterval = earlySpawnInterval;
+            }
+            else if (progress < midEnd)
+            {
+                enemyCap = midEnemyCap;
+                spawnInterval = midSpawnInterval;
+            }
+            else
+            {
+                enemyCap = finalEnemyCap;
+                spawnInterval = finalSpawnInterval;
+            }
+
+            enemyCap = Mathf.Max(1, enemyCap);
+            spawnInterval = Mathf.Max(0.5f, spawnInterval);
+        }
+
+        private static int CountActiveRaceEnemies()
+        {
+            return
                 FindObjectsByType<SharkLaneSwimmer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length +
                 FindObjectsByType<GiantSquidLaneSwimmer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length +
                 FindObjectsByType<WhaleLaneSwimmer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length +
-                FindObjectsByType<JellyfishSchoolController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length;
-
-            if (activeEnemies < 7)
-                SpawnRandomWaterEnemy();
-
-            nextEcosystemSpawnTime = Time.time + UnityEngine.Random.Range(7f, 13f);
+                FindObjectsByType<JellyfishSchoolController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length +
+                FindObjectsByType<BloodSharkLaneSwimmer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length +
+                FindObjectsByType<TransparentSquidLaneSwimmer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length +
+                FindObjectsByType<StingrayLaneSwimmer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length +
+                FindObjectsByType<BloodfishSchoolController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length +
+                FindObjectsByType<SeaTurtleSwimmer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length +
+                FindObjectsByType<GiantTurtleSwimmer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length;
         }
 
         private void SpawnRandomWaterEnemy()
+        {
+            SpawnSpecificRaceCreature(UnityEngine.Random.Range(0, 10));
+        }
+
+        private void SpawnSpecificRaceCreature(int creatureIndex)
         {
             if (ecosystemRoot == null)
                 return;
@@ -504,7 +582,9 @@ namespace PixelOcean
                     holder.position = new Vector3(centres[UnityEngine.Random.Range(0, centres.Count)], 0f, 0f);
             }
 
-            switch (UnityEngine.Random.Range(0, 4))
+            // Every ordinary sea creature is eligible. Bosses, boss minions,
+            // aircraft, UFOs and boombox surfers are intentionally excluded.
+            switch (Mathf.Clamp(creatureIndex, 0, 9))
             {
                 case 0:
                     holder.gameObject.AddComponent<SharkLaneSpawner>().SpawnShark(true);
@@ -515,10 +595,90 @@ namespace PixelOcean
                 case 2:
                     holder.gameObject.AddComponent<WhaleLaneSpawner>().SpawnWhale(true);
                     break;
-                default:
+                case 3:
                     holder.gameObject.AddComponent<JellyfishSchoolSpawner>().SpawnSchool();
                     break;
+                case 4:
+                    holder.gameObject.AddComponent<BloodSharkLaneSpawner>().SpawnBloodShark(true);
+                    break;
+                case 5:
+                    holder.gameObject.AddComponent<TransparentSquidLaneSpawner>().SpawnTransparentSquid(true);
+                    break;
+                case 6:
+                    holder.gameObject.AddComponent<StingrayLaneSpawner>().SpawnStingray(true);
+                    break;
+                case 7:
+                    holder.gameObject.AddComponent<BloodfishSchoolSpawner>().SpawnSchool();
+                    break;
+                case 8:
+                    SpawnRaceSeaTurtleSchool(holder);
+                    break;
+                default:
+                    SpawnRaceGiantTurtle(holder);
+                    break;
             }
+
+            EnsureRaceCreatureFade(holder.gameObject);
+        }
+
+        private void SpawnRaceSeaTurtleSchool(Transform holder)
+        {
+            int laneCount = Mathf.Max(1, EndlessWaveSections.LayersNearest(holder.position.x).Count - 1);
+            int lane = UnityEngine.Random.Range(0, laneCount);
+            int low = Mathf.Max(2, Mathf.Min(raceTurtleSchoolMinimum, raceTurtleSchoolMaximum));
+            int high = Mathf.Max(low, Mathf.Max(raceTurtleSchoolMinimum, raceTurtleSchoolMaximum));
+            int count = UnityEngine.Random.Range(low, high + 1);
+            float direction = UnityEngine.Random.value < 0.5f ? -1f : 1f;
+            Transform leader = null;
+
+            for (int i = 0; i < count; i++)
+            {
+                GameObject turtle = new GameObject($"Race Sea Turtle {i + 1}");
+                turtle.transform.SetParent(holder, false);
+                turtle.AddComponent<SpriteRenderer>();
+                turtle.AddComponent<InterWaveRenderItem>();
+                turtle.AddComponent<Rigidbody2D>();
+                turtle.AddComponent<CircleCollider2D>();
+
+                Vector2 offset = new(
+                    -direction * i * 0.38f,
+                    (i % 2 == 0 ? 1f : -1f) * 0.12f * Mathf.Ceil(i * 0.5f));
+
+                SeaTurtleSwimmer swimmer = turtle.AddComponent<SeaTurtleSwimmer>();
+                swimmer.Initialise(
+                    Mathf.Clamp(lane + (i == count - 1 && count > 3 ? 1 : 0), 0, laneCount - 1),
+                    leader,
+                    offset,
+                    direction);
+
+                if (i == 0)
+                    leader = turtle.transform;
+            }
+        }
+
+        private static void SpawnRaceGiantTurtle(Transform holder)
+        {
+            int laneCount = Mathf.Max(1, EndlessWaveSections.LayersNearest(holder.position.x).Count - 1);
+            GameObject turtle = new GameObject("Race Giant Turtle");
+            turtle.transform.SetParent(holder, false);
+            turtle.AddComponent<SpriteRenderer>();
+            turtle.AddComponent<InterWaveRenderItem>();
+            turtle.AddComponent<Rigidbody2D>();
+            turtle.AddComponent<BoxCollider2D>();
+            turtle.AddComponent<GiantTurtleSwimmer>().Initialise(
+                UnityEngine.Random.Range(0, laneCount));
+        }
+
+        private void EnsureRaceCreatureFade(GameObject root)
+        {
+            if (root == null)
+                return;
+
+            OceanSpawnFadeIn fade = root.GetComponent<OceanSpawnFadeIn>();
+            if (fade == null)
+                fade = root.AddComponent<OceanSpawnFadeIn>();
+
+            fade.Configure(raceCreatureFadeInDuration);
         }
 
         private void DisableStoryAndSpawners()
