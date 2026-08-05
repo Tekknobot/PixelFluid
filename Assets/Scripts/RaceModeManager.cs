@@ -91,8 +91,13 @@ namespace PixelOcean
             RectTransform windowRect = window.GetComponent<RectTransform>();
             windowRect.anchorMin = windowRect.anchorMax = new Vector2(0.5f, 0.5f);
             windowRect.pivot = new Vector2(0.5f, 0.5f);
-            windowRect.sizeDelta = new Vector2(1060f, 430f);
-            window.GetComponent<Image>().color = new Color(0.015f, 0.075f, 0.105f, 0.98f);
+            windowRect.sizeDelta = new Vector2(1024f, 512f);
+
+            Image windowImage = window.GetComponent<Image>();
+            windowImage.sprite = Resources.Load<Sprite>("SurferSlugUI/Panels/race_mode_panel");
+            windowImage.type = Image.Type.Simple;
+            windowImage.preserveAspect = true;
+            windowImage.color = Color.white;
 
             TextMeshProUGUI title = CreateText(
                 window.transform,
@@ -100,8 +105,8 @@ namespace PixelOcean
                 32,
                 TextAlignmentOptions.Center);
             RectTransform titleRect = title.rectTransform;
-            titleRect.anchorMin = new Vector2(0.15f, 0.82f);
-            titleRect.anchorMax = new Vector2(0.85f, 0.97f);
+            titleRect.anchorMin = new Vector2(0.15f, 0.80f);
+            titleRect.anchorMax = new Vector2(0.85f, 0.92f);
             titleRect.offsetMin = titleRect.offsetMax = Vector2.zero;
 
             GameObject row = new GameObject(
@@ -110,8 +115,8 @@ namespace PixelOcean
                 typeof(HorizontalLayoutGroup));
             row.transform.SetParent(window.transform, false);
             RectTransform rowRect = row.GetComponent<RectTransform>();
-            rowRect.anchorMin = new Vector2(0.04f, 0.22f);
-            rowRect.anchorMax = new Vector2(0.96f, 0.80f);
+            rowRect.anchorMin = new Vector2(0.08f, 0.24f);
+            rowRect.anchorMax = new Vector2(0.92f, 0.76f);
             rowRect.offsetMin = rowRect.offsetMax = Vector2.zero;
 
             HorizontalLayoutGroup layout = row.GetComponent<HorizontalLayoutGroup>();
@@ -164,8 +169,8 @@ namespace PixelOcean
                 18,
                 TextAlignmentOptions.Center);
             RectTransform helpRect = help.rectTransform;
-            helpRect.anchorMin = new Vector2(0.06f, 0.04f);
-            helpRect.anchorMax = new Vector2(0.94f, 0.18f);
+            helpRect.anchorMin = new Vector2(0.08f, 0.08f);
+            helpRect.anchorMax = new Vector2(0.92f, 0.18f);
             helpRect.offsetMin = helpRect.offsetMax = Vector2.zero;
             help.color = new Color(0.72f, 0.88f, 0.92f, 1f);
 
@@ -511,7 +516,13 @@ namespace PixelOcean
         private static TextMeshProUGUI CreateText(Transform parent, string text, float size, TextAlignmentOptions alignment)
         {
             GameObject go = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI)); go.transform.SetParent(parent, false);
-            TextMeshProUGUI label = go.GetComponent<TextMeshProUGUI>(); label.text = text; label.fontSize = size; label.alignment = alignment; label.color = Color.white; label.enableWordWrapping = false;
+            TextMeshProUGUI label = go.GetComponent<TextMeshProUGUI>();
+            label.text = text;
+            label.fontSize = size;
+            label.alignment = alignment;
+            label.color = Color.white;
+            label.enableWordWrapping = false;
+            PixelFontLibrary.Apply(label, size >= 28f, size >= 20f);
             return label;
         }
 
@@ -545,25 +556,85 @@ namespace PixelOcean
 
         private static Button CreateRosterButton(Transform parent, string racer, Sprite portrait, UnityEngine.Events.UnityAction action)
         {
-            GameObject go = new GameObject(racer, typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement)); go.transform.SetParent(parent, false);
-            LayoutElement le = go.GetComponent<LayoutElement>(); le.preferredWidth = 220f; le.preferredHeight = 245f;
-            Image image = go.GetComponent<Image>(); image.color = new Color(0.025f, 0.14f, 0.18f, 1f);
-            Button button = go.GetComponent<Button>(); button.targetGraphic = image; button.onClick.AddListener(action);
-            ColorBlock cb = button.colors; cb.normalColor = Color.white; cb.highlightedColor = new Color(1f, .82f, .25f, 1f); cb.selectedColor = new Color(1f, .65f, .12f, 1f); button.colors = cb;
+            GameObject go = new GameObject(
+                racer,
+                typeof(RectTransform),
+                typeof(Image),
+                typeof(Button),
+                typeof(LayoutElement),
+                typeof(Outline),
+                typeof(EventTrigger));
+            go.transform.SetParent(parent, false);
+
+            LayoutElement le = go.GetComponent<LayoutElement>();
+            le.preferredWidth = 190f;
+            le.preferredHeight = 220f;
+
+            Image image = go.GetComponent<Image>();
+            image.color = new Color(0.015f, 0.055f, 0.075f, 0.82f);
+
+            Outline outline = go.GetComponent<Outline>();
+            outline.effectColor = Color.white;
+            outline.effectDistance = new Vector2(3f, -3f);
+            outline.useGraphicAlpha = false;
+            outline.enabled = false;
+
+            Button button = go.GetComponent<Button>();
+            button.targetGraphic = image;
+            button.transition = Selectable.Transition.None;
+            button.onClick.AddListener(action);
+
+            EventTrigger trigger = go.GetComponent<EventTrigger>();
+            trigger.triggers = new List<EventTrigger.Entry>();
+            AddSelectionTrigger(trigger, EventTriggerType.Select, _ => outline.enabled = true);
+            AddSelectionTrigger(trigger, EventTriggerType.Deselect, _ => outline.enabled = false);
+            AddSelectionTrigger(trigger, EventTriggerType.PointerEnter, _ =>
+            {
+                if (EventSystem.current != null)
+                    EventSystem.current.SetSelectedGameObject(go);
+            });
+
             if (portrait != null)
             {
-                GameObject portraitObject = new GameObject("Single Frame Portrait", typeof(RectTransform), typeof(Image));
+                GameObject portraitObject = new GameObject(
+                    "Single Frame Portrait",
+                    typeof(RectTransform),
+                    typeof(Image));
                 portraitObject.transform.SetParent(go.transform, false);
                 Image portraitImage = portraitObject.GetComponent<Image>();
                 portraitImage.sprite = portrait;
                 portraitImage.preserveAspect = true;
                 portraitImage.raycastTarget = false;
                 RectTransform pr = portraitImage.rectTransform;
-                pr.anchorMin = new Vector2(0.16f, 0.25f); pr.anchorMax = new Vector2(0.84f, 0.88f); pr.offsetMin = pr.offsetMax = Vector2.zero;
+                pr.anchorMin = new Vector2(0.18f, 0.27f);
+                pr.anchorMax = new Vector2(0.82f, 0.88f);
+                pr.offsetMin = pr.offsetMax = Vector2.zero;
             }
-            TextMeshProUGUI label = CreateText(go.transform, racer.ToUpperInvariant(), 22, TextAlignmentOptions.Center);
-            label.rectTransform.anchorMin = new Vector2(0f, 0.04f); label.rectTransform.anchorMax = new Vector2(1f, 0.24f); label.rectTransform.offsetMin = label.rectTransform.offsetMax = Vector2.zero;
+
+            TextMeshProUGUI label = CreateText(
+                go.transform,
+                racer.ToUpperInvariant(),
+                20,
+                TextAlignmentOptions.Center);
+            label.rectTransform.anchorMin = new Vector2(0f, 0.05f);
+            label.rectTransform.anchorMax = new Vector2(1f, 0.25f);
+            label.rectTransform.offsetMin = label.rectTransform.offsetMax = Vector2.zero;
+            PixelFontLibrary.Apply(label, false, true);
             return button;
+        }
+
+        private static void AddSelectionTrigger(
+            EventTrigger trigger,
+            EventTriggerType type,
+            UnityEngine.Events.UnityAction<BaseEventData> callback)
+        {
+            EventTrigger.Entry entry = new EventTrigger.Entry
+            {
+                eventID = type,
+                callback = new EventTrigger.TriggerEvent()
+            };
+            entry.callback.AddListener(callback);
+            trigger.triggers.Add(entry);
         }
     }
 }
