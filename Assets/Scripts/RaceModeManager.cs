@@ -72,35 +72,100 @@ namespace PixelOcean
         {
             if (selectionRoot != null) Destroy(selectionRoot);
             EnsureCanvas();
-            selectionRoot = CreatePanel(canvas.transform, "Race Surfer Selection", new Color(0f, 0.04f, 0.08f, 0.96f));
 
-            TextMeshProUGUI title = CreateText(selectionRoot.transform, "SELECT YOUR SURFER", 46, TextAlignmentOptions.Center);
-            RectTransform tr = title.rectTransform;
-            tr.anchorMin = new Vector2(0.1f, 0.78f); tr.anchorMax = new Vector2(0.9f, 0.94f); tr.offsetMin = tr.offsetMax = Vector2.zero;
+            selectionRoot = CreatePanel(
+                canvas.transform,
+                "Race Surfer Selection",
+                new Color(0f, 0.015f, 0.025f, 0.82f));
 
-            GameObject row = new GameObject("Roster", typeof(RectTransform), typeof(HorizontalLayoutGroup));
-            row.transform.SetParent(selectionRoot.transform, false);
-            RectTransform rr = row.GetComponent<RectTransform>();
-            rr.anchorMin = new Vector2(0.08f, 0.25f); rr.anchorMax = new Vector2(0.92f, 0.74f); rr.offsetMin = rr.offsetMax = Vector2.zero;
+            GameObject window = new GameObject(
+                "Selection Window",
+                typeof(RectTransform),
+                typeof(Image));
+            window.transform.SetParent(selectionRoot.transform, false);
+            RectTransform windowRect = window.GetComponent<RectTransform>();
+            windowRect.anchorMin = windowRect.anchorMax = new Vector2(0.5f, 0.5f);
+            windowRect.pivot = new Vector2(0.5f, 0.5f);
+            windowRect.sizeDelta = new Vector2(1060f, 430f);
+            window.GetComponent<Image>().color = new Color(0.015f, 0.075f, 0.105f, 0.98f);
+
+            TextMeshProUGUI title = CreateText(
+                window.transform,
+                "SELECT SURFER",
+                32,
+                TextAlignmentOptions.Center);
+            RectTransform titleRect = title.rectTransform;
+            titleRect.anchorMin = new Vector2(0.15f, 0.82f);
+            titleRect.anchorMax = new Vector2(0.85f, 0.97f);
+            titleRect.offsetMin = titleRect.offsetMax = Vector2.zero;
+
+            GameObject row = new GameObject(
+                "Roster",
+                typeof(RectTransform),
+                typeof(HorizontalLayoutGroup));
+            row.transform.SetParent(window.transform, false);
+            RectTransform rowRect = row.GetComponent<RectTransform>();
+            rowRect.anchorMin = new Vector2(0.04f, 0.22f);
+            rowRect.anchorMax = new Vector2(0.96f, 0.80f);
+            rowRect.offsetMin = rowRect.offsetMax = Vector2.zero;
+
             HorizontalLayoutGroup layout = row.GetComponent<HorizontalLayoutGroup>();
-            layout.spacing = 22f; layout.childAlignment = TextAnchor.MiddleCenter; layout.childForceExpandWidth = true; layout.childForceExpandHeight = true;
+            layout.spacing = 16f;
+            layout.padding = new RectOffset(8, 8, 4, 4);
+            layout.childAlignment = TextAnchor.MiddleCenter;
+            layout.childControlWidth = false;
+            layout.childControlHeight = false;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
 
-            Button first = null;
+            List<Button> buttons = new();
             foreach (string racer in Roster)
             {
-                Button button = CreateRosterButton(row.transform, racer, GetPortraitSprite(racer), () =>
-                {
-                    Destroy(selectionRoot);
-                    selectionRoot = null;
-                    menu.BeginRaceMode(racer);
-                });
-                if (first == null) first = button;
+                string capturedRacer = racer;
+                Button button = CreateRosterButton(
+                    row.transform,
+                    capturedRacer,
+                    GetPortraitSprite(capturedRacer),
+                    () =>
+                    {
+                        if (selectionRoot != null)
+                        {
+                            Destroy(selectionRoot);
+                            selectionRoot = null;
+                        }
+
+                        menu.SetRaceSelectionPresentation(false);
+                        menu.BeginRaceMode(capturedRacer);
+                    });
+                buttons.Add(button);
             }
 
-            TextMeshProUGUI help = CreateText(selectionRoot.transform, "ARROWS / LEFT STICK TO CHOOSE   •   ENTER / A TO START   •   ESC / B TO CANCEL", 22, TextAlignmentOptions.Center);
-            RectTransform hr = help.rectTransform;
-            hr.anchorMin = new Vector2(0.05f, 0.08f); hr.anchorMax = new Vector2(0.95f, 0.2f); hr.offsetMin = hr.offsetMax = Vector2.zero;
-            EventSystem.current?.SetSelectedGameObject(first != null ? first.gameObject : null);
+            for (int i = 0; i < buttons.Count; i++)
+            {
+                Navigation nav = new Navigation
+                {
+                    mode = Navigation.Mode.Explicit,
+                    selectOnLeft = buttons[(i - 1 + buttons.Count) % buttons.Count],
+                    selectOnRight = buttons[(i + 1) % buttons.Count],
+                    selectOnUp = buttons[i],
+                    selectOnDown = buttons[i]
+                };
+                buttons[i].navigation = nav;
+            }
+
+            TextMeshProUGUI help = CreateText(
+                window.transform,
+                "CHOOSE  •  ENTER / A TO START  •  ESC / B TO BACK",
+                18,
+                TextAlignmentOptions.Center);
+            RectTransform helpRect = help.rectTransform;
+            helpRect.anchorMin = new Vector2(0.06f, 0.04f);
+            helpRect.anchorMax = new Vector2(0.94f, 0.18f);
+            helpRect.offsetMin = helpRect.offsetMax = Vector2.zero;
+            help.color = new Color(0.72f, 0.88f, 0.92f, 1f);
+
+            EventSystem.current?.SetSelectedGameObject(
+                buttons.Count > 0 ? buttons[0].gameObject : null);
         }
 
         public void BeginRace(string selectedSurfer)
@@ -124,7 +189,7 @@ namespace PixelOcean
             {
                 Destroy(selectionRoot);
                 selectionRoot = null;
-                EventSystem.current?.SetSelectedGameObject(null);
+                selectionMenu?.SetRaceSelectionPresentation(false);
                 return;
             }
 
@@ -345,9 +410,9 @@ namespace PixelOcean
             RectTransform root = raceHud.GetComponent<RectTransform>();
             root.anchorMin = Vector2.zero; root.anchorMax = Vector2.one; root.offsetMin = root.offsetMax = Vector2.zero;
             TextMeshProUGUI modeLabel = CreateText(raceHud.transform, "RACE MODE", 24, TextAlignmentOptions.Top);
-            modeLabel.rectTransform.anchorMin = new Vector2(0.4f, 0.95f); modeLabel.rectTransform.anchorMax = new Vector2(0.6f, 0.995f); modeLabel.rectTransform.offsetMin = modeLabel.rectTransform.offsetMax = Vector2.zero;
+            modeLabel.rectTransform.anchorMin = new Vector2(0.4f, 0.94f); modeLabel.rectTransform.anchorMax = new Vector2(0.6f, 0.99f); modeLabel.rectTransform.offsetMin = modeLabel.rectTransform.offsetMax = Vector2.zero;
             timerLabel = CreateText(raceHud.transform, "1:15", 40, TextAlignmentOptions.Top);
-            timerLabel.rectTransform.anchorMin = new Vector2(0.35f, 0.845f); timerLabel.rectTransform.anchorMax = new Vector2(0.65f, 0.92f); timerLabel.rectTransform.offsetMin = timerLabel.rectTransform.offsetMax = Vector2.zero;
+            timerLabel.rectTransform.anchorMin = new Vector2(0.35f, 0.86f); timerLabel.rectTransform.anchorMax = new Vector2(0.65f, 0.98f); timerLabel.rectTransform.offsetMin = timerLabel.rectTransform.offsetMax = Vector2.zero;
             standingsLabel = CreateText(raceHud.transform, string.Empty, 23, TextAlignmentOptions.TopLeft);
             standingsLabel.rectTransform.anchorMin = new Vector2(0.02f, 0.68f); standingsLabel.rectTransform.anchorMax = new Vector2(0.28f, 0.94f); standingsLabel.rectTransform.offsetMin = standingsLabel.rectTransform.offsetMax = Vector2.zero;
         }
@@ -371,7 +436,7 @@ namespace PixelOcean
             if (canvas != null) return;
             GameObject go = new GameObject("Race Mode Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
             DontDestroyOnLoad(go);
-            canvas = go.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.sortingOrder = 32000;
+            canvas = go.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.sortingOrder = 32100;
             CanvasScaler scaler = go.GetComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize; scaler.referenceResolution = new Vector2(1920f, 1080f);
         }
 
@@ -393,7 +458,14 @@ namespace PixelOcean
         {
             string lower = racer.ToLowerInvariant();
             string[] paths = string.Equals(racer, "Chuck", StringComparison.OrdinalIgnoreCase)
-                ? new[] { "RaceSurfers/Chuck/chuck_idle", "SurferSlug/Chuck/chuck_idle", "Surfers/chuck_idle", "chuck_idle" }
+                ? new[]
+                {
+                    "Surfers/chuck",
+                    "RaceSurfers/Chuck/chuck_idle",
+                    "SurferSlug/Chuck/chuck_idle",
+                    "Surfers/chuck_idle",
+                    "chuck_idle"
+                }
                 : new[] { $"RaceSurfers/{racer}/{lower}_idle" };
 
             foreach (string path in paths)
@@ -413,8 +485,8 @@ namespace PixelOcean
         private static Button CreateRosterButton(Transform parent, string racer, Sprite portrait, UnityEngine.Events.UnityAction action)
         {
             GameObject go = new GameObject(racer, typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement)); go.transform.SetParent(parent, false);
-            LayoutElement le = go.GetComponent<LayoutElement>(); le.preferredWidth = 300f; le.preferredHeight = 360f;
-            Image image = go.GetComponent<Image>(); image.color = new Color(0.02f, 0.13f, 0.18f, 0.96f);
+            LayoutElement le = go.GetComponent<LayoutElement>(); le.preferredWidth = 220f; le.preferredHeight = 245f;
+            Image image = go.GetComponent<Image>(); image.color = new Color(0.025f, 0.14f, 0.18f, 1f);
             Button button = go.GetComponent<Button>(); button.targetGraphic = image; button.onClick.AddListener(action);
             ColorBlock cb = button.colors; cb.normalColor = Color.white; cb.highlightedColor = new Color(1f, .82f, .25f, 1f); cb.selectedColor = new Color(1f, .65f, .12f, 1f); button.colors = cb;
             if (portrait != null)
@@ -426,10 +498,10 @@ namespace PixelOcean
                 portraitImage.preserveAspect = true;
                 portraitImage.raycastTarget = false;
                 RectTransform pr = portraitImage.rectTransform;
-                pr.anchorMin = new Vector2(0.12f, 0.22f); pr.anchorMax = new Vector2(0.88f, 0.92f); pr.offsetMin = pr.offsetMax = Vector2.zero;
+                pr.anchorMin = new Vector2(0.16f, 0.25f); pr.anchorMax = new Vector2(0.84f, 0.88f); pr.offsetMin = pr.offsetMax = Vector2.zero;
             }
-            TextMeshProUGUI label = CreateText(go.transform, racer.ToUpperInvariant(), 32, TextAlignmentOptions.Center);
-            label.rectTransform.anchorMin = new Vector2(0f, 0.02f); label.rectTransform.anchorMax = new Vector2(1f, 0.22f); label.rectTransform.offsetMin = label.rectTransform.offsetMax = Vector2.zero;
+            TextMeshProUGUI label = CreateText(go.transform, racer.ToUpperInvariant(), 22, TextAlignmentOptions.Center);
+            label.rectTransform.anchorMin = new Vector2(0f, 0.04f); label.rectTransform.anchorMax = new Vector2(1f, 0.24f); label.rectTransform.offsetMin = label.rectTransform.offsetMax = Vector2.zero;
             return button;
         }
     }

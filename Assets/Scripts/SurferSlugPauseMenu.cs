@@ -59,8 +59,6 @@ namespace PixelOcean
         private bool menuVisible;
         private bool showingTitleMenu;
         private float inputReadyTime;
-        private bool raceSelectionOpening;
-        private float nextMenuSelectionRecoveryTime;
 
         // Secret controller code: UP, UP, LEFT, RIGHT, LEFT, RIGHT, LB, RB.
         private const float DeveloperCheatStepTimeout = 1.0f;
@@ -141,10 +139,7 @@ namespace PixelOcean
             }
 
             if (menuVisible)
-            {
                 UpdateDeveloperCheat();
-                RecoverMainMenuSelection();
-            }
 
             if (Time.unscaledTime < inputReadyTime)
                 return;
@@ -384,7 +379,6 @@ namespace PixelOcean
             if (titleCreditGroup != null) titleCreditGroup.alpha = showingTitleMenu ? 1f : 0f;
             RefreshContinueButton();
             Select(continueButton != null && continueButton.gameObject.activeInHierarchy && continueButton.interactable ? continueButton : playButton);
-            nextMenuSelectionRecoveryTime = Time.unscaledTime + 0.08f;
         }
 
         private IEnumerator HideAnimated()
@@ -880,7 +874,7 @@ namespace PixelOcean
             playButton = CreateSpriteButton(panel.transform, "play_button", PlayPressed);
             continueButton = CreateSpriteButton(panel.transform, "continue_button", ContinuePressed);
             raceModeButton = CreateSpriteButton(panel.transform, "race_mode_button", OpenRaceModeSelection);
-            AddPointerDownFallback(raceModeButton, OpenRaceModeSelection);
+            AddPointerClickFallback(raceModeButton, OpenRaceModeSelection);
             controlsButton = CreateSpriteButton(panel.transform, "controls_button", ShowControls);
             settingsButton = CreateSpriteButton(panel.transform, "options_button", ShowSettings);
             developerButton = CreateSpriteButton(panel.transform, "developer_button", OpenDeveloperMenu);
@@ -932,18 +926,43 @@ namespace PixelOcean
 
         private void OpenRaceModeSelection()
         {
-            if (raceSelectionOpening)
-                return;
-
             RaceModeManager manager = RaceModeManager.EnsureInstance();
             if (manager.IsSelectionVisible)
                 return;
 
-            raceSelectionOpening = true;
-            GameModeSession.ReturnToModeSelect();
-            manager = RaceModeManager.EnsureInstance();
+            // Treat Race Mode like a real front-end sub-screen. The title menu
+            // must stop drawing and blocking raycasts before the selector opens.
+            SetRaceSelectionPresentation(true);
             manager.ShowSelection(this);
-            raceSelectionOpening = false;
+        }
+
+        public void SetRaceSelectionPresentation(bool selectionVisible)
+        {
+            if (buttonPanelInputGroup != null)
+            {
+                buttonPanelInputGroup.interactable = !selectionVisible;
+                buttonPanelInputGroup.blocksRaycasts = !selectionVisible;
+                buttonPanelInputGroup.alpha = selectionVisible ? 0f : 1f;
+            }
+
+            if (logoPanel != null)
+                logoPanel.gameObject.SetActive(!selectionVisible);
+            if (buttonPanel != null)
+                buttonPanel.gameObject.SetActive(!selectionVisible);
+            if (titleCreditPanel != null)
+                titleCreditPanel.gameObject.SetActive(!selectionVisible && showingTitleMenu);
+
+            if (!selectionVisible)
+            {
+                ConfigureMainMenuNavigation();
+                Select(raceModeButton != null && raceModeButton.interactable
+                    ? raceModeButton
+                    : playButton);
+            }
+            else
+            {
+                EventSystem.current?.SetSelectedGameObject(null);
+            }
         }
 
         public void BeginRaceMode(string selectedSurfer)
@@ -1047,7 +1066,7 @@ namespace PixelOcean
         }
 
 
-        private static void AddPointerDownFallback(Button button, UnityEngine.Events.UnityAction action)
+        private static void AddPointerClickFallback(Button button, UnityEngine.Events.UnityAction action)
         {
             if (button == null || action == null)
                 return;
@@ -1056,42 +1075,16 @@ namespace PixelOcean
             if (trigger == null)
                 trigger = button.gameObject.AddComponent<EventTrigger>();
 
-            EventTrigger.Entry pointerDown = new EventTrigger.Entry
+            EventTrigger.Entry click = new EventTrigger.Entry
             {
-                eventID = EventTriggerType.PointerDown
+                eventID = EventTriggerType.PointerClick
             };
-            pointerDown.callback.AddListener(_ =>
+            click.callback.AddListener(_ =>
             {
                 if (button.IsActive() && button.IsInteractable())
-                {
-                    Select(button);
                     action.Invoke();
-                }
             });
-            trigger.triggers.Add(pointerDown);
-        }
-
-        private void RecoverMainMenuSelection()
-        {
-            if (!showingTitleMenu || buttonPanel == null || !buttonPanel.gameObject.activeInHierarchy)
-                return;
-            if (controlsPanel != null && controlsPanel.activeSelf)
-                return;
-            if (settingsPanel != null && settingsPanel.activeSelf)
-                return;
-            if (saveWarningPanel != null && saveWarningPanel.activeSelf)
-                return;
-            if (RaceModeManager.Instance != null && RaceModeManager.Instance.IsSelectionVisible)
-                return;
-            if (EventSystem.current == null || EventSystem.current.currentSelectedGameObject != null)
-                return;
-            if (Time.unscaledTime < nextMenuSelectionRecoveryTime)
-                return;
-
-            nextMenuSelectionRecoveryTime = Time.unscaledTime + 0.15f;
-            Select(continueButton != null && continueButton.gameObject.activeInHierarchy && continueButton.interactable
-                ? continueButton
-                : playButton);
+            trigger.triggers.Add(click);
         }
 
         private Button CreateSpriteButton(Transform parent, string resourceName, UnityEngine.Events.UnityAction action)

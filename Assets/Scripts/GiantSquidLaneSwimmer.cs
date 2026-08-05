@@ -260,10 +260,11 @@ namespace PixelOcean
             {
                 if (surfer == null || surfer.IsDead) continue;
                 float distance = Vector2.Distance(position, surfer.transform.position);
-                if (distance <= bestDistance)
+                if (distance <= bestDistance && (best == null || surfer.IsPlayerControlled))
                 {
                     best = surfer;
                     bestDistance = distance;
+                    if (surfer.IsPlayerControlled) break;
                 }
             }
             return best;

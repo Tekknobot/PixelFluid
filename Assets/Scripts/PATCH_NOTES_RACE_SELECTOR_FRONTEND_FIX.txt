@@ -1,0 +1,8 @@
+RACE SELECTOR FRONT-END FIX
+- Race Mode now opens as a true title-menu sub-screen.
+- Main title buttons/logo stop drawing and blocking raycasts while selection is open.
+- Race selector canvas is above the title canvas.
+- Cancel restores the Race Mode button as the selected menu item.
+- Chuck portrait now loads from Resources/Surfers/chuck first frame.
+- Character cards and selector window are smaller and cleaner.
+- Explicit left/right selector navigation added.
