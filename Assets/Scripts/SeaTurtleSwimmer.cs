@@ -17,6 +17,11 @@ namespace PixelOcean
         [SerializeField, Range(0f, 1f)] private float draftChance = .35f;
         [SerializeField, Min(1f)] private float fps = 9f;
 
+        [Header("Spawn Stability")]
+        [SerializeField, Min(0f)] private float spawnSettleDuration = 0.25f;
+        [SerializeField, Range(1f, 20f)] private float surfaceSmoothing = 6f;
+        [SerializeField, Min(0.05f)] private float maximumVerticalSpeed = 0.9f;
+
         private const float SharedThreatRefreshInterval = 0.35f;
         private const float SharedPlayerRefreshInterval = 0.5f;
 
@@ -39,6 +44,8 @@ namespace PixelOcean
         private float clock;
         private float phase;
         private bool drafting;
+        private float settleUntil;
+        private float smoothedLaneY;
 
         public void Initialise(int requestedLane, Transform groupLeader, Vector2 offset, float travelDirection)
         {
@@ -54,17 +61,31 @@ namespace PixelOcean
                 return;
             }
 
+            renderer2D.sprite = frames[0];
             lane = Mathf.Clamp(requestedLane, 0, water.Count - 2);
             leader = groupLeader;
             formationOffset = offset;
-            direction = Mathf.Sign(travelDirection);
+            direction = Mathf.Approximately(travelDirection, 0f) ? 1f : Mathf.Sign(travelDirection);
             renderItem.SetLane(lane);
             phase = UnityEngine.Random.Range(0f, 10f);
             drafting = UnityEngine.Random.value < draftChance;
 
-            float x = CameraSafeSpawnUtility.ChooseOffscreenEntryX(water, renderer2D, out bool fromLeft);
-            direction = fromLeft ? 1f : -1f;
-            Vector2 p = new(x + offset.x, LaneY(x) + offset.y);
+            Vector2 p;
+            if (leader != null && leader != transform)
+            {
+                // Followers must begin in formation with the leader. Choosing a new
+                // camera-safe edge per turtle made members spawn on opposite sides,
+                // then violently correct toward the leader on their first physics tick.
+                p = (Vector2)leader.position + formationOffset;
+            }
+            else
+            {
+                float x = ChooseEntryXForDirection(direction);
+                p = new Vector2(x, LaneY(x));
+            }
+
+            smoothedLaneY = p.y;
+            settleUntil = Time.time + spawnSettleDuration;
             body.position = p;
             transform.position = p;
             renderer2D.flipX = direction < 0f;
@@ -111,23 +132,29 @@ namespace PixelOcean
             player = sharedPlayer;
 
             Vector2 p = body.position;
-            Vector2 desiredVelocity = new(direction * swimSpeed, 0f);
+            Vector2 desiredVelocity = Time.time < settleUntil
+                ? Vector2.zero
+                : new Vector2(direction * swimSpeed, 0f);
 
-            if (leader != null && leader != transform)
+            bool settling = Time.time < settleUntil;
+            if (!settling)
             {
-                Vector2 desired = (Vector2)leader.position + formationOffset;
-                desiredVelocity += Vector2.ClampMagnitude((desired - p) * formationCatchup, swimSpeed * .75f);
-            }
+                if (leader != null && leader != transform)
+                {
+                    Vector2 desired = (Vector2)leader.position + formationOffset;
+                    desiredVelocity += Vector2.ClampMagnitude((desired - p) * formationCatchup, swimSpeed * .75f);
+                }
 
-            if (drafting && player != null && !player.IsDead &&
-                ((Vector2)player.transform.position - p).sqrMagnitude <= playerDraftRange * playerDraftRange)
-            {
-                Vector2 behind = (Vector2)player.transform.position + new Vector2(-direction * .8f, .12f);
-                desiredVelocity += Vector2.ClampMagnitude((behind - p) * .5f, .25f);
-            }
+                if (drafting && player != null && !player.IsDead &&
+                    ((Vector2)player.transform.position - p).sqrMagnitude <= playerDraftRange * playerDraftRange)
+                {
+                    Vector2 behind = (Vector2)player.transform.position + new Vector2(-direction * .8f, .12f);
+                    desiredVelocity += Vector2.ClampMagnitude((behind - p) * .5f, .25f);
+                }
 
-            RefreshSharedThreatsIfNeeded();
-            desiredVelocity += ThreatAvoidance(p);
+                RefreshSharedThreatsIfNeeded();
+                desiredVelocity += ThreatAvoidance(p);
+            }
             p += desiredVelocity * Time.fixedDeltaTime;
 
             float min = water[0].TankMinimum.x - .8f;
@@ -138,12 +165,27 @@ namespace PixelOcean
                 return;
             }
 
-            float y = LaneY(p.x) + formationOffset.y + Mathf.Sin(Time.time * 1.2f + phase) * .04f;
-            p.y = Mathf.Lerp(p.y, y, 1f - Mathf.Exp(-5f * Time.fixedDeltaTime));
+            float sampledLaneY = LaneY(p.x);
+            float surfaceBlend = 1f - Mathf.Exp(-surfaceSmoothing * Time.fixedDeltaTime);
+            smoothedLaneY = Mathf.Lerp(smoothedLaneY, sampledLaneY, surfaceBlend);
+
+            float bob = Time.time < settleUntil ? 0f : Mathf.Sin(Time.time * 1.2f + phase) * .04f;
+            float targetY = smoothedLaneY + formationOffset.y + bob;
+            p.y = Mathf.MoveTowards(p.y, targetY, maximumVerticalSpeed * Time.fixedDeltaTime);
             body.MovePosition(p);
 
             if (Mathf.Abs(desiredVelocity.x) > .03f)
                 renderer2D.flipX = desiredVelocity.x < 0f;
+        }
+
+
+        private float ChooseEntryXForDirection(float travelDirection)
+        {
+            float halfWidth = renderer2D != null ? Mathf.Max(0.1f, renderer2D.bounds.extents.x) : 0.3f;
+            float margin = halfWidth + 0.6f;
+            float min = water[0].TankMinimum.x + margin;
+            float max = water[0].TankMaximum.x - margin;
+            return travelDirection >= 0f ? min : max;
         }
 
         private Vector2 ThreatAvoidance(Vector2 p)

@@ -496,6 +496,8 @@ namespace PixelOcean
             SpawnSpecificRaceCreature(4); // Blood shark
             SpawnSpecificRaceCreature(7); // Bloodfish school
             SpawnSpecificRaceCreature(8); // Baby sea turtle school
+            SpawnSpecificRaceCreature(9); // Giant turtle
+
 
             // Add two random creatures so the opening still changes each race.
             SpawnRandomWaterEnemy();

@@ -309,8 +309,14 @@ namespace PixelOcean
             root.anchorMin = new Vector2(0f, 1f);
             root.anchorMax = new Vector2(1f, 1f);
             root.pivot = new Vector2(0.5f, 1f);
-            root.offsetMin = new Vector2(safeMargin.x, -174f);
-            root.offsetMax = new Vector2(-safeMargin.x, -safeMargin.y);
+
+            // Keep the complete top edge inside the Game view. A very small or
+            // serialized-zero safeMargin can place the panel border/text above
+            // the canvas and make the whole HUD look horizontally shaved off.
+            const float panelHeight = 152f;
+            float topInset = Mathf.Max(34f, safeMargin.y);
+            root.offsetMin = new Vector2(safeMargin.x, -(topInset + panelHeight));
+            root.offsetMax = new Vector2(-safeMargin.x, -topInset);
 
             HorizontalLayoutGroup row = root.gameObject.AddComponent<HorizontalLayoutGroup>();
             row.spacing = 16f;
