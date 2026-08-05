@@ -1,0 +1,546 @@
+fileFormatVersion: 2
+guid: ae2d8eb41b415fe40af27f40aa2da0c6
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 5199576098520389861
+    second: fred_rotation_0
+  - first:
+      213: 1590190538175462318
+    second: fred_rotation_1
+  - first:
+      213: 6455029996986694665
+    second: fred_rotation_2
+  - first:
+      213: -5013305891707097635
+    second: fred_rotation_3
+  - first:
+      213: 3175142323388715589
+    second: fred_rotation_4
+  - first:
+      213: -2360641347391017825
+    second: fred_rotation_5
+  - first:
+      213: 4800987822925757817
+    second: fred_rotation_6
+  - first:
+      213: 5554222129157169343
+    second: fred_rotation_7
+  - first:
+      213: 1852795945317258437
+    second: fred_rotation_8
+  - first:
+      213: -2907427481131776128
+    second: fred_rotation_9
+  - first:
+      213: 2333001381201140532
+    second: fred_rotation_10
+  - first:
+      213: -1112263507569015547
+    second: fred_rotation_11
+  - first:
+      213: -6292596406745293183
+    second: fred_rotation_12
+  - first:
+      213: -2327235757893281122
+    second: fred_rotation_13
+  - first:
+      213: 3041837869940869519
+    second: fred_rotation_14
+  - first:
+      213: -3700586416625012480
+    second: fred_rotation_15
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: fred_rotation_0
+      rect:
+        serializedVersion: 2
+        x: 3
+        y: 1
+        width: 28
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5e85beeb9ea982840800000000000000
+      internalID: 5199576098520389861
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_rotation_1
+      rect:
+        serializedVersion: 2
+        x: 34
+        y: 1
+        width: 29
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eabb2298edd711610800000000000000
+      internalID: 1590190538175462318
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_rotation_2
+      rect:
+        serializedVersion: 2
+        x: 66
+        y: 1
+        width: 26
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 90cf1e0059fd49950800000000000000
+      internalID: 6455029996986694665
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_rotation_3
+      rect:
+        serializedVersion: 2
+        x: 98
+        y: 2
+        width: 24
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dddec666ad82d6ab0800000000000000
+      internalID: -5013305891707097635
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_rotation_4
+      rect:
+        serializedVersion: 2
+        x: 131
+        y: 3
+        width: 22
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 54294e8de1f501c20800000000000000
+      internalID: 3175142323388715589
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_rotation_5
+      rect:
+        serializedVersion: 2
+        x: 164
+        y: 4
+        width: 22
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f9ca8a6a3315d3fd0800000000000000
+      internalID: -2360641347391017825
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_rotation_6
+      rect:
+        serializedVersion: 2
+        x: 194
+        y: 3
+        width: 22
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 97d377cfcf880a240800000000000000
+      internalID: 4800987822925757817
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_rotation_7
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 3
+        width: 24
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fb0e604599f841d40800000000000000
+      internalID: 5554222129157169343
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_rotation_8
+      rect:
+        serializedVersion: 2
+        x: 257
+        y: 2
+        width: 23
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5c45be1881476b910800000000000000
+      internalID: 1852795945317258437
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_rotation_9
+      rect:
+        serializedVersion: 2
+        x: 291
+        y: 3
+        width: 24
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0878ee03c1eb6a7d0800000000000000
+      internalID: -2907427481131776128
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_rotation_10
+      rect:
+        serializedVersion: 2
+        x: 324
+        y: 3
+        width: 25
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 43b5dfa356c706020800000000000000
+      internalID: 2333001381201140532
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_rotation_11
+      rect:
+        serializedVersion: 2
+        x: 356
+        y: 4
+        width: 27
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 50508be9b327090f0800000000000000
+      internalID: -1112263507569015547
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_rotation_12
+      rect:
+        serializedVersion: 2
+        x: 388
+        y: 2
+        width: 27
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 18e1c0d58e43ca8a0800000000000000
+      internalID: -6292596406745293183
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_rotation_13
+      rect:
+        serializedVersion: 2
+        x: 421
+        y: 1
+        width: 26
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e9a1f2e886ff3bfd0800000000000000
+      internalID: -2327235757893281122
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_rotation_14
+      rect:
+        serializedVersion: 2
+        x: 453
+        y: 2
+        width: 26
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f8908262d67c63a20800000000000000
+      internalID: 3041837869940869519
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_rotation_15
+      rect:
+        serializedVersion: 2
+        x: 486
+        y: 2
+        width: 26
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0013e68b240e4acc0800000000000000
+      internalID: -3700586416625012480
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      fred_rotation_0: 5199576098520389861
+      fred_rotation_1: 1590190538175462318
+      fred_rotation_10: 2333001381201140532
+      fred_rotation_11: -1112263507569015547
+      fred_rotation_12: -6292596406745293183
+      fred_rotation_13: -2327235757893281122
+      fred_rotation_14: 3041837869940869519
+      fred_rotation_15: -3700586416625012480
+      fred_rotation_2: 6455029996986694665
+      fred_rotation_3: -5013305891707097635
+      fred_rotation_4: 3175142323388715589
+      fred_rotation_5: -2360641347391017825
+      fred_rotation_6: 4800987822925757817
+      fred_rotation_7: 5554222129157169343
+      fred_rotation_8: 1852795945317258437
+      fred_rotation_9: -2907427481131776128
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

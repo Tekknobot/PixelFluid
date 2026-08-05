@@ -1,0 +1,546 @@
+fileFormatVersion: 2
+guid: bd7e420a58091b246a648b677ad1e2b8
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 1356745735393783838
+    second: fred_surf_jump_0
+  - first:
+      213: -3544425988373894022
+    second: fred_surf_jump_1
+  - first:
+      213: 4081888419815239153
+    second: fred_surf_jump_2
+  - first:
+      213: -9057604379003633377
+    second: fred_surf_jump_3
+  - first:
+      213: -1070570643186751930
+    second: fred_surf_jump_4
+  - first:
+      213: -6106529679303151607
+    second: fred_surf_jump_5
+  - first:
+      213: 1221142424589532149
+    second: fred_surf_jump_6
+  - first:
+      213: 4738375954453930283
+    second: fred_surf_jump_7
+  - first:
+      213: 271414837853542179
+    second: fred_surf_jump_8
+  - first:
+      213: 1136296707953870662
+    second: fred_surf_jump_9
+  - first:
+      213: 3843446526361958742
+    second: fred_surf_jump_10
+  - first:
+      213: 1625712185148151143
+    second: fred_surf_jump_11
+  - first:
+      213: -8616187098930736196
+    second: fred_surf_jump_12
+  - first:
+      213: 7941046830942125475
+    second: fred_surf_jump_13
+  - first:
+      213: -7557049295245419432
+    second: fred_surf_jump_14
+  - first:
+      213: 4776211107708540457
+    second: fred_surf_jump_15
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: fred_surf_jump_0
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 1
+        width: 28
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e103ca8de0124d210800000000000000
+      internalID: 1356745735393783838
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_surf_jump_1
+      rect:
+        serializedVersion: 2
+        x: 36
+        y: 2
+        width: 27
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a7caf4eb75bafcec0800000000000000
+      internalID: -3544425988373894022
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_surf_jump_2
+      rect:
+        serializedVersion: 2
+        x: 69
+        y: 2
+        width: 26
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1fd2edb14e7c5a830800000000000000
+      internalID: 4081888419815239153
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_surf_jump_3
+      rect:
+        serializedVersion: 2
+        x: 101
+        y: 3
+        width: 25
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f1147797eccec4280800000000000000
+      internalID: -9057604379003633377
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_surf_jump_4
+      rect:
+        serializedVersion: 2
+        x: 132
+        y: 3
+        width: 25
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 64664e11ca19421f0800000000000000
+      internalID: -1070570643186751930
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_surf_jump_5
+      rect:
+        serializedVersion: 2
+        x: 165
+        y: 3
+        width: 24
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 90071c64c9f314ba0800000000000000
+      internalID: -6106529679303151607
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_surf_jump_6
+      rect:
+        serializedVersion: 2
+        x: 197
+        y: 3
+        width: 25
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5fb71d5b09e52f010800000000000000
+      internalID: 1221142424589532149
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_surf_jump_7
+      rect:
+        serializedVersion: 2
+        x: 228
+        y: 1
+        width: 28
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b21aa7953d712c140800000000000000
+      internalID: 4738375954453930283
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_surf_jump_8
+      rect:
+        serializedVersion: 2
+        x: 260
+        y: 1
+        width: 28
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 327d7056b5244c300800000000000000
+      internalID: 271414837853542179
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_surf_jump_9
+      rect:
+        serializedVersion: 2
+        x: 292
+        y: 2
+        width: 28
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6474905e5dfe4cf00800000000000000
+      internalID: 1136296707953870662
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_surf_jump_10
+      rect:
+        serializedVersion: 2
+        x: 325
+        y: 2
+        width: 26
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6597305904aa65530800000000000000
+      internalID: 3843446526361958742
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_surf_jump_11
+      rect:
+        serializedVersion: 2
+        x: 358
+        y: 3
+        width: 24
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 76597c67e90bf8610800000000000000
+      internalID: 1625712185148151143
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_surf_jump_12
+      rect:
+        serializedVersion: 2
+        x: 389
+        y: 3
+        width: 25
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cb31ee9eb772d6880800000000000000
+      internalID: -8616187098930736196
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_surf_jump_13
+      rect:
+        serializedVersion: 2
+        x: 420
+        y: 4
+        width: 25
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3adfb0fe404443e60800000000000000
+      internalID: 7941046830942125475
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_surf_jump_14
+      rect:
+        serializedVersion: 2
+        x: 453
+        y: 4
+        width: 25
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 85cd7c674b7ff1790800000000000000
+      internalID: -7557049295245419432
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fred_surf_jump_15
+      rect:
+        serializedVersion: 2
+        x: 484
+        y: 2
+        width: 27
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9261e3f62b2884240800000000000000
+      internalID: 4776211107708540457
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      fred_surf_jump_0: 1356745735393783838
+      fred_surf_jump_1: -3544425988373894022
+      fred_surf_jump_10: 3843446526361958742
+      fred_surf_jump_11: 1625712185148151143
+      fred_surf_jump_12: -8616187098930736196
+      fred_surf_jump_13: 7941046830942125475
+      fred_surf_jump_14: -7557049295245419432
+      fred_surf_jump_15: 4776211107708540457
+      fred_surf_jump_2: 4081888419815239153
+      fred_surf_jump_3: -9057604379003633377
+      fred_surf_jump_4: -1070570643186751930
+      fred_surf_jump_5: -6106529679303151607
+      fred_surf_jump_6: 1221142424589532149
+      fred_surf_jump_7: 4738375954453930283
+      fred_surf_jump_8: 271414837853542179
+      fred_surf_jump_9: 1136296707953870662
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
