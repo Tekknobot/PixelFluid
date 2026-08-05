@@ -1147,7 +1147,7 @@ namespace PixelOcean
             titleCreditGroup.blocksRaycasts = false;
 
             CreateTitleCreditLabel(panel.transform, "A ZILLATRONICS PRODUCTION", TextAnchor.MiddleLeft);
-            CreateTitleCreditLabel(panel.transform, "SURFER SLUG  //  © 2026  //  ALL RIGHTS RESERVED", TextAnchor.MiddleRight);
+            CreateTitleCreditLabel(panel.transform, "THEY SURF  //  © 2026  //  ALL RIGHTS RESERVED", TextAnchor.MiddleRight);
         }
 
         private void CreateTitleCreditLabel(
