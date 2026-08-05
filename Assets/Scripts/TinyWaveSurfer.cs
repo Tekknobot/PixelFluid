@@ -3668,7 +3668,7 @@ namespace PixelOcean
                 landingMomentumCarryTimer = 0f;
             }
 
-            if (playerControlled && AirTrickScoreSystem.Instance != null)
+            if (IsPlayerControlled && AirTrickScoreSystem.Instance != null)
             {
                 float achievedHeight = Mathf.Max(0f, scoredJumpPeakY - airStartY);
                 float travelledDistance = Mathf.Abs(localRideX - scoredJumpStartX);

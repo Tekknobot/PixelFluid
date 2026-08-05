@@ -591,6 +591,28 @@ namespace PixelOcean
         [ContextMenu("Focus Next Surfer")]
         public void FocusNextSurfer()
         {
+            // Race Mode must remain locked to the selected human racer.
+            // Cycling is only useful in Story/debug contexts.
+            if (GameModeSession.IsRace)
+            {
+                SelectPlayerSurfer();
+
+                if (surfer == null)
+                {
+                    Debug.LogWarning(
+                        "No selected human racer was found for the cinematic camera.",
+                        this);
+                    return;
+                }
+
+                if (!cinematicActive)
+                    EnableCinematic();
+                else
+                    SetFollowTarget(surfer, false);
+
+                return;
+            }
+
             RefreshSurferList();
 
             if (availableSurfers == null || availableSurfers.Length == 0)
@@ -636,7 +658,9 @@ namespace PixelOcean
             if (cinematicActive || controlledCamera == null)
                 return;
 
-            if (surfer == null)
+            if (GameModeSession.IsRace)
+                SelectPlayerSurfer();
+            else if (surfer == null)
                 RefreshSurferListAndSelect(0);
 
             if (surfer == null)

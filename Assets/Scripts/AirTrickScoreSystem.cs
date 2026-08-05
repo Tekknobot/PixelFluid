@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 
 namespace PixelOcean
 {
@@ -20,6 +22,7 @@ namespace PixelOcean
             public Color TextColour;
             public float CreatedAt;
             public float Lifetime;
+            public TextMeshProUGUI Label;
         }
 
         public static AirTrickScoreSystem Instance { get; private set; }
@@ -58,6 +61,12 @@ namespace PixelOcean
 
         [SerializeField, Min(0f)] private float floatingScoreLifetime = 1.35f;
 
+        [Header("Floating Stoke TMP Font")]
+        [Tooltip("TMP font used only for the floating Stoke number.")]
+        [SerializeField] private TMP_FontAsset floatingStokeFont;
+        [Tooltip("Optional Resources path used when Floating Stoke Font is not assigned.")]
+        [SerializeField] private string floatingStokeFontResource = "Fonts/PixeloidSans-Bold SDF";
+
         [Header("Flow Meter / On Fire")]
         [SerializeField, Min(1f)] private float maximumFlow = 100f;
         [SerializeField, Min(0f)] private float singleTrickFlow = 30f;
@@ -77,12 +86,14 @@ namespace PixelOcean
         [SerializeField, Min(1)] private int cleanTierMinimum = 350;
         [SerializeField, Min(1)] private int radicalTierMinimum = 450;
         [SerializeField, Min(1)] private int legendaryTierMinimum = 650;
-        [SerializeField] private Color baseTierColour = Color.white;
-        [SerializeField] private Color cleanTierColour = new(0.25f, 0.95f, 1f, 1f);
-        [SerializeField] private Color radicalTierColour = new(1f, 0.88f, 0.15f, 1f);
-        [SerializeField] private Color legendaryTierColour = new(1.00f, 0.72f, 0.12f, 1f);
+        [SerializeField] private Color baseTierColour       = Color.white;
+        [SerializeField] private Color cleanTierColour      = new Color32(0,255,255,255);     // Aqua
+        [SerializeField] private Color radicalTierColour    = new Color32(255,70,180,255);    // Hot Pink
+        [SerializeField] private Color legendaryTierColour  = new Color32(255,205,0,255);     // Gold
 
         private readonly List<FloatingScore> floatingScores = new();
+        private Canvas floatingStokeCanvas;
+        private RectTransform floatingStokeCanvasRect;
         private GUIStyle floatingStyle;
         private GUIStyle recapTitleStyle;
         private GUIStyle recapValueStyle;
@@ -164,7 +175,7 @@ namespace PixelOcean
         private void Update()
         {
             float now = Time.unscaledTime;
-            floatingScores.RemoveAll(score => now - score.CreatedAt >= score.Lifetime);
+            UpdateFloatingStokeLabels(now);
 
             if (recapVisible && now >= recapUntil)
                 recapVisible = false;
@@ -182,6 +193,126 @@ namespace PixelOcean
             {
                 currentFlow = Mathf.Max(0f,
                     currentFlow - flowDecayPerSecond * Time.unscaledDeltaTime);
+            }
+        }
+
+        private void EnsureFloatingStokeCanvas()
+        {
+            if (floatingStokeCanvas != null)
+                return;
+
+            GameObject canvasObject = new("Floating Stoke Canvas");
+            canvasObject.transform.SetParent(transform, false);
+
+            floatingStokeCanvas = canvasObject.AddComponent<Canvas>();
+            floatingStokeCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            floatingStokeCanvas.sortingOrder = 32000;
+
+            // No CanvasScaler: the old IMGUI popup used literal screen pixels.
+            canvasObject.AddComponent<GraphicRaycaster>().enabled = false;
+            floatingStokeCanvasRect = floatingStokeCanvas.transform as RectTransform;
+
+            if (floatingStokeFont == null &&
+                !string.IsNullOrWhiteSpace(floatingStokeFontResource))
+            {
+                floatingStokeFont =
+                    Resources.Load<TMP_FontAsset>(floatingStokeFontResource);
+            }
+
+            if (floatingStokeFont == null)
+                floatingStokeFont = TMP_Settings.defaultFontAsset;
+        }
+
+        private void AddFloatingStoke(
+            Vector3 worldPosition,
+            string text,
+            Color colour,
+            float lifetime)
+        {
+            EnsureFloatingStokeCanvas();
+            if (floatingStokeCanvasRect == null)
+                return;
+
+            GameObject labelObject = new("Floating Stoke");
+            labelObject.transform.SetParent(floatingStokeCanvasRect, false);
+
+            TextMeshProUGUI label =
+                labelObject.AddComponent<TextMeshProUGUI>();
+
+            label.raycastTarget = false;
+            label.text = text;
+            label.font = floatingStokeFont;
+            label.fontSize = 64f;
+            label.fontStyle = FontStyles.Normal;
+            label.alignment = TextAlignmentOptions.Center;
+            label.enableWordWrapping = true;
+            label.overflowMode = TextOverflowModes.Overflow;
+            label.color = colour;
+
+            RectTransform rect = label.rectTransform;
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = new Vector2(500f, 180f);
+            rect.localScale = Vector3.one;
+
+            floatingScores.Add(new FloatingScore
+            {
+                WorldPosition = worldPosition,
+                Text = text,
+                TextColour = colour,
+                CreatedAt = Time.unscaledTime,
+                Lifetime = Mathf.Max(0.01f, lifetime),
+                Label = label
+            });
+        }
+
+        private void UpdateFloatingStokeLabels(float now)
+        {
+            Camera camera = Camera.main;
+
+            for (int i = floatingScores.Count - 1; i >= 0; i--)
+            {
+                FloatingScore score = floatingScores[i];
+                float age = now - score.CreatedAt;
+
+                if (score.Label == null || age >= score.Lifetime)
+                {
+                    if (score.Label != null)
+                        Destroy(score.Label.gameObject);
+
+                    floatingScores.RemoveAt(i);
+                    continue;
+                }
+
+                if (camera == null || floatingStokeCanvasRect == null)
+                {
+                    score.Label.enabled = false;
+                    continue;
+                }
+
+                float age01 = Mathf.Clamp01(
+                    age / Mathf.Max(0.01f, score.Lifetime));
+
+                // Exact original rise: 0.55 world units over the popup lifetime.
+                Vector3 screen = camera.WorldToScreenPoint(
+                    score.WorldPosition + Vector3.up * age01 * 0.55f);
+
+                if (screen.z <= 0f)
+                {
+                    score.Label.enabled = false;
+                    continue;
+                }
+
+                score.Label.enabled = true;
+
+                // Convert the old IMGUI screen position to centered overlay space.
+                score.Label.rectTransform.anchoredPosition = new Vector2(
+                    screen.x - Screen.width * 0.5f,
+                    screen.y - Screen.height * 0.5f);
+
+                Color faded = score.TextColour;
+                faded.a *= 1f - age01;
+                score.Label.color = faded;
             }
         }
 
@@ -326,16 +457,11 @@ namespace PixelOcean
             }
 
             GetPopupTier(score, out string tierName, out Color tierColour);
-            floatingScores.Add(new FloatingScore
-            {
-                WorldPosition = landingPosition + Vector3.up * 0.35f,
-                Text = (scoredWhileOnFire ? "ON FIRE  " : string.Empty) +
-                    tierName + "  " + chainLabel + "\n" +
-                    trickName + "  +" + score + " STOKE",
-                TextColour = tierColour,
-                CreatedAt = Time.unscaledTime,
-                Lifetime = floatingScoreLifetime
-            });
+            AddFloatingStoke(
+                landingPosition + Vector3.up * 0.35f,
+                "+" + score,
+                tierColour,
+                floatingScoreLifetime);
 
             return score;
         }
@@ -378,14 +504,11 @@ namespace PixelOcean
             int award = Mathf.Max(0, flowFinisherStoke);
             dayStoke += award;
             totalStoke += award;
-            floatingScores.Add(new FloatingScore
-            {
-                WorldPosition = worldPosition + Vector3.up * 0.55f,
-                Text = "FLOW FINISH!\n+" + award + " STOKE",
-                TextColour = legendaryTierColour,
-                CreatedAt = Time.unscaledTime,
-                Lifetime = Mathf.Max(1.5f, floatingScoreLifetime)
-            });
+            AddFloatingStoke(
+                worldPosition + Vector3.up * 0.55f,
+                "FLOW FINISH!\n+" + award + " STOKE",
+                legendaryTierColour,
+                Mathf.Max(1.5f, floatingScoreLifetime));
             return true;
         }
 
@@ -437,17 +560,7 @@ namespace PixelOcean
 
         private void EnsureStyles()
         {
-            if (floatingStyle != null) return;
-
-            floatingStyle = new GUIStyle(GUI.skin.label)
-            {
-                font = PixelFontLibrary.Bold,
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 32,
-                fontStyle = FontStyle.Normal,
-                wordWrap = true,
-                normal = { textColor = new Color(1f, 0.9f, 0.2f, 1f) }
-            };
+            if (recapTitleStyle != null) return;
 
             recapTitleStyle = new GUIStyle(GUI.skin.label)
             {
@@ -551,32 +664,6 @@ namespace PixelOcean
         private void OnGUI()
         {
             EnsureStyles();
-
-            Camera camera = Camera.main;
-            if (camera != null)
-            {
-                float now = Time.unscaledTime;
-                foreach (FloatingScore score in floatingScores)
-                {
-                    float age01 = Mathf.Clamp01((now - score.CreatedAt) / Mathf.Max(0.01f, score.Lifetime));
-                    Vector3 screen = camera.WorldToScreenPoint(score.WorldPosition + Vector3.up * age01 * 0.55f);
-                    if (screen.z <= 0f) continue;
-
-                    Color old = GUI.color;
-                    Color tierColour = score.TextColour;
-                    GUI.color = new Color(tierColour.r, tierColour.g, tierColour.b,
-                        tierColour.a * (1f - age01));
-                    GUI.Label(
-                        new Rect(
-                            screen.x - 250f,
-                            Screen.height - screen.y - 80f,
-                            500f,
-                            180f),
-                        score.Text,
-                        floatingStyle);
-                    GUI.color = old;
-                }
-            }
 
             if (!recapVisible) return;
 

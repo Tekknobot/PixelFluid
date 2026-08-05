@@ -20,6 +20,7 @@ namespace PixelOcean
             public string Name;
             public TinyWaveSurfer Surfer;
             public float Distance;
+            public float StartX;
             public float LastX;
             public bool Player;
         }
@@ -35,7 +36,7 @@ namespace PixelOcean
         private TextMeshProUGUI timerLabel;
         private TextMeshProUGUI standingsLabel;
         private float raceTimeRemaining;
-        private const float PrototypeRaceSeconds = 75f;
+        private const float PrototypeRaceSeconds = 180f;
         private AudioSource musicSource;
         private SurferSlugPauseMenu selectionMenu;
         private GameObject ecosystemRoot;
@@ -91,7 +92,7 @@ namespace PixelOcean
             RectTransform windowRect = window.GetComponent<RectTransform>();
             windowRect.anchorMin = windowRect.anchorMax = new Vector2(0.5f, 0.5f);
             windowRect.pivot = new Vector2(0.5f, 0.5f);
-            windowRect.sizeDelta = new Vector2(1024f, 512f);
+            windowRect.sizeDelta = new Vector2(1024f, 412f);
 
             Image windowImage = window.GetComponent<Image>();
             windowImage.sprite = Resources.Load<Sprite>("SurferSlugUI/Panels/race_mode_panel");
@@ -105,8 +106,8 @@ namespace PixelOcean
                 32,
                 TextAlignmentOptions.Center);
             RectTransform titleRect = title.rectTransform;
-            titleRect.anchorMin = new Vector2(0.15f, 0.80f);
-            titleRect.anchorMax = new Vector2(0.85f, 0.92f);
+            titleRect.anchorMin = new Vector2(0.15f, 0.72f);
+            titleRect.anchorMax = new Vector2(0.85f, 0.84f);
             titleRect.offsetMin = titleRect.offsetMax = Vector2.zero;
 
             GameObject row = new GameObject(
@@ -211,7 +212,13 @@ namespace PixelOcean
             {
                 if (racer.Surfer == null) continue;
                 float x = racer.Surfer.transform.position.x;
-                racer.Distance += Mathf.Abs(x - racer.LastX);
+
+                // Race progress only increases when reaching a new furthest-right position.
+                // Moving left does not add distance, and returning over old ground does not
+                // count the same distance twice.
+                float forwardProgress = Mathf.Max(0f, x - racer.StartX);
+                racer.Distance = Mathf.Max(racer.Distance, forwardProgress);
+
                 racer.LastX = x;
             }
             RefreshHud();
@@ -265,7 +272,15 @@ namespace PixelOcean
 
                 RaceSurferSkin skin = go.AddComponent<RaceSurferSkin>();
                 skin.Configure(name);
-                racers.Add(new Racer { Name = name, Surfer = surfer, LastX = startX, Player = player });
+                racers.Add(new Racer
+                {
+                    Name = name,
+                    Surfer = surfer,
+                    StartX = startX,
+                    LastX = startX,
+                    Distance = 0f,
+                    Player = player
+                });
             }
         }
 
@@ -470,17 +485,49 @@ namespace PixelOcean
         private void BuildRaceHud()
         {
             EnsureCanvas();
-            if (raceHud != null) Destroy(raceHud);
-            raceHud = new GameObject("Race HUD", typeof(RectTransform), typeof(CanvasGroup));
+
+            if (raceHud != null)
+                Destroy(raceHud);
+
+            raceHud = new GameObject(
+                "Race HUD",
+                typeof(RectTransform),
+                typeof(CanvasGroup));
+
             raceHud.transform.SetParent(canvas.transform, false);
+
             RectTransform root = raceHud.GetComponent<RectTransform>();
-            root.anchorMin = Vector2.zero; root.anchorMax = Vector2.one; root.offsetMin = root.offsetMax = Vector2.zero;
-            TextMeshProUGUI modeLabel = CreateText(raceHud.transform, "RACE MODE", 24, TextAlignmentOptions.Top);
-            modeLabel.rectTransform.anchorMin = new Vector2(0.4f, 0.94f); modeLabel.rectTransform.anchorMax = new Vector2(0.6f, 0.99f); modeLabel.rectTransform.offsetMin = modeLabel.rectTransform.offsetMax = Vector2.zero;
-            timerLabel = CreateText(raceHud.transform, "1:15", 40, TextAlignmentOptions.Top);
-            timerLabel.rectTransform.anchorMin = new Vector2(0.35f, 0.86f); timerLabel.rectTransform.anchorMax = new Vector2(0.65f, 0.98f); timerLabel.rectTransform.offsetMin = timerLabel.rectTransform.offsetMax = Vector2.zero;
-            standingsLabel = CreateText(raceHud.transform, string.Empty, 23, TextAlignmentOptions.TopLeft);
-            standingsLabel.rectTransform.anchorMin = new Vector2(0.02f, 0.68f); standingsLabel.rectTransform.anchorMax = new Vector2(0.28f, 0.94f); standingsLabel.rectTransform.offsetMin = standingsLabel.rectTransform.offsetMax = Vector2.zero;
+            root.anchorMin = Vector2.zero;
+            root.anchorMax = Vector2.one;
+            root.offsetMin = Vector2.zero;
+            root.offsetMax = Vector2.zero;
+
+            // Header
+            TextMeshProUGUI modeLabel =
+                CreateText(raceHud.transform, "RACE MODE", 24, TextAlignmentOptions.Top);
+
+            modeLabel.rectTransform.anchorMin = new Vector2(0.40f, 0.955f);
+            modeLabel.rectTransform.anchorMax = new Vector2(0.60f, 0.995f);
+            modeLabel.rectTransform.offsetMin = Vector2.zero;
+            modeLabel.rectTransform.offsetMax = Vector2.zero;
+
+            // Timer (lowered to create spacing)
+            timerLabel =
+                CreateText(raceHud.transform, "1:15", 40, TextAlignmentOptions.Top);
+
+            timerLabel.rectTransform.anchorMin = new Vector2(0.35f, 0.81f);
+            timerLabel.rectTransform.anchorMax = new Vector2(0.65f, 0.91f);
+            timerLabel.rectTransform.offsetMin = Vector2.zero;
+            timerLabel.rectTransform.offsetMax = Vector2.zero;
+
+            // Standings
+            standingsLabel =
+                CreateText(raceHud.transform, string.Empty, 23, TextAlignmentOptions.TopLeft);
+
+            standingsLabel.rectTransform.anchorMin = new Vector2(0.02f, 0.68f);
+            standingsLabel.rectTransform.anchorMax = new Vector2(0.28f, 0.94f);
+            standingsLabel.rectTransform.offsetMin = Vector2.zero;
+            standingsLabel.rectTransform.offsetMax = Vector2.zero;
         }
 
         private void RefreshHud()
@@ -567,7 +614,7 @@ namespace PixelOcean
             go.transform.SetParent(parent, false);
 
             LayoutElement le = go.GetComponent<LayoutElement>();
-            le.preferredWidth = 190f;
+            le.preferredWidth = 220f;
             le.preferredHeight = 220f;
 
             Image image = go.GetComponent<Image>();
