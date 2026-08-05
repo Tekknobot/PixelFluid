@@ -1,0 +1,6 @@
+TITLE GRADIENT HOLD PATCH
+
+- The loading screen now ends directly on the complete title-menu gradient.
+- The rigid gradient bars no longer transition when loading completes.
+- Browsing Controls, Settings, Developer tools, and the Race Mode racer selector leaves the bars in place.
+- The bars transition away only after starting a new game, loading Continue, or confirming a racer and beginning Race Mode.

@@ -24,6 +24,8 @@ namespace PixelOcean
         [SerializeField, Min(0.1f)] private float motionDuration = 0.42f;
         [SerializeField, Min(0.05f)] private float buttonStagger = 0.055f;
         [SerializeField] private Color screenDim = new(0f, 0f, 0f, 0.16f);
+        [SerializeField, Min(0.25f)] private float startupLoadingDuration = 1.35f;
+        [SerializeField, Min(0f)] private float startupLoadingHold = 0.18f;
 
         private readonly List<MonoBehaviour> disabledGameplayBehaviours = new();
         private Canvas canvas;
@@ -48,6 +50,10 @@ namespace PixelOcean
         private Image logoImage;
         private Image startupBlackImage;
         private CanvasGroup startupBlackGroup;
+        private GameObject startupLoadingRoot;
+        private Image startupLoadingFill;
+        private RectTransform startupLoadingFillRect;
+        private TextMeshProUGUI startupLoadingPercent;
         private readonly List<RectTransform> fadeWaveBands = new();
         private readonly List<CanvasGroup> fadeWaveGroups = new();
         private readonly List<Vector2> fadeWaveHomePositions = new();
@@ -100,13 +106,103 @@ namespace PixelOcean
             {
                 GameplayPaused = true;
                 DisableGameplayBehaviours();
-                ShowMenu(true);
+                menuRoot.SetActive(false);
+                StartCoroutine(ShowStartupLoadingThenMenu());
             }
             else
             {
                 menuRoot.SetActive(false);
+                if (startupLoadingRoot != null)
+                    startupLoadingRoot.SetActive(false);
                 firstMenu = false;
             }
+        }
+
+        private IEnumerator ShowStartupLoadingThenMenu()
+        {
+            if (startupBlackGroup != null)
+            {
+                startupBlackGroup.gameObject.SetActive(true);
+                startupBlackGroup.alpha = 1f;
+                startupBlackGroup.blocksRaycasts = true;
+            }
+
+            if (startupLoadingRoot != null)
+                startupLoadingRoot.SetActive(true);
+
+            SetStartupLoadingProgress(0f);
+
+            // Give runtime bootstraps and Resources loads several frames to settle,
+            // while the displayed progress advances smoothly instead of flashing.
+            float elapsed = 0f;
+            while (elapsed < startupLoadingDuration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float normalized = Mathf.Clamp01(elapsed / Mathf.Max(0.01f, startupLoadingDuration));
+                float progress = Mathf.SmoothStep(0f, 1f, normalized);
+                SetStartupLoadingProgress(progress);
+                yield return null;
+            }
+
+            SetStartupLoadingProgress(1f);
+            if (startupLoadingHold > 0f)
+                yield return new WaitForSecondsRealtime(startupLoadingHold);
+
+            if (startupLoadingRoot != null)
+                startupLoadingRoot.SetActive(false);
+
+            ShowMenu(true);
+
+            // Keep the rigid title gradient fully visible while the player browses
+            // the front end. It only transitions away after Play, Continue, or a
+            // racer has actually been selected and the chosen mode begins.
+            HoldTitleGradientForMenu();
+        }
+
+        private void HoldTitleGradientForMenu()
+        {
+            if (startupBlackGroup == null)
+                return;
+
+            startupBlackGroup.gameObject.SetActive(true);
+            startupBlackGroup.alpha = 1f;
+            startupBlackGroup.interactable = false;
+            startupBlackGroup.blocksRaycasts = false;
+
+            if (startupBlackImage != null)
+            {
+                Color black = startupBlackImage.color;
+                black.a = 0f;
+                startupBlackImage.color = black;
+            }
+
+            for (int i = 0; i < fadeWaveBands.Count; i++)
+            {
+                if (fadeWaveBands[i] != null && i < fadeWaveHomePositions.Count)
+                    fadeWaveBands[i].anchoredPosition = fadeWaveHomePositions[i];
+
+                if (i < fadeWaveGroups.Count && fadeWaveGroups[i] != null)
+                    fadeWaveGroups[i].alpha = 1f;
+            }
+        }
+
+        private void SetStartupLoadingProgress(float progress)
+        {
+            progress = Mathf.Clamp01(progress);
+
+            // Resize the fill rectangle itself instead of relying on Image.fillAmount.
+            // This works consistently even when the Image uses Unity's generated
+            // white texture rather than an imported sprite.
+            if (startupLoadingFillRect != null)
+            {
+                startupLoadingFillRect.anchorMin = Vector2.zero;
+                startupLoadingFillRect.anchorMax = new Vector2(progress, 1f);
+                startupLoadingFillRect.offsetMin = new Vector2(4f, 4f);
+                startupLoadingFillRect.offsetMax = new Vector2(-4f, -4f);
+            }
+
+            if (startupLoadingPercent != null)
+                startupLoadingPercent.text = $"LOADING  {Mathf.RoundToInt(progress * 100f):00}%";
         }
 
         private void Update()
@@ -438,6 +534,7 @@ namespace PixelOcean
             startupBlackGroup.blocksRaycasts = true;
 
             BuildRigidAbyssBands(blackObject.transform);
+            BuildStartupLoading(blackObject.transform);
 
             menuRoot = CreateUIObject(canvasObject.transform, "Menu Root");
             Stretch(menuRoot.GetComponent<RectTransform>());
@@ -453,6 +550,72 @@ namespace PixelOcean
             BuildSaveWarning(menuRoot.transform);
         }
 
+
+
+        private void BuildStartupLoading(Transform parent)
+        {
+            startupLoadingRoot = CreateUIObject(parent, "Startup Loading");
+            Stretch(startupLoadingRoot.GetComponent<RectTransform>());
+
+            GameObject stack = CreateUIObject(startupLoadingRoot.transform, "Loading Stack");
+            RectTransform stackRect = stack.GetComponent<RectTransform>();
+            stackRect.anchorMin = stackRect.anchorMax = new Vector2(0.5f, 0.5f);
+            stackRect.pivot = new Vector2(0.5f, 0.5f);
+            stackRect.sizeDelta = new Vector2(620f, 110f);
+            stackRect.anchoredPosition = new Vector2(0f, -300f);
+
+            TMP_FontAsset loadingFont = Resources.Load<TMP_FontAsset>("Fonts/Silver SDF");
+            if (loadingFont == null)
+                loadingFont = PixelFontLibrary.TmpSemiBold;
+            if (loadingFont == null)
+                loadingFont = TMP_Settings.defaultFontAsset;
+
+            GameObject labelObject = CreateUIObject(stack.transform, "Loading Percent");
+            RectTransform labelRect = labelObject.GetComponent<RectTransform>();
+            labelRect.anchorMin = new Vector2(0f, 1f);
+            labelRect.anchorMax = new Vector2(1f, 1f);
+            labelRect.pivot = new Vector2(0.5f, 1f);
+            labelRect.sizeDelta = new Vector2(0f, 46f);
+            labelRect.anchoredPosition = Vector2.zero;
+
+            startupLoadingPercent = labelObject.AddComponent<TextMeshProUGUI>();
+            startupLoadingPercent.font = loadingFont;
+            startupLoadingPercent.text = "LOADING  00%";
+            startupLoadingPercent.fontSize = 28f;
+            startupLoadingPercent.fontStyle = FontStyles.Normal;
+            startupLoadingPercent.alignment = TextAlignmentOptions.Center;
+            startupLoadingPercent.color = Color.white;
+            startupLoadingPercent.raycastTarget = false;
+
+            GameObject trackObject = CreateUIObject(stack.transform, "Loading Track");
+            RectTransform trackRect = trackObject.GetComponent<RectTransform>();
+            trackRect.anchorMin = new Vector2(0f, 0f);
+            trackRect.anchorMax = new Vector2(1f, 0f);
+            trackRect.pivot = new Vector2(0.5f, 0f);
+            trackRect.sizeDelta = new Vector2(0f, 30f);
+            trackRect.anchoredPosition = new Vector2(0f, 12f);
+
+            Image track = trackObject.AddComponent<Image>();
+            track.color = new Color(1f, 1f, 1f, 0.16f);
+            track.raycastTarget = false;
+
+            Outline outline = trackObject.AddComponent<Outline>();
+            outline.effectColor = new Color(1f, 1f, 1f, 0.72f);
+            outline.effectDistance = new Vector2(2f, -2f);
+
+            GameObject fillObject = CreateUIObject(trackObject.transform, "Loading Fill");
+            startupLoadingFillRect = fillObject.GetComponent<RectTransform>();
+            startupLoadingFillRect.anchorMin = Vector2.zero;
+            startupLoadingFillRect.anchorMax = new Vector2(0f, 1f);
+            startupLoadingFillRect.pivot = new Vector2(0f, 0.5f);
+            startupLoadingFillRect.offsetMin = new Vector2(4f, 4f);
+            startupLoadingFillRect.offsetMax = new Vector2(-4f, -4f);
+
+            startupLoadingFill = fillObject.AddComponent<Image>();
+            startupLoadingFill.color = Color.white;
+            startupLoadingFill.type = Image.Type.Simple;
+            startupLoadingFill.raycastTarget = false;
+        }
 
         private void BuildSaveWarning(Transform parent)
         {

@@ -1,0 +1,13 @@
+STARTUP LOADING BAR
+
+- Added a lightweight loading screen before the title menu appears.
+- Uses TextMesh Pro and first attempts to load Resources/Fonts/Silver SDF.
+- Falls back to the project's existing PixelFontLibrary TMP font, then TMP default.
+- Displays a smooth horizontal progress bar and percentage.
+- Keeps gameplay paused and hidden while startup runtime systems settle.
+- Automatically transitions into the existing animated main menu.
+
+TUNING
+SurferSlugPauseMenu.cs > Startup:
+- startupLoadingDuration (default 1.35 seconds)
+- startupLoadingHold (default 0.18 seconds)
