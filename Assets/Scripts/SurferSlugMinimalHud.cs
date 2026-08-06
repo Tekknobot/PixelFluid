@@ -304,7 +304,7 @@ namespace PixelOcean
                 gameObject.AddComponent<GraphicRaycaster>();
 
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 32000;
+            canvas.sortingOrder = 30000;
             canvas.pixelPerfect = true;
 
             hudGroup = GetComponent<CanvasGroup>();
@@ -498,7 +498,10 @@ namespace PixelOcean
             chapterGroup = chapterBannerRect.gameObject.AddComponent<CanvasGroup>();
             chapterGroup.alpha = 0f;
 
-            chapterLabel = CreateText(string.Empty, chapterBannerRect, 38, TextAnchor.MiddleCenter, foregroundColour);
+            chapterLabel = CreateText(string.Empty, chapterBannerRect, 38, TextAnchor.MiddleLeft, foregroundColour);
+            chapterLabel.alignment = TextAlignmentOptions.MidlineLeft;
+            chapterLabel.horizontalAlignment = HorizontalAlignmentOptions.Left;
+            chapterLabel.verticalAlignment = VerticalAlignmentOptions.Middle;
             chapterLabel.enableAutoSizing = true;
             chapterLabel.fontSizeMin = 22f;
             chapterLabel.fontSizeMax = 40f;

@@ -99,7 +99,7 @@ namespace PixelOcean
         [SerializeField, Range(0f, 0.2f)] private float independentProfileRandomness = 0.06f;
         [SerializeField, Range(0.02f, 1f)] private float independentLayerDelay = 0.22f;
         [SerializeField, Range(0f, 1.5f)] private float independentLayerBackOffset = 0.14f;
-        [SerializeField, Range(0f, 0.75f)] private float independentLayerVerticalOffset = 0.24f;
+        [SerializeField, Range(0f, 0.75f)] private float independentLayerVerticalOffset = 0.34f;
         [SerializeField, Range(0f, 0.5f)] private float independentLayerDepthOffset = 0.06f;
         [SerializeField, Range(0.75f, 1f)] private float independentLayerScaleFalloff = 1f;
         [SerializeField, Range(0.5f, 2f)] private float independentLayerRiseCurve = 1f;
@@ -270,8 +270,6 @@ namespace PixelOcean
         private float simulationTime;
 
         [Header("Surfboard Coupling")]
-        [Tooltip("When disabled, the surfer still rides the sampled surface but cannot launch individual GPU water particles.")]
-        [SerializeField] private bool enableSurfboardParticleCoupling = false;
         [SerializeField, Range(0.01f, 0.25f)] private float boardParticlePadding = 0.002f;
         [SerializeField, Range(1f, 80f)] private float boardParticlePush = 8f;
         [SerializeField, Range(0f, 1f)] private float boardVelocityTransfer = 0.18f;
@@ -702,7 +700,7 @@ namespace PixelOcean
             // Fixed parallel rows:
             // master at the bottom, then one equal Y step per rear layer.
             independentLayerBackOffset = 0.08f;
-            independentLayerVerticalOffset = 0.24f;
+            independentLayerVerticalOffset = 0.34f;
             independentLayerDepthOffset = 0.08f;
             independentLayerScaleFalloff = 1f;
             independentLayerRiseCurve = 1f;
@@ -1590,7 +1588,6 @@ namespace PixelOcean
             // Only the foreground/master simulation interacts with the board.
             // Rear horizontal rows remain fully independent visual wave fields.
             bool boardActive =
-                enableSurfboardParticleCoupling &&
                 independentLayerIndex == 0 &&
                 surfboardTransform != null &&
                 surfboardBody != null;

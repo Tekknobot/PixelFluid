@@ -890,6 +890,12 @@ namespace PixelOcean
                 skull.AddComponent<InterWaveRenderItem>();
             skullRenderItem.SetLane(currentLane);
 
+            // Hide the skull on the same frame it is created. Adding the fade
+            // here avoids a visible one-frame flash before the global installer
+            // has time to discover the new projectile.
+            OceanSpawnFadeIn fade = skull.AddComponent<OceanSpawnFadeIn>();
+            fade.Configure(0.45f);
+
             GodzillaSkullSwimmer swimmer =
                 skull.AddComponent<GodzillaSkullSwimmer>();
             swimmer.Initialise(

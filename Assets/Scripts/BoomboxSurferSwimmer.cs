@@ -60,6 +60,7 @@ namespace PixelOcean
         [SerializeField, Min(0.05f)] private float cassetteInsertDelay = 0.22f;
         [SerializeField, Min(0.1f)] private float trackSwitchCooldown = 0.45f;
         [SerializeField, Range(0f, 1f)] private float cassetteVolume = 0.9f;
+        [SerializeField, Range(0.12f, 0.6f)] private float cassetteDoubleTapWindow = 0.32f;
 
         [Header("Summon / Release Presentation")]
         [SerializeField, Range(0.1f, 2f)] private float releaseDuration = 0.55f;
@@ -76,6 +77,8 @@ namespace PixelOcean
         private AudioClip[] musicTracks;
         private int currentTrackIndex;
         private float nextTrackSwitchTime;
+        private float lastCassetteUpTapTime = float.NegativeInfinity;
+        private float lastCassetteDownTapTime = float.NegativeInfinity;
         private bool playerTouching;
         private Coroutine cassetteRoutine;
         private Transform player;
@@ -705,25 +708,62 @@ namespace PixelOcean
             cassetteRoutine = null;
         }
 
-        private static int ReadCassetteDirection()
+        private int ReadCassetteDirection()
         {
 #if ENABLE_INPUT_SYSTEM
             Gamepad gamepad = Gamepad.current;
             if (gamepad == null)
                 return 0;
 
-            bool noHorizontal = !gamepad.dpad.left.isPressed && !gamepad.dpad.right.isPressed;
-            bool noButtons = !gamepad.buttonSouth.isPressed && !gamepad.buttonNorth.isPressed &&
-                             !gamepad.buttonEast.isPressed && !gamepad.buttonWest.isPressed &&
-                             !gamepad.leftShoulder.isPressed && !gamepad.rightShoulder.isPressed;
+            bool noHorizontal =
+                !gamepad.dpad.left.isPressed &&
+                !gamepad.dpad.right.isPressed;
+
+            bool noButtons =
+                !gamepad.buttonSouth.isPressed &&
+                !gamepad.buttonNorth.isPressed &&
+                !gamepad.buttonEast.isPressed &&
+                !gamepad.buttonWest.isPressed &&
+                !gamepad.leftShoulder.isPressed &&
+                !gamepad.rightShoulder.isPressed;
 
             if (!noHorizontal || !noButtons)
                 return 0;
 
-            if (gamepad.dpad.up.wasPressedThisFrame && !gamepad.dpad.down.isPressed)
-                return 1;
-            if (gamepad.dpad.down.wasPressedThisFrame && !gamepad.dpad.up.isPressed)
-                return -1;
+            float now = Time.unscaledTime;
+            float window = Mathf.Max(0.12f, cassetteDoubleTapWindow);
+
+            if (gamepad.dpad.up.wasPressedThisFrame &&
+                !gamepad.dpad.down.isPressed)
+            {
+                bool isDoubleTap =
+                    now - lastCassetteUpTapTime <= window;
+
+                lastCassetteUpTapTime = isDoubleTap
+                    ? float.NegativeInfinity
+                    : now;
+
+                // An UP tap cancels any pending DOWN sequence.
+                lastCassetteDownTapTime = float.NegativeInfinity;
+
+                return isDoubleTap ? 1 : 0;
+            }
+
+            if (gamepad.dpad.down.wasPressedThisFrame &&
+                !gamepad.dpad.up.isPressed)
+            {
+                bool isDoubleTap =
+                    now - lastCassetteDownTapTime <= window;
+
+                lastCassetteDownTapTime = isDoubleTap
+                    ? float.NegativeInfinity
+                    : now;
+
+                // A DOWN tap cancels any pending UP sequence.
+                lastCassetteUpTapTime = float.NegativeInfinity;
+
+                return isDoubleTap ? -1 : 0;
+            }
 #endif
             return 0;
         }

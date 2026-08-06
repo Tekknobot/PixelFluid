@@ -150,6 +150,7 @@ namespace PixelOcean
             FadeNew<SeaTurtleSwimmer>();
             FadeNew<GiantTurtleSwimmer>();
             FadeNew<RubberDucklingSwimmer>();
+            FadeNew<GodzillaSkullSwimmer>();
             FadeNew<AlienUfoController>();
             FadeNew<DayTwoHelicopterController>();
             FadeNew<BoomboxSurferSwimmer>();

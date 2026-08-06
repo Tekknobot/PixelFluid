@@ -383,8 +383,8 @@ namespace PixelOcean
         [Header("Water Slash / Flow Finisher")]
         [SerializeField] private bool enableWaterSlash = true;
         [Tooltip("Right bumper / keyboard R. While ON FIRE this becomes the Flow Finisher.")]
-        [SerializeField, Min(0.1f)] private float waterSlashCooldown = 0.65f;
-        [SerializeField, Min(0.1f)] private float waterSlashActionDuration = 0.22f;
+        [SerializeField, Min(0.1f)] private float waterSlashCooldown = 0.25f;
+        [SerializeField, Min(0.1f)] private float waterSlashActionDuration = 0.25f;
         [SerializeField, Min(0.1f)] private float flowFinisherActionDuration = 0.85f;
         [SerializeField, Min(0.1f)] private float waterSlashSpeed = 3f;
         [SerializeField, Min(0.1f)] private float flowFinisherSpeed = 3.5f;
