@@ -63,6 +63,7 @@ namespace PixelOcean
         [SerializeField, Min(1f)] private float raceBossChildRecycleDistance = 14f;
         private bool raceReaperSpawned;
         private bool raceRubberDuckSpawned;
+        private bool raceTeardownInProgress;
 
         [Header("Race Ecosystem Difficulty")]
         [SerializeField, Range(1, 12)] private int openingEnemyCap = 6;
@@ -226,12 +227,13 @@ namespace PixelOcean
         {
             GameModeSession.SelectRaceMode();
             ExitRaceMode(false);
+            DestroyExistingSurfers(false);
+            raceTeardownInProgress = false;
             CaptureStoryProgression();
             RaceActive = true;
             raceTimeRemaining = PrototypeRaceSeconds;
             SurfAbilityProgression.Instance?.DebugUnlockAll();
             DisableStoryAndSpawners();
-            DestroyExistingSurfers();
             SpawnRoster(selectedSurfer);
             BindCameraToSelectedRacer();
             SetupRaceEcosystem();
@@ -400,9 +402,14 @@ namespace PixelOcean
         public void ExitRaceMode(bool destroyRacers)
         {
             RaceActive = false;
-            if (selectionRoot != null) { Destroy(selectionRoot); selectionRoot = null; }
-            if (raceHud != null) { Destroy(raceHud); raceHud = null; }
-            if (ecosystemRoot != null) { Destroy(ecosystemRoot); ecosystemRoot = null; }
+            raceTeardownInProgress = destroyRacers;
+
+            DisableAndDestroy(ref selectionRoot);
+            DisableAndDestroy(ref raceHud);
+            DisableAndDestroy(ref ecosystemRoot);
+
+            ClearRaceCameraTarget();
+
             if (raceSky == null)
                 raceSky = FindFirstObjectByType<ProceduralStarryNight>();
             raceSky?.ClearExternalTimeOverride();
@@ -410,18 +417,109 @@ namespace PixelOcean
             StopMusicImmediately();
 
             if (destroyRacers)
-                DestroyExistingSurfers();
+            {
+                DestroyExistingSurfers(true);
+                StartCoroutine(CompleteRaceTeardown());
+            }
+            else
+            {
+                raceTeardownInProgress = false;
+            }
 
             RestoreStoryProgression();
             GameplayTargetCache.Refresh();
 
-            foreach (MonoBehaviour behaviour in FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (MonoBehaviour behaviour in FindObjectsByType<MonoBehaviour>(
+                         FindObjectsInactive.Include,
+                         FindObjectsSortMode.None))
             {
-                if (behaviour == null || behaviour == this) continue;
+                if (behaviour == null || behaviour == this)
+                    continue;
+
                 string n = behaviour.GetType().Name;
-                if (n.Contains("Spawner", StringComparison.OrdinalIgnoreCase) || n.Contains("ProgressionDirector", StringComparison.OrdinalIgnoreCase))
+                if (n.Contains("Spawner", StringComparison.OrdinalIgnoreCase) ||
+                    n.Contains("ProgressionDirector", StringComparison.OrdinalIgnoreCase))
+                {
                     behaviour.enabled = GameModeSession.IsStory;
+                }
             }
+        }
+
+        public IEnumerator WaitForRaceTeardown()
+        {
+            float timeoutAt = Time.realtimeSinceStartup + 3f;
+            while (Time.realtimeSinceStartup < timeoutAt &&
+                   (raceTeardownInProgress || HasRaceOwnedObjects()))
+            {
+                yield return null;
+            }
+
+            // One final end-of-frame boundary prevents deferred Destroy calls from
+            // crossing into the destination mode's construction frame.
+            yield return new WaitForEndOfFrame();
+        }
+
+        private IEnumerator CompleteRaceTeardown()
+        {
+            yield return null;
+            yield return new WaitForEndOfFrame();
+            yield return null;
+            raceTeardownInProgress = HasRaceOwnedObjects();
+
+            if (raceTeardownInProgress)
+            {
+                // Disable any orphaned race object immediately and give Unity one
+                // more frame to process its deferred destruction.
+                DestroyExistingSurfers(true);
+                yield return null;
+                yield return new WaitForEndOfFrame();
+            }
+
+            raceTeardownInProgress = false;
+            GameplayTargetCache.Refresh();
+        }
+
+        private static void DisableAndDestroy(ref GameObject target)
+        {
+            if (target == null)
+                return;
+
+            target.SetActive(false);
+            Destroy(target);
+            target = null;
+        }
+
+        private static bool HasRaceOwnedObjects()
+        {
+            foreach (TinyWaveSurfer surfer in FindObjectsByType<TinyWaveSurfer>(
+                         FindObjectsInactive.Include,
+                         FindObjectsSortMode.None))
+            {
+                if (surfer == null)
+                    continue;
+
+                string objectName = surfer.gameObject.name;
+                if (objectName.StartsWith("Race Player -", StringComparison.Ordinal) ||
+                    objectName.StartsWith("Race AI -", StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return FindFirstObjectByType<RaceBossHasteFollower>(
+                       FindObjectsInactive.Include) != null ||
+                   GameObject.Find("Race Mode Random Ecosystem") != null;
+        }
+
+        private void ClearRaceCameraTarget()
+        {
+            Camera camera = Camera.main;
+            if (camera == null)
+                return;
+
+            TinySurferCinematicCamera follow =
+                camera.GetComponent<TinySurferCinematicCamera>();
+            follow?.SetFollowTarget(null, false);
         }
 
         private void CaptureStoryProgression()
@@ -1004,12 +1102,48 @@ namespace PixelOcean
                 Destroy(boss.gameObject);
         }
 
-        private void DestroyExistingSurfers()
+        private void DestroyExistingSurfers(bool raceOwnedOnly)
         {
-            foreach (TinyWaveSurfer surfer in FindObjectsByType<TinyWaveSurfer>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (TinyWaveSurfer surfer in FindObjectsByType<TinyWaveSurfer>(
+                         FindObjectsInactive.Include,
+                         FindObjectsSortMode.None))
+            {
+                if (surfer == null)
+                    continue;
+
+                string objectName = surfer.gameObject.name;
+                bool raceOwned =
+                    objectName.StartsWith("Race Player -", StringComparison.Ordinal) ||
+                    objectName.StartsWith("Race AI -", StringComparison.Ordinal) ||
+                    racers.Any(racer => racer.Surfer == surfer);
+
+                if (raceOwnedOnly && !raceOwned)
+                    continue;
+
+                surfer.gameObject.SetActive(false);
                 Destroy(surfer.gameObject);
-            foreach (TinyWaveSurferSpawnListener listener in FindObjectsByType<TinyWaveSurferSpawnListener>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            }
+
+            foreach (TinyWaveSurferSpawnListener listener in
+                     FindObjectsByType<TinyWaveSurferSpawnListener>(
+                         FindObjectsInactive.Include,
+                         FindObjectsSortMode.None))
+            {
+                if (listener == null)
+                    continue;
+
+                if (raceOwnedOnly &&
+                    !listener.gameObject.name.Contains(
+                        "Race",
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                listener.gameObject.SetActive(false);
                 Destroy(listener.gameObject);
+            }
+
             racers.Clear();
         }
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -65,6 +66,7 @@ namespace PixelOcean
         private bool menuVisible;
         private bool showingTitleMenu;
         private float inputReadyTime;
+        private bool modeBuildInProgress;
 
         // Secret controller code: UP, UP, LEFT, RIGHT, LEFT, RIGHT, LB, RB.
         private const float DeveloperCheatStepTimeout = 1.0f;
@@ -1136,13 +1138,29 @@ namespace PixelOcean
 
         private IEnumerator StartRaceAndResume(string selectedSurfer)
         {
-            GameModeSession.SelectRaceMode();
-            yield return HideMenuForOpeningTransition();
+            if (modeBuildInProgress)
+                yield break;
+
+            modeBuildInProgress = true;
+            CoverScreenForModeBuild();
+
             RaceModeManager manager = RaceModeManager.EnsureInstance();
+
+            // Build the destination mode behind a fully opaque cover. Nothing from
+            // the title, story, or previous race is revealed until the new race
+            // player, camera target, ecosystem, and HUD all exist.
+            GameModeSession.SelectRaceMode();
+            yield return manager.WaitForRaceTeardown();
+
             manager.BeginRace(selectedSurfer, false);
+            yield return WaitForRaceModeReady(manager);
+
+            // Only now animate the title UI away and reveal the completed mode.
+            yield return HideMenuForOpeningTransition();
             yield return FadeStartupBlack(1f, 0f, 0.7f);
             manager.SetRaceHudVisible(true);
             FinishOpeningTransition();
+            modeBuildInProgress = false;
         }
 
         private void OpenDeveloperMenu()
@@ -1843,25 +1861,169 @@ namespace PixelOcean
 
         private IEnumerator LoadAndResume(SurfStageSaveSystem.SaveData data)
         {
-            SurferSlugMinimalHud.Instance?.SetPresentationSuppressed(true);
-            GameModeSession.SelectStoryMode();
-            // Continue skips the opening boards but still prevents a one-frame view
-            // of the ocean before the saved state is ready.
-            yield return HideMenuForOpeningTransition();
+            if (modeBuildInProgress)
+                yield break;
 
-            SurfDayProgressionDirector director = FindFirstObjectByType<SurfDayProgressionDirector>();
+            modeBuildInProgress = true;
+            SurferSlugMinimalHud.Instance?.SetPresentationSuppressed(true);
+            CoverScreenForModeBuild();
+
+            // Treat changing from Race to Continue as an explicit mode boundary.
+            // Race-owned surfers, camera targets, bosses, and update systems must be
+            // completely gone before the save loader is allowed to find a player.
+            GameModeSession.SelectStoryMode();
+            RaceModeManager manager = RaceModeManager.Instance;
+            if (manager != null)
+                yield return manager.WaitForRaceTeardown();
+
+            yield return WaitForNoRacePopulation();
+
+            SurfDayProgressionDirector director =
+                FindFirstObjectByType<SurfDayProgressionDirector>();
+
             if (director != null)
                 yield return director.LoadSavedRun(data);
 
             SurfRunLifeManager.Instance?.RestoreLives(data.lives);
-            TinyWaveSurfer surfer = FindFirstObjectByType<TinyWaveSurfer>();
-            surfer?.RespawnForManagedRun();
-            surfer?.RestorePersistentState(data);
 
+            TinyWaveSurfer surfer = FindObjectsByType<TinyWaveSurfer>(
+                    FindObjectsInactive.Exclude,
+                    FindObjectsSortMode.None)
+                .FirstOrDefault(candidate =>
+                    candidate != null && candidate.IsPlayerControlled);
+
+            if (surfer != null)
+            {
+                surfer.RespawnForManagedRun();
+                surfer.RestorePersistentState(data);
+                yield return StabilizeRestoredStoryPlayer(surfer);
+            }
+
+            // The title transition starts only after the story mode and saved player
+            // are fully built and stable behind the black cover.
+            yield return HideMenuForOpeningTransition();
             yield return FadeStartupBlack(1f, 0f, 0.85f);
             SurferSlugMinimalHud.Instance?.SetPresentationSuppressed(false);
             SurferSlugMinimalHud.Instance?.SetStoryHudActive(true);
             FinishOpeningTransition();
+            modeBuildInProgress = false;
+        }
+
+        private void CoverScreenForModeBuild()
+        {
+            if (startupBlackGroup != null)
+            {
+                startupBlackGroup.gameObject.SetActive(true);
+                startupBlackGroup.alpha = 1f;
+                startupBlackGroup.blocksRaycasts = true;
+            }
+
+            if (startupBlackImage != null)
+            {
+                Color black = startupBlackImage.color;
+                black.a = 1f;
+                startupBlackImage.color = black;
+            }
+
+            if (buttonPanelInputGroup != null)
+            {
+                buttonPanelInputGroup.interactable = false;
+                buttonPanelInputGroup.blocksRaycasts = false;
+            }
+
+            EventSystem.current?.SetSelectedGameObject(null);
+        }
+
+        private IEnumerator WaitForRaceModeReady(RaceModeManager manager)
+        {
+            float timeoutAt = Time.realtimeSinceStartup + 3f;
+            while (Time.realtimeSinceStartup < timeoutAt)
+            {
+                TinyWaveSurfer racePlayer = FindObjectsByType<TinyWaveSurfer>(
+                        FindObjectsInactive.Exclude,
+                        FindObjectsSortMode.None)
+                    .FirstOrDefault(candidate =>
+                        candidate != null &&
+                        candidate.IsPlayerControlled &&
+                        candidate.gameObject.name.StartsWith(
+                            "Race Player -",
+                            StringComparison.Ordinal));
+
+                if (manager != null &&
+                    RaceModeManager.RaceActive &&
+                    racePlayer != null)
+                {
+                    // Allow Awake/Start and the camera binding to finish without
+                    // depending on scaled time while the title screen is paused.
+                    yield return null;
+                    yield return new WaitForEndOfFrame();
+                    yield break;
+                }
+
+                yield return null;
+            }
+        }
+
+        private IEnumerator WaitForNoRacePopulation()
+        {
+            float timeoutAt = Time.realtimeSinceStartup + 3f;
+            while (Time.realtimeSinceStartup < timeoutAt)
+            {
+                bool foundRaceSurfer = FindObjectsByType<TinyWaveSurfer>(
+                        FindObjectsInactive.Include,
+                        FindObjectsSortMode.None)
+                    .Any(candidate =>
+                        candidate != null &&
+                        (candidate.gameObject.name.StartsWith(
+                             "Race Player -",
+                             StringComparison.Ordinal) ||
+                         candidate.gameObject.name.StartsWith(
+                             "Race AI -",
+                             StringComparison.Ordinal)));
+
+                bool foundRaceFollower =
+                    FindFirstObjectByType<RaceBossHasteFollower>(
+                        FindObjectsInactive.Include) != null;
+
+                if (!foundRaceSurfer && !foundRaceFollower)
+                    yield break;
+
+                yield return null;
+            }
+        }
+
+        private IEnumerator StabilizeRestoredStoryPlayer(TinyWaveSurfer surfer)
+        {
+            if (surfer == null)
+                yield break;
+
+            Rigidbody2D body = surfer.GetComponent<Rigidbody2D>();
+            Vector3 restoredPosition = surfer.transform.position;
+
+            // Late Start/bootstrap/camera hand-off work can run for a few frames after
+            // loading. Hold the authoritative save position only while the screen is
+            // covered, then release it before gameplay resumes.
+            for (int frame = 0; frame < 3 && surfer != null; frame++)
+            {
+                if (body != null)
+                {
+                    body.position = restoredPosition;
+                    body.linearVelocity = Vector2.zero;
+                    body.angularVelocity = 0f;
+                }
+
+                surfer.transform.position = restoredPosition;
+                yield return new WaitForEndOfFrame();
+            }
+
+            GameplayTargetCache.Refresh();
+
+            Camera camera = Camera.main;
+            TinySurferCinematicCamera follow =
+                camera != null
+                    ? camera.GetComponent<TinySurferCinematicCamera>()
+                    : null;
+            follow?.SetFollowTarget(surfer, true);
         }
 
         private IEnumerator HideMenuForOpeningTransition()

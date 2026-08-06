@@ -59,12 +59,12 @@ namespace PixelOcean
         [SerializeField, Min(0f)] private float deathDelay = 0.3f;
         [SerializeField] private AudioClip hurtClip;
         [SerializeField, Range(0f, 1f)] private float hurtVolume = 1f;
-        [SerializeField, Min(0.08f)] private float hitReactionDuration = 3.28f;
+        [SerializeField, Min(0.08f)] private float hitReactionDuration = 3f;
         [SerializeField, Range(0.01f, 0.35f)] private float hitReactionScalePunch = 0.14f;
-        [SerializeField, Range(0.05f, 0.6f)] private float hitCameraFocusDuration = 3.32f;
+        [SerializeField, Range(0.05f, 0.6f)] private float hitCameraFocusDuration = 3f;
 
         [Header("Boss Death Sequence")]
-        [SerializeField, Min(0.5f)] private float bossDeathDuration = 5.6f;
+        [SerializeField, Min(0.5f)] private float bossDeathDuration = 5f;
         [SerializeField, Min(0f)] private float bossDeathSinkDistance = 2.8f;
         [SerializeField, Min(0f)] private float bossDeathShakeAmount = 0.11f;
         [SerializeField, Min(1f)] private float bossDeathShakeFrequency = 28f;
