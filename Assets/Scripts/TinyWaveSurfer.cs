@@ -625,33 +625,58 @@ namespace PixelOcean
 
         public void RestorePersistentState(SurfStageSaveSystem.SaveData data)
         {
-            if (data == null || !data.hasPlayerState) return;
+            if (data == null || !data.hasPlayerState)
+                return;
+
+            // A saved Continue position always overrides the delayed new-game spawn.
+            randomizeInitialOceanSpawn = false;
 
             RefreshWaveList();
+
             if (simulations.Count > 0)
             {
-                int restoredWave = Mathf.Clamp(data.playerWaveIndex, 0, simulations.Count - 1);
+                int restoredWave = Mathf.Clamp(
+                    data.playerWaveIndex,
+                    0,
+                    simulations.Count - 1);
+
                 PickWave(restoredWave, true);
+
                 Vector3 restored = GetStartingPosition(currentWave);
                 restored.x = ClampPlayerXToSandbox(data.playerX);
+
                 localRideX = restored.x;
                 transform.position = restored;
                 renderDepth = restored.z;
             }
 
             direction = data.playerDirection >= 0f ? 1f : -1f;
-            currentHealth = Mathf.Clamp(data.playerHealth, 1, MaximumHealth);
+            currentHealth = Mathf.Clamp(
+                data.playerHealth,
+                1,
+                MaximumHealth);
+
             healthBar?.SetHealth(currentHealth, MaximumHealth);
             throwableItems.Clear();
 
-            if (data.throwableSpriteNames != null && data.throwableSpriteNames.Length > 0)
+            if (data.throwableSpriteNames != null &&
+                data.throwableSpriteNames.Length > 0)
             {
-                Sprite[] allResourceSprites = Resources.LoadAll<Sprite>(string.Empty);
+                Sprite[] allResourceSprites =
+                    Resources.LoadAll<Sprite>(string.Empty);
+
                 foreach (string spriteName in data.throwableSpriteNames)
                 {
-                    if (string.IsNullOrEmpty(spriteName)) continue;
-                    Sprite match = System.Array.Find(allResourceSprites, sprite => sprite != null && sprite.name == spriteName);
-                    if (match != null) throwableItems.Enqueue(match);
+                    if (string.IsNullOrEmpty(spriteName))
+                        continue;
+
+                    Sprite match = System.Array.Find(
+                        allResourceSprites,
+                        sprite => sprite != null &&
+                                sprite.name == spriteName);
+
+                    if (match != null)
+                        throwableItems.Enqueue(match);
                 }
             }
         }
@@ -759,6 +784,14 @@ namespace PixelOcean
             // create sharks and squids before selecting a safe player position.
             yield return null;
             yield return null;
+
+            // Continue may have restored the player while this coroutine was waiting.
+            if (!randomizeInitialOceanSpawn ||
+                raceModeSurfer ||
+                GameModeSession.IsRace)
+            {
+                yield break;
+            }
 
             SpawnAtRandomOceanPosition();
         }

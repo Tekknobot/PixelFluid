@@ -497,10 +497,26 @@ namespace PixelOcean
                 duckBoss.CloseArenaVulnerability();
             }
 
-            if (player == null || player.IsDead || !player.IsPlayerControlled)
+            TinyWaveSurfer previousPlayer = player;
+
+            if (player == null ||
+                player.IsDead ||
+                !player.IsPlayerControlled ||
+                !player.gameObject.activeInHierarchy)
+            {
                 player = FindPlayerControlledSurfer();
+            }
+
             if (player == null)
                 return;
+
+            // Continue may replace the Race Mode surfer with a new story surfer.
+            // Rebuild the arena around the new player before applying any clamp.
+            if (player != previousPlayer)
+            {
+                RecenterArenaAroundPlayer();
+                PlaceBossAtArenaX(centreX);
+            }
 
             Vector3 p = player.transform.position;
             float paddedLeft = leftX + edgePadding;
@@ -534,6 +550,43 @@ namespace PixelOcean
                 if (p.x <= leftX - escapeDistance)
                     FinishArena(true);
             }
+        }
+
+        private void RecenterArenaAroundPlayer()
+        {
+            if (player == null)
+                return;
+
+            centreX = player.transform.position.x;
+
+            if (gameplayCamera == null)
+                gameplayCamera = Camera.main;
+
+            if (gameplayCamera != null && gameplayCamera.orthographic)
+            {
+                float cameraWidth =
+                    gameplayCamera.orthographicSize *
+                    2f *
+                    gameplayCamera.aspect;
+
+                float desiredWidth =
+                    cameraWidth *
+                    Mathf.Max(1.85f, arenaWidthInCameraWidths);
+
+                arenaWidth = Mathf.Max(
+                    6f,
+                    arenaWidth,
+                    desiredWidth);
+            }
+
+            leftX = centreX - arenaWidth * 0.5f;
+            rightX = centreX + arenaWidth * 0.5f;
+
+            // Do not move the player. Only rebuild the arena around their
+            // already-restored saved position.
+            gateOnRight =
+                boss == null ||
+                boss.transform.position.x <= centreX;
         }
 
         private void ClampBossInsideArena()
@@ -593,6 +646,11 @@ namespace PixelOcean
         {
             if (encounterFinished)
                 return;
+            if (GameModeSession.IsRace)
+            {
+                Destroy(gameObject);
+                return;
+            }                
             encounterFinished = true;
 
             if (escaped && boss != null)
