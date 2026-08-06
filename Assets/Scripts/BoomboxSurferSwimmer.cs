@@ -21,7 +21,7 @@ namespace PixelOcean
         public event Action<BoomboxSurferSwimmer> Released;
 
         [Header("Surfing Movement")]
-        [SerializeField] private Vector2 speedRange = new(0.64f, 3.92f);
+        [SerializeField] private Vector2 speedRange = new(0.64f, 0.92f);
         [SerializeField, Range(0f, 0.4f)] private float laneWander = 0.12f;
         [SerializeField, Min(0.1f)] private float verticalResponsiveness = 5.5f;
         [SerializeField] private Vector2 bobHeightRange = new(0.025f, 0.07f);
@@ -35,10 +35,18 @@ namespace PixelOcean
         [SerializeField, Range(0f, 1f)] private float grooveTowardPlayerChance = 0.65f;
 
         [Header("Natural Player Following")]
-        [SerializeField, Min(0.5f)] private float comfortableFollowDistance = 2.25f;
+        [SerializeField, Min(0.5f)] private float comfortableFollowDistance = 0.35f;
         [SerializeField, Min(1f)] private float maximumFollowDistance = 10.5f;
-        [SerializeField, Range(1f, 4f)] private float catchUpSpeedMultiplier = 1.65f;
+        [SerializeField, Range(1f, 6f)] private float catchUpSpeedMultiplier = 4.4f;
+        [SerializeField, Min(0.1f)] private float followAcceleration = 5.5f;
+        [SerializeField, Min(0.1f)] private float followDeceleration = 2.8f;
+        [SerializeField, Range(0f, 1.5f)] private float playerVelocityInfluence = 0.92f;
+        [SerializeField, Min(0f)] private float distanceCatchUpGain = 0.8f;
+        [SerializeField, Min(0.5f)] private float maximumFollowSpeed = 6.5f;
+        [SerializeField, Range(0.5f, 0.95f)] private float hearingRangeFraction = 0.82f;
         [SerializeField, Min(0.1f)] private float waterSectionRefreshInterval = 0.5f;
+        [SerializeField, Min(0f)] private float interactionStopDistance = 0.45f;
+        [SerializeField, Min(0f)] private float followResumeDistance = 0.75f;        
 
         [Header("Death Surfer Spatial Music")]
         [SerializeField, Range(0f, 1f)] private float maximumVolume = 0.9f;
@@ -84,9 +92,14 @@ namespace PixelOcean
         private bool changingLane;
         private bool initialised;
         private bool releasing;
+        private bool summoned;
+        private float smoothedMovementSpeed;
+        private Vector2 previousPlayerPosition;
+        private float smoothedPlayerVelocityX;
+        private bool hasPreviousPlayerPosition;
         private float nextWaterRefreshTime;
-
         public bool IsReleasing => releasing;
+        private bool pausedForInteraction;
 
         public void Initialise(int requestedLane, AudioClip musicClip)
         {
@@ -103,6 +116,8 @@ namespace PixelOcean
             renderItem.SetLane(laneIndex);
             direction = Random.value < 0.5f ? -1f : 1f;
             speed = Random.Range(speedRange.x, speedRange.y);
+            smoothedMovementSpeed = speed;
+            summoned = false;
             laneOffset = Random.Range(-laneWander, laneWander);
             bobHeight = Random.Range(bobHeightRange.x, bobHeightRange.y);
             bobSpeed = Random.Range(bobSpeedRange.x, bobSpeedRange.y);
@@ -147,6 +162,13 @@ namespace PixelOcean
                 return;
 
             player = summonedBy;
+            summoned = summonedBy != null;
+            smoothedMovementSpeed = speed;
+            hasPreviousPlayerPosition = summonedBy != null;
+            previousPlayerPosition = summonedBy != null
+                ? (Vector2)summonedBy.position
+                : Vector2.zero;
+            smoothedPlayerVelocityX = 0f;
 
             Vector2 position = summonPosition;
             float minimumX = GetMinimumX(laneIndex);
@@ -306,60 +328,231 @@ namespace PixelOcean
             RefreshWaterLayersWhenNeeded();
 
             Vector2 position = body.position;
-            float movementSpeed = speed;
+            float targetMovementSpeed = speed;
 
             if (player != null)
             {
-                float horizontalDelta = player.position.x - position.x;
+                Vector2 playerPosition = player.position;
+
+                if (hasPreviousPlayerPosition)
+                {
+                    float rawPlayerVelocityX =
+                        (playerPosition.x - previousPlayerPosition.x) /
+                        Mathf.Max(0.0001f, Time.fixedDeltaTime);
+
+                    smoothedPlayerVelocityX = Mathf.Lerp(
+                        smoothedPlayerVelocityX,
+                        rawPlayerVelocityX,
+                        1f - Mathf.Exp(-10f * Time.fixedDeltaTime));
+                }
+                else
+                {
+                    hasPreviousPlayerPosition = true;
+                    smoothedPlayerVelocityX = 0f;
+                }
+
+                previousPlayerPosition = playerPosition;
+
+                float horizontalDelta = playerPosition.x - position.x;
                 float absoluteDelta = Mathf.Abs(horizontalDelta);
 
-                // The board still swims independently nearby, but turns and catches up
-                // before it can be left behind by the endless world recycling.
-                if (absoluteDelta > comfortableFollowDistance)
-                    direction = Mathf.Sign(horizontalDelta);
+                float stopDistance = Mathf.Max(0f, interactionStopDistance);
+                float resumeDistance = Mathf.Max(
+                    stopDistance + 0.05f,
+                    followResumeDistance);
 
-                if (absoluteDelta > maximumFollowDistance)
+                // Hysteresis:
+                // stop when close, but do not resume until the player clearly moves away.
+                if (pausedForInteraction)
                 {
-                    float catchUp = Mathf.InverseLerp(
-                        maximumFollowDistance,
-                        maximumFollowDistance * 2f,
-                        absoluteDelta);
-                    movementSpeed *= Mathf.Lerp(1f, catchUpSpeedMultiplier, catchUp);
+                    if (absoluteDelta >= resumeDistance)
+                        pausedForInteraction = false;
+                }
+                else if (absoluteDelta <= stopDistance)
+                {
+                    pausedForInteraction = true;
+                }
+
+                if (pausedForInteraction)
+                {
+                    targetMovementSpeed = 0f;
+
+                    // Avoid using tiny player-position changes to flip direction
+                    // while both trigger colliders overlap.
+                    smoothedPlayerVelocityX = 0f;
+                }
+                else
+                {
+                    float hearingLeash = Mathf.Max(
+                        comfortableFollowDistance + 0.5f,
+                        silentDistance * hearingRangeFraction);
+
+                    float followLeash = summoned
+                        ? Mathf.Min(maximumFollowDistance, hearingLeash)
+                        : maximumFollowDistance;
+
+                    // Only reverse when there is meaningful horizontal separation.
+                    if (absoluteDelta > comfortableFollowDistance)
+                    {
+                        direction = Mathf.Sign(horizontalDelta);
+                    }
+                    else if (Mathf.Abs(smoothedPlayerVelocityX) > 0.1f)
+                    {
+                        direction = Mathf.Sign(smoothedPlayerVelocityX);
+                    }
+
+                    float playerSpeedContribution =
+                        Mathf.Abs(smoothedPlayerVelocityX) *
+                        playerVelocityInfluence;
+
+                    float distanceError = Mathf.Max(
+                        0f,
+                        absoluteDelta - comfortableFollowDistance);
+
+                    float distanceCorrection =
+                        distanceError * distanceCatchUpGain;
+
+                    targetMovementSpeed = Mathf.Max(
+                        speed,
+                        playerSpeedContribution + distanceCorrection);
+
+                    if (absoluteDelta > followLeash)
+                    {
+                        float emergencyCatchUp = Mathf.InverseLerp(
+                            followLeash,
+                            Mathf.Max(
+                                followLeash + 0.1f,
+                                silentDistance),
+                            absoluteDelta);
+
+                        targetMovementSpeed = Mathf.Max(
+                            targetMovementSpeed,
+                            speed * Mathf.Lerp(
+                                catchUpSpeedMultiplier,
+                                catchUpSpeedMultiplier * 1.35f,
+                                emergencyCatchUp));
+                    }
+
+                    targetMovementSpeed = Mathf.Min(
+                        targetMovementSpeed,
+                        maximumFollowSpeed);
                 }
             }
+            else
+            {
+                hasPreviousPlayerPosition = false;
+                smoothedPlayerVelocityX = 0f;
+                pausedForInteraction = false;
+            }
 
-            position.x += direction * movementSpeed * Time.fixedDeltaTime;
+            float speedChangeRate =
+                targetMovementSpeed > smoothedMovementSpeed
+                    ? followAcceleration
+                    : followDeceleration;
 
-            int boundsLane = changingLane ? Mathf.Min(laneIndex, targetLaneIndex) : laneIndex;
+            smoothedMovementSpeed = Mathf.MoveTowards(
+                smoothedMovementSpeed,
+                targetMovementSpeed,
+                speedChangeRate * Time.fixedDeltaTime);
+
+            // Remove tiny residual movement once it has stopped for interaction.
+            if (pausedForInteraction &&
+                smoothedMovementSpeed <= 0.02f)
+            {
+                smoothedMovementSpeed = 0f;
+            }
+
+            position.x +=
+                direction *
+                smoothedMovementSpeed *
+                Time.fixedDeltaTime;
+
+            int boundsLane = changingLane
+                ? Mathf.Min(laneIndex, targetLaneIndex)
+                : laneIndex;
+
             float minX = GetMinimumX(boundsLane);
             float maxX = GetMaximumX(boundsLane);
+
             if (position.x <= minX)
             {
                 position.x = minX;
-                direction = player != null && player.position.x < position.x ? -1f : 1f;
+
+                if (!pausedForInteraction)
+                {
+                    direction =
+                        player != null &&
+                        player.position.x < position.x
+                            ? -1f
+                            : 1f;
+                }
             }
             else if (position.x >= maxX)
             {
                 position.x = maxX;
-                direction = player != null && player.position.x > position.x ? 1f : -1f;
+
+                if (!pausedForInteraction)
+                {
+                    direction =
+                        player != null &&
+                        player.position.x > position.x
+                            ? 1f
+                            : -1f;
+                }
             }
 
-            if (!changingLane && Time.time >= nextLaneChangeTime)
+            // Do not begin a random lane change while the player is touching it.
+            if (!pausedForInteraction &&
+                !changingLane &&
+                Time.time >= nextLaneChangeTime)
+            {
                 BeginLaneChange();
+            }
 
-            float sampledX = Mathf.Clamp(position.x, minX, maxX);
-            float bob = Mathf.Sin(Time.time * bobSpeed + bobPhase) * bobHeight;
-            float desiredY = UpdateLaneTransition(sampledX) + laneOffset + bob;
-            position.y = Mathf.Lerp(position.y, desiredY,
-                1f - Mathf.Exp(-verticalResponsiveness * Time.fixedDeltaTime));
+            float sampledX = Mathf.Clamp(
+                position.x,
+                minX,
+                maxX);
+
+            float bob =
+                Mathf.Sin(
+                    Time.time * bobSpeed +
+                    bobPhase) *
+                bobHeight;
+
+            float desiredY =
+                UpdateLaneTransition(sampledX) +
+                laneOffset +
+                bob;
+
+            position.y = Mathf.Lerp(
+                position.y,
+                desiredY,
+                1f - Mathf.Exp(
+                    -verticalResponsiveness *
+                    Time.fixedDeltaTime));
 
             body.MovePosition(position);
-            spriteRenderer.flipX = direction < 0f;
-            transform.rotation = Quaternion.Euler(0f, 0f,
-                Mathf.Sin(Time.time * bobSpeed * 0.72f + bobPhase) * maximumTilt);
+
+            // Keep its facing stable while stopped beside the player.
+            if (!pausedForInteraction &&
+                smoothedMovementSpeed > 0.05f)
+            {
+                spriteRenderer.flipX = direction < 0f;
+            }
+
+            transform.rotation = Quaternion.Euler(
+                0f,
+                0f,
+                Mathf.Sin(
+                    Time.time *
+                    bobSpeed *
+                    0.72f +
+                    bobPhase) *
+                maximumTilt);
+
             UpdateSpatialMusic(position);
         }
-
 
         private void RefreshWaterLayersWhenNeeded()
         {
