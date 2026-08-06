@@ -59,6 +59,8 @@ namespace PixelOcean
         [SerializeField, Min(0.5f)] private float raceBossFollowDistance = 3.25f;
         [SerializeField, Min(0.5f)] private float raceBossMaximumSpeed = 8.5f;
         [SerializeField, Min(0.1f)] private float raceBossAcceleration = 12f;
+        [SerializeField, Min(0.5f)] private float raceBossVisibleSpawnOffset = 4.5f;
+        [SerializeField, Min(1f)] private float raceBossChildRecycleDistance = 14f;
         private bool raceReaperSpawned;
         private bool raceRubberDuckSpawned;
 
@@ -720,7 +722,7 @@ namespace PixelOcean
                 raceReaperSpawned = true;
                 SpawnRaceBoss<GodzillaLaneSwimmer>(
                     "Race Reaper",
-                    7f);
+                    raceBossVisibleSpawnOffset);
             }
 
             if (!raceRubberDuckSpawned &&
@@ -729,7 +731,7 @@ namespace PixelOcean
                 raceRubberDuckSpawned = true;
                 SpawnRaceBoss<RubberDuckBossSwimmer>(
                     "Race Rubber Duck",
-                    -7f);
+                    -raceBossVisibleSpawnOffset);
             }
 
             AttachRaceFollowToExistingBosses();
@@ -782,6 +784,13 @@ namespace PixelOcean
                 raceBossMaximumSpeed,
                 raceBossAcceleration);
 
+            RaceBossChildRecycler recycler =
+                bossObject.AddComponent<RaceBossChildRecycler>();
+
+            recycler.Configure(
+                targetRacer != null ? targetRacer.Surfer : null,
+                raceBossChildRecycleDistance);
+
             OceanSpawnFadeIn fade =
                 bossObject.GetComponent<OceanSpawnFadeIn>();
 
@@ -832,6 +841,16 @@ namespace PixelOcean
                 raceBossFollowDistance,
                 raceBossMaximumSpeed,
                 raceBossAcceleration);
+
+            RaceBossChildRecycler recycler =
+                boss.GetComponent<RaceBossChildRecycler>();
+
+            if (recycler == null)
+                recycler = boss.gameObject.AddComponent<RaceBossChildRecycler>();
+
+            recycler.Configure(
+                targetRacer != null ? targetRacer.Surfer : null,
+                raceBossChildRecycleDistance);
         }
 
         private static void SuppressRaceBossArenas()
@@ -1165,6 +1184,8 @@ namespace PixelOcean
         private float acceleration = 12f;
         private float currentSpeed;
         private float lastDirection = 1f;
+        private float verticalVelocity;
+        private bool forcedVisiblePosition;
 
         public void Configure(
             TinyWaveSurfer followTarget,
@@ -1211,39 +1232,51 @@ namespace PixelOcean
                     return;
             }
 
+            Vector3 targetPosition = target.transform.position;
             Vector3 position = transform.position;
-            float delta = target.transform.position.x - position.x;
+
+            // Boss Start()/Initialise() may relocate itself to a story-mode
+            // off-screen entry point. Pull it back beside the racer once, after
+            // that initialization has occurred.
+            if (!forcedVisiblePosition)
+            {
+                float side = position.x >= targetPosition.x ? 1f : -1f;
+                position.x = targetPosition.x + side * desiredDistance;
+                position.y = targetPosition.y;
+                transform.position = position;
+
+                if (body != null)
+                    body.position = position;
+
+                forcedVisiblePosition = true;
+            }
+
+            float delta = targetPosition.x - position.x;
             float absoluteDelta = Mathf.Abs(delta);
 
-            if (absoluteDelta > 0.08f)
+            if (absoluteDelta > 0.12f)
                 lastDirection = Mathf.Sign(delta);
 
             float distanceError = Mathf.Max(
                 0f,
                 absoluteDelta - desiredDistance);
 
-            // Haste grows smoothly with separation. Close to the racer the boss
-            // coasts instead of rapidly reversing, which prevents jitter.
             float targetSpeed = distanceError <= 0f
                 ? 0f
                 : Mathf.Min(
                     maximumSpeed,
-                    1.5f + distanceError * 2.25f);
+                    1.75f + distanceError * 2.6f);
 
             currentSpeed = Mathf.MoveTowards(
                 currentSpeed,
                 targetSpeed,
                 acceleration * Time.deltaTime);
 
-            if (currentSpeed <= 0.001f)
-                return;
-
             float movement =
                 lastDirection *
                 currentSpeed *
                 Time.deltaTime;
 
-            // Never overshoot the desired follow pocket in one frame.
             float allowedMovement = Mathf.Max(
                 0f,
                 absoluteDelta - desiredDistance);
@@ -1253,10 +1286,118 @@ namespace PixelOcean
 
             position.x += movement;
 
+            // Keep the race boss in the same visible water band as the racer.
+            // The boss's own attacks still run, but it cannot disappear vertically.
+            position.y = Mathf.SmoothDamp(
+                position.y,
+                targetPosition.y,
+                ref verticalVelocity,
+                0.16f,
+                maximumSpeed,
+                Time.deltaTime);
+
             if (body != null && body.bodyType == RigidbodyType2D.Kinematic)
                 body.position = position;
-            else
-                transform.position = position;
+
+            transform.position = position;
+        }
+    }
+
+
+    [DefaultExecutionOrder(26000)]
+    [DisallowMultipleComponent]
+    internal sealed class RaceBossChildRecycler : MonoBehaviour
+    {
+        private TinyWaveSurfer target;
+        private float recycleDistance = 14f;
+        private float nextScanTime;
+
+        public void Configure(
+            TinyWaveSurfer followTarget,
+            float maximumDistance)
+        {
+            if (followTarget != null)
+                target = followTarget;
+
+            recycleDistance = Mathf.Max(3f, maximumDistance);
+        }
+
+        private void LateUpdate()
+        {
+            if (!RaceModeManager.RaceActive)
+            {
+                enabled = false;
+                return;
+            }
+
+            if (Time.time < nextScanTime)
+                return;
+
+            nextScanTime = Time.time + 0.2f;
+
+            if (target == null || target.IsDead)
+            {
+                target = FindObjectsByType<TinyWaveSurfer>(
+                        FindObjectsInactive.Exclude,
+                        FindObjectsSortMode.None)
+                    .Where(surfer =>
+                        surfer != null &&
+                        !surfer.IsDead &&
+                        surfer.IsPlayerControlled)
+                    .FirstOrDefault();
+
+                if (target == null)
+                    return;
+            }
+
+            Vector3 targetPosition = target.transform.position;
+
+            foreach (GodzillaSkullSwimmer skull in
+                     FindObjectsByType<GodzillaSkullSwimmer>(
+                         FindObjectsInactive.Exclude,
+                         FindObjectsSortMode.None))
+            {
+                RecycleChild(skull != null ? skull.transform : null, targetPosition);
+            }
+
+            foreach (RubberDucklingSwimmer duckling in
+                     FindObjectsByType<RubberDucklingSwimmer>(
+                         FindObjectsInactive.Exclude,
+                         FindObjectsSortMode.None))
+            {
+                RecycleChild(duckling != null ? duckling.transform : null, targetPosition);
+            }
+        }
+
+        private void RecycleChild(
+            Transform child,
+            Vector3 targetPosition)
+        {
+            if (child == null)
+                return;
+
+            float horizontalDistance =
+                Mathf.Abs(child.position.x - targetPosition.x);
+
+            if (horizontalDistance <= recycleDistance)
+                return;
+
+            Vector3 recycled = child.position;
+            float side = child.position.x >= targetPosition.x ? 1f : -1f;
+
+            recycled.x =
+                targetPosition.x +
+                side *
+                Mathf.Min(5f, recycleDistance * 0.35f);
+
+            recycled.y = targetPosition.y +
+                         UnityEngine.Random.Range(-0.6f, 0.6f);
+
+            child.position = recycled;
+
+            Rigidbody2D childBody = child.GetComponent<Rigidbody2D>();
+            if (childBody != null)
+                childBody.position = recycled;
         }
     }
 
