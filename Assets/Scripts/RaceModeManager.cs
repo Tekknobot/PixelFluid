@@ -53,6 +53,15 @@ namespace PixelOcean
         private GameObject ecosystemRoot;
         private float nextEcosystemSpawnTime;
 
+        [Header("Race Bosses — No Arenas")]
+        [SerializeField, Min(0f)] private float reaperSpawnAfterSeconds = 55f;
+        [SerializeField, Min(0f)] private float rubberDuckSpawnAfterSeconds = 115f;
+        [SerializeField, Min(0.5f)] private float raceBossFollowDistance = 3.25f;
+        [SerializeField, Min(0.5f)] private float raceBossMaximumSpeed = 8.5f;
+        [SerializeField, Min(0.1f)] private float raceBossAcceleration = 12f;
+        private bool raceReaperSpawned;
+        private bool raceRubberDuckSpawned;
+
         [Header("Race Ecosystem Difficulty")]
         [SerializeField, Range(1, 12)] private int openingEnemyCap = 6;
         [SerializeField, Range(1, 16)] private int earlyEnemyCap = 9;
@@ -259,6 +268,7 @@ namespace PixelOcean
             }
             RefreshHud();
             UpdateRaceEcosystem();
+            UpdateRaceBosses();
             UpdateRaceWeatherPattern();
             if (raceTimeRemaining <= 0f) FinishRace();
         }
@@ -488,6 +498,9 @@ namespace PixelOcean
             ecosystemRoot = new GameObject("Race Mode Random Ecosystem");
             DontDestroyOnLoad(ecosystemRoot);
             nextEcosystemSpawnTime = Time.time + 0.75f;
+            raceReaperSpawned = false;
+            raceRubberDuckSpawned = false;
+            SuppressRaceBossArenas();
 
             // Guarantee the signature Race Mode ecosystem appears immediately.
             // These used to be hidden behind a ten-way random roll, so an entire
@@ -688,6 +701,152 @@ namespace PixelOcean
                 fade = root.AddComponent<OceanSpawnFadeIn>();
 
             fade.Configure(raceCreatureFadeInDuration);
+        }
+
+        private void UpdateRaceBosses()
+        {
+            if (!RaceActive)
+                return;
+
+            // Story-mode boss encounters build BossArenaPrison objects. Race mode
+            // never uses those arenas; bosses remain free-moving hazards.
+            SuppressRaceBossArenas();
+
+            float elapsed = PrototypeRaceSeconds - raceTimeRemaining;
+
+            if (!raceReaperSpawned &&
+                elapsed >= Mathf.Max(0f, reaperSpawnAfterSeconds))
+            {
+                raceReaperSpawned = true;
+                SpawnRaceBoss<GodzillaLaneSwimmer>(
+                    "Race Reaper",
+                    7f);
+            }
+
+            if (!raceRubberDuckSpawned &&
+                elapsed >= Mathf.Max(0f, rubberDuckSpawnAfterSeconds))
+            {
+                raceRubberDuckSpawned = true;
+                SpawnRaceBoss<RubberDuckBossSwimmer>(
+                    "Race Rubber Duck",
+                    -7f);
+            }
+
+            AttachRaceFollowToExistingBosses();
+        }
+
+        private void SpawnRaceBoss<TBoss>(
+            string objectName,
+            float horizontalOffset)
+            where TBoss : MonoBehaviour
+        {
+            if (ecosystemRoot == null)
+                return;
+
+            Racer targetRacer = racers.FirstOrDefault(
+                racer =>
+                    racer.Player &&
+                    racer.Surfer != null &&
+                    !racer.Surfer.IsDead);
+
+            if (targetRacer == null)
+            {
+                targetRacer = racers.FirstOrDefault(
+                    racer =>
+                        racer.Surfer != null &&
+                        !racer.Surfer.IsDead);
+            }
+
+            Vector3 spawnPosition =
+                targetRacer != null && targetRacer.Surfer != null
+                    ? targetRacer.Surfer.transform.position
+                    : Vector3.zero;
+
+            spawnPosition.x += horizontalOffset;
+
+            GameObject bossObject = new GameObject(objectName);
+            bossObject.transform.SetParent(ecosystemRoot.transform, false);
+            bossObject.transform.position = spawnPosition;
+
+            // RequireComponent attributes on each boss add their normal renderer,
+            // rigidbody and collider dependencies. Their ordinary attack logic stays
+            // active; only arena confinement is omitted.
+            bossObject.AddComponent<TBoss>();
+
+            RaceBossHasteFollower follower =
+                bossObject.AddComponent<RaceBossHasteFollower>();
+
+            follower.Configure(
+                targetRacer != null ? targetRacer.Surfer : null,
+                raceBossFollowDistance,
+                raceBossMaximumSpeed,
+                raceBossAcceleration);
+
+            OceanSpawnFadeIn fade =
+                bossObject.GetComponent<OceanSpawnFadeIn>();
+
+            if (fade == null)
+                fade = bossObject.AddComponent<OceanSpawnFadeIn>();
+
+            fade.Configure(raceCreatureFadeInDuration);
+        }
+
+        private void AttachRaceFollowToExistingBosses()
+        {
+            foreach (GodzillaLaneSwimmer boss in
+                     FindObjectsByType<GodzillaLaneSwimmer>(
+                         FindObjectsInactive.Exclude,
+                         FindObjectsSortMode.None))
+            {
+                EnsureRaceBossFollower(boss);
+            }
+
+            foreach (RubberDuckBossSwimmer boss in
+                     FindObjectsByType<RubberDuckBossSwimmer>(
+                         FindObjectsInactive.Exclude,
+                         FindObjectsSortMode.None))
+            {
+                EnsureRaceBossFollower(boss);
+            }
+        }
+
+        private void EnsureRaceBossFollower(MonoBehaviour boss)
+        {
+            if (boss == null)
+                return;
+
+            RaceBossHasteFollower follower =
+                boss.GetComponent<RaceBossHasteFollower>();
+
+            if (follower == null)
+                follower = boss.gameObject.AddComponent<RaceBossHasteFollower>();
+
+            Racer targetRacer = racers.FirstOrDefault(
+                racer =>
+                    racer.Player &&
+                    racer.Surfer != null &&
+                    !racer.Surfer.IsDead);
+
+            follower.Configure(
+                targetRacer != null ? targetRacer.Surfer : null,
+                raceBossFollowDistance,
+                raceBossMaximumSpeed,
+                raceBossAcceleration);
+        }
+
+        private static void SuppressRaceBossArenas()
+        {
+            if (!RaceActive && !GameModeSession.IsRace)
+                return;
+
+            foreach (BossArenaPrison arena in
+                     FindObjectsByType<BossArenaPrison>(
+                         FindObjectsInactive.Include,
+                         FindObjectsSortMode.None))
+            {
+                if (arena != null)
+                    Destroy(arena.gameObject);
+            }
         }
 
         private void DisableStoryAndSpawners()
@@ -994,4 +1153,111 @@ namespace PixelOcean
             trigger.triggers.Add(entry);
         }
     }
+
+    [DefaultExecutionOrder(25000)]
+    [DisallowMultipleComponent]
+    internal sealed class RaceBossHasteFollower : MonoBehaviour
+    {
+        private TinyWaveSurfer target;
+        private Rigidbody2D body;
+        private float desiredDistance = 3.25f;
+        private float maximumSpeed = 8.5f;
+        private float acceleration = 12f;
+        private float currentSpeed;
+        private float lastDirection = 1f;
+
+        public void Configure(
+            TinyWaveSurfer followTarget,
+            float followDistance,
+            float maxSpeed,
+            float accelerationRate)
+        {
+            if (followTarget != null)
+                target = followTarget;
+
+            desiredDistance = Mathf.Max(0.5f, followDistance);
+            maximumSpeed = Mathf.Max(0.5f, maxSpeed);
+            acceleration = Mathf.Max(0.1f, accelerationRate);
+
+            if (body == null)
+                body = GetComponent<Rigidbody2D>();
+        }
+
+        private void Awake()
+        {
+            body = GetComponent<Rigidbody2D>();
+        }
+
+        private void LateUpdate()
+        {
+            if (!RaceModeManager.RaceActive)
+            {
+                enabled = false;
+                return;
+            }
+
+            if (target == null || target.IsDead)
+            {
+                target = FindObjectsByType<TinyWaveSurfer>(
+                        FindObjectsInactive.Exclude,
+                        FindObjectsSortMode.None)
+                    .Where(surfer =>
+                        surfer != null &&
+                        !surfer.IsDead &&
+                        surfer.IsPlayerControlled)
+                    .FirstOrDefault();
+
+                if (target == null)
+                    return;
+            }
+
+            Vector3 position = transform.position;
+            float delta = target.transform.position.x - position.x;
+            float absoluteDelta = Mathf.Abs(delta);
+
+            if (absoluteDelta > 0.08f)
+                lastDirection = Mathf.Sign(delta);
+
+            float distanceError = Mathf.Max(
+                0f,
+                absoluteDelta - desiredDistance);
+
+            // Haste grows smoothly with separation. Close to the racer the boss
+            // coasts instead of rapidly reversing, which prevents jitter.
+            float targetSpeed = distanceError <= 0f
+                ? 0f
+                : Mathf.Min(
+                    maximumSpeed,
+                    1.5f + distanceError * 2.25f);
+
+            currentSpeed = Mathf.MoveTowards(
+                currentSpeed,
+                targetSpeed,
+                acceleration * Time.deltaTime);
+
+            if (currentSpeed <= 0.001f)
+                return;
+
+            float movement =
+                lastDirection *
+                currentSpeed *
+                Time.deltaTime;
+
+            // Never overshoot the desired follow pocket in one frame.
+            float allowedMovement = Mathf.Max(
+                0f,
+                absoluteDelta - desiredDistance);
+
+            movement = Mathf.Sign(movement) *
+                       Mathf.Min(Mathf.Abs(movement), allowedMovement);
+
+            position.x += movement;
+
+            if (body != null && body.bodyType == RigidbodyType2D.Kinematic)
+                body.position = position;
+            else
+                transform.position = position;
+        }
+    }
+
 }
