@@ -1,8 +1,0 @@
-WARNING DIALOG CONTROLLER + WHITE SELECTION PATCH
-
-- Added explicit controller navigation between KEEP SAVE and ERASE & START NEW.
-- D-pad and left stick directions move reliably between the two choices.
-- A / Submit activates the selected choice through Unity UI.
-- B / Back continues to close the warning dialog.
-- Selected warning button now uses a thick pure-white outline.
-- KEEP SAVE remains the initially selected safe/default choice.

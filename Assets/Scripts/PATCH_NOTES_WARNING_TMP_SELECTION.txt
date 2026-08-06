@@ -1,6 +1,0 @@
-SAVE WARNING UI PATCH
-- Converted warning banner, title, body, and action labels to TextMeshPro.
-- Uses TmpBold for warning/title, TmpRegular for body, and TmpSemiBold for buttons.
-- Selected warning action now uses a bright gold 7px-style outline.
-- Selected action smoothly scales to 1.045x for unmistakable controller/keyboard focus.
-- Non-selected actions return to their original scale and dark outline.

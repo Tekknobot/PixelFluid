@@ -1,8 +1,0 @@
-MODE PLAYER/CAMERA STABILITY FIX
-- Fresh Story explicitly creates Chuck after deferred Race destruction completes.
-- Continue explicitly creates/restores Chuck before revealing the screen.
-- Camera targeting is centralized in GameModeSession.BindCameraToSurfer.
-- Race binds both camera controllers to the selected human racer.
-- Story binds both camera controllers back to Chuck.
-- Cinematic camera now prioritizes the human-controlled surfer over AI racers.
-- Camera smoothing state resets whenever the mode changes target.

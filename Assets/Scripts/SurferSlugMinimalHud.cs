@@ -102,7 +102,7 @@ namespace PixelOcean
             }
 
             Instance = this;
-            font = PixelFontLibrary.TmpMedium;
+            font = PixelFontLibrary.TmpBold;
 
             if (font == null)
             {
@@ -330,8 +330,8 @@ namespace PixelOcean
             root.anchorMax = new Vector2(1f, 1f);
             root.pivot = new Vector2(0.5f, 1f);
 
-            const float hudHeight = 188f;
-            float topInset = Mathf.Max(28f, safeMargin.y);
+            const float hudHeight = 148f;
+            float topInset = Mathf.Max(40f, safeMargin.y);
             root.offsetMin = new Vector2(safeMargin.x, -(topInset + hudHeight));
             root.offsetMax = new Vector2(-safeMargin.x, -topInset);
 
@@ -926,7 +926,7 @@ namespace PixelOcean
             shadow.useGraphicAlpha = true;
 
             text.text = value;
-            text.font = font != null ? font : PixelFontLibrary.TmpMedium;
+            text.font = font != null ? font : PixelFontLibrary.TmpBold;
             text.fontSize = fontSize;
             text.fontStyle = uppercase
                 ? FontStyles.UpperCase

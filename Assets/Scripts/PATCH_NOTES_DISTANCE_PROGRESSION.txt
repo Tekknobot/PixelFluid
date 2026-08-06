@@ -1,9 +1,0 @@
-DISTANCE-DRIVEN CHAPTER PROGRESSION
-
-- Chapters trigger primarily from cumulative player travel distance.
-- Existing clock thresholds remain as generous atmospheric fallbacks.
-- Teleports and tiny jitter are rejected.
-- Distance is saved/restored.
-- HUD day bar uses the greater of journey/time progress and displays metres.
-- Developer Next Chapter advances both distance and time so chapter state, sky, spawns and saves remain synchronized.
-- Developer Reset/Next Day initialize journey distance correctly.

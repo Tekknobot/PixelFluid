@@ -1,8 +1,0 @@
-Loaded boss chapter arena restoration
-
-- Continue now creates Chuck immediately when the normal press-to-spawn listener has not run.
-- The saved lane and horizontal position are restored before chapter population and boss rebuilding.
-- BossArenaPrison now captures only the player-controlled surfer, not an arbitrary surfer.
-- Arena centre, boundaries, camera clamp and boss entrance are therefore based on Chuck's real loaded spawn.
-- The boss still uses its normal random/off-screen creation path, but is relocated and faded inside the restored arena.
-- Existing menu-side state restoration remains safe and idempotent.

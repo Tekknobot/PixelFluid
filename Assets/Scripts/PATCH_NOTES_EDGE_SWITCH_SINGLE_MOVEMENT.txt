@@ -1,6 +1,0 @@
-EDGE LANE SWITCH SINGLE-MOVEMENT FIX
-
-- Destination wave height is refreshed throughout the switch.
-- Landing is committed once against the live destination surface.
-- Removes the second snap/correction before Chuck locks onto the wave.
-- Existing edge-wrap input latch remains intact.

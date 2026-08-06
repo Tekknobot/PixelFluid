@@ -1,9 +1,0 @@
-BOSS ARENA FADE + WIDTH PATCH
-
-- Reaper/Godzilla now starts with its SpriteRenderer disabled, matching the Rubber Duck path.
-- BossArenaPrison relocates either boss inside the captured arena before enabling renderers.
-- Every SpriteRenderer on either boss fades from 0 alpha to its authored alpha over bossFadeInDuration.
-- Developer Spawn Boss uses the same BuildBossEncounter/EnsureArenaForBoss path, so both bosses receive the same arena placement and fade.
-- Arena default width increased from 16 to 18 world units.
-- Arena width increased from 1.65 to a minimum of 1.85 visible camera widths, preserving healthy camera movement even on existing serialized instances.
-- Removed an accidental duplicate FadeBossIntoArena method declaration.

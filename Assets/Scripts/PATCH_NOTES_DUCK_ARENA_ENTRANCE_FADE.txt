@@ -1,9 +1,0 @@
-RUBBER DUCK ARENA ENTRANCE FIX
-
-- Rubber duck renderer remains disabled at its normal off-screen spawn point.
-- BossArenaPrison relocates the duck inside the captured arena before enabling it.
-- The duck then fades in and travels to its arena arrival position.
-- Existing arenas are verified to control the current boss instead of being blindly reused.
-- Stale arenas can be reset and rebound during normal play, save restoration, and developer rebuilds.
-- The generic ocean fade no longer races the arena-specific boss fade.
-- Bosses remain arena-contained; this patch does not allow them to cross arena walls.

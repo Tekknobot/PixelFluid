@@ -1,9 +1,0 @@
-BOOMBOX CASSETTE SWITCHING
-
-- Touch the summoned boombox with the player.
-- Press D-pad Up alone to insert and play the next cassette.
-- Press D-pad Down alone to insert and play the previous cassette.
-- Plays cassette_insert before beginning the selected track.
-- Available tracks are Death Surfer, High Life, and Wind It Up.
-- Uses a trigger around the boombox and ignores AI surfers.
-- Input is edge-triggered and cooldown-protected, so holding the D-pad does not rapidly skip tracks.

@@ -1,7 +1,0 @@
-DAY 4 DUPLICATE FACILITY FIX
-
-- Removed creation and animation of secret_facility_sheet from DayFourConspiracyEncounter.
-- Day 4 now creates only the research_island world object.
-- Added defensive cleanup for any SecretFacilityEncounter left over during load or transition.
-- Research island remains native scale and stays on lane 4 between wave simulations four and five.
-- Starry Night still fades as the research island approaches.

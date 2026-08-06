@@ -1,8 +1,0 @@
-MODE-TO-MODE TRANSITION PATCH
-
-- Race, New Game and Continue now share a fade-to-black -> teardown/build -> hold -> reveal lifecycle.
-- Black remains opaque for two settling frames plus a real-time hold, allowing Destroy/Instantiate, camera assignment, lane binding and HUD replacement to complete invisibly.
-- Story mode is assigned before race cleanup, fixing story spawners remaining disabled after leaving Race.
-- The selected mode is reasserted after pause-menu behaviour restoration, preventing Story HUD/spawners from leaking into Race and vice versa.
-- Choosing PLAY from the pause menu while in Race starts a fresh Story run.
-- Continue can switch directly from Race to the saved Story state under the same fade.

@@ -1,9 +1,0 @@
-RACE AI / FULL LOADOUT UPDATE
-- Race start unlocks the complete ability roster before racers spawn.
-- Water Slash and Flow Finisher remain disabled for all race surfers.
-- AI scans nearby race hazards and other surfers.
-- AI scores lanes and switches toward the safest available wave.
-- AI jumps hazards when a lane change is not preferable.
-- AI chains alternating airborne trick inputs up to the normal chain limit.
-- AI throws held items and tactically charges/release skids.
-- AI continues moving forward while making short, frequent race decisions.

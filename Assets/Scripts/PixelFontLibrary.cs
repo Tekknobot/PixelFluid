@@ -29,8 +29,8 @@ namespace PixelOcean
         public static Font SemiBold => semiBold != null ? semiBold : semiBold = Load("PixelifySans-SemiBold");
         public static Font Bold => bold != null ? bold : bold = Load("PixelifySans-Bold");
 
-        public static TMP_FontAsset TmpRegular => tmpRegular != null ? tmpRegular : tmpRegular = LoadTmp("PixelifySans-Regular SDF");
-        public static TMP_FontAsset TmpMedium => tmpMedium != null ? tmpMedium : tmpMedium = LoadTmp("PixelifySans-Medium SDF");
+        public static TMP_FontAsset TmpRegular => tmpRegular != null ? tmpRegular : tmpRegular = LoadTmp("PixeloidSans-Bold SDF");
+        public static TMP_FontAsset TmpMedium => tmpMedium != null ? tmpMedium : tmpMedium = LoadTmp("PixeloidSans-Bold SDF");
         public static TMP_FontAsset TmpSemiBold => tmpSemiBold != null ? tmpSemiBold : tmpSemiBold = LoadTmp("PixeloidSans-Bold SDF");
         public static TMP_FontAsset TmpBold => tmpBold != null ? tmpBold : tmpBold = LoadTmp("PixeloidSans-Bold SDF");
 

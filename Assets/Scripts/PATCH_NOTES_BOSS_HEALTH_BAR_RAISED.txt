@@ -1,3 +1,0 @@
-Boss health bars raised by 25%.
-- BossHealthBar localOffset.y changed from 1.05 to 1.3125.
-- Applies to both Reaper/Godzilla and Rubber Duck bosses.

@@ -1,7 +1,0 @@
-SurferSlugMinimalHud patch
-- Standardized HUD status icons to a 48 px reference footprint matching the visible soda-can inventory scale.
-- Inventory item sprites remain native-sized.
-- Fire icon now sits directly before the flow meter and remains visible while Flow is unlocked.
-- Flow continues to ease both upward and downward using MoveTowards.
-- Chapter banner widened and dynamically adjusts its height to wrapped TMP text.
-- Chapter/progression banners remain visible for at least 8 seconds and fade out more slowly.

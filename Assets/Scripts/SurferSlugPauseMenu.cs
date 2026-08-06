@@ -1650,7 +1650,7 @@ namespace PixelOcean
         {
             GameObject go = CreateUIObject(parent, text + " TMP");
             TextMeshProUGUI label = go.AddComponent<TextMeshProUGUI>();
-            label.font = PixelFontLibrary.TmpMedium;
+            label.font = PixelFontLibrary.TmpBold;
             label.text = text;
             label.fontSize = size;
             label.fontStyle = FontStyles.Normal;

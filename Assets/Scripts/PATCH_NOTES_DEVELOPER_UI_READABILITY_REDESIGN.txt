@@ -1,8 +1,0 @@
-DEVELOPER UI READABILITY REDESIGN
-
-- Replaced the developer menu's pixel font with Unity's built-in LegacyRuntime sans-serif font.
-- No imported font asset is required, so the panel remains reliable in Mac and Windows builds.
-- Reorganized controls into Player Status, Abilities, and Progression sections.
-- Increased panel width, row height, spacing, and left alignment for faster scanning.
-- Added clearer selected-row marker and stronger status hierarchy.
-- Preserved all existing controls, controller navigation, F10 behavior, and Retina scaling.
