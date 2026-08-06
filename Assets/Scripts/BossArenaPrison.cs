@@ -455,10 +455,15 @@ namespace PixelOcean
             {
                 if (!entranceStarted)
                     BeginBossEntrance();
+
+                ClampBossToPlayerArenaLimits();
+
                 if (!IsBossStillEntering())
                     BeginEncounter();
                 return;
             }
+
+            ClampBossToPlayerArenaLimits();
 
             if (duckWindowOpen && duckBoss != null && !duckBoss.IsVulnerable)
             {
@@ -502,6 +507,41 @@ namespace PixelOcean
                 SetPlayerPosition(p);
                 if (p.x <= leftX - escapeDistance)
                     FinishArena(true);
+            }
+        }
+
+        private void ClampBossToPlayerArenaLimits()
+        {
+            if (boss == null)
+                return;
+
+            Vector3 position = boss.transform.position;
+            float clampedX = Mathf.Clamp(
+                position.x,
+                LeftBoundary,
+                RightBoundary);
+
+            if (Mathf.Approximately(position.x, clampedX))
+                return;
+
+            position.x = clampedX;
+
+            Rigidbody2D body = boss.GetComponent<Rigidbody2D>();
+            if (body != null)
+            {
+                body.position = new Vector2(position.x, position.y);
+
+                Vector2 velocity = body.linearVelocity;
+                if ((clampedX <= LeftBoundary && velocity.x < 0f) ||
+                    (clampedX >= RightBoundary && velocity.x > 0f))
+                {
+                    velocity.x = 0f;
+                    body.linearVelocity = velocity;
+                }
+            }
+            else
+            {
+                boss.transform.position = position;
             }
         }
 
