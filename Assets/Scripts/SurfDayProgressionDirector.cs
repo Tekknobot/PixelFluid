@@ -950,6 +950,18 @@ namespace PixelOcean
         private void TrackJourneyDistance(TinyWaveSurfer player)
         {
             float currentX = player.transform.position.x;
+
+            // Freeze stage distance for the entire live boss encounter. The player can
+            // move freely inside the arena without accidentally reaching dayEndDistance.
+            // Reset the sample every frame so arena movement is not added in one large
+            // burst after the boss is defeated and the sunset run resumes.
+            if (chapter == Chapter.FinalWave && !bossDefeatedSunset)
+            {
+                previousPlayerX = currentX;
+                hasPreviousPlayerX = true;
+                return;
+            }
+
             if (!hasPreviousPlayerX)
             {
                 previousPlayerX = currentX;
@@ -1201,6 +1213,11 @@ namespace PixelOcean
             bossDefeatedSunset = true;
             StopHostileSpawners();
             RetreatAllHostileSeaCreatures();
+
+            // The Day 1 UFO must not survive the boss transition into Day 2.
+            // Remove every active or disabled instance as soon as the boss ends.
+            DestroyAll<AlienUfoController>();
+
             rain?.ClearRain();
 
             float shortenedStart = Mathf.Max(0f, dayEndsAt - acceleratedSunsetSeconds);

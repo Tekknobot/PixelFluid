@@ -586,50 +586,9 @@ namespace PixelOcean
             if (!encounterStarted || encounterFinished || boss == null)
                 return;
 
-            EnsureStyles();
-
-            string bossName = theme == ArenaTheme.Reaper
-                ? "REAPER TIDE"
-                : "DUCK STORM";
-
-            string status = BuildStatus();
-
-            const float panelWidth = 760f;
-            const float panelHeight = 135f;
-            const float padding = 18f;
-
-            float panelX = (Screen.width - panelWidth) * 0.5f;
-
-            Rect panelRect = new Rect(
-                panelX,
-                panelY,
-                panelWidth,
-                panelHeight);
-
-            Color old = GUI.color;
-
-            GUI.color = new Color(0f, 0.05f, 0.09f, 0.82f);
-            GUI.Box(panelRect, GUIContent.none);
-            GUI.color = old;
-
-            GUI.Label(
-                new Rect(
-                    panelX + padding,
-                    panelY + 8f,
-                    panelWidth - padding * 2f,
-                    76f),
-                bossName,
-                titleStyle);
-
-            GUI.Label(
-                new Rect(
-                    panelX + padding,
-                    panelY + 66f,
-                    panelWidth - padding * 2f,
-                    36f),
-                status,
-                smallStyle);
-
+            // Keep only the arena boundary markers. The old IMGUI boss panel
+            // ("REAPER TIDE" / "DUCK STORM" and status copy) is intentionally
+            // disabled for both boss themes so it cannot display the legacy font.
             DrawEdge(12f, !gateOpen || gateOnRight);
             DrawEdge(Screen.width - 24f, !gateOpen || !gateOnRight);
         }

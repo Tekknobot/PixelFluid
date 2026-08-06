@@ -2025,6 +2025,8 @@ namespace PixelOcean
         {
             playerControlled = true;
             aiControlled = false;
+            raceModeSurfer = false;
+            enableWaterSlash = true;
             randomizeInitialOceanSpawn = true;
             playerIdleTimer = 0f;
             playerScrollSpeed = Mathf.Max(0.25f, scrollSpeed);
@@ -2428,6 +2430,12 @@ namespace PixelOcean
 
         private void TryBeginWaterSpecial()
         {
+            // Water Slash and Flow Finisher are Story/normal-mode abilities only.
+            // Check both the session and surfer flag so a race surfer can never
+            // fire one, even during mode transitions or delayed input frames.
+            if (GameModeSession.IsRace || raceModeSurfer)
+                return;
+
             if (!enableWaterSlash || !HasAbility(SurfAbility.WaterSlash) || state != RiderState.Riding || Time.time < nextWaterSlashTime || specialCharging || specialSkidding)
                 return;
             specialAttackIsFinisher = HasAbility(SurfAbility.FlowFinisher) && AirTrickScoreSystem.Instance != null && AirTrickScoreSystem.Instance.IsOnFire;
