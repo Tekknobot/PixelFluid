@@ -48,7 +48,7 @@ namespace PixelOcean
         [SerializeField] private Color insetColour = new(0.018f, 0.018f, 0.024f, 0f);
         [SerializeField] private Color borderColour = new(0.92f, 0.58f, 0.08f, 0f);
         [SerializeField, Range(1f, 4f)] private float borderThickness = 2f;
-        [SerializeField] private Color trackColour = new(0.16f, 0.13f, 0.16f, 1f);
+        [SerializeField] private Color trackColour = new(0.16f, 0.13f, 0.16f, 0.33f);
         [SerializeField] private Color foregroundColour = new(1f, 0.89f, 0.62f, 1f);
         [SerializeField] private Color mutedColour = new(0.84f, 0.73f, 0.53f, 1f);
 
