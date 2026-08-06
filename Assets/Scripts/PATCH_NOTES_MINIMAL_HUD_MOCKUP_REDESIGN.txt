@@ -1,0 +1,13 @@
+Surfer Slug minimal HUD mockup redesign
+
+- Rebuilt the story HUD around the approved three-strip mockup.
+- Added a dark charcoal panel treatment with warm gold pixel borders.
+- Increased routine HUD text to 32 px minimum.
+- Increased DAY text to 48 px and chapter banners to 32-64 px autosizing.
+- Put clock and distance on one line.
+- Put the complete objective on one 32 px line.
+- Expanded the HUD height and top safe inset to prevent clipping.
+- Kept HUD icons at their native texture dimensions via Image.SetNativeSize().
+- Kept inventory item sprites at native dimensions.
+- Preserved the existing icon resource paths and gameplay data sources.
+- Flow remains a full-width compact strip and changes to the fire icon when active.

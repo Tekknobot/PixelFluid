@@ -1,0 +1,8 @@
+SurferSlugMinimalHud clipping/native-sprite correction
+- Removed the missing objective icon placeholder that rendered as a white rectangle.
+- Missing HUD sprites now disable their Image component instead of drawing white.
+- All HUD and inventory sprites remain at SetNativeSize; no custom sprite scaling is applied.
+- Increased usable strip heights and separated top/objective/flow rows.
+- Collapsed multiline objectives into one 32 px line with bullet separators.
+- Rebalanced day progress, clock/distance, and inventory widths to prevent overlap.
+- Kept clock and distance together at 32 px; DAY remains 48 px.

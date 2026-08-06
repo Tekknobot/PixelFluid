@@ -39,18 +39,18 @@ namespace PixelOcean
         }
         [Header("Layout")]
         [SerializeField] private Vector2 referenceResolution = new(1920f, 1080f);
-        [SerializeField] private Vector2 safeMargin = new(30f, 22f);
-        [SerializeField, Min(28f)] private float inventoryIconSize = 46f;
-        [SerializeField, Min(1f)] private float inventorySpacing = 10f;
+        [SerializeField] private Vector2 safeMargin = new(36f, 32f);
+        [SerializeField, Min(16f)] private float inventoryIconSize = 32f;
+        [SerializeField, Min(1f)] private float inventorySpacing = 8f;
 
         [Header("Pixel HUD Appearance")]
-        [SerializeField] private Color panelColour = new(0.10f, 0.055f, 0.16f, 0.74f);
-        [SerializeField] private Color insetColour = new(0.035f, 0.022f, 0.070f, 0.72f);
-        [SerializeField] private Color borderColour = new(1f, 1f, 1f, 0.92f);
+        [SerializeField] private Color panelColour = new(0.035f, 0.035f, 0.045f, 0f);
+        [SerializeField] private Color insetColour = new(0.018f, 0.018f, 0.024f, 0f);
+        [SerializeField] private Color borderColour = new(0.92f, 0.58f, 0.08f, 0f);
         [SerializeField, Range(1f, 4f)] private float borderThickness = 2f;
-        [SerializeField] private Color trackColour = new(1f, 1f, 1f, 0.25f);
-        [SerializeField] private Color foregroundColour = new(1f, 1f, 1f, 0.98f);
-        [SerializeField] private Color mutedColour = new(1f, 1f, 1f, 0.72f);
+        [SerializeField] private Color trackColour = new(0.16f, 0.13f, 0.16f, 1f);
+        [SerializeField] private Color foregroundColour = new(1f, 0.89f, 0.62f, 1f);
+        [SerializeField] private Color mutedColour = new(0.84f, 0.73f, 0.53f, 1f);
 
         private TinyWaveSurfer player;
         private ProceduralStarryNight dayNight;
@@ -61,6 +61,11 @@ namespace PixelOcean
         private RectTransform dayFill;
         private RectTransform flowFill;
         private Image flowFillImage;
+        private Image phaseIcon;
+        private Image livesIcon;
+        private Image stokeIcon;
+        private Image flowIcon;
+        private Image fireIcon;
 
         private TMP_Text dayPhaseLabel;
         private TMP_Text timeLabel;
@@ -79,6 +84,14 @@ namespace PixelOcean
         private string inventoryFingerprint = string.Empty;
         private readonly List<GameObject> inventorySlots = new();
         private bool presentationSuppressed;
+        private float displayedFlow01;
+        private RectTransform chapterBannerRect;
+        private string heldChapterText = string.Empty;
+        private float chapterHoldUntil;
+
+        private const float HudIconReferenceSize = 48f;
+        private const float InventoryReferenceSize = 48f;
+        private const float ChapterHoldSeconds = 8f;
 
         private void Awake()
         {
@@ -272,6 +285,13 @@ namespace PixelOcean
 
         private void BuildHud()
         {
+            // The gameplay HUD is intentionally frameless so the sky and ocean remain open.
+            // Force these alpha values at runtime as well, so older serialized component values
+            // cannot bring the previous dark panels or gold borders back.
+            panelColour.a = 0f;
+            insetColour.a = 0f;
+            borderColour.a = 0f;
+
             Canvas canvas = GetComponent<Canvas>();
             if (canvas == null)
                 canvas = gameObject.AddComponent<Canvas>();
@@ -305,218 +325,200 @@ namespace PixelOcean
 
         private void BuildTopPanels(Transform parent)
         {
-            RectTransform root = CreateRect("HUD Panels", parent, Vector2.zero);
+            RectTransform root = CreateRect("Minimal HUD", parent, Vector2.zero);
             root.anchorMin = new Vector2(0f, 1f);
             root.anchorMax = new Vector2(1f, 1f);
             root.pivot = new Vector2(0.5f, 1f);
 
-            // Keep the complete top edge inside the Game view. A very small or
-            // serialized-zero safeMargin can place the panel border/text above
-            // the canvas and make the whole HUD look horizontally shaved off.
-            const float panelHeight = 152f;
-            float topInset = Mathf.Max(34f, safeMargin.y);
-            root.offsetMin = new Vector2(safeMargin.x, -(topInset + panelHeight));
+            const float hudHeight = 188f;
+            float topInset = Mathf.Max(28f, safeMargin.y);
+            root.offsetMin = new Vector2(safeMargin.x, -(topInset + hudHeight));
             root.offsetMax = new Vector2(-safeMargin.x, -topInset);
 
-            HorizontalLayoutGroup row = root.gameObject.AddComponent<HorizontalLayoutGroup>();
-            row.spacing = 16f;
-            row.padding = new RectOffset(0, 0, 0, 0);
-            row.childAlignment = TextAnchor.UpperCenter;
-            row.childControlWidth = true;
-            row.childControlHeight = true;
-            row.childForceExpandWidth = false;
-            row.childForceExpandHeight = true;
+            RectTransform topBar = CreateRect("Unified Status Bar", root, Vector2.zero);
+            topBar.anchorMin = new Vector2(0f, 0.54f);
+            topBar.anchorMax = Vector2.one;
+            topBar.offsetMin = Vector2.zero;
+            topBar.offsetMax = Vector2.zero;
+            AddImage(topBar.gameObject, panelColour);
+            AddPixelBorder(topBar, borderColour, borderThickness);
 
-            RectTransform objectivePanel = CreatePanel("Objective Panel", root, 470f, 1f);
-            RectTransform dayPanel = CreatePanel("Day Panel", root, 0f, 1.8f);
-            RectTransform inventoryPanel = CreatePanel("Items Panel", root, 430f, 1f);
+            BuildCompactVitals(topBar);
+            BuildCompactDay(topBar);
+            BuildCompactInventory(topBar);
 
-            BuildObjectivePanel(objectivePanel);
-            BuildDayPanel(dayPanel);
-            BuildInventoryPanel(inventoryPanel);
-        }
+            RectTransform objectiveStrip = CreateRect("Objective Strip", root, Vector2.zero);
+            objectiveStrip.anchorMin = new Vector2(0f, 0f);
+            objectiveStrip.anchorMax = new Vector2(1f, 0.23f);
+            objectiveStrip.offsetMin = Vector2.zero;
+            objectiveStrip.offsetMax = Vector2.zero;
+            AddImage(objectiveStrip.gameObject, insetColour);
+            AddPixelBorder(objectiveStrip, borderColour, borderThickness);
 
-        private RectTransform CreatePanel(string name, Transform parent, float preferredWidth, float flexibleWidth)
-        {
-            RectTransform panel = CreateRect(name, parent, Vector2.zero);
-            AddImage(panel.gameObject, panelColour);
-            AddPixelBorder(panel, borderColour, borderThickness);
-            LayoutElement layout = panel.gameObject.AddComponent<LayoutElement>();
-            layout.preferredWidth = preferredWidth;
-            layout.flexibleWidth = flexibleWidth;
-            layout.minWidth = preferredWidth > 0f ? preferredWidth * 0.72f : 520f;
-            layout.preferredHeight = 152f;
-            return panel;
-        }
-
-        private void BuildObjectivePanel(RectTransform panel)
-        {
-            TMP_Text heading = CreateText("OBJECTIVE + CURRENT LESSON", panel, 16, TextAnchor.UpperLeft, mutedColour, true);
-            Stretch(heading.rectTransform, new Vector2(0f, 0.76f), Vector2.one, new Vector2(18f, 0f), new Vector2(-18f, -10f));
-
-            objectiveLabel = CreateText("Surf. Stay alive.\nLEARN  •  Move Left/Right.", panel, 32, TextAnchor.MiddleLeft, foregroundColour);
+            objectiveLabel = CreateText("Surf. Stay alive.", objectiveStrip, 27, TextAnchor.MiddleLeft, foregroundColour);
             objectiveLabel.enableAutoSizing = true;
-            objectiveLabel.fontSizeMin = 10f;
-            objectiveLabel.fontSizeMax = 16f;
-            objectiveLabel.enableWordWrapping = true;
-            Stretch(objectiveLabel.rectTransform, new Vector2(0f, 0.38f), new Vector2(1f, 0.78f), new Vector2(18f, 0f), new Vector2(-18f, 0f));
+            objectiveLabel.fontSizeMin = 20f;
+            objectiveLabel.fontSizeMax = 27f;
+            objectiveLabel.enableWordWrapping = false;
+            objectiveLabel.overflowMode = TextOverflowModes.Ellipsis;
+            Stretch(objectiveLabel.rectTransform, Vector2.zero, Vector2.one, new Vector2(16f, 1f), new Vector2(-16f, -1f));
 
-            RectTransform livesInset = CreateRect("Lives Inset", panel, Vector2.zero);
-            livesInset.anchorMin = new Vector2(0f, 0.16f);
-            livesInset.anchorMax = new Vector2(0.58f, 0.38f);
-            livesInset.offsetMin = new Vector2(0f, 0f);
-            livesInset.offsetMax = Vector2.zero;
-            AddImage(livesInset.gameObject, insetColour);
-            AddPixelBorder(livesInset, borderColour, borderThickness);
-
-            livesLabel = CreateText("LIVES  3/3", livesInset, 32, TextAnchor.MiddleCenter, foregroundColour);
-            Stretch(livesLabel.rectTransform, Vector2.zero, Vector2.one, new Vector2(10f, 2f), new Vector2(-10f, -2f));
-
-            RectTransform stokeInset = CreateRect("Stoke Inset", panel, Vector2.zero);
-            stokeInset.anchorMin = new Vector2(0.60f, 0.16f);
-            stokeInset.anchorMax = new Vector2(1f, 0.38f);
-            stokeInset.offsetMin = Vector2.zero;
-            stokeInset.offsetMax = Vector2.zero;
-            AddImage(stokeInset.gameObject, insetColour);
-            AddPixelBorder(stokeInset, borderColour, borderThickness);
-
-            stokeLabel = CreateText("STOKE  0", stokeInset, 32, TextAnchor.MiddleCenter, foregroundColour);
-            stokeLabel.enableAutoSizing = true;
-            stokeLabel.fontSizeMin = 14f;
-            stokeLabel.fontSizeMax = 22f;
-            Stretch(stokeLabel.rectTransform, Vector2.zero, Vector2.one, new Vector2(8f, 2f), new Vector2(-8f, -2f));
-
-            RectTransform flowTrack = CreateRect("Flow Track", panel, Vector2.zero);
+            RectTransform flowTrack = CreateRect("Flow Track", root, Vector2.zero);
             flowTrackObject = flowTrack.gameObject;
-            flowTrack.anchorMin = new Vector2(0f, 0f);
-            flowTrack.anchorMax = new Vector2(1f, 0.14f);
+            flowTrack.anchorMin = new Vector2(0f, 0.27f);
+            flowTrack.anchorMax = new Vector2(1f, 0.50f);
             flowTrack.offsetMin = Vector2.zero;
             flowTrack.offsetMax = Vector2.zero;
             AddImage(flowTrack.gameObject, insetColour);
             AddPixelBorder(flowTrack, borderColour, borderThickness);
 
-            flowFill = CreateRect("Flow Fill", flowTrack, Vector2.zero);
+            fireIcon = CreateHudIcon("Flow Fire Icon", flowTrack, "SurferSlugUI/fire_icon", true);
+            fireIcon.rectTransform.anchorMin = fireIcon.rectTransform.anchorMax = new Vector2(0f, 0.5f);
+            fireIcon.rectTransform.pivot = new Vector2(0f, 0.5f);
+            fireIcon.rectTransform.anchoredPosition = new Vector2(14f, 0f);
+
+            RectTransform meter = CreateRect("Flow Meter Background", flowTrack, Vector2.zero);
+            // Keep the flow meter compact so it does not span the full screen.
+            meter.anchorMin = new Vector2(0f, 0f);
+            meter.anchorMax = new Vector2(0.52f, 1f);
+            meter.offsetMin = new Vector2(76f, 9f);
+            meter.offsetMax = new Vector2(-18f, -9f);
+            AddImage(meter.gameObject, trackColour);
+
+            flowFill = CreateRect("Flow Fill", meter, Vector2.zero);
             flowFill.anchorMin = Vector2.zero;
             flowFill.anchorMax = new Vector2(0f, 1f);
             flowFill.pivot = new Vector2(0f, 0.5f);
-            flowFill.offsetMin = new Vector2(3f, 3f);
-            flowFill.offsetMax = new Vector2(-3f, -3f);
-            flowFillImage = AddImage(flowFill.gameObject, new Color(1f, 0.55f, 0.08f, 0.95f));
+            flowFill.offsetMin = new Vector2(2f, 2f);
+            flowFill.offsetMax = new Vector2(-2f, -2f);
+            flowFillImage = AddImage(flowFill.gameObject, new Color(0.18f, 0.74f, 1f, 0.95f));
 
-            flowLabel = CreateText("FLOW  0%", flowTrack, 16, TextAnchor.MiddleCenter, foregroundColour);
-            Stretch(flowLabel.rectTransform, Vector2.zero, Vector2.one, new Vector2(8f, 0f), new Vector2(-8f, 0f));
+            flowLabel = CreateText("0%", flowTrack, 27, TextAnchor.MiddleLeft, foregroundColour);
+            Stretch(flowLabel.rectTransform, new Vector2(0.53f, 0f), new Vector2(0.64f, 1f), new Vector2(10f, 0f), Vector2.zero);
         }
 
-        private void BuildDayPanel(RectTransform panel)
+        private void BuildCompactVitals(RectTransform bar)
         {
-            dayPhaseLabel = CreateText("DAY 1  •  DAWN", panel, 32, TextAnchor.UpperCenter, foregroundColour);
-            Stretch(dayPhaseLabel.rectTransform,
-                new Vector2(0f, 0.58f),
-                new Vector2(0.65f, 1f),
-                new Vector2(18f, 0f),
-                new Vector2(0f, -10f));
-                
-            timeLabel = CreateText("7:03 AM", panel, 16, TextAnchor.UpperCenter, foregroundColour);
-            Stretch(timeLabel.rectTransform,
-                new Vector2(0.65f, 0.58f),
-                Vector2.one,
-                Vector2.zero,
-                new Vector2(-16f, -10f));
+            RectTransform vitals = CreateRect("Vitals", bar, Vector2.zero);
+            vitals.anchorMin = new Vector2(0f, 0f);
+            vitals.anchorMax = new Vector2(0.23f, 1f);
+            vitals.offsetMin = new Vector2(16f, 8f);
+            vitals.offsetMax = new Vector2(-10f, -8f);
 
-            RectTransform track = CreateRect("Day Track", panel, Vector2.zero);
-            track.anchorMin = new Vector2(0f, 0.37f);
-            track.anchorMax = new Vector2(1f, 0.46f);
-            track.offsetMin = new Vector2(28f, 0f);
-            track.offsetMax = new Vector2(-28f, 0f);
+            livesIcon = CreateHudIcon("Lives Icon", vitals, "SurferSlugUI/lives_icon", true);
+            livesIcon.rectTransform.anchorMin = livesIcon.rectTransform.anchorMax = new Vector2(0f, 0.5f);
+            livesIcon.rectTransform.pivot = new Vector2(0f, 0.5f);
+            livesIcon.rectTransform.anchoredPosition = Vector2.zero;
+
+            livesLabel = CreateText("3/3", vitals, 30, TextAnchor.MiddleLeft, foregroundColour);
+            Stretch(livesLabel.rectTransform, Vector2.zero, new Vector2(0.45f, 1f), new Vector2(48f, 0f), Vector2.zero);
+
+            stokeIcon = CreateHudIcon("Stoke Icon", vitals, "SurferSlugUI/stoke_icon", true);
+            stokeIcon.rectTransform.anchorMin = stokeIcon.rectTransform.anchorMax = new Vector2(0.52f, 0.5f);
+            stokeIcon.rectTransform.pivot = new Vector2(0f, 0.5f);
+            stokeIcon.rectTransform.anchoredPosition = Vector2.zero;
+
+            stokeLabel = CreateText("0", vitals, 28, TextAnchor.MiddleLeft, foregroundColour);
+            stokeLabel.enableAutoSizing = true;
+            stokeLabel.fontSizeMin = 20f;
+            stokeLabel.fontSizeMax = 28f;
+            Stretch(stokeLabel.rectTransform, new Vector2(0.52f, 0f), Vector2.one, new Vector2(46f, 0f), new Vector2(-2f, 0f));
+        }
+
+        private void BuildCompactDay(RectTransform bar)
+        {
+            RectTransform day = CreateRect("Day Status", bar, Vector2.zero);
+            day.anchorMin = new Vector2(0.23f, 0f);
+            day.anchorMax = new Vector2(0.69f, 1f);
+            day.offsetMin = new Vector2(12f, 8f);
+            day.offsetMax = new Vector2(-12f, -8f);
+
+            phaseIcon = CreateHudIcon("Phase Icon", day, "SurferSlugUI/dawn_icon", true);
+            phaseIcon.rectTransform.anchorMin = phaseIcon.rectTransform.anchorMax = new Vector2(0f, 0.5f);
+            phaseIcon.rectTransform.pivot = new Vector2(0f, 0.5f);
+            phaseIcon.rectTransform.anchoredPosition = Vector2.zero;
+
+            dayPhaseLabel = CreateText("DAY 1", day, 42, TextAnchor.MiddleLeft, foregroundColour);
+            Stretch(dayPhaseLabel.rectTransform, Vector2.zero, new Vector2(0.31f, 1f), new Vector2(52f, 0f), Vector2.zero);
+
+            RectTransform track = CreateRect("Day Track", day, Vector2.zero);
+            track.anchorMin = new Vector2(0.33f, 0.36f);
+            track.anchorMax = new Vector2(0.58f, 0.64f);
+            track.offsetMin = Vector2.zero;
+            track.offsetMax = Vector2.zero;
             AddImage(track.gameObject, trackColour);
+            AddPixelBorder(track, borderColour, 2f);
 
             dayFill = CreateRect("Day Fill", track, Vector2.zero);
             dayFill.anchorMin = Vector2.zero;
             dayFill.anchorMax = new Vector2(0f, 1f);
             dayFill.pivot = new Vector2(0f, 0.5f);
-            dayFill.offsetMin = Vector2.zero;
-            dayFill.offsetMax = Vector2.zero;
-            AddImage(dayFill.gameObject, foregroundColour);
+            dayFill.offsetMin = new Vector2(3f, 3f);
+            dayFill.offsetMax = new Vector2(-3f, -3f);
+            AddImage(dayFill.gameObject, new Color(0.95f, 0.42f, 0.14f, 1f));
 
-            CreateRulerMark(panel, 0.00f, true);
-            CreateRulerMark(panel, 0.125f, false);
-            CreateRulerMark(panel, 0.25f, true);
-            CreateRulerMark(panel, 0.375f, false);
-            CreateRulerMark(panel, 0.50f, true);
-            CreateRulerMark(panel, 0.625f, false);
-            CreateRulerMark(panel, 0.75f, true);
-            CreateRulerMark(panel, 0.875f, false);
-            CreateRulerMark(panel, 1.00f, true);
+            timeLabel = CreateText("7:03 AM  •  0 / 0 m", day, 28, TextAnchor.MiddleLeft, foregroundColour);
+            timeLabel.enableAutoSizing = true;
+            timeLabel.fontSizeMin = 22f;
+            timeLabel.fontSizeMax = 28f;
+            Stretch(timeLabel.rectTransform, new Vector2(0.60f, 0f), Vector2.one, new Vector2(10f, 0f), Vector2.zero);
         }
 
-        private void CreateRulerMark(RectTransform panel, float x, bool major)
+        private void BuildCompactInventory(RectTransform bar)
         {
-            RectTransform mark = CreateRect(
-                major ? "Major Mark" : "Minor Mark",
-                panel,
-                Vector2.zero);
+            RectTransform inventory = CreateRect("Items", bar, Vector2.zero);
+            inventory.anchorMin = new Vector2(0.69f, 0f);
+            inventory.anchorMax = Vector2.one;
+            inventory.offsetMin = new Vector2(10f, 6f);
+            inventory.offsetMax = new Vector2(-10f, -6f);
 
-            mark.anchorMin = mark.anchorMax = new Vector2(x, 0f);
-            mark.pivot = new Vector2(0.5f, 0f);
-
-            float height = major ? 12f : 6f;
-            float width = 2f;
-
-            mark.sizeDelta = new Vector2(width, height);
-            mark.anchoredPosition = new Vector2(0f, 16f);
-
-            AddImage(mark.gameObject, mutedColour);
-        }
-
-        private void CreateTimeMark(string value, RectTransform panel, float x, TextAnchor alignment)
-        {
-            TMP_Text mark = CreateText(value, panel, 16, alignment, mutedColour);
-            RectTransform rect = mark.rectTransform;
-            rect.anchorMin = rect.anchorMax = new Vector2(x, 0f);
-            rect.pivot = new Vector2(x, 0f);
-            rect.sizeDelta = new Vector2(58f, 32f);
-            float edge = x <= 0f ? 26f : x >= 1f ? -26f : 0f;
-            rect.anchoredPosition = new Vector2(edge, 8f);
-        }
-
-        private void BuildInventoryPanel(RectTransform panel)
-        {
-            TMP_Text heading = CreateText("ITEMS  •  NEXT TO THROW", panel, 16, TextAnchor.UpperLeft, mutedColour, true);
-            Stretch(heading.rectTransform, new Vector2(0f, 0.68f), Vector2.one, new Vector2(18f, 0f), new Vector2(-18f, -12f));
-
-            inventoryRow = CreateRect("Item Row", panel, Vector2.zero);
-            inventoryRow.anchorMin = new Vector2(0f, 0f);
-            inventoryRow.anchorMax = new Vector2(1f, 0.70f);
-            inventoryRow.offsetMin = new Vector2(14f, 10f);
-            inventoryRow.offsetMax = new Vector2(-44f, 0f);
+            inventoryRow = CreateRect("Item Row", inventory, Vector2.zero);
+            Stretch(inventoryRow, Vector2.zero, Vector2.one, Vector2.zero, new Vector2(-54f, 0f));
 
             HorizontalLayoutGroup layout = inventoryRow.gameObject.AddComponent<HorizontalLayoutGroup>();
-            layout.spacing = inventorySpacing;
-            layout.childAlignment = TextAnchor.MiddleLeft;
+            layout.spacing = 8f;
+            layout.childAlignment = TextAnchor.MiddleRight;
             layout.childControlWidth = false;
             layout.childControlHeight = false;
             layout.childForceExpandWidth = false;
             layout.childForceExpandHeight = false;
-            inventoryOverflowLabel = CreateText(string.Empty, panel, 16, TextAnchor.MiddleRight, mutedColour);
-            Stretch(inventoryOverflowLabel.rectTransform, new Vector2(0.84f, 0f), new Vector2(1f, 0.70f), Vector2.zero, new Vector2(-12f, 0f));
+
+            inventoryOverflowLabel = CreateText(string.Empty, inventory, 26, TextAnchor.MiddleRight, foregroundColour);
+            Stretch(inventoryOverflowLabel.rectTransform, new Vector2(0.88f, 0f), Vector2.one, Vector2.zero, Vector2.zero);
         }
 
         private void BuildChapterBanner(Transform parent)
         {
-            RectTransform banner = CreateRect("Chapter Banner", parent, new Vector2(650f, 74f));
-            banner.anchorMin = banner.anchorMax = new Vector2(0.5f, 1f);
-            banner.pivot = new Vector2(0.5f, 1f);
-            banner.anchoredPosition = new Vector2(0f, -(safeMargin.y + 170f));
-            AddImage(banner.gameObject, panelColour);
-            AddPixelBorder(banner, borderColour, borderThickness);
-            chapterGroup = banner.gameObject.AddComponent<CanvasGroup>();
+            chapterBannerRect = CreateRect("Chapter Banner", parent, new Vector2(1500f, 120f));
+            chapterBannerRect.anchorMin = chapterBannerRect.anchorMax = new Vector2(0.5f, 1f);
+            chapterBannerRect.pivot = new Vector2(0.5f, 1f);
+            chapterBannerRect.anchoredPosition = new Vector2(0f, -(Mathf.Max(32f, safeMargin.y) + 218f));
+            AddImage(chapterBannerRect.gameObject, panelColour);
+            AddPixelBorder(chapterBannerRect, borderColour, borderThickness);
+            chapterGroup = chapterBannerRect.gameObject.AddComponent<CanvasGroup>();
             chapterGroup.alpha = 0f;
 
-            chapterLabel = CreateText(string.Empty, banner, 32, TextAnchor.MiddleCenter, foregroundColour);
+            chapterLabel = CreateText(string.Empty, chapterBannerRect, 38, TextAnchor.MiddleCenter, foregroundColour);
             chapterLabel.enableAutoSizing = true;
-            chapterLabel.fontSizeMin = 12f;
-            chapterLabel.fontSizeMax = 20f;
-            Stretch(chapterLabel.rectTransform, Vector2.zero, Vector2.one, new Vector2(18f, 8f), new Vector2(-18f, -8f));
+            chapterLabel.fontSizeMin = 22f;
+            chapterLabel.fontSizeMax = 40f;
+            chapterLabel.enableWordWrapping = true;
+            chapterLabel.overflowMode = TextOverflowModes.Overflow;
+            Stretch(chapterLabel.rectTransform, Vector2.zero, Vector2.one, new Vector2(28f, 18f), new Vector2(-28f, -18f));
+        }
+
+        private void ResizeChapterBannerToText()
+        {
+            if (chapterBannerRect == null || chapterLabel == null)
+                return;
+
+            chapterLabel.ForceMeshUpdate();
+            float preferred = chapterLabel.GetPreferredValues(
+                chapterLabel.text,
+                Mathf.Max(320f, chapterBannerRect.sizeDelta.x - 56f),
+                0f).y;
+            float height = Mathf.Clamp(preferred + 44f, 104f, 240f);
+            chapterBannerRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Ceil(height / 2f) * 2f);
         }
 
         private void RefreshProgressionAndLives()
@@ -530,35 +532,49 @@ namespace PixelOcean
             {
                 int remaining = lifeManager != null ? lifeManager.LivesRemaining : 3;
                 int maximum = lifeManager != null ? lifeManager.StartingLives : 3;
-                livesLabel.text = $"LIVES  {remaining}/{maximum}";
+                livesLabel.text = $"{remaining}/{maximum}";
             }
 
             bool showNotice =
                 Time.unscaledTime < noticeUntil &&
                 !string.IsNullOrEmpty(noticeText);
 
-            bool showProgressionBanner =
+            bool progressionBannerActive =
                 progression != null &&
-                progression.IsBannerVisible;
+                progression.IsBannerVisible &&
+                !string.IsNullOrWhiteSpace(progression.CurrentBanner);
+
+            if (showNotice)
+            {
+                heldChapterText = noticeText;
+                chapterHoldUntil = Mathf.Max(chapterHoldUntil, noticeUntil);
+            }
+            else if (progressionBannerActive)
+            {
+                heldChapterText = progression.CurrentBanner;
+                chapterHoldUntil = Time.unscaledTime + ChapterHoldSeconds;
+            }
 
             bool showBanner =
-                showNotice ||
-                showProgressionBanner;
+                !string.IsNullOrWhiteSpace(heldChapterText) &&
+                Time.unscaledTime < chapterHoldUntil;
+
+            if (chapterLabel != null && showBanner && chapterLabel.text != heldChapterText)
+            {
+                chapterLabel.text = heldChapterText;
+                ResizeChapterBannerToText();
+            }
 
             if (chapterGroup != null)
             {
                 chapterGroup.alpha = Mathf.MoveTowards(
                     chapterGroup.alpha,
                     showBanner ? 1f : 0f,
-                    Time.unscaledDeltaTime * 5f);
+                    Time.unscaledDeltaTime * (showBanner ? 4f : 1.4f));
             }
 
-            if (chapterLabel != null && showBanner)
-            {
-                chapterLabel.text = showNotice
-                    ? noticeText
-                    : progression.CurrentBanner;
-            }
+            if (!showBanner && Time.unscaledTime >= chapterHoldUntil)
+                heldChapterText = string.Empty;
 
             if (!showNotice &&
                 Time.unscaledTime >= noticeUntil &&
@@ -576,35 +592,55 @@ namespace PixelOcean
             int stoke = AirTrickScoreSystem.Instance != null
                 ? AirTrickScoreSystem.Instance.TotalStoke
                 : 0;
-            stokeLabel.text = "STOKE  " + stoke.ToString("N0");
+            stokeLabel.text = stoke.ToString("N0");
         }
 
         private void RefreshFlow()
         {
             bool unlocked = SurfAbilityProgression.Instance == null || SurfAbilityProgression.Instance.Has(SurfAbility.Flow);
             if (flowTrackObject != null) flowTrackObject.SetActive(unlocked);
-            if (!unlocked) return;
+            if (!unlocked)
+            {
+                displayedFlow01 = 0f;
+                return;
+            }
+
             AirTrickScoreSystem scoring = AirTrickScoreSystem.Instance;
-            float flow01 = scoring != null ? scoring.Flow01 : 0f;
+            float targetFlow01 = scoring != null ? scoring.Flow01 : 0f;
             bool onFire = scoring != null && scoring.IsOnFire;
+            if (onFire)
+                targetFlow01 = 1f;
+
+            // Ease both filling and draining so the meter never jumps upward.
+            displayedFlow01 = Mathf.MoveTowards(
+                displayedFlow01,
+                Mathf.Clamp01(targetFlow01),
+                Time.unscaledDeltaTime * 0.32f);
 
             if (flowFill != null)
-                flowFill.anchorMax = new Vector2(onFire ? 1f : flow01, 1f);
+                flowFill.anchorMax = new Vector2(displayedFlow01, 1f);
 
             if (flowFillImage != null)
             {
                 float green = onFire
-                    ? 0.72f + Mathf.Sin(Time.unscaledTime * 12f) * 0.18f
-                    : 0.55f;
-                flowFillImage.color = new Color(1f, green, 0.08f, onFire ? 1f : 0.95f);
+                    ? 0.62f + Mathf.Sin(Time.unscaledTime * 12f) * 0.18f
+                    : 0.74f;
+                flowFillImage.color = onFire
+                    ? new Color(1f, green, 0.08f, 1f)
+                    : new Color(0.18f, 0.74f, 1f, 0.95f);
             }
+
+            if (fireIcon != null)
+                fireIcon.gameObject.SetActive(fireIcon.sprite != null);
+
+            if (flowIcon != null)
+                flowIcon.gameObject.SetActive(false);
 
             if (flowLabel != null)
             {
-                flowLabel.text = onFire
-                    ? "ON FIRE  " + Mathf.CeilToInt(scoring.OnFireTimeRemaining)
-                    : "FLOW  " + Mathf.RoundToInt(flow01 * 100f) + "%";
-                flowLabel.fontSize = onFire ? 18f : 16f;
+                flowLabel.text = onFire && scoring != null
+                    ? Mathf.CeilToInt(scoring.OnFireTimeRemaining).ToString()
+                    : Mathf.RoundToInt(displayedFlow01 * 100f) + "%";
             }
         }
 
@@ -622,7 +658,12 @@ namespace PixelOcean
 
             string phase = GetDayPhase(visualTime);
             int currentDay = progression != null ? Mathf.Max(1, progression.CurrentDay) : 1;
-            if (dayPhaseLabel != null) dayPhaseLabel.text = $"DAY {currentDay}  •  {phase}";
+            if (dayPhaseLabel != null) dayPhaseLabel.text = $"DAY {currentDay}";
+            if (phaseIcon != null)
+            {
+                phaseIcon.sprite = LoadHudSprite("SurferSlugUI/" + phase.ToLowerInvariant() + "_icon");
+                ApplyHudIconReferenceSize(phaseIcon);
+            }
             if (timeLabel != null)
             {
                 string clock = $"{hour12}:{minute:00} {(hour24 < 12 ? "AM" : "PM")}";
@@ -690,7 +731,7 @@ namespace PixelOcean
             GameObject slot = new($"{sprite.name} x{count}", typeof(RectTransform));
             slot.transform.SetParent(inventoryRow, false);
             RectTransform slotRect = (RectTransform)slot.transform;
-            slotRect.sizeDelta = new Vector2(82f, 66f);
+            slotRect.sizeDelta = new Vector2(82f, 76f);
             AddImage(slot, insetColour);
             AddPixelBorder(slotRect, isNext ? foregroundColour : borderColour, isNext ? borderThickness + 1f : borderThickness);
 
@@ -699,22 +740,100 @@ namespace PixelOcean
             icon.sprite = sprite;
             icon.preserveAspect = true;
             icon.raycastTarget = false;
+            FitInventoryIcon(icon);
             RectTransform iconRect = icon.rectTransform;
-            iconRect.anchorMin = iconRect.anchorMax = new Vector2(0f, 0.5f);
-            iconRect.pivot = new Vector2(0f, 0.5f);
-            iconRect.sizeDelta = new Vector2(inventoryIconSize, inventoryIconSize);
-            iconRect.anchoredPosition = new Vector2(8f, 0f);
+            iconRect.anchorMin = iconRect.anchorMax = new Vector2(0.5f, 0.56f);
+            iconRect.pivot = new Vector2(0.5f, 0.5f);
+            iconRect.anchoredPosition = Vector2.zero;
 
-            TMP_Text countText = CreateText($"×{count}", slot.transform, 20, TextAnchor.MiddleRight, foregroundColour);
-            Stretch(countText.rectTransform, Vector2.zero, Vector2.one, new Vector2(45f, 0f), new Vector2(-6f, 0f));
-
-            if (isNext)
-            {
-                TMP_Text nextLabel = CreateText("NEXT", slot.transform, 10, TextAnchor.UpperLeft, foregroundColour);
-                Stretch(nextLabel.rectTransform, new Vector2(0f, 0.64f), new Vector2(1f, 1f), new Vector2(5f, 0f), new Vector2(-5f, -3f));
-            }
+            TMP_Text countText = CreateText($"×{count}", slot.transform, 22, TextAnchor.LowerRight, foregroundColour);
+            Stretch(countText.rectTransform, Vector2.zero, Vector2.one, new Vector2(4f, 0f), new Vector2(-5f, -3f));
 
             inventorySlots.Add(slot);
+        }
+
+        private static void FitInventoryIcon(Image icon)
+        {
+            if (icon == null || icon.sprite == null)
+                return;
+
+            icon.SetNativeSize();
+
+            RectTransform rect = icon.rectTransform;
+            Vector2 native = rect.sizeDelta;
+
+            float largest = Mathf.Max(1f, native.x, native.y);
+            float scale = InventoryReferenceSize / largest;
+
+            rect.sizeDelta = new Vector2(
+                Mathf.Round(native.x * scale),
+                Mathf.Round(native.y * scale));
+        }
+
+        private Image CreateHudIcon(string name, Transform parent, string resourcePath, bool matchInventoryCanSize = false)
+        {
+            GameObject go = new(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            go.transform.SetParent(parent, false);
+            Image image = go.GetComponent<Image>();
+            image.sprite = LoadHudSprite(resourcePath);
+            image.preserveAspect = true;
+            image.raycastTarget = false;
+
+            if (image.sprite != null)
+            {
+                image.SetNativeSize();
+                if (matchInventoryCanSize)
+                {
+                    RectTransform rect = image.rectTransform;
+                    Vector2 native = rect.sizeDelta;
+                    float largest = Mathf.Max(1f, native.x, native.y);
+                    float scale = HudIconReferenceSize / largest;
+                    rect.sizeDelta = new Vector2(
+                        Mathf.Max(1f, Mathf.Round(native.x * scale)),
+                        Mathf.Max(1f, Mathf.Round(native.y * scale)));
+                }
+            }
+            else
+            {
+                // A missing resource must not render Unity's default white box.
+                image.enabled = false;
+                image.rectTransform.sizeDelta = Vector2.zero;
+            }
+
+            return image;
+        }
+
+        private static void ApplyHudIconReferenceSize(Image image)
+        {
+            if (image == null || image.sprite == null)
+                return;
+
+            image.enabled = true;
+            image.SetNativeSize();
+            RectTransform rect = image.rectTransform;
+            Vector2 native = rect.sizeDelta;
+            float largest = Mathf.Max(1f, native.x, native.y);
+            float scale = HudIconReferenceSize / largest;
+            rect.sizeDelta = new Vector2(
+                Mathf.Max(1f, Mathf.Round(native.x * scale)),
+                Mathf.Max(1f, Mathf.Round(native.y * scale)));
+        }
+
+        private static Sprite LoadHudSprite(string resourcePath)
+        {
+            Texture2D texture = Resources.Load<Texture2D>(resourcePath);
+            if (texture == null)
+                return null;
+
+            texture.filterMode = FilterMode.Point;
+            texture.wrapMode = TextureWrapMode.Clamp;
+            return Sprite.Create(
+                texture,
+                new Rect(0f, 0f, texture.width, texture.height),
+                new Vector2(0.5f, 0.5f),
+                100f,
+                0,
+                SpriteMeshType.FullRect);
         }
 
         private RectTransform CreateRect(string objectName, Transform parent, Vector2 size)
@@ -744,6 +863,10 @@ namespace PixelOcean
 
         private void AddPixelBorder(RectTransform target, Color colour, float thickness)
         {
+            // Transparent HUD style: do not create invisible border graphics.
+            if (colour.a <= 0.001f || thickness <= 0f)
+                return;
+
             CreateBorderEdge("Border Top", target, colour,
                 new Vector2(0f, 1f), new Vector2(1f, 1f),
                 new Vector2(0f, -thickness), Vector2.zero);
@@ -794,6 +917,13 @@ namespace PixelOcean
             go.transform.SetParent(parent, false);
 
             TextMeshProUGUI text = go.GetComponent<TextMeshProUGUI>();
+
+            // A crisp offset shadow keeps all HUD copy readable over bright sky, clouds,
+            // waves, and nighttime backgrounds without needing opaque panels.
+            Shadow shadow = go.AddComponent<Shadow>();
+            shadow.effectColor = new Color(0f, 0f, 0f, 0.88f);
+            shadow.effectDistance = new Vector2(3f, -3f);
+            shadow.useGraphicAlpha = true;
 
             text.text = value;
             text.font = font != null ? font : PixelFontLibrary.TmpMedium;

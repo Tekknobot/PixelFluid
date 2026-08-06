@@ -1,0 +1,8 @@
+SURFER SLUG FRAMELESS MINIMAL HUD PATCH
+
+- Removed all HUD panel backgrounds.
+- Removed all HUD panel and inventory-slot borders.
+- Kept gameplay meters and icons visible.
+- Added a crisp black pixel-offset shadow to every TMP text element created by SurferSlugMinimalHud.
+- Runtime-forces transparent panel colors so older serialized values cannot restore the previous frames.
+- Avoids creating invisible border child graphics.
