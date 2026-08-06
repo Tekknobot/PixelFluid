@@ -46,6 +46,9 @@ namespace PixelOcean
         [SerializeField, Min(0f)] private float deathDelay = 0.3f;
         [SerializeField] private AudioClip hurtClip;
         [SerializeField, Range(0f, 1f)] private float hurtVolume = 1f;
+        [SerializeField, Min(0.08f)] private float hitReactionDuration = 0.28f;
+        [SerializeField, Range(0.01f, 0.35f)] private float hitReactionScalePunch = 0.14f;
+        [SerializeField, Range(0.05f, 0.6f)] private float hitCameraFocusDuration = 0.32f;
 
         [Header("Boss Death Sequence")]
         [SerializeField, Min(0.5f)] private float bossDeathDuration = 3.6f;
@@ -141,6 +144,8 @@ namespace PixelOcean
         private bool defeated;
         private float enragedUntil;
         private Coroutine hurtFlashRoutine;
+        private Coroutine hitReactionRoutine;
+        private Vector3 normalLocalScale;
         private Color normalSpriteColour = Color.white;
         private float nextVulnerableTime;
         private bool arenaEntranceActive;
@@ -266,7 +271,9 @@ namespace PixelOcean
 
         private void Awake()
         {
-            ResolveReferences();
+            
+            normalLocalScale = transform.localScale;
+ResolveReferences();
             currentHealth = Mathf.Max(1, maximumHealth);
             nextVulnerableTime = Time.time + openingInvulnerability;
             if (spriteRenderer != null)
@@ -703,6 +710,16 @@ namespace PixelOcean
                 StopCoroutine(hurtFlashRoutine);
             hurtFlashRoutine = StartCoroutine(HurtFlash());
 
+            if (hitReactionRoutine != null)
+                StopCoroutine(hitReactionRoutine);
+            hitReactionRoutine = StartCoroutine(HitReaction());
+
+            TinySurferCinematicCamera hitCamera =
+                FindFirstObjectByType<TinySurferCinematicCamera>();
+            hitCamera?.BeginBossHitFocus(
+                transform,
+                hitCameraFocusDuration);
+
             if (hurtClip != null && audioSource != null)
                 audioSource.PlayOneShot(hurtClip, hurtVolume);
 
@@ -717,6 +734,35 @@ namespace PixelOcean
             // SodaCanProjectile owns thrown-item hit detection and ricochet.
             // Keeping damage in one place prevents duplicate hits and prevents
             // this swimmer from absorbing the projectile before it can bounce.
+        }
+
+        private IEnumerator HitReaction()
+        {
+            Vector3 baseScale =
+                normalLocalScale == Vector3.zero
+                    ? transform.localScale
+                    : normalLocalScale;
+
+            float duration = Mathf.Max(0.08f, hitReactionDuration);
+            float elapsed = 0f;
+
+            while (elapsed < duration && !defeated)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                float wave = Mathf.Sin(t * Mathf.PI * 4f) * (1f - t);
+                float punch = 1f + wave * hitReactionScalePunch;
+
+                transform.localScale = new Vector3(
+                    baseScale.x * punch,
+                    baseScale.y * (2f - punch),
+                    baseScale.z);
+
+                yield return null;
+            }
+
+            transform.localScale = baseScale;
+            hitReactionRoutine = null;
         }
 
         private IEnumerator HurtFlash()
@@ -761,6 +807,16 @@ namespace PixelOcean
             {
                 StopCoroutine(hurtFlashRoutine);
                 hurtFlashRoutine = null;
+            }
+
+            if (hitReactionRoutine != null)
+            {
+                StopCoroutine(hitReactionRoutine);
+                hitReactionRoutine = null;
+                transform.localScale =
+                    normalLocalScale == Vector3.zero
+                        ? transform.localScale
+                        : normalLocalScale;
             }
 
             Collider2D[] colliders = GetComponents<Collider2D>();

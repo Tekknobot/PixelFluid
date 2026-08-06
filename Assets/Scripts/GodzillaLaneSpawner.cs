@@ -30,7 +30,8 @@ namespace PixelOcean
             }
 
             spawnedGodzilla = new GameObject("Godzilla - Unique Inter-Wave Swimmer");
-            spawnedGodzilla.transform.SetParent(transform, false);
+            // Keep the active boss independent from the temporary spawner host.
+            spawnedGodzilla.transform.SetParent(null, true);
             spawnedGodzilla.transform.localScale = Vector3.one * scale;
 
             SpriteRenderer renderer = spawnedGodzilla.AddComponent<SpriteRenderer>();
@@ -48,9 +49,18 @@ namespace PixelOcean
             GodzillaLaneSwimmer swimmer = spawnedGodzilla.AddComponent<GodzillaLaneSwimmer>();
             swimmer.Initialise(startingLane);
 
-            GameObject arenaHost = new GameObject("Reaper Boss Arena Prison");
-            BossArenaPrison arena = arenaHost.AddComponent<BossArenaPrison>();
-            arena.Configure(swimmer, BossArenaPrison.ArenaTheme.Reaper);
+            BossArenaPrison arena = BossArenaPrison.Active;
+            if (arena == null)
+                arena = FindFirstObjectByType<BossArenaPrison>();
+
+            if (arena == null)
+            {
+                GameObject arenaHost = new GameObject("Reaper Boss Arena Prison");
+                arena = arenaHost.AddComponent<BossArenaPrison>();
+            }
+
+            if (!arena.ControlsBoss(swimmer))
+                arena.Configure(swimmer, BossArenaPrison.ArenaTheme.Reaper);
         }
 
         private static Sprite[] LoadOrdered(string path)

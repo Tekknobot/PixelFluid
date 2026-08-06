@@ -110,6 +110,10 @@ namespace PixelOcean
         public void ShowSelection(SurferSlugPauseMenu menu)
         {
             selectionMenu = menu;
+
+            if (selectionMenu != null)
+                selectionMenu.SetRaceSelectionPresentation(true);
+
             BuildSelection(menu);
         }
 
@@ -184,8 +188,8 @@ namespace PixelOcean
                             selectionRoot = null;
                         }
 
-                        menu.SetRaceSelectionPresentation(false);
-                        menu.BeginRaceMode(capturedRacer);
+                        selectionMenu?.SetRaceSelectionPresentation(false);
+                        selectionMenu?.BeginRaceMode(capturedRacer);
                     });
                 buttons.Add(button);
             }
@@ -276,16 +280,42 @@ namespace PixelOcean
         }
 
 
+        private void LateUpdate()
+        {
+            // The pause menu and EventSystem can process B/Escape before this
+            // manager's normal Update. Check again at the end of the frame so
+            // character select always honours the Back command.
+            if (selectionRoot == null || !CancelPressed())
+                return;
+
+            Destroy(selectionRoot);
+            selectionRoot = null;
+            selectionMenu?.SetRaceSelectionPresentation(false);
+        }
+
         private static bool CancelPressed()
         {
 #if ENABLE_INPUT_SYSTEM
             Keyboard keyboard = Keyboard.current;
-            if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame) return true;
+            if (keyboard != null &&
+                keyboard.escapeKey.wasPressedThisFrame)
+            {
+                return true;
+            }
+
             Gamepad gamepad = Gamepad.current;
-            if (gamepad != null && gamepad.buttonEast.wasPressedThisFrame) return true;
+            if (gamepad != null &&
+                gamepad.buttonEast.wasPressedThisFrame)
+            {
+                return true;
+            }
 #endif
 #if ENABLE_LEGACY_INPUT_MANAGER
-            if (Input.GetKeyDown(KeyCode.Escape)) return true;
+            if (Input.GetKeyDown(KeyCode.Escape) ||
+                Input.GetKeyDown(KeyCode.JoystickButton1))
+            {
+                return true;
+            }
 #endif
             return false;
         }
@@ -713,6 +743,7 @@ namespace PixelOcean
             // Story-mode boss encounters build BossArenaPrison objects. Race mode
             // never uses those arenas; bosses remain free-moving hazards.
             SuppressRaceBossArenas();
+            RemoveDuplicateRaceBosses();
 
             float elapsed = PrototypeRaceSeconds - raceTimeRemaining;
 
@@ -745,6 +776,20 @@ namespace PixelOcean
             if (ecosystemRoot == null)
                 return;
 
+            // A story spawner, developer command, or a second race pulse may have
+            // created this boss already. Adopt the existing instance rather than
+            // creating another one.
+            TBoss existingBoss = FindObjectsByType<TBoss>(
+                    FindObjectsInactive.Exclude,
+                    FindObjectsSortMode.None)
+                .FirstOrDefault();
+
+            if (existingBoss != null)
+            {
+                EnsureRaceBossFollower(existingBoss);
+                return;
+            }
+
             Racer targetRacer = racers.FirstOrDefault(
                 racer =>
                     racer.Player &&
@@ -764,7 +809,9 @@ namespace PixelOcean
                     ? targetRacer.Surfer.transform.position
                     : Vector3.zero;
 
-            spawnPosition.x += horizontalOffset;
+            spawnPosition = FindSafeRaceBossSpawn(
+                spawnPosition,
+                horizontalOffset);
 
             GameObject bossObject = new GameObject(objectName);
             bossObject.transform.SetParent(ecosystemRoot.transform, false);
@@ -798,6 +845,40 @@ namespace PixelOcean
                 fade = bossObject.AddComponent<OceanSpawnFadeIn>();
 
             fade.Configure(raceCreatureFadeInDuration);
+        }
+
+        private static Vector3 FindSafeRaceBossSpawn(
+            Vector3 racerPosition,
+            float requestedOffset)
+        {
+            float side = Mathf.Approximately(requestedOffset, 0f)
+                ? 1f
+                : Mathf.Sign(requestedOffset);
+
+            float safeOffset = Mathf.Max(3.5f, Mathf.Abs(requestedOffset));
+            Vector3 result = racerPosition;
+            result.x += side * safeOffset;
+
+            Camera camera = Camera.main;
+            if (camera != null && camera.orthographic)
+            {
+                float halfWidth = camera.orthographicSize * camera.aspect;
+                float cameraLeft = camera.transform.position.x - halfWidth + 0.75f;
+                float cameraRight = camera.transform.position.x + halfWidth - 0.75f;
+                result.x = Mathf.Clamp(result.x, cameraLeft, cameraRight);
+
+                // If clamping made the boss too close, use the opposite safe side.
+                if (Mathf.Abs(result.x - racerPosition.x) < 2.75f)
+                {
+                    float opposite = racerPosition.x - side * safeOffset;
+                    result.x = Mathf.Clamp(opposite, cameraLeft, cameraRight);
+                }
+            }
+
+            // Keep the boss in the active racer water band instead of allowing its
+            // own Initialise/Start path to leave it above or below the visible lane.
+            result.y = racerPosition.y;
+            return result;
         }
 
         private void AttachRaceFollowToExistingBosses()
@@ -851,6 +932,43 @@ namespace PixelOcean
             recycler.Configure(
                 targetRacer != null ? targetRacer.Surfer : null,
                 raceBossChildRecycleDistance);
+        }
+
+        private static void RemoveDuplicateRaceBosses()
+        {
+            KeepSingleBoss(
+                FindObjectsByType<GodzillaLaneSwimmer>(
+                    FindObjectsInactive.Exclude,
+                    FindObjectsSortMode.None));
+
+            KeepSingleBoss(
+                FindObjectsByType<RubberDuckBossSwimmer>(
+                    FindObjectsInactive.Exclude,
+                    FindObjectsSortMode.None));
+        }
+
+        private static void KeepSingleBoss<TBoss>(TBoss[] bosses)
+            where TBoss : MonoBehaviour
+        {
+            if (bosses == null || bosses.Length <= 1)
+                return;
+
+            // Prefer the boss owned by the race ecosystem.
+            // Otherwise keep the first valid boss Unity returned.
+            TBoss keeper = bosses
+                .OrderByDescending(boss =>
+                    boss != null &&
+                    boss.transform.parent != null &&
+                    boss.transform.parent.name.Contains(
+                        "Race Mode Random Ecosystem",
+                        StringComparison.OrdinalIgnoreCase))
+                .FirstOrDefault(boss => boss != null);
+
+            foreach (TBoss boss in bosses)
+            {
+                if (boss != null && boss != keeper)
+                    Destroy(boss.gameObject);
+            }
         }
 
         private static void SuppressRaceBossArenas()
@@ -1037,7 +1155,7 @@ namespace PixelOcean
             if (canvas != null) return;
             GameObject go = new GameObject("Race Mode Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
             DontDestroyOnLoad(go);
-            canvas = go.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.sortingOrder = 32100;
+            canvas = go.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.overrideSorting = true; canvas.sortingOrder = 32767;
             CanvasScaler scaler = go.GetComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize; scaler.referenceResolution = new Vector2(1920f, 1080f);
         }
 
@@ -1186,6 +1304,9 @@ namespace PixelOcean
         private float lastDirection = 1f;
         private float verticalVelocity;
         private bool forcedVisiblePosition;
+        private float previousTargetX;
+        private float smoothedTargetVelocityX;
+        private bool hasPreviousTargetX;
 
         public void Configure(
             TinyWaveSurfer followTarget,
@@ -1202,6 +1323,12 @@ namespace PixelOcean
 
             if (body == null)
                 body = GetComponent<Rigidbody2D>();
+
+            if (target != null)
+            {
+                previousTargetX = target.transform.position.x;
+                hasPreviousTargetX = true;
+            }
         }
 
         private void Awake()
@@ -1235,6 +1362,25 @@ namespace PixelOcean
             Vector3 targetPosition = target.transform.position;
             Vector3 position = transform.position;
 
+            if (hasPreviousTargetX)
+            {
+                float rawTargetVelocityX =
+                    (targetPosition.x - previousTargetX) /
+                    Mathf.Max(0.0001f, Time.deltaTime);
+
+                smoothedTargetVelocityX = Mathf.Lerp(
+                    smoothedTargetVelocityX,
+                    rawTargetVelocityX,
+                    1f - Mathf.Exp(-9f * Time.deltaTime));
+            }
+            else
+            {
+                hasPreviousTargetX = true;
+                smoothedTargetVelocityX = 0f;
+            }
+
+            previousTargetX = targetPosition.x;
+
             // Boss Start()/Initialise() may relocate itself to a story-mode
             // off-screen entry point. Pull it back beside the racer once, after
             // that initialization has occurred.
@@ -1261,11 +1407,16 @@ namespace PixelOcean
                 0f,
                 absoluteDelta - desiredDistance);
 
+            float racerSpeed =
+                Mathf.Abs(smoothedTargetVelocityX);
+
             float targetSpeed = distanceError <= 0f
-                ? 0f
+                ? Mathf.Min(maximumSpeed, racerSpeed * 0.92f)
                 : Mathf.Min(
                     maximumSpeed,
-                    1.75f + distanceError * 2.6f);
+                    racerSpeed * 0.92f +
+                    1.25f +
+                    distanceError * 2.35f);
 
             currentSpeed = Mathf.MoveTowards(
                 currentSpeed,

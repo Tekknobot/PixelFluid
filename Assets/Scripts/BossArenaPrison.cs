@@ -175,27 +175,14 @@ namespace PixelOcean
             entranceStarted = true;
             encounterStarted = false;
 
-            /*
-             * Boss spawners normally create their swimmers beyond the camera so
-             * ordinary encounters can enter naturally. An arena encounter is
-             * different: the arena can lock the camera before that swimmer ever
-             * reaches it. Place the boss just inside the captured arena first,
-             * then let its normal entrance movement carry it farther inward.
-             */
-            float side = boss.transform.position.x < centreX ? -1f : 1f;
-            float inset = Mathf.Clamp(
-                arenaSpawnInset,
-                0.25f,
-                Mathf.Max(0.25f, arenaWidth * 0.2f));
-
-            float startX = side < 0f
-                ? LeftBoundary + inset
-                : RightBoundary - inset;
-
-            float arrivalX =
-                centreX + side * arenaWidth * entranceArrivalFromCentre;
+            // Arena bosses always begin at the arena centre. This avoids a boss
+            // appearing on top of an arena wall, outside the camera clamp, or too
+            // close to the player after loading a saved boss encounter.
+            float startX = centreX;
+            float arrivalX = centreX;
 
             PlaceBossAtArenaX(startX);
+            //MovePlayerToSafeArenaSide();
             StartCoroutine(FadeBossIntoArena());
 
             reaperBoss = boss as GodzillaLaneSwimmer;
@@ -214,6 +201,45 @@ namespace PixelOcean
             }
 
             BeginEncounter();
+        }
+
+        private void MovePlayerToSafeArenaSide()
+        {
+            if (player == null || boss == null)
+                return;
+
+            float safeGap = Mathf.Max(2.25f, edgePadding + 1.25f);
+            float leftCandidate = Mathf.Clamp(
+                centreX - safeGap,
+                LeftBoundary,
+                RightBoundary);
+            float rightCandidate = Mathf.Clamp(
+                centreX + safeGap,
+                LeftBoundary,
+                RightBoundary);
+
+            // Keep whichever side requires the least movement, while guaranteeing
+            // the player is not overlapping a boss spawned at arena centre.
+            float targetX = Mathf.Abs(player.transform.position.x - leftCandidate) <=
+                            Mathf.Abs(player.transform.position.x - rightCandidate)
+                ? leftCandidate
+                : rightCandidate;
+
+            Vector3 position = player.transform.position;
+            if (Mathf.Abs(position.x - centreX) >= safeGap * 0.8f)
+                return;
+
+            position.x = targetX;
+            Rigidbody2D playerBody = player.GetComponent<Rigidbody2D>();
+            if (playerBody != null)
+            {
+                playerBody.position = new Vector2(position.x, position.y);
+                Vector2 velocity = playerBody.linearVelocity;
+                velocity.x = 0f;
+                playerBody.linearVelocity = velocity;
+            }
+
+            player.transform.position = position;
         }
 
         private void PlaceBossAtArenaX(float worldX)
@@ -451,6 +477,11 @@ namespace PixelOcean
                 return;
             }
 
+            // Story/save-loaded bosses are always kept in the same horizontal
+            // arena limits as the player. Race mode destroys/ignores arenas.
+            if (!GameModeSession.IsRace)
+                ClampBossInsideArena();
+
             if (!encounterStarted)
             {
                 if (!entranceStarted)
@@ -503,6 +534,39 @@ namespace PixelOcean
                 if (p.x <= leftX - escapeDistance)
                     FinishArena(true);
             }
+        }
+
+        private void ClampBossInsideArena()
+        {
+            if (boss == null)
+                return;
+
+            Vector3 position = boss.transform.position;
+            float clampedX = Mathf.Clamp(
+                position.x,
+                LeftBoundary,
+                RightBoundary);
+
+            if (Mathf.Approximately(position.x, clampedX))
+                return;
+
+            position.x = clampedX;
+
+            Rigidbody2D bossBody = boss.GetComponent<Rigidbody2D>();
+            if (bossBody != null)
+            {
+                bossBody.position = new Vector2(position.x, position.y);
+
+                Vector2 velocity = bossBody.linearVelocity;
+                if ((clampedX <= LeftBoundary && velocity.x < 0f) ||
+                    (clampedX >= RightBoundary && velocity.x > 0f))
+                {
+                    velocity.x = 0f;
+                    bossBody.linearVelocity = velocity;
+                }
+            }
+
+            boss.transform.position = position;
         }
 
         private static TinyWaveSurfer FindPlayerControlledSurfer()

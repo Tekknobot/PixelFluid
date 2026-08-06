@@ -12,7 +12,17 @@ namespace PixelOcean
     public sealed class GodzillaLaneSwimmer : MonoBehaviour
     {
         public event Action<GodzillaLaneSwimmer> ArenaHitAccepted;
-        private enum CreatureState { Roam, Pursue, WindUp, Lunge, Recover, InvestigateDeath, MournDeath }
+        private enum CreatureState
+        {
+            Roam,
+            Search,
+            Pursue,
+            WindUp,
+            Lunge,
+            Recover,
+            InvestigateDeath,
+            MournDeath
+        }
 
         [Header("Movement")]
         [SerializeField, Min(0.05f)] private float cruiseSpeed = 0.65f;
@@ -24,6 +34,10 @@ namespace PixelOcean
         [SerializeField, Min(0.5f)] private float detectionRange = 15f;
         [SerializeField, Min(0.5f)] private float abandonRange = 21f;
         [SerializeField, Min(0.1f)] private float attackRange = 2.55f;
+        [SerializeField, Min(0.2f)] private float searchDuration = 1.6f;
+        [SerializeField, Min(0.05f)] private float searchSpeed = 0.82f;
+        [SerializeField, Min(0.1f)] private float targetRefreshInterval = 0.25f;
+        [SerializeField, Min(0.25f)] private float pursuitTurnThreshold = 1.4f;
         [SerializeField, Min(0.05f)] private float hitRange = 0.68f;
         [SerializeField, Min(0f)] private float windUpDuration = 0.42f;
         [SerializeField, Min(0f)] private float attackRecovery = 1.15f;
@@ -45,9 +59,12 @@ namespace PixelOcean
         [SerializeField, Min(0f)] private float deathDelay = 0.3f;
         [SerializeField] private AudioClip hurtClip;
         [SerializeField, Range(0f, 1f)] private float hurtVolume = 1f;
+        [SerializeField, Min(0.08f)] private float hitReactionDuration = 3.28f;
+        [SerializeField, Range(0.01f, 0.35f)] private float hitReactionScalePunch = 0.14f;
+        [SerializeField, Range(0.05f, 0.6f)] private float hitCameraFocusDuration = 3.32f;
 
         [Header("Boss Death Sequence")]
-        [SerializeField, Min(0.5f)] private float bossDeathDuration = 3.6f;
+        [SerializeField, Min(0.5f)] private float bossDeathDuration = 5.6f;
         [SerializeField, Min(0f)] private float bossDeathSinkDistance = 2.8f;
         [SerializeField, Min(0f)] private float bossDeathShakeAmount = 0.11f;
         [SerializeField, Min(1f)] private float bossDeathShakeFrequency = 28f;
@@ -77,8 +94,8 @@ namespace PixelOcean
         [SerializeField, Range(0.05f, 0.8f)] private float slopeSampleDistance = 0.3f;
 
         [Header("Facing Stability")]
-        [SerializeField, Min(0.05f)] private float facingDeadZone = 0.32f;
-        [SerializeField, Min(0f)] private float minimumFacingHoldTime = 0.18f;
+        [SerializeField, Min(0.05f)] private float facingDeadZone = 0.55f;
+        [SerializeField, Min(0f)] private float minimumFacingHoldTime = 0.8f;
 
         [Header("Spatial Reaper Horn")]
         [SerializeField] private AudioClip reaperHornClip;
@@ -101,6 +118,9 @@ namespace PixelOcean
         private AudioSource audioSource;
         private float nextReaperHornTime;
 
+        [SerializeField] private AudioClip reaperDeathClip;
+        [SerializeField, Range(0f, 1f)] private float reaperDeathVolume = 1f;
+
         private CreatureState state;
         private int currentLane;
         private int targetLane;
@@ -122,12 +142,17 @@ namespace PixelOcean
         private bool hasTrackedSectionCentre;
         private float nextWaterRefreshTime;
         private float nextSkullSpawnTime;
+        private float nextTargetRefreshTime;
+        private float lastKnownTargetX;
+        private bool hasLastKnownTargetX;
 
         private readonly HashSet<GameObject> consumedProjectiles = new();
         private int currentHealth;
         private bool defeated;
         private float enragedUntil;
         private Coroutine hurtFlashRoutine;
+        private Coroutine hitReactionRoutine;
+        private Vector3 normalLocalScale;
         private Color normalSpriteColour = Color.white;
         private float nextVulnerableTime;
         private bool arenaEntranceActive;
@@ -252,6 +277,8 @@ namespace PixelOcean
 
         private void Awake()
         {
+            
+            normalLocalScale = transform.localScale;
             ResolveReferences();
             currentHealth = Mathf.Max(1, maximumHealth);
             nextVulnerableTime = Time.time + openingInvulnerability;
@@ -300,6 +327,12 @@ namespace PixelOcean
             audioSource.maxDistance = Mathf.Max(audioMinDistance + 0.1f, audioMaxDistance);
             audioSource.dopplerLevel = 0.1f;
             reaperHornClip ??= Resources.Load<AudioClip>("Audio/SFX/reaper_horn");
+
+            hurtClip ??= Resources.Load<AudioClip>("Audio/SFX/reaper_hurt");
+
+            AudioClip reaperDeathClip =
+                Resources.Load<AudioClip>("Audio/SFX/reaper_death");
+
             ScheduleReaperHorn();
             if (attackClip == null)
                 attackClip = Resources.Load<AudioClip>("Audio/SFX/shark_attack");
@@ -348,6 +381,7 @@ namespace PixelOcean
             float aggressionMultiplier = Time.time < enragedUntil ? 1.28f : 1f;
             float speed = state switch
             {
+                CreatureState.Search => searchSpeed * aggressionMultiplier,
                 CreatureState.Pursue => pursuitSpeed * aggressionMultiplier,
                 CreatureState.Lunge => lungeSpeed * aggressionMultiplier,
                 CreatureState.WindUp => cruiseSpeed * 0.15f,
@@ -520,11 +554,13 @@ namespace PixelOcean
             {
                 if (target == null || target.IsDead)
                 {
-                    state = CreatureState.Roam;
+                    BeginSearch(position);
                     return;
                 }
 
-                FaceTarget(position);
+                RememberTarget();
+                // Facing is committed during wind-up. Do not mirror every time the
+                // player crosses the Reaper's centre.
                 if (Time.time >= stateUntil)
                 {
                     animation?.Attack();
@@ -539,9 +575,9 @@ namespace PixelOcean
                 if (animation == null || !animation.IsAttacking)
                 {
                     state = CreatureState.Recover;
-                    stateUntil = Time.time + (Time.time < enragedUntil ? 0.35f : 0.55f);
+                    stateUntil = Time.time +
+                        (Time.time < enragedUntil ? 0.35f : 0.55f);
                     nextAttackTime = Time.time + attackRecovery;
-                    target = null;
                 }
                 return;
             }
@@ -549,36 +585,123 @@ namespace PixelOcean
             if (state == CreatureState.Recover)
             {
                 if (Time.time >= stateUntil)
+                    BeginSearch(position);
+                return;
+            }
+
+            if (state == CreatureState.Search)
+            {
+                // Search in the last known direction for a readable amount of time.
+                // Reacquire on a small interval rather than changing decisions every
+                // physics frame.
+                if (Time.time >= nextTargetRefreshTime)
+                {
+                    nextTargetRefreshTime =
+                        Time.time + Mathf.Max(0.05f, targetRefreshInterval);
+                    target = FindBestTarget(position);
+                }
+
+                if (target != null && !target.IsDead)
+                {
+                    state = CreatureState.Pursue;
+                    CommitFacingTowardTarget(position, true);
+                    return;
+                }
+
+                if (Time.time >= stateUntil)
+                {
+                    state = CreatureState.Roam;
+                    hasLastKnownTargetX = false;
+                }
+                return;
+            }
+
+            if (target == null ||
+                target.IsDead ||
+                Time.time >= nextTargetRefreshTime)
+            {
+                nextTargetRefreshTime =
+                    Time.time + Mathf.Max(0.05f, targetRefreshInterval);
+                target = FindBestTarget(position);
+            }
+
+            if (target == null)
+            {
+                if (hasLastKnownTargetX)
+                    BeginSearch(position);
+                else
                     state = CreatureState.Roam;
                 return;
             }
 
-            if (target == null || target.IsDead)
-                target = FindBestTarget(position);
+            float distance =
+                Vector2.Distance(position, target.transform.position);
 
-            if (target == null)
-            {
-                state = CreatureState.Roam;
-                return;
-            }
-
-            float distance = Vector2.Distance(position, target.transform.position);
             if (distance > abandonRange)
             {
+                RememberTarget();
                 target = null;
-                state = CreatureState.Roam;
+                BeginSearch(position);
                 return;
             }
 
             state = CreatureState.Pursue;
-            FaceTarget(position);
+            RememberTarget();
+            CommitFacingTowardTarget(position, false);
 
             bool sameLane = GetTargetLane(target) == currentLane;
-            if (sameLane && distance <= attackRange && Time.time >= nextAttackTime)
+            if (sameLane &&
+                distance <= attackRange &&
+                Time.time >= nextAttackTime)
             {
+                // Lock the facing direction for the whole attack sequence.
+                CommitFacingTowardTarget(position, true);
                 state = CreatureState.WindUp;
                 stateUntil = Time.time + windUpDuration;
             }
+        }
+
+        private void BeginSearch(Vector2 position)
+        {
+            RememberTarget();
+            target = null;
+            state = CreatureState.Search;
+            stateUntil = Time.time + Mathf.Max(0.2f, searchDuration);
+            nextTargetRefreshTime = Time.time;
+
+            if (hasLastKnownTargetX)
+                TryFaceHorizontalDelta(
+                    lastKnownTargetX - position.x,
+                    true);
+        }
+
+        private void RememberTarget()
+        {
+            if (target == null || target.IsDead)
+                return;
+
+            lastKnownTargetX = target.transform.position.x;
+            hasLastKnownTargetX = true;
+        }
+
+        private void CommitFacingTowardTarget(
+            Vector2 position,
+            bool force)
+        {
+            if (target == null)
+                return;
+
+            float deltaX =
+                target.transform.position.x - position.x;
+
+            if (!force &&
+                Mathf.Sign(deltaX) != direction &&
+                Mathf.Abs(deltaX) < pursuitTurnThreshold)
+            {
+                return;
+            }
+
+            TryFaceHorizontalDelta(deltaX, force);
         }
 
         private TinyWaveSurfer FindBestTarget(Vector2 position)
@@ -596,28 +719,30 @@ namespace PixelOcean
 
         private void FaceTarget(Vector2 position)
         {
-            if (target == null)
-                return;
-
-            TryFaceHorizontalDelta(target.transform.position.x - position.x);
+            CommitFacingTowardTarget(position, false);
         }
 
-        private void TryFaceHorizontalDelta(float deltaX)
+        private void TryFaceHorizontalDelta(
+            float deltaX,
+            bool force = false)
         {
-            // Preserve the last facing direction while the target is almost directly
-            // above/below this swimmer, and rate-limit genuine direction changes.
-            if (Mathf.Abs(deltaX) <= facingDeadZone)
+            if (!force && Mathf.Abs(deltaX) <= facingDeadZone)
                 return;
 
             float desiredDirection = Mathf.Sign(deltaX);
             if (Mathf.Approximately(desiredDirection, direction))
                 return;
 
-            if (Time.time - lastFacingChangeTime < minimumFacingHoldTime)
+            if (!force &&
+                Time.time - lastFacingChangeTime <
+                minimumFacingHoldTime)
+            {
                 return;
+            }
 
             direction = desiredDirection;
             lastFacingChangeTime = Time.time;
+
             if (spriteRenderer != null)
                 spriteRenderer.flipX = direction < 0f;
         }
@@ -675,6 +800,16 @@ namespace PixelOcean
                 StopCoroutine(hurtFlashRoutine);
             hurtFlashRoutine = StartCoroutine(HurtFlash());
 
+            if (hitReactionRoutine != null)
+                StopCoroutine(hitReactionRoutine);
+            hitReactionRoutine = StartCoroutine(HitReaction());
+
+            TinySurferCinematicCamera hitCamera =
+                FindFirstObjectByType<TinySurferCinematicCamera>();
+            hitCamera?.BeginBossHitFocus(
+                transform,
+                hitCameraFocusDuration);
+
             if (hurtClip != null && audioSource != null)
                 audioSource.PlayOneShot(hurtClip, hurtVolume);
 
@@ -689,6 +824,35 @@ namespace PixelOcean
             // SodaCanProjectile owns thrown-item hit detection and ricochet.
             // Keeping damage in one place prevents duplicate hits and prevents
             // this swimmer from absorbing the projectile before it can bounce.
+        }
+
+        private IEnumerator HitReaction()
+        {
+            Vector3 baseScale =
+                normalLocalScale == Vector3.zero
+                    ? transform.localScale
+                    : normalLocalScale;
+
+            float duration = Mathf.Max(0.08f, hitReactionDuration);
+            float elapsed = 0f;
+
+            while (elapsed < duration && !defeated)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                float wave = Mathf.Sin(t * Mathf.PI * 4f) * (1f - t);
+                float punch = 1f + wave * hitReactionScalePunch;
+
+                transform.localScale = new Vector3(
+                    baseScale.x * punch,
+                    baseScale.y * (2f - punch),
+                    baseScale.z);
+
+                yield return null;
+            }
+
+            transform.localScale = baseScale;
+            hitReactionRoutine = null;
         }
 
         private IEnumerator HurtFlash()
@@ -718,6 +882,9 @@ namespace PixelOcean
 
             defeated = true;
 
+            if (reaperDeathClip != null && audioSource != null)
+                audioSource.PlayOneShot(reaperDeathClip, reaperDeathVolume);
+                
             TinySurferCinematicCamera deathCamera =
                 FindFirstObjectByType<TinySurferCinematicCamera>();
             deathCamera?.BeginBossDeathFocus(transform);
@@ -732,6 +899,16 @@ namespace PixelOcean
             {
                 StopCoroutine(hurtFlashRoutine);
                 hurtFlashRoutine = null;
+            }
+
+            if (hitReactionRoutine != null)
+            {
+                StopCoroutine(hitReactionRoutine);
+                hitReactionRoutine = null;
+                transform.localScale =
+                    normalLocalScale == Vector3.zero
+                        ? transform.localScale
+                        : normalLocalScale;
             }
 
             Collider2D[] colliders = GetComponents<Collider2D>();

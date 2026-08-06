@@ -86,6 +86,8 @@ namespace PixelOcean
         private PixelWaterGPU[] cachedSimulations;
         private float nextSimulationBoundsRefreshTime;
         private Transform bossDeathFocusTarget;
+        private Transform bossHitFocusTarget;
+        private float bossHitFocusUntil;
 
         private bool cinematicActive;
         private Vector3 storedPosition;
@@ -108,6 +110,8 @@ namespace PixelOcean
         {
             surfer = target;
             bossDeathFocusTarget = null;
+            bossHitFocusTarget = null;
+            bossHitFocusUntil = 0f;
             followVelocity = Vector3.zero;
             lookAheadVelocity = Vector3.zero;
             smoothedLookAhead = Vector3.zero;
@@ -179,13 +183,24 @@ namespace PixelOcean
             if (surfer == null || !surfer.isActiveAndEnabled)
                 SelectPlayerSurfer();
 
-            bool focusingBoss = bossDeathFocusTarget != null;
+            if (bossHitFocusTarget != null &&
+                Time.unscaledTime >= bossHitFocusUntil)
+            {
+                bossHitFocusTarget = null;
+            }
+
+            Transform activeBossFocus =
+                bossDeathFocusTarget != null
+                    ? bossDeathFocusTarget
+                    : bossHitFocusTarget;
+
+            bool focusingBoss = activeBossFocus != null;
             if (!focusingBoss && surfer == null)
                 return;
 
             float deltaTime = Mathf.Max(Time.unscaledDeltaTime, 0.0001f);
             Vector3 surferPosition = focusingBoss
-                ? bossDeathFocusTarget.position
+                ? activeBossFocus.position
                 : surfer.transform.position;
 
             Vector3 desiredPosition;
@@ -341,12 +356,31 @@ namespace PixelOcean
             }
         }
 
+        public void BeginBossHitFocus(
+            Transform hitBoss,
+            float duration = 0.32f)
+        {
+            if (hitBoss == null || bossDeathFocusTarget != null)
+                return;
+
+            bossHitFocusTarget = hitBoss;
+            bossHitFocusUntil =
+                Time.unscaledTime + Mathf.Max(0.08f, duration);
+
+            followVelocity = Vector3.zero;
+            lookAheadVelocity = Vector3.zero;
+            smoothedLookAhead = Vector3.zero;
+            ResetCameraStability();
+        }
+
         public void BeginBossDeathFocus(Transform defeatedBoss)
         {
             if (defeatedBoss == null)
                 return;
 
             bossDeathFocusTarget = defeatedBoss;
+            bossHitFocusTarget = null;
+            bossHitFocusUntil = 0f;
             followVelocity = Vector3.zero;
             lookAheadVelocity = Vector3.zero;
             smoothedLookAhead = Vector3.zero;

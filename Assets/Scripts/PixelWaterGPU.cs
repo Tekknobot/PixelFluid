@@ -270,6 +270,8 @@ namespace PixelOcean
         private float simulationTime;
 
         [Header("Surfboard Coupling")]
+        [Tooltip("Physical board-to-particle coupling can slowly redistribute the finite GPU water mass and launch isolated particles. Keep this off for stable waves; surfing still uses sampled surface heights.")]
+        [SerializeField] private bool enableSurfboardParticleCoupling = false;
         [SerializeField, Range(0.01f, 0.25f)] private float boardParticlePadding = 0.002f;
         [SerializeField, Range(1f, 80f)] private float boardParticlePush = 8f;
         [SerializeField, Range(0f, 1f)] private float boardVelocityTransfer = 0.18f;
@@ -1588,6 +1590,7 @@ namespace PixelOcean
             // Only the foreground/master simulation interacts with the board.
             // Rear horizontal rows remain fully independent visual wave fields.
             bool boardActive =
+                enableSurfboardParticleCoupling &&
                 independentLayerIndex == 0 &&
                 surfboardTransform != null &&
                 surfboardBody != null;
