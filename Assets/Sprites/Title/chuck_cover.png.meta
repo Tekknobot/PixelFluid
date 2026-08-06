@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 72045fbfa72721e4bb8ccf00efa7e429
+guid: ad7659f2b186b3845a07e14dab52ef9b
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 8930161539772771865
-    second: they_surf_logotype-sheet_0
+      213: -7920360228780386361
+    second: chuck_cover_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: they_surf_logotype-sheet_0
+      name: chuck_cover_0
       rect:
         serializedVersion: 2
-        x: 15
-        y: 15
-        width: 226
-        height: 226
+        x: 83
+        y: 47
+        width: 602
+        height: 506
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 91ee20d3b9e4eeb70800000000000000
-      internalID: 8930161539772771865
+      spriteID: 7c7d966f55a351290800000000000000
+      internalID: -7920360228780386361
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      they_surf_logotype-sheet_0: 8930161539772771865
+      chuck_cover_0: -7920360228780386361
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
