@@ -1681,8 +1681,8 @@ namespace PixelOcean
                 "POLE POSITIONS",
                 20,
                 TextAlignmentOptions.Center);
-                heading.rectTransform.anchorMin = new Vector2(0.12f, 0.83f);
-                heading.rectTransform.anchorMax = new Vector2(0.99f, 0.97f);
+                heading.rectTransform.anchorMin = new Vector2(0.12f, 0.86f);
+                heading.rectTransform.anchorMax = new Vector2(0.99f, 1.0f);
             heading.rectTransform.offsetMin = heading.rectTransform.offsetMax = Vector2.zero;
             heading.color = new Color(0.72f, 0.9f, 0.94f, 1f);
 
