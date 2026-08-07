@@ -42,6 +42,8 @@ namespace PixelOcean
         public static bool RaceActive { get; private set; }
         public static bool IsTwoPlayerRace => Instance != null && Instance.twoPlayerRace;
         public static bool IsSelectingSurfer => Instance != null && Instance.selectionRoot != null;
+        private const int RaceHudCanvasOrder = 32750;
+        private const int RaceSelectionCanvasOrder = 32767;
 
         // Every selectable surfer also enters the race, so the player always has
         // a complete eight-surfer field to race against.
@@ -78,6 +80,22 @@ namespace PixelOcean
         private readonly Dictionary<string, Sprite> racePortraitCache = new();
         private float raceTimeRemaining;
         private const float PrototypeRaceSeconds = 180f;
+
+        [Header("Pole Position HUD Layout")]
+        [SerializeField] private Vector2 polePanelAnchorMin = new(0.025f, 0.70f);
+        [SerializeField] private Vector2 polePanelAnchorMax = new(0.975f, 0.95f);
+        [SerializeField, Range(0f, 1f)] private float poleFirstSlotCenter = 0.1715f;
+        [SerializeField, Range(0.02f, 0.2f)] private float poleSlotSpacing = 0.109f;
+        [SerializeField, Range(0f, 1f)] private float poleRowVerticalAnchor = 0.46f;
+        [SerializeField, Min(64f)] private float polePortraitSize = 64f;
+        [SerializeField, Min(48f)] private float poleInfoCellWidth = 140f;
+        [SerializeField, Min(24f)] private float poleInfoCellHeight = 60f;
+        [SerializeField, Min(0f)] private float polePortraitInfoGap = 5f;
+        [SerializeField] private Vector2 poleTextPadding = new(6f, 2f);
+        [SerializeField, Range(8, 40)] private int poleNameFontSize = 16;
+        [SerializeField, Range(8, 32)] private int poleDetailFontSize = 13;
+        [SerializeField, Min(0.1f)] private float polePositionSlideSpeed = 10f;
+
         private AudioSource musicSource;
         private Coroutine musicFadeCoroutine;
         private float nextRaceWeatherChangeTime;
@@ -150,6 +168,7 @@ namespace PixelOcean
 
         public void ShowSelection(SurferSlugPauseMenu menu)
         {
+            enabled = true;
             selectionMenu = menu;
 
             if (selectionMenu != null)
@@ -162,6 +181,7 @@ namespace PixelOcean
         {
             if (selectionRoot != null) Destroy(selectionRoot);
             EnsureCanvas();
+            canvas.sortingOrder = RaceSelectionCanvasOrder;
 
             // Keep the current racers selected when this screen is reopened.
             // The choices remain movable (not locked), but both controller
@@ -305,6 +325,8 @@ namespace PixelOcean
 
         public void BeginRace(string selectedSurfer, bool showHudImmediately = true)
         {
+            if (canvas != null)
+                canvas.sortingOrder = RaceHudCanvasOrder;
             twoPlayerRace = twoPlayerRace && !string.IsNullOrEmpty(secondPlayerSurfer);
             secondPlayerSurfer = twoPlayerRace ? secondPlayerSurfer : null;
             GameModeSession.SelectRaceMode();
@@ -327,6 +349,8 @@ namespace PixelOcean
 
         public void SetRaceHudVisible(bool visible)
         {
+            if (canvas != null)
+                canvas.sortingOrder = RaceHudCanvasOrder;
             if (raceHud != null)
                 raceHud.SetActive(visible);
         }
@@ -344,6 +368,9 @@ namespace PixelOcean
                     CloseSelection();
                 return;
             }
+
+            if (SurferSlugPauseMenu.GameplayPaused)
+                return;
 
             if (!RaceActive) return;
             raceTimeRemaining = Mathf.Max(0f, raceTimeRemaining - Time.deltaTime);
@@ -533,6 +560,8 @@ namespace PixelOcean
             // into gameplay, and only then enables the race HUD.
             Destroy(selectionRoot);
             selectionRoot = null;
+            if (canvas != null)
+                canvas.sortingOrder = RaceHudCanvasOrder;
 
             if (selectionMenu != null)
                 selectionMenu.BeginRaceMode(playerOneChoice);
@@ -586,6 +615,9 @@ namespace PixelOcean
                 Destroy(selectionRoot);
                 selectionRoot = null;
             }
+
+            if (canvas != null)
+                canvas.sortingOrder = RaceHudCanvasOrder;
 
             selectionMenu?.SetRaceSelectionPresentation(false);
             selectionMenu = null;
@@ -1636,8 +1668,8 @@ namespace PixelOcean
             panelObject.transform.SetParent(raceHud.transform, false);
 
             RectTransform panel = panelObject.GetComponent<RectTransform>();
-            panel.anchorMin = new Vector2(0.025f, 0.70f);
-            panel.anchorMax = new Vector2(0.975f, 0.95f);
+            panel.anchorMin = polePanelAnchorMin;
+            panel.anchorMax = polePanelAnchorMax;
             panel.offsetMin = panel.offsetMax = Vector2.zero;
 
             Image panelImage = panelObject.GetComponent<Image>();
@@ -1649,8 +1681,8 @@ namespace PixelOcean
                 "POLE POSITIONS",
                 20,
                 TextAlignmentOptions.Center);
-            heading.rectTransform.anchorMin = new Vector2(0.12f, 0.80f);
-            heading.rectTransform.anchorMax = new Vector2(0.99f, 0.94f);
+                heading.rectTransform.anchorMin = new Vector2(0.12f, 0.83f);
+                heading.rectTransform.anchorMax = new Vector2(0.99f, 0.97f);
             heading.rectTransform.offsetMin = heading.rectTransform.offsetMax = Vector2.zero;
             heading.color = new Color(0.72f, 0.9f, 0.94f, 1f);
 
@@ -1690,7 +1722,7 @@ namespace PixelOcean
                 standingRows.Add(CreateStandingRow(panelObject.transform, i));
         }
 
-        private static StandingRow CreateStandingRow(Transform parent, int index)
+        private StandingRow CreateStandingRow(Transform parent, int index)
         {
             GameObject rowObject = new GameObject(
                 $"Position {index + 1}",
@@ -1699,11 +1731,14 @@ namespace PixelOcean
             rowObject.transform.SetParent(parent, false);
 
             RectTransform row = rowObject.GetComponent<RectTransform>();
-            float centerX = 0.1715f + index * 0.109f;
-            row.anchorMin = row.anchorMax = new Vector2(centerX, 0.36f);
+            float centerX = poleFirstSlotCenter + index * poleSlotSpacing;
+            float rowHeight = polePortraitSize + polePortraitInfoGap + poleInfoCellHeight;
+            row.anchorMin = row.anchorMax = new Vector2(centerX, poleRowVerticalAnchor);
             row.pivot = new Vector2(0.5f, 0.5f);
             row.anchoredPosition = Vector2.zero;
-            row.sizeDelta = new Vector2(140f, 132f);
+            row.sizeDelta = new Vector2(
+                Mathf.Max(polePortraitSize, poleInfoCellWidth),
+                rowHeight);
             row.localScale = Vector3.one;
 
             Image background = rowObject.GetComponent<Image>();
@@ -1722,8 +1757,10 @@ namespace PixelOcean
             RectTransform portraitRect = portrait.rectTransform;
             portraitRect.anchorMin = portraitRect.anchorMax = new Vector2(0.5f, 0.5f);
             portraitRect.pivot = new Vector2(0.5f, 0.5f);
-            portraitRect.anchoredPosition = new Vector2(0f, 34f);
-            portraitRect.sizeDelta = new Vector2(64f, 64f);
+            portraitRect.anchoredPosition = new Vector2(
+                0f,
+                (poleInfoCellHeight + polePortraitInfoGap) * 0.5f);
+            portraitRect.sizeDelta = new Vector2(polePortraitSize, polePortraitSize);
             portraitRect.localScale = Vector3.one;
 
             // This is a separate, clipped cell below the portrait. Its contents
@@ -1737,31 +1774,39 @@ namespace PixelOcean
             RectTransform infoRect = infoObject.GetComponent<RectTransform>();
             infoRect.anchorMin = infoRect.anchorMax = new Vector2(0.5f, 0.5f);
             infoRect.pivot = new Vector2(0.5f, 0.5f);
-            infoRect.anchoredPosition = new Vector2(0f, -33f);
-            infoRect.sizeDelta = new Vector2(140f, 60f);
+            infoRect.anchoredPosition = new Vector2(
+                0f,
+                -(polePortraitSize + polePortraitInfoGap) * 0.5f);
+            infoRect.sizeDelta = new Vector2(poleInfoCellWidth, poleInfoCellHeight);
 
             Image infoCellImage = infoObject.GetComponent<Image>();
             infoCellImage.color = Color.clear;
             infoCellImage.raycastTarget = false;
 
-            TextMeshProUGUI rank = CreateText(infoObject.transform, string.Empty, 13, TextAlignmentOptions.Center);
+            float horizontalPadding = Mathf.Max(0f, poleTextPadding.x);
+            float verticalPadding = Mathf.Max(0f, poleTextPadding.y);
+
+            TextMeshProUGUI rank = CreateText(infoObject.transform, string.Empty, poleDetailFontSize, TextAlignmentOptions.Center);
             rank.rectTransform.anchorMin = new Vector2(0.02f, 0f);
             rank.rectTransform.anchorMax = new Vector2(0.48f, 0.52f);
-            rank.rectTransform.offsetMin = rank.rectTransform.offsetMax = Vector2.zero;
+            rank.rectTransform.offsetMin = new Vector2(horizontalPadding, verticalPadding);
+            rank.rectTransform.offsetMax = new Vector2(-2f, -verticalPadding);
             rank.overflowMode = TextOverflowModes.Truncate;
             ApplyPortraitTextOutline(rank);
 
-            TextMeshProUGUI name = CreateText(infoObject.transform, string.Empty, 16, TextAlignmentOptions.Center);
+            TextMeshProUGUI name = CreateText(infoObject.transform, string.Empty, poleNameFontSize, TextAlignmentOptions.Center);
             name.rectTransform.anchorMin = new Vector2(0.02f, 0.52f);
             name.rectTransform.anchorMax = new Vector2(0.98f, 1f);
-            name.rectTransform.offsetMin = name.rectTransform.offsetMax = Vector2.zero;
+            name.rectTransform.offsetMin = new Vector2(horizontalPadding, verticalPadding);
+            name.rectTransform.offsetMax = new Vector2(-horizontalPadding, -verticalPadding);
             name.overflowMode = TextOverflowModes.Truncate;
             ApplyPortraitTextOutline(name);
 
-            TextMeshProUGUI distance = CreateText(infoObject.transform, string.Empty, 13, TextAlignmentOptions.Center);
+            TextMeshProUGUI distance = CreateText(infoObject.transform, string.Empty, poleDetailFontSize, TextAlignmentOptions.Center);
             distance.rectTransform.anchorMin = new Vector2(0.48f, 0f);
             distance.rectTransform.anchorMax = new Vector2(0.98f, 0.52f);
-            distance.rectTransform.offsetMin = distance.rectTransform.offsetMax = Vector2.zero;
+            distance.rectTransform.offsetMin = new Vector2(2f, verticalPadding);
+            distance.rectTransform.offsetMax = new Vector2(-horizontalPadding, -verticalPadding);
             distance.overflowMode = TextOverflowModes.Truncate;
             distance.color = new Color(0.72f, 0.88f, 0.92f, 1f);
             ApplyPortraitTextOutline(distance);
@@ -1803,11 +1848,11 @@ namespace PixelOcean
 
                 row.Background.gameObject.SetActive(true);
                 Vector2 targetAnchor = new Vector2(
-                    0.1715f + rankIndex * 0.109f,
-                    0.36f);
+                    poleFirstSlotCenter + rankIndex * poleSlotSpacing,
+                    poleRowVerticalAnchor);
                 float blend = snap
                     ? 1f
-                    : 1f - Mathf.Exp(-10f * Time.unscaledDeltaTime);
+                    : 1f - Mathf.Exp(-polePositionSlideSpeed * Time.unscaledDeltaTime);
                 Vector2 smoothAnchor = Vector2.Lerp(
                     row.Root.anchorMin,
                     targetAnchor,
@@ -1817,7 +1862,9 @@ namespace PixelOcean
                 row.Portrait.sprite = GetRacePortrait(racer.Name);
                 row.Portrait.enabled = row.Portrait.sprite != null;
                 if (row.Portrait.enabled)
+                {
                     row.Portrait.SetNativeSize();
+                }
                 row.Rank.text = $"POS {rankIndex + 1}";
                 row.Name.text = racer.Name.ToUpperInvariant();
                 row.Distance.text = $"{racer.Distance:0.0}m";
@@ -1865,7 +1912,7 @@ namespace PixelOcean
             if (canvas != null) return;
             GameObject go = new GameObject("Race Mode Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
             DontDestroyOnLoad(go);
-            canvas = go.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.overrideSorting = true; canvas.sortingOrder = 32767;
+            canvas = go.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.overrideSorting = true; canvas.sortingOrder = RaceHudCanvasOrder;
             CanvasScaler scaler = go.GetComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize; scaler.referenceResolution = new Vector2(1920f, 1080f);
         }
 
