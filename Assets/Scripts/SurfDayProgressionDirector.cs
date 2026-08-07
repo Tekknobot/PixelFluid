@@ -873,8 +873,8 @@ namespace PixelOcean
             {
                 finalWaveStarted = true;
                 BeginChapter(Chapter.FinalWave,
-                    currentDay >= 4 ? "THE ISLAND ON THE HORIZON" : currentDay == 3 ? "THE LAST ECHO" : "THE LAST WAVE",
-                    currentDay >= 4 ? "FOLLOW THE TRANSMISSION TO ITS SOURCE." : currentDay == 3 ? "SURVIVE UNTIL THE OCEAN FALLS SILENT." : $"SURVIVE {finalSurvivalSeconds} SECONDS.");
+                    currentDay >= 4 ? "THE ISLAND ON THE HORIZON" : currentDay == 3 ? "THE LAST ECHO" : currentDay == 2 ? "DUCK STORM" : "THE LAST WAVE",
+                    currentDay >= 4 ? "FOLLOW THE TRANSMISSION TO ITS SOURCE." : currentDay == 3 ? "SURVIVE UNTIL THE OCEAN FALLS SILENT." : currentDay == 2 ? "BREAK THROUGH THE ARMOURED FLOCK." : $"SURVIVE {finalSurvivalSeconds} SECONDS.");
                 if (pendingBossEncounter == null)
                 {
                     pendingBossEncounter = StartCoroutine(
@@ -890,8 +890,8 @@ namespace PixelOcean
             if ((distanceTravelled >= stormDistance || runTime >= stormBeginsAt) && chapter < Chapter.Storm)
             {
                 BeginChapter(Chapter.Storm,
-                    currentDay >= 4 ? "ENCRYPTED WEATHER" : currentDay == 3 ? "SIGNAL IN THE STORM" : "STORM FRONT",
-                    currentDay >= 4 ? "THE TRANSMISSION IS DISTORTING THE SEA AND SKY." : currentDay == 3 ? "FOLLOW THE DISTANT LIGHT THROUGH THE BLACK WATER." : "KEEP MOVING. RESCUE ANYONE LEFT OUT THERE.");
+                    currentDay >= 4 ? "ENCRYPTED WEATHER" : currentDay == 3 ? "SIGNAL IN THE STORM" : currentDay == 2 ? "RED WEATHER" : "STORM FRONT",
+                    currentDay >= 4 ? "THE TRANSMISSION IS DISTORTING THE SEA AND SKY." : currentDay == 3 ? "FOLLOW THE DISTANT LIGHT THROUGH THE BLACK WATER." : currentDay == 2 ? "OUTRUN THE HUNTERS ABOVE AND BELOW." : "KEEP MOVING. RESCUE ANYONE LEFT OUT THERE.");
                 EnsureRain().SetSituation(ProceduralRainSystem.RainSituation.HeavyRain);
                 if (currentDay == 1)
                     SpawnMajor<GiantSquidLaneSpawner>("Storm Squid", spawner => spawner.SpawnSquid(true));
@@ -911,8 +911,8 @@ namespace PixelOcean
             if ((distanceTravelled >= strangeTideDistance || runTime >= strangeTideBeginsAt) && chapter < Chapter.StrangeTide)
             {
                 BeginChapter(Chapter.StrangeTide,
-                    currentDay >= 4 ? "RECOVERY SIGNAL" : currentDay == 3 ? "THE SHADOW RETURNS" : "STRANGE TIDE",
-                    currentDay >= 4 ? "ALIEN MACHINERY IS ACTIVE BENEATH THE TRANSMISSION." : currentDay == 3 ? "IT COPIES YOU. DO NOT LET IT TURN YOU BACK." : "SOMETHING IS WATCHING THE WATER.");
+                    currentDay >= 4 ? "RECOVERY SIGNAL" : currentDay == 3 ? "THE SHADOW RETURNS" : currentDay == 2 ? "EYES IN THE SKY" : "STRANGE TIDE",
+                    currentDay >= 4 ? "ALIEN MACHINERY IS ACTIVE BENEATH THE TRANSMISSION." : currentDay == 3 ? "IT COPIES YOU. DO NOT LET IT TURN YOU BACK." : currentDay == 2 ? "THE HELICOPTER HAS LOCKED ON." : "SOMETHING IS WATCHING THE WATER.");
                 if (currentDay == 1)
                     UnlockAbility(SurfAbility.Rotation | SurfAbility.Flip |
                         SurfAbility.DoubleChain | SurfAbility.TripleChain,
@@ -942,8 +942,8 @@ namespace PixelOcean
             if ((distanceTravelled >= dangerDistance || runTime >= dangerBeginsAt) && chapter < Chapter.DangerousWater)
             {
                 BeginChapter(Chapter.DangerousWater,
-                    currentDay >= 4 ? "CLASSIFIED CURRENT" : currentDay == 3 ? "MEMORY CURRENT" : "DANGEROUS WATER",
-                    currentDay >= 4 ? "THE OUTPOST SIGNAL IS DRAWING PREDATORS AND MACHINES." : currentDay == 3 ? "OLD THREATS RETURN IN THE WRONG ORDER." : "SAVE 3 SWIMMERS. USE CANS TO FIGHT BACK.");
+                    currentDay >= 4 ? "CLASSIFIED CURRENT" : currentDay == 3 ? "MEMORY CURRENT" : currentDay == 2 ? "BLOOD CURRENT" : "DANGEROUS WATER",
+                    currentDay >= 4 ? "THE OUTPOST SIGNAL IS DRAWING PREDATORS AND MACHINES." : currentDay == 3 ? "OLD THREATS RETURN IN THE WRONG ORDER." : currentDay == 2 ? "SURVIVE THE NEW PREDATORS." : "SAVE 3 SWIMMERS. USE CANS TO FIGHT BACK.");
                 if (currentDay == 1)
                     UnlockAbility(SurfAbility.ChargedJump,
                         "CHARGED JUMP UNLOCKED",
@@ -966,8 +966,8 @@ namespace PixelOcean
             if ((distanceTravelled >= rescueDistance || runTime >= rescueBeginsAt) && chapter < Chapter.FirstRescue)
             {
                 BeginChapter(Chapter.FirstRescue,
-                    currentDay >= 4 ? "NO AUTHORIZED TRAFFIC" : currentDay == 3 ? "A FAMILIAR VOICE" : "DISTRESS CALL",
-                    currentDay >= 4 ? "RESCUE THE SWIMMER CAUGHT NEAR THE RESTRICTED ROUTE." : currentDay == 3 ? "SAVE THE SWIMMER THE OCEAN BROUGHT BACK." : "FIND AND SAVE THE STRUGGLING SWIMMER.");
+                    currentDay >= 4 ? "NO AUTHORIZED TRAFFIC" : currentDay == 3 ? "A FAMILIAR VOICE" : currentDay == 2 ? "AFTER THE WRECK" : "DISTRESS CALL",
+                    currentDay >= 4 ? "RESCUE THE SWIMMER CAUGHT NEAR THE RESTRICTED ROUTE." : currentDay == 3 ? "SAVE THE SWIMMER THE OCEAN BROUGHT BACK." : currentDay == 2 ? "PULL THE SURVIVOR OUT OF THE DEEP CURRENT." : "FIND AND SAVE THE STRUGGLING SWIMMER.");
                 SpawnRescueSet(1);
             }
 
@@ -1530,7 +1530,7 @@ namespace PixelOcean
 
             if (currentDay >= 2)
             {
-                learningObjective = "Use the full moveset to build Flow and survive.";
+                learningObjective = string.Empty;
                 return;
             }
 
@@ -1673,7 +1673,7 @@ namespace PixelOcean
             BoomboxSurferSpawner.RestoreForStage(
                 currentDay,
                 chapter,
-                showHudNotice: true);
+                showHudNotice: currentDay == 1);
         }
 
         private void SpawnUfo()

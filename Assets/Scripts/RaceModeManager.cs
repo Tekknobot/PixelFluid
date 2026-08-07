@@ -253,9 +253,7 @@ namespace PixelOcean
         {
             if (selectionRoot != null && CancelPressed())
             {
-                Destroy(selectionRoot);
-                selectionRoot = null;
-                selectionMenu?.SetRaceSelectionPresentation(false);
+                CloseSelection();
                 return;
             }
 
@@ -290,9 +288,19 @@ namespace PixelOcean
             if (selectionRoot == null || !CancelPressed())
                 return;
 
-            Destroy(selectionRoot);
-            selectionRoot = null;
+            CloseSelection();
+        }
+
+        public void CloseSelection()
+        {
+            if (selectionRoot != null)
+            {
+                Destroy(selectionRoot);
+                selectionRoot = null;
+            }
+
             selectionMenu?.SetRaceSelectionPresentation(false);
+            selectionMenu = null;
         }
 
         private static bool CancelPressed()

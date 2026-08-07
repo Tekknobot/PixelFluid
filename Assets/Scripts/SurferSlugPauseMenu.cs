@@ -220,6 +220,14 @@ namespace PixelOcean
 
             UpdateSaveWarningSelectionOutline();
 
+            RaceModeManager raceManager = RaceModeManager.Instance;
+            if (raceManager != null && raceManager.IsSelectionVisible && SubPanelBackPressed())
+            {
+                raceManager.CloseSelection();
+                inputReadyTime = Time.unscaledTime + 0.18f;
+                return;
+            }
+
             if (menuVisible && saveWarningPanel != null && saveWarningPanel.activeSelf && SubPanelBackPressed())
             {
                 HideSaveWarning();
@@ -1120,6 +1128,7 @@ namespace PixelOcean
 
             if (!selectionVisible)
             {
+                inputReadyTime = Time.unscaledTime + 0.18f;
                 ConfigureMainMenuNavigation();
                 Select(raceModeButton != null && raceModeButton.interactable
                     ? raceModeButton

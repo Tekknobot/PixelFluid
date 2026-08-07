@@ -17,10 +17,12 @@ namespace PixelOcean
 
         [Header("Flight")]
         [SerializeField] private Vector2 skyViewportY = new(0.72f, 0.91f);
-        [SerializeField] private Vector2 patrolSpeedRange = new(1.15f, 2.05f);
-        [SerializeField] private Vector2 patrolDecisionRange = new(1.4f, 3.2f);
-        [SerializeField] private float movementSmoothing = 4.2f;
+        [SerializeField] private Vector2 patrolSpeedRange = new(1.8f, 2.8f);
+        [SerializeField] private Vector2 patrolDecisionRange = new(0.8f, 1.8f);
+        [SerializeField] private float movementSmoothing = 6.5f;
         [SerializeField] private float bankAngle = 8f;
+        [SerializeField, Range(0.1f, 0.45f)] private float patrolHorizontalRadius = 0.24f;
+        [SerializeField, Range(0.15f, 0.5f)] private float maximumTargetViewportSeparation = 0.32f;
 
         [Header("Spatial Audio")]
         [SerializeField] private AudioClip movementClip;
@@ -188,14 +190,31 @@ namespace PixelOcean
                 return;
             }
 
-            if (decisionTimer <= 0f || Vector2.Distance(transform.position, desiredPosition) < 0.25f)
+            bool targetTooFar = false;
+            if (target != null && worldCamera != null)
+            {
+                Vector3 helicopterViewport = worldCamera.WorldToViewportPoint(transform.position);
+                Vector3 targetViewport = worldCamera.WorldToViewportPoint(target.transform.position);
+                targetTooFar = Mathf.Abs(helicopterViewport.x - targetViewport.x) > maximumTargetViewportSeparation;
+            }
+
+            if (decisionTimer <= 0f || targetTooFar || Vector2.Distance(transform.position, desiredPosition) < 0.25f)
                 PickPatrolTarget();
         }
 
         private void PickPatrolTarget()
         {
+            float targetViewportX = 0.5f;
+            if (target != null && worldCamera != null)
+                targetViewportX = worldCamera.WorldToViewportPoint(target.transform.position).x;
+
+            float patrolViewportX = Mathf.Clamp(
+                targetViewportX + Random.Range(-patrolHorizontalRadius, patrolHorizontalRadius),
+                0.10f,
+                0.90f);
+
             desiredPosition = new Vector3(
-                ViewportWorldX(Random.Range(0.08f, 0.92f)),
+                ViewportWorldX(patrolViewportX),
                 ViewportWorldY(Random.Range(skyViewportY.x, skyViewportY.y)),
                 0f);
             moveSpeed = Random.Range(patrolSpeedRange.x, patrolSpeedRange.y);
