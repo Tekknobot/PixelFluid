@@ -24,6 +24,16 @@ namespace PixelOcean
             public float StartX;
             public float LastX;
             public bool Player;
+            public int PlayerSlot;
+        }
+
+        private sealed class StandingRow
+        {
+            public Image Background;
+            public Image Portrait;
+            public TextMeshProUGUI Rank;
+            public TextMeshProUGUI Name;
+            public TextMeshProUGUI Distance;
         }
 
         public static RaceModeManager Instance { get; private set; }
@@ -54,7 +64,8 @@ namespace PixelOcean
         private GameObject selectionRoot;
         private GameObject raceHud;
         private TextMeshProUGUI timerLabel;
-        private TextMeshProUGUI standingsLabel;
+        private readonly List<StandingRow> standingRows = new();
+        private readonly Dictionary<string, Sprite> racePortraitCache = new();
         private float raceTimeRemaining;
         private const float PrototypeRaceSeconds = 180f;
         private AudioSource musicSource;
@@ -533,7 +544,8 @@ namespace PixelOcean
                     StartX = startX,
                     LastX = startX,
                     Distance = 0f,
-                    Player = player
+                    Player = player,
+                    PlayerSlot = player ? playerIndex + 1 : 0
                 });
             }
         }
@@ -584,7 +596,9 @@ namespace PixelOcean
             foreach (Racer racer in racers.Where(r => r.Player && r != leader && r.Surfer != null && !r.Surfer.IsDead))
             {
                 if (leader.Surfer.transform.position.x - racer.Surfer.transform.position.x > 8f)
+                {
                     racer.Surfer.CatchUpToRaceLeader(leader.Surfer.transform.position.x - 4.5f, racer.Surfer.CurrentWave != null ? racer.Surfer.CurrentWave.IndependentLayerIndex : 0);
+                }
             }
         }
 
@@ -774,8 +788,7 @@ namespace PixelOcean
             RaceActive = false;
             racers.Sort((a, b) => b.Distance.CompareTo(a.Distance));
             if (timerLabel != null) timerLabel.text = "RACE COMPLETE";
-            if (standingsLabel != null)
-                standingsLabel.text = string.Join("\n", racers.Select((r, i) => $"{i + 1}. {r.Name.ToUpperInvariant()}  {r.Distance:0.0}m"));
+            RefreshStandingRows(racers);
             BeginMusicFadeOut();
             if (ecosystemRoot != null)
             {
@@ -1482,32 +1495,7 @@ namespace PixelOcean
             root.offsetMin = Vector2.zero;
             root.offsetMax = Vector2.zero;
 
-            // Header
-            TextMeshProUGUI modeLabel =
-                CreateText(raceHud.transform, "RACE MODE", 24, TextAlignmentOptions.Top);
-
-            modeLabel.rectTransform.anchorMin = new Vector2(0.40f, 0.955f);
-            modeLabel.rectTransform.anchorMax = new Vector2(0.60f, 0.995f);
-            modeLabel.rectTransform.offsetMin = Vector2.zero;
-            modeLabel.rectTransform.offsetMax = Vector2.zero;
-
-            // Timer (lowered to create spacing)
-            timerLabel =
-                CreateText(raceHud.transform, "1:15", 40, TextAlignmentOptions.Top);
-
-            timerLabel.rectTransform.anchorMin = new Vector2(0.35f, 0.81f);
-            timerLabel.rectTransform.anchorMax = new Vector2(0.65f, 0.91f);
-            timerLabel.rectTransform.offsetMin = Vector2.zero;
-            timerLabel.rectTransform.offsetMax = Vector2.zero;
-
-            // Standings
-            standingsLabel =
-                CreateText(raceHud.transform, string.Empty, 23, TextAlignmentOptions.TopLeft);
-
-            standingsLabel.rectTransform.anchorMin = new Vector2(0.02f, 0.68f);
-            standingsLabel.rectTransform.anchorMax = new Vector2(0.28f, 0.94f);
-            standingsLabel.rectTransform.offsetMin = Vector2.zero;
-            standingsLabel.rectTransform.offsetMax = Vector2.zero;
+            BuildPolePositionsPanel();
         }
 
         private void RefreshHud()
@@ -1517,11 +1505,183 @@ namespace PixelOcean
                 int seconds = Mathf.CeilToInt(raceTimeRemaining);
                 timerLabel.text = $"{seconds / 60}:{seconds % 60:00}";
             }
-            if (standingsLabel != null)
+            RefreshStandingRows(racers.OrderByDescending(r => r.Distance).ToArray());
+        }
+
+        private void BuildPolePositionsPanel()
+        {
+            standingRows.Clear();
+
+            GameObject panelObject = new GameObject(
+                "Pole Positions Panel",
+                typeof(RectTransform),
+                typeof(Image));
+            panelObject.transform.SetParent(raceHud.transform, false);
+
+            RectTransform panel = panelObject.GetComponent<RectTransform>();
+            panel.anchorMin = new Vector2(0.025f, 0.815f);
+            panel.anchorMax = new Vector2(0.975f, 0.985f);
+            panel.offsetMin = panel.offsetMax = Vector2.zero;
+
+            Image panelImage = panelObject.GetComponent<Image>();
+            panelImage.color = new Color(0f, 0.025f, 0.04f, 0.78f);
+            panelImage.raycastTarget = false;
+
+            TextMeshProUGUI heading = CreateText(
+                panelObject.transform,
+                "POLE POSITIONS",
+                20,
+                TextAlignmentOptions.Center);
+            heading.rectTransform.anchorMin = new Vector2(0.12f, 0.78f);
+            heading.rectTransform.anchorMax = new Vector2(0.99f, 0.98f);
+            heading.rectTransform.offsetMin = heading.rectTransform.offsetMax = Vector2.zero;
+            heading.color = new Color(0.72f, 0.9f, 0.94f, 1f);
+
+            GameObject timerCard = new GameObject(
+                "Race Timer Card",
+                typeof(RectTransform),
+                typeof(Image));
+            timerCard.transform.SetParent(panelObject.transform, false);
+            RectTransform timerCardRect = timerCard.GetComponent<RectTransform>();
+            timerCardRect.anchorMin = new Vector2(0.012f, 0.08f);
+            timerCardRect.anchorMax = new Vector2(0.112f, 0.76f);
+            timerCardRect.offsetMin = timerCardRect.offsetMax = Vector2.zero;
+            timerCard.GetComponent<Image>().color = new Color(0.01f, 0.12f, 0.15f, 0.94f);
+
+            TextMeshProUGUI timerCaption = CreateText(
+                timerCard.transform,
+                "TIME",
+                15,
+                TextAlignmentOptions.Center);
+            timerCaption.rectTransform.anchorMin = new Vector2(0f, 0.62f);
+            timerCaption.rectTransform.anchorMax = new Vector2(1f, 0.96f);
+            timerCaption.rectTransform.offsetMin = timerCaption.rectTransform.offsetMax = Vector2.zero;
+            timerCaption.color = new Color(0.62f, 0.86f, 0.91f, 1f);
+
+            timerLabel = CreateText(
+                timerCard.transform,
+                "3:00",
+                34,
+                TextAlignmentOptions.Center);
+            timerLabel.rectTransform.anchorMin = new Vector2(0f, 0.04f);
+            timerLabel.rectTransform.anchorMax = new Vector2(1f, 0.68f);
+            timerLabel.rectTransform.offsetMin = timerLabel.rectTransform.offsetMax = Vector2.zero;
+
+            for (int i = 0; i < Roster.Length; i++)
+                standingRows.Add(CreateStandingRow(panelObject.transform, i));
+        }
+
+        private static StandingRow CreateStandingRow(Transform parent, int index)
+        {
+            GameObject rowObject = new GameObject(
+                $"Position {index + 1}",
+                typeof(RectTransform),
+                typeof(Image));
+            rowObject.transform.SetParent(parent, false);
+
+            RectTransform row = rowObject.GetComponent<RectTransform>();
+            float left = 0.12f + index * 0.109f;
+            row.anchorMin = new Vector2(left, 0.08f);
+            row.anchorMax = new Vector2(left + 0.103f, 0.76f);
+            row.offsetMin = row.offsetMax = Vector2.zero;
+
+            Image background = rowObject.GetComponent<Image>();
+            background.color = index % 2 == 0
+                ? new Color(0.025f, 0.09f, 0.115f, 0.88f)
+                : new Color(0.015f, 0.065f, 0.085f, 0.88f);
+            background.raycastTarget = false;
+
+            GameObject portraitObject = new GameObject(
+                "Portrait",
+                typeof(RectTransform),
+                typeof(Image));
+            portraitObject.transform.SetParent(rowObject.transform, false);
+            Image portrait = portraitObject.GetComponent<Image>();
+            portrait.preserveAspect = true;
+            portrait.raycastTarget = false;
+            RectTransform portraitRect = portrait.rectTransform;
+            portraitRect.anchorMin = portraitRect.anchorMax = new Vector2(0f, 0.5f);
+            portraitRect.pivot = new Vector2(0f, 0.5f);
+            portraitRect.anchoredPosition = new Vector2(6f, 0f);
+            portraitRect.sizeDelta = new Vector2(76f, 76f);
+
+            TextMeshProUGUI rank = CreateText(rowObject.transform, string.Empty, 23, TextAlignmentOptions.MidlineLeft);
+            rank.rectTransform.anchorMin = new Vector2(0.46f, 0.62f);
+            rank.rectTransform.anchorMax = new Vector2(0.96f, 0.98f);
+            rank.rectTransform.offsetMin = rank.rectTransform.offsetMax = Vector2.zero;
+
+            TextMeshProUGUI name = CreateText(rowObject.transform, string.Empty, 15, TextAlignmentOptions.MidlineLeft);
+            name.rectTransform.anchorMin = new Vector2(0.46f, 0.31f);
+            name.rectTransform.anchorMax = new Vector2(0.98f, 0.65f);
+            name.rectTransform.offsetMin = name.rectTransform.offsetMax = Vector2.zero;
+
+            TextMeshProUGUI distance = CreateText(rowObject.transform, string.Empty, 14, TextAlignmentOptions.MidlineLeft);
+            distance.rectTransform.anchorMin = new Vector2(0.46f, 0.03f);
+            distance.rectTransform.anchorMax = new Vector2(0.98f, 0.34f);
+            distance.rectTransform.offsetMin = distance.rectTransform.offsetMax = Vector2.zero;
+            distance.color = new Color(0.72f, 0.88f, 0.92f, 1f);
+
+            return new StandingRow
             {
-                var ordered = racers.OrderByDescending(r => r.Distance).ToArray();
-                standingsLabel.text = string.Join("\n", ordered.Select((r, i) => $"{i + 1}. {(r.Player ? "> " : string.Empty)}{r.Name.ToUpperInvariant()}  {r.Distance:0.0}m"));
+                Background = background,
+                Portrait = portrait,
+                Rank = rank,
+                Name = name,
+                Distance = distance
+            };
+        }
+
+        private void RefreshStandingRows(IReadOnlyList<Racer> ordered)
+        {
+            for (int i = 0; i < standingRows.Count; i++)
+            {
+                StandingRow row = standingRows[i];
+                if (i >= ordered.Count)
+                {
+                    row.Background.gameObject.SetActive(false);
+                    continue;
+                }
+
+                row.Background.gameObject.SetActive(true);
+                Racer racer = ordered[i];
+                row.Portrait.sprite = GetRacePortrait(racer.Name);
+                row.Portrait.enabled = row.Portrait.sprite != null;
+                row.Rank.text = (i + 1).ToString();
+                row.Name.text = racer.Name.ToUpperInvariant();
+                row.Distance.text = $"{racer.Distance:0.0}m";
+
+                if (racer.PlayerSlot == 1)
+                {
+                    row.Background.color = new Color(0.01f, 0.18f, 0.22f, 0.94f);
+                    row.Rank.color = row.Name.color = new Color(0.1f, 0.95f, 1f, 1f);
+                }
+                else if (racer.PlayerSlot == 2)
+                {
+                    row.Background.color = new Color(0.22f, 0.015f, 0.05f, 0.94f);
+                    row.Rank.color = row.Name.color = new Color(1f, 0.08f, 0.25f, 1f);
+                }
+                else
+                {
+                    row.Background.color = i % 2 == 0
+                        ? new Color(0.025f, 0.09f, 0.115f, 0.88f)
+                        : new Color(0.015f, 0.065f, 0.085f, 0.88f);
+                    row.Rank.color = row.Name.color = Color.white;
+                }
             }
+        }
+
+        private Sprite GetRacePortrait(string racerName)
+        {
+            if (racePortraitCache.TryGetValue(racerName, out Sprite cached))
+                return cached;
+
+            string path = "RaceSurfers/Portraits/" + racerName.ToLowerInvariant();
+            Sprite[] portraits = Resources.LoadAll<Sprite>(path);
+            Sprite portrait = portraits != null && portraits.Length > 0
+                ? portraits[0]
+                : Resources.Load<Sprite>(path);
+            racePortraitCache[racerName] = portrait;
+            return portrait;
         }
 
         private void EnsureCanvas()
