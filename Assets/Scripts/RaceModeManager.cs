@@ -367,9 +367,20 @@ namespace PixelOcean
         {
             if (!playerOneLocked) return;
             if (playerTwoJoined && (!playerTwoLocked || playerOneChoice == playerTwoChoice)) return;
-            twoPlayerRace = playerTwoJoined; secondPlayerSurfer = playerTwoChoice;
-            Destroy(selectionRoot); selectionRoot = null; selectionMenu?.SetRaceSelectionPresentation(false);
-            BeginRace(playerOneChoice);
+            twoPlayerRace = playerTwoJoined;
+            secondPlayerSurfer = playerTwoChoice;
+
+            // Keep the title presentation suppressed and hand the confirmed
+            // choices back to the pause menu. Its existing transition builds
+            // the race behind an opaque cover, animates the title away, fades
+            // into gameplay, and only then enables the race HUD.
+            Destroy(selectionRoot);
+            selectionRoot = null;
+
+            if (selectionMenu != null)
+                selectionMenu.BeginRaceMode(playerOneChoice);
+            else
+                BeginRace(playerOneChoice);
         }
 
         private void RefreshPlayerFrames()
