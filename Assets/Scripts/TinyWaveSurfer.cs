@@ -376,6 +376,9 @@ namespace PixelOcean
         [Header("Reaction Audio")]
         [SerializeField] private AudioClip humanDeathClip;
         [SerializeField] private AudioClip maleHurtClip;
+        [SerializeField] private AudioClip womanDeathClip;
+        [SerializeField] private AudioClip womanHurtClip;
+        private bool useWomanReactionAudio;
         [SerializeField] private AudioClip healthUpClip;
         [SerializeField, Range(0f, 1f)] private float hurtSoundVolume = 1f;
         [SerializeField, Range(0f, 1f)] private float healthUpSoundVolume = 1f;
@@ -728,6 +731,10 @@ namespace PixelOcean
                 humanDeathClip = Resources.Load<AudioClip>("Audio/SFX/human_death");
             if (maleHurtClip == null)
                 maleHurtClip = Resources.Load<AudioClip>("Audio/SFX/male_hurt");
+            if (womanDeathClip == null)
+                womanDeathClip = Resources.Load<AudioClip>("Audio/SFX/woman_death");
+            if (womanHurtClip == null)
+                womanHurtClip = Resources.Load<AudioClip>("Audio/SFX/woman_hurt");
             if (healthUpClip == null)
                 healthUpClip = Resources.Load<AudioClip>("Audio/SFX/health_up");
             if (waterSlashClip == null) waterSlashClip = Resources.Load<AudioClip>("Audio/SFX/water_slash");
@@ -957,8 +964,7 @@ namespace PixelOcean
             localRideX = transform.position.x;
             // A strong red-only flash clearly communicates damage without washing the sprite white.
             BeginSpriteReaction(hitFlashColor, hitFlashDuration, hitFlashInterval);
-            if (maleHurtClip != null && deathAudioSource != null)
-                deathAudioSource.PlayOneShot(maleHurtClip, hurtSoundVolume);
+            PlayHurtReactionAudio();
             if (speechBubble != null) speechBubble.HideImmediate();
 
             if (currentHealth <= 0)
@@ -1002,8 +1008,7 @@ namespace PixelOcean
             // Restart a short reaction on every combo beat instead of waiting for
             // the normal hurt cooldown or the previous flash to finish.
             BeginSpriteReaction(hitFlashColor, 0.14f, 0.035f);
-            if (maleHurtClip != null && deathAudioSource != null)
-                deathAudioSource.PlayOneShot(maleHurtClip, hurtSoundVolume);
+            PlayHurtReactionAudio();
             if (speechBubble != null)
                 speechBubble.HideImmediate();
 
@@ -1633,8 +1638,7 @@ namespace PixelOcean
             if (speechBubble != null) speechBubble.HideImmediate();
             PlayDeathAnimation();
             EmitDeathBlood();
-            if (humanDeathClip != null && deathAudioSource != null)
-                deathAudioSource.PlayOneShot(humanDeathClip);
+            PlayDeathReactionAudio();
             deathTimer = 0f;
             respawnTimer = 0f;
             managedDeathReported = false;
@@ -1662,8 +1666,7 @@ namespace PixelOcean
             GodzillaLaneSwimmer.NotifyPlayerDeath(transform.position);
             if (speechBubble != null) speechBubble.HideImmediate();
             PlayDeathAnimation();
-            if (humanDeathClip != null && deathAudioSource != null)
-                deathAudioSource.PlayOneShot(humanDeathClip);
+            PlayDeathReactionAudio();
             deathTimer = 0f;
             respawnTimer = 0f;
             managedDeathReported = false;
@@ -2124,6 +2127,26 @@ namespace PixelOcean
                 aiHorizontal = 1f;
                 gameObject.name = "Race AI Surfer";
             }
+        }
+
+        /// <summary>Assigns the voice set for a generated race competitor.</summary>
+        public void ConfigureRaceReactionAudio(bool useWomanAudio)
+        {
+            useWomanReactionAudio = useWomanAudio;
+        }
+
+        private void PlayHurtReactionAudio()
+        {
+            AudioClip clip = useWomanReactionAudio ? womanHurtClip : maleHurtClip;
+            if (clip != null && deathAudioSource != null)
+                deathAudioSource.PlayOneShot(clip, hurtSoundVolume);
+        }
+
+        private void PlayDeathReactionAudio()
+        {
+            AudioClip clip = useWomanReactionAudio ? womanDeathClip : humanDeathClip;
+            if (clip != null && deathAudioSource != null)
+                deathAudioSource.PlayOneShot(clip);
         }
 
         public void ConfigureAIPlayer(float scrollSpeed, float boostMultiplier)

@@ -1,0 +1,546 @@
+fileFormatVersion: 2
+guid: 2bbf81df661c4190bda52f59148da229
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 2706261418089829109
+    second: summer_surf_jump_0
+  - first:
+      213: -1062565411395390744
+    second: summer_surf_jump_1
+  - first:
+      213: -383589069858646568
+    second: summer_surf_jump_2
+  - first:
+      213: -5364525093286935865
+    second: summer_surf_jump_3
+  - first:
+      213: 6998415876955936605
+    second: summer_surf_jump_4
+  - first:
+      213: -4538852798753322848
+    second: summer_surf_jump_5
+  - first:
+      213: 5477289199082757885
+    second: summer_surf_jump_6
+  - first:
+      213: -6514958386572343349
+    second: summer_surf_jump_7
+  - first:
+      213: 4238814009503150998
+    second: summer_surf_jump_8
+  - first:
+      213: -4688956089260402162
+    second: summer_surf_jump_9
+  - first:
+      213: 8521605552394785580
+    second: summer_surf_jump_10
+  - first:
+      213: -3635831081785785547
+    second: summer_surf_jump_11
+  - first:
+      213: -3253426208208954304
+    second: summer_surf_jump_12
+  - first:
+      213: -4352966021300394182
+    second: summer_surf_jump_13
+  - first:
+      213: 7803377781651710287
+    second: summer_surf_jump_14
+  - first:
+      213: 4918550997099376780
+    second: summer_surf_jump_15
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 1
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: summer_surf_jump_0
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 2
+        width: 27
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5f2d69edb629e8520800000000000000
+      internalID: 2706261418089829109
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_surf_jump_1
+      rect:
+        serializedVersion: 2
+        x: 37
+        y: 3
+        width: 25
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8e2392753620141f0800000000000000
+      internalID: -1062565411395390744
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_surf_jump_2
+      rect:
+        serializedVersion: 2
+        x: 68
+        y: 3
+        width: 24
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8d55a57f5c73daaf0800000000000000
+      internalID: -383589069858646568
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_surf_jump_3
+      rect:
+        serializedVersion: 2
+        x: 98
+        y: 3
+        width: 25
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7c286f1a9d06d85b0800000000000000
+      internalID: -5364525093286935865
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_surf_jump_4
+      rect:
+        serializedVersion: 2
+        x: 130
+        y: 2
+        width: 25
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d579960392e5f1160800000000000000
+      internalID: 6998415876955936605
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_surf_jump_5
+      rect:
+        serializedVersion: 2
+        x: 162
+        y: 2
+        width: 24
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0a8458a6d61c201c0800000000000000
+      internalID: -4538852798753322848
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_surf_jump_6
+      rect:
+        serializedVersion: 2
+        x: 194
+        y: 2
+        width: 24
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dfe5963b18d330c40800000000000000
+      internalID: 5477289199082757885
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_surf_jump_7
+      rect:
+        serializedVersion: 2
+        x: 227
+        y: 2
+        width: 24
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bc747e97dd73695a0800000000000000
+      internalID: -6514958386572343349
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_surf_jump_8
+      rect:
+        serializedVersion: 2
+        x: 259
+        y: 2
+        width: 24
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 693726922ea43da30800000000000000
+      internalID: 4238814009503150998
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_surf_jump_9
+      rect:
+        serializedVersion: 2
+        x: 290
+        y: 2
+        width: 25
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e0a9a3ca74b7deeb0800000000000000
+      internalID: -4688956089260402162
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_surf_jump_10
+      rect:
+        serializedVersion: 2
+        x: 322
+        y: 3
+        width: 24
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c23dc7ab913d24670800000000000000
+      internalID: 8521605552394785580
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_surf_jump_11
+      rect:
+        serializedVersion: 2
+        x: 355
+        y: 3
+        width: 24
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 53385d205eeea8dc0800000000000000
+      internalID: -3635831081785785547
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_surf_jump_12
+      rect:
+        serializedVersion: 2
+        x: 386
+        y: 2
+        width: 24
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 04c52ccd91289d2d0800000000000000
+      internalID: -3253426208208954304
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_surf_jump_13
+      rect:
+        serializedVersion: 2
+        x: 417
+        y: 2
+        width: 25
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a376b0577782793c0800000000000000
+      internalID: -4352966021300394182
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_surf_jump_14
+      rect:
+        serializedVersion: 2
+        x: 449
+        y: 3
+        width: 25
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f41a6839fba2b4c60800000000000000
+      internalID: 7803377781651710287
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_surf_jump_15
+      rect:
+        serializedVersion: 2
+        x: 483
+        y: 3
+        width: 24
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c8070cf7214324440800000000000000
+      internalID: 4918550997099376780
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      summer_surf_jump_0: 2706261418089829109
+      summer_surf_jump_1: -1062565411395390744
+      summer_surf_jump_10: 8521605552394785580
+      summer_surf_jump_11: -3635831081785785547
+      summer_surf_jump_12: -3253426208208954304
+      summer_surf_jump_13: -4352966021300394182
+      summer_surf_jump_14: 7803377781651710287
+      summer_surf_jump_15: 4918550997099376780
+      summer_surf_jump_2: -383589069858646568
+      summer_surf_jump_3: -5364525093286935865
+      summer_surf_jump_4: 6998415876955936605
+      summer_surf_jump_5: -4538852798753322848
+      summer_surf_jump_6: 5477289199082757885
+      summer_surf_jump_7: -6514958386572343349
+      summer_surf_jump_8: 4238814009503150998
+      summer_surf_jump_9: -4688956089260402162
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

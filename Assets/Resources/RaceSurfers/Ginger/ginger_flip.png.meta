@@ -1,0 +1,546 @@
+fileFormatVersion: 2
+guid: 08ecbc983e7a4e309e15fa4dc2c55f23
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -8503801615582140802
+    second: ginger_flip_0
+  - first:
+      213: -3261853658358868957
+    second: ginger_flip_1
+  - first:
+      213: 5214904386260831551
+    second: ginger_flip_2
+  - first:
+      213: -7106788472246144858
+    second: ginger_flip_3
+  - first:
+      213: -7602189614079580136
+    second: ginger_flip_4
+  - first:
+      213: 1910853007426863067
+    second: ginger_flip_5
+  - first:
+      213: -4512524921065885056
+    second: ginger_flip_6
+  - first:
+      213: -2908793506361231285
+    second: ginger_flip_7
+  - first:
+      213: 3949540391602732551
+    second: ginger_flip_8
+  - first:
+      213: 2878922502523879780
+    second: ginger_flip_9
+  - first:
+      213: 3708019852877251664
+    second: ginger_flip_10
+  - first:
+      213: 8678311423751503530
+    second: ginger_flip_11
+  - first:
+      213: 2048050155527276089
+    second: ginger_flip_12
+  - first:
+      213: 4415142677107624068
+    second: ginger_flip_13
+  - first:
+      213: 981871710398121294
+    second: ginger_flip_14
+  - first:
+      213: -7263767815412224685
+    second: ginger_flip_15
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 1
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: ginger_flip_0
+      rect:
+        serializedVersion: 2
+        x: 5
+        y: 1
+        width: 27
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e7665d65c7d6cf980800000000000000
+      internalID: -8503801615582140802
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ginger_flip_1
+      rect:
+        serializedVersion: 2
+        x: 37
+        y: 2
+        width: 27
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 324163831619bb2d0800000000000000
+      internalID: -3261853658358868957
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ginger_flip_2
+      rect:
+        serializedVersion: 2
+        x: 67
+        y: 3
+        width: 27
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f3d04b8d8ef0f5840800000000000000
+      internalID: 5214904386260831551
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ginger_flip_3
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 5
+        width: 27
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6a07de1b98d9f5d90800000000000000
+      internalID: -7106788472246144858
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ginger_flip_4
+      rect:
+        serializedVersion: 2
+        x: 130
+        y: 8
+        width: 25
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8186f99f2d89f7690800000000000000
+      internalID: -7602189614079580136
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ginger_flip_5
+      rect:
+        serializedVersion: 2
+        x: 163
+        y: 11
+        width: 24
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bdf3aa5afa6b48a10800000000000000
+      internalID: 1910853007426863067
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ginger_flip_6
+      rect:
+        serializedVersion: 2
+        x: 194
+        y: 10
+        width: 23
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 08235cf1e7a4061c0800000000000000
+      internalID: -4512524921065885056
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ginger_flip_7
+      rect:
+        serializedVersion: 2
+        x: 227
+        y: 7
+        width: 20
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b483068a7b3e1a7d0800000000000000
+      internalID: -2908793506361231285
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ginger_flip_8
+      rect:
+        serializedVersion: 2
+        x: 260
+        y: 4
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 70eb9838f069fc630800000000000000
+      internalID: 3949540391602732551
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ginger_flip_9
+      rect:
+        serializedVersion: 2
+        x: 292
+        y: 4
+        width: 19
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 46180da43ccf3f720800000000000000
+      internalID: 2878922502523879780
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ginger_flip_10
+      rect:
+        serializedVersion: 2
+        x: 321
+        y: 4
+        width: 24
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 05448d60968857330800000000000000
+      internalID: 3708019852877251664
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ginger_flip_11
+      rect:
+        serializedVersion: 2
+        x: 353
+        y: 4
+        width: 23
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aae3cee924e8f6870800000000000000
+      internalID: 8678311423751503530
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ginger_flip_12
+      rect:
+        serializedVersion: 2
+        x: 385
+        y: 3
+        width: 24
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9360362f3c22c6c10800000000000000
+      internalID: 2048050155527276089
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ginger_flip_13
+      rect:
+        serializedVersion: 2
+        x: 419
+        y: 3
+        width: 24
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 488caa55fdcb54d30800000000000000
+      internalID: 4415142677107624068
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ginger_flip_14
+      rect:
+        serializedVersion: 2
+        x: 452
+        y: 3
+        width: 23
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e4509415e1f40ad00800000000000000
+      internalID: 981871710398121294
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ginger_flip_15
+      rect:
+        serializedVersion: 2
+        x: 486
+        y: 2
+        width: 24
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 35d607f28a9e13b90800000000000000
+      internalID: -7263767815412224685
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      ginger_flip_0: -8503801615582140802
+      ginger_flip_1: -3261853658358868957
+      ginger_flip_10: 3708019852877251664
+      ginger_flip_11: 8678311423751503530
+      ginger_flip_12: 2048050155527276089
+      ginger_flip_13: 4415142677107624068
+      ginger_flip_14: 981871710398121294
+      ginger_flip_15: -7263767815412224685
+      ginger_flip_2: 5214904386260831551
+      ginger_flip_3: -7106788472246144858
+      ginger_flip_4: -7602189614079580136
+      ginger_flip_5: 1910853007426863067
+      ginger_flip_6: -4512524921065885056
+      ginger_flip_7: -2908793506361231285
+      ginger_flip_8: 3949540391602732551
+      ginger_flip_9: 2878922502523879780
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

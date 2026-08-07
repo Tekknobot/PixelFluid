@@ -1,0 +1,546 @@
+fileFormatVersion: 2
+guid: 16e8b9f5427247c2a7507ab999015232
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -3787005868646073135
+    second: summer_handstand_0
+  - first:
+      213: 8647590946734540606
+    second: summer_handstand_1
+  - first:
+      213: -993653432463987996
+    second: summer_handstand_2
+  - first:
+      213: -4062556118009184694
+    second: summer_handstand_3
+  - first:
+      213: 7424602083668510874
+    second: summer_handstand_4
+  - first:
+      213: -4418212556319122052
+    second: summer_handstand_5
+  - first:
+      213: -4147375248168293024
+    second: summer_handstand_6
+  - first:
+      213: -3172573472887295047
+    second: summer_handstand_7
+  - first:
+      213: 706920951193109874
+    second: summer_handstand_8
+  - first:
+      213: 4997860547727400620
+    second: summer_handstand_9
+  - first:
+      213: 62794054897014895
+    second: summer_handstand_10
+  - first:
+      213: 8182966676146998743
+    second: summer_handstand_11
+  - first:
+      213: -5546947023894972412
+    second: summer_handstand_12
+  - first:
+      213: -5179444177943872651
+    second: summer_handstand_13
+  - first:
+      213: -8571533976421052491
+    second: summer_handstand_14
+  - first:
+      213: -3661215519848233987
+    second: summer_handstand_15
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 1
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: summer_handstand_0
+      rect:
+        serializedVersion: 2
+        x: 5
+        y: 2
+        width: 26
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1dcf7051a3ad17bc0800000000000000
+      internalID: -3787005868646073135
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_handstand_1
+      rect:
+        serializedVersion: 2
+        x: 37
+        y: 2
+        width: 25
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e370ffe262a620870800000000000000
+      internalID: 8647590946734540606
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_handstand_2
+      rect:
+        serializedVersion: 2
+        x: 68
+        y: 3
+        width: 25
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4eae220c775d532f0800000000000000
+      internalID: -993653432463987996
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_handstand_3
+      rect:
+        serializedVersion: 2
+        x: 100
+        y: 3
+        width: 25
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a4ef8f92cb6ee97c0800000000000000
+      internalID: -4062556118009184694
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_handstand_4
+      rect:
+        serializedVersion: 2
+        x: 131
+        y: 3
+        width: 25
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a98cfa3024c790760800000000000000
+      internalID: 7424602083668510874
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_handstand_5
+      rect:
+        serializedVersion: 2
+        x: 162
+        y: 3
+        width: 25
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c7d9d66b61b5fa2c0800000000000000
+      internalID: -4418212556319122052
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_handstand_6
+      rect:
+        serializedVersion: 2
+        x: 193
+        y: 3
+        width: 25
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 06d6eae7f209176c0800000000000000
+      internalID: -4147375248168293024
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_handstand_7
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 2
+        width: 26
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9b3b9b44c31c8f3d0800000000000000
+      internalID: -3172573472887295047
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_handstand_8
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 2
+        width: 26
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 27585241cdc7fc900800000000000000
+      internalID: 706920951193109874
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_handstand_9
+      rect:
+        serializedVersion: 2
+        x: 288
+        y: 2
+        width: 26
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cae1b3830b7fb5540800000000000000
+      internalID: 4997860547727400620
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_handstand_10
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 2
+        width: 27
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f6894283cd61fd000800000000000000
+      internalID: 62794054897014895
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_handstand_11
+      rect:
+        serializedVersion: 2
+        x: 352
+        y: 3
+        width: 26
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7ddc99436dcbf8170800000000000000
+      internalID: 8182966676146998743
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_handstand_12
+      rect:
+        serializedVersion: 2
+        x: 385
+        y: 3
+        width: 25
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 40874dc12194503b0800000000000000
+      internalID: -5546947023894972412
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_handstand_13
+      rect:
+        serializedVersion: 2
+        x: 419
+        y: 3
+        width: 25
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 57bb0b746faee18b0800000000000000
+      internalID: -5179444177943872651
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_handstand_14
+      rect:
+        serializedVersion: 2
+        x: 453
+        y: 3
+        width: 24
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5bf4b3b234bcb0980800000000000000
+      internalID: -8571533976421052491
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_handstand_15
+      rect:
+        serializedVersion: 2
+        x: 486
+        y: 2
+        width: 24
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: df38c45f1efb03dc0800000000000000
+      internalID: -3661215519848233987
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      summer_handstand_0: -3787005868646073135
+      summer_handstand_1: 8647590946734540606
+      summer_handstand_10: 62794054897014895
+      summer_handstand_11: 8182966676146998743
+      summer_handstand_12: -5546947023894972412
+      summer_handstand_13: -5179444177943872651
+      summer_handstand_14: -8571533976421052491
+      summer_handstand_15: -3661215519848233987
+      summer_handstand_2: -993653432463987996
+      summer_handstand_3: -4062556118009184694
+      summer_handstand_4: 7424602083668510874
+      summer_handstand_5: -4418212556319122052
+      summer_handstand_6: -4147375248168293024
+      summer_handstand_7: -3172573472887295047
+      summer_handstand_8: 706920951193109874
+      summer_handstand_9: 4997860547727400620
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

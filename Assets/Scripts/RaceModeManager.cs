@@ -29,7 +29,13 @@ namespace PixelOcean
         public static RaceModeManager Instance { get; private set; }
         public static bool RaceActive { get; private set; }
 
-        private static readonly string[] Roster = { "Chuck", "Fred", "Josh", "Jason" };
+        // Every selectable surfer also enters the race, so the player always has
+        // a complete eight-surfer field to race against.
+        private static readonly string[] Roster =
+        {
+            "Chuck", "Fred", "Josh", "Jason",
+            "Angie", "Ginger", "Summer", "Jane"
+        };
         private readonly List<Racer> racers = new();
         private Canvas canvas;
         private GameObject selectionRoot;
@@ -136,7 +142,7 @@ namespace PixelOcean
             RectTransform windowRect = window.GetComponent<RectTransform>();
             windowRect.anchorMin = windowRect.anchorMax = new Vector2(0.5f, 0.5f);
             windowRect.pivot = new Vector2(0.5f, 0.5f);
-            windowRect.sizeDelta = new Vector2(1024f, 412f);
+            windowRect.sizeDelta = new Vector2(1080f, 620f);
 
             Image windowImage = window.GetComponent<Image>();
             windowImage.sprite = Resources.Load<Sprite>("SurferSlugUI/Panels/race_mode_panel");
@@ -157,21 +163,20 @@ namespace PixelOcean
             GameObject row = new GameObject(
                 "Roster",
                 typeof(RectTransform),
-                typeof(HorizontalLayoutGroup));
+                typeof(GridLayoutGroup));
             row.transform.SetParent(window.transform, false);
             RectTransform rowRect = row.GetComponent<RectTransform>();
-            rowRect.anchorMin = new Vector2(0.08f, 0.24f);
+            rowRect.anchorMin = new Vector2(0.08f, 0.20f);
             rowRect.anchorMax = new Vector2(0.92f, 0.76f);
             rowRect.offsetMin = rowRect.offsetMax = Vector2.zero;
 
-            HorizontalLayoutGroup layout = row.GetComponent<HorizontalLayoutGroup>();
-            layout.spacing = 16f;
+            GridLayoutGroup layout = row.GetComponent<GridLayoutGroup>();
+            layout.cellSize = new Vector2(200f, 160f);
+            layout.spacing = new Vector2(16f, 16f);
             layout.padding = new RectOffset(8, 8, 4, 4);
             layout.childAlignment = TextAnchor.MiddleCenter;
-            layout.childControlWidth = false;
-            layout.childControlHeight = false;
-            layout.childForceExpandWidth = false;
-            layout.childForceExpandHeight = false;
+            layout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            layout.constraintCount = 4;
 
             List<Button> buttons = new();
             foreach (string racer in Roster)
@@ -202,8 +207,8 @@ namespace PixelOcean
                     mode = Navigation.Mode.Explicit,
                     selectOnLeft = buttons[(i - 1 + buttons.Count) % buttons.Count],
                     selectOnRight = buttons[(i + 1) % buttons.Count],
-                    selectOnUp = buttons[i],
-                    selectOnDown = buttons[i]
+                    selectOnUp = buttons[(i - 4 + buttons.Count) % buttons.Count],
+                    selectOnDown = buttons[(i + 4) % buttons.Count]
                 };
                 buttons[i].navigation = nav;
             }
@@ -357,6 +362,7 @@ namespace PixelOcean
                 TinyWaveSurfer surfer = go.AddComponent<TinyWaveSurfer>();
                 surfer.ConfigureGeneratedSurfer(randomWave, true, 0.95f, Color.white, Color.white, 100 + i, 0.2f + i * 0.1f, i * 0.08f);
                 surfer.ConfigureRaceSurfer(!player, speed * (player ? 1f : UnityEngine.Random.Range(0.93f, 1.07f)), boost);
+                surfer.ConfigureRaceReactionAudio(IsWomanRacer(name));
                 surfer.ForceRaceStartingLine(startX, randomWave);
 
                 RaceSurferSkin skin = go.AddComponent<RaceSurferSkin>();
@@ -371,6 +377,14 @@ namespace PixelOcean
                     Player = player
                 });
             }
+        }
+
+        private static bool IsWomanRacer(string racer)
+        {
+            return string.Equals(racer, "Angie", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(racer, "Ginger", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(racer, "Summer", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(racer, "Jane", StringComparison.OrdinalIgnoreCase);
         }
 
         private void BindCameraToSelectedRacer()
@@ -1362,8 +1376,8 @@ namespace PixelOcean
             go.transform.SetParent(parent, false);
 
             LayoutElement le = go.GetComponent<LayoutElement>();
-            le.preferredWidth = 220f;
-            le.preferredHeight = 220f;
+            le.preferredWidth = 200f;
+            le.preferredHeight = 160f;
 
             Image image = go.GetComponent<Image>();
             image.color = new Color(0.015f, 0.055f, 0.075f, 0.82f);
@@ -1401,7 +1415,7 @@ namespace PixelOcean
                 portraitImage.preserveAspect = true;
                 portraitImage.raycastTarget = false;
                 RectTransform pr = portraitImage.rectTransform;
-                pr.anchorMin = new Vector2(0.18f, 0.27f);
+                pr.anchorMin = new Vector2(0.18f, 0.31f);
                 pr.anchorMax = new Vector2(0.82f, 0.88f);
                 pr.offsetMin = pr.offsetMax = Vector2.zero;
             }
@@ -1411,8 +1425,8 @@ namespace PixelOcean
                 racer.ToUpperInvariant(),
                 20,
                 TextAlignmentOptions.Center);
-            label.rectTransform.anchorMin = new Vector2(0f, 0.05f);
-            label.rectTransform.anchorMax = new Vector2(1f, 0.25f);
+            label.rectTransform.anchorMin = new Vector2(0f, 0.06f);
+            label.rectTransform.anchorMax = new Vector2(1f, 0.28f);
             label.rectTransform.offsetMin = label.rectTransform.offsetMax = Vector2.zero;
             PixelFontLibrary.Apply(label, false, true);
             return button;

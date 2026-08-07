@@ -1,0 +1,546 @@
+fileFormatVersion: 2
+guid: 4d3df7c9ec2b4a5bbc6cfd2a70ef29e2
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 536707186807457182
+    second: summer_rotation_0
+  - first:
+      213: 4632664536655447063
+    second: summer_rotation_1
+  - first:
+      213: 6578448774110852475
+    second: summer_rotation_2
+  - first:
+      213: 6550820030982320995
+    second: summer_rotation_3
+  - first:
+      213: -5265455976708045396
+    second: summer_rotation_4
+  - first:
+      213: 2402355271283964321
+    second: summer_rotation_5
+  - first:
+      213: 5987783476380783837
+    second: summer_rotation_6
+  - first:
+      213: -8796804275624684023
+    second: summer_rotation_7
+  - first:
+      213: 4841373791859159265
+    second: summer_rotation_8
+  - first:
+      213: 7418194026198409590
+    second: summer_rotation_9
+  - first:
+      213: 5463274239921955668
+    second: summer_rotation_10
+  - first:
+      213: -8030555729598653947
+    second: summer_rotation_11
+  - first:
+      213: -1291256655973622356
+    second: summer_rotation_12
+  - first:
+      213: 313503050551190881
+    second: summer_rotation_13
+  - first:
+      213: -4970450264207161312
+    second: summer_rotation_14
+  - first:
+      213: -9209186354149246968
+    second: summer_rotation_15
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 1
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: summer_rotation_0
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 2
+        width: 27
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e95ce02c754c27700800000000000000
+      internalID: 536707186807457182
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_rotation_1
+      rect:
+        serializedVersion: 2
+        x: 36
+        y: 3
+        width: 27
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 714c5e6e9d78a4040800000000000000
+      internalID: 4632664536655447063
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_rotation_2
+      rect:
+        serializedVersion: 2
+        x: 68
+        y: 3
+        width: 26
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b753bf15e485b4b50800000000000000
+      internalID: 6578448774110852475
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_rotation_3
+      rect:
+        serializedVersion: 2
+        x: 101
+        y: 3
+        width: 24
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 363f6364c1039ea50800000000000000
+      internalID: 6550820030982320995
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_rotation_4
+      rect:
+        serializedVersion: 2
+        x: 133
+        y: 3
+        width: 22
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ca50cdfcfa75de6b0800000000000000
+      internalID: -5265455976708045396
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_rotation_5
+      rect:
+        serializedVersion: 2
+        x: 166
+        y: 3
+        width: 21
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1a9fa291461e65120800000000000000
+      internalID: 2402355271283964321
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_rotation_6
+      rect:
+        serializedVersion: 2
+        x: 198
+        y: 2
+        width: 21
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dd451add851e81350800000000000000
+      internalID: 5987783476380783837
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_rotation_7
+      rect:
+        serializedVersion: 2
+        x: 231
+        y: 2
+        width: 19
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 906d0c86e197be580800000000000000
+      internalID: -8796804275624684023
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_rotation_8
+      rect:
+        serializedVersion: 2
+        x: 259
+        y: 2
+        width: 22
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1e0b6a020d3003340800000000000000
+      internalID: 4841373791859159265
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_rotation_9
+      rect:
+        serializedVersion: 2
+        x: 289
+        y: 2
+        width: 26
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6712b7ed928b2f660800000000000000
+      internalID: 7418194026198409590
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_rotation_10
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 3
+        width: 27
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 453271db9f271db40800000000000000
+      internalID: 5463274239921955668
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_rotation_11
+      rect:
+        serializedVersion: 2
+        x: 352
+        y: 3
+        width: 27
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 50a5b449c1cbd8090800000000000000
+      internalID: -8030555729598653947
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_rotation_12
+      rect:
+        serializedVersion: 2
+        x: 385
+        y: 3
+        width: 25
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cad55daa9e8841ee0800000000000000
+      internalID: -1291256655973622356
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_rotation_13
+      rect:
+        serializedVersion: 2
+        x: 418
+        y: 3
+        width: 24
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 165ea1c0d59c95400800000000000000
+      internalID: 313503050551190881
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_rotation_14
+      rect:
+        serializedVersion: 2
+        x: 451
+        y: 2
+        width: 23
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0288f2cb1d9650bb0800000000000000
+      internalID: -4970450264207161312
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: summer_rotation_15
+      rect:
+        serializedVersion: 2
+        x: 485
+        y: 2
+        width: 23
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8083f82adc5623080800000000000000
+      internalID: -9209186354149246968
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      summer_rotation_0: 536707186807457182
+      summer_rotation_1: 4632664536655447063
+      summer_rotation_10: 5463274239921955668
+      summer_rotation_11: -8030555729598653947
+      summer_rotation_12: -1291256655973622356
+      summer_rotation_13: 313503050551190881
+      summer_rotation_14: -4970450264207161312
+      summer_rotation_15: -9209186354149246968
+      summer_rotation_2: 6578448774110852475
+      summer_rotation_3: 6550820030982320995
+      summer_rotation_4: -5265455976708045396
+      summer_rotation_5: 2402355271283964321
+      summer_rotation_6: 5987783476380783837
+      summer_rotation_7: -8796804275624684023
+      summer_rotation_8: 4841373791859159265
+      summer_rotation_9: 7418194026198409590
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

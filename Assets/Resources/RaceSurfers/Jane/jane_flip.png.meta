@@ -1,0 +1,546 @@
+fileFormatVersion: 2
+guid: aa1c0c44cc9d4c658bcb85387cad3137
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -8199141596711009837
+    second: jane_flip_0
+  - first:
+      213: 404764048107693259
+    second: jane_flip_1
+  - first:
+      213: 2177213308692528757
+    second: jane_flip_2
+  - first:
+      213: -2901541853434101369
+    second: jane_flip_3
+  - first:
+      213: 330030900187077378
+    second: jane_flip_4
+  - first:
+      213: 7732493001643125207
+    second: jane_flip_5
+  - first:
+      213: 2455967528756826682
+    second: jane_flip_6
+  - first:
+      213: -6985555389628303672
+    second: jane_flip_7
+  - first:
+      213: -8878469792282940441
+    second: jane_flip_8
+  - first:
+      213: -5545354350476247749
+    second: jane_flip_9
+  - first:
+      213: -7167785904140041002
+    second: jane_flip_10
+  - first:
+      213: 3258109483842916657
+    second: jane_flip_11
+  - first:
+      213: -2041935875793602094
+    second: jane_flip_12
+  - first:
+      213: -6461244777126170413
+    second: jane_flip_13
+  - first:
+      213: 8761352290983263828
+    second: jane_flip_14
+  - first:
+      213: 2225659146080724147
+    second: jane_flip_15
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 1
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: jane_flip_0
+      rect:
+        serializedVersion: 2
+        x: 3
+        y: 2
+        width: 29
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3d149e0a82cc63e80800000000000000
+      internalID: -8199141596711009837
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_flip_1
+      rect:
+        serializedVersion: 2
+        x: 36
+        y: 3
+        width: 28
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bc4ee49d1c20e9500800000000000000
+      internalID: 404764048107693259
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_flip_2
+      rect:
+        serializedVersion: 2
+        x: 69
+        y: 4
+        width: 25
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 57efed808f3073e10800000000000000
+      internalID: 2177213308692528757
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_flip_3
+      rect:
+        serializedVersion: 2
+        x: 101
+        y: 4
+        width: 24
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 781c12dae07abb7d0800000000000000
+      internalID: -2901541853434101369
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_flip_4
+      rect:
+        serializedVersion: 2
+        x: 132
+        y: 7
+        width: 23
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 20b9d8aea51849400800000000000000
+      internalID: 330030900187077378
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_flip_5
+      rect:
+        serializedVersion: 2
+        x: 163
+        y: 10
+        width: 24
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7d9e12f9a655f4b60800000000000000
+      internalID: 7732493001643125207
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_flip_6
+      rect:
+        serializedVersion: 2
+        x: 195
+        y: 9
+        width: 24
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a32d1738479551220800000000000000
+      internalID: 2455967528756826682
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_flip_7
+      rect:
+        serializedVersion: 2
+        x: 227
+        y: 8
+        width: 22
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8c6b36a52625e0f90800000000000000
+      internalID: -6985555389628303672
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_flip_8
+      rect:
+        serializedVersion: 2
+        x: 258
+        y: 7
+        width: 20
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7eb60f993c659c480800000000000000
+      internalID: -8878469792282940441
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_flip_9
+      rect:
+        serializedVersion: 2
+        x: 291
+        y: 4
+        width: 19
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b3d323a4991fa03b0800000000000000
+      internalID: -5545354350476247749
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_flip_10
+      rect:
+        serializedVersion: 2
+        x: 322
+        y: 4
+        width: 21
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6d44ead52b8e68c90800000000000000
+      internalID: -7167785904140041002
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_flip_11
+      rect:
+        serializedVersion: 2
+        x: 353
+        y: 3
+        width: 25
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 131d9c73051273d20800000000000000
+      internalID: 3258109483842916657
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_flip_12
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 4
+        width: 27
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2d9323db32699a3e0800000000000000
+      internalID: -2041935875793602094
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_flip_13
+      rect:
+        serializedVersion: 2
+        x: 416
+        y: 3
+        width: 27
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3d0fb8cbb1c0556a0800000000000000
+      internalID: -6461244777126170413
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_flip_14
+      rect:
+        serializedVersion: 2
+        x: 448
+        y: 3
+        width: 25
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 45ebc103d73969970800000000000000
+      internalID: 8761352290983263828
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_flip_15
+      rect:
+        serializedVersion: 2
+        x: 481
+        y: 2
+        width: 24
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3b4ad39833123ee10800000000000000
+      internalID: 2225659146080724147
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      jane_flip_0: -8199141596711009837
+      jane_flip_1: 404764048107693259
+      jane_flip_10: -7167785904140041002
+      jane_flip_11: 3258109483842916657
+      jane_flip_12: -2041935875793602094
+      jane_flip_13: -6461244777126170413
+      jane_flip_14: 8761352290983263828
+      jane_flip_15: 2225659146080724147
+      jane_flip_2: 2177213308692528757
+      jane_flip_3: -2901541853434101369
+      jane_flip_4: 330030900187077378
+      jane_flip_5: 7732493001643125207
+      jane_flip_6: 2455967528756826682
+      jane_flip_7: -6985555389628303672
+      jane_flip_8: -8878469792282940441
+      jane_flip_9: -5545354350476247749
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

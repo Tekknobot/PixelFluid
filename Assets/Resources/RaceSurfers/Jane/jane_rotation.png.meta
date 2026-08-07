@@ -1,0 +1,546 @@
+fileFormatVersion: 2
+guid: f99638343d2a48cab2e9aa105216d91c
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -8554258242832523217
+    second: jane_rotation_0
+  - first:
+      213: 6937122789063632307
+    second: jane_rotation_1
+  - first:
+      213: -3257038039284882564
+    second: jane_rotation_2
+  - first:
+      213: -5986763794983968798
+    second: jane_rotation_3
+  - first:
+      213: 8392535545356361272
+    second: jane_rotation_4
+  - first:
+      213: 4619956254831427814
+    second: jane_rotation_5
+  - first:
+      213: -5038650481482292808
+    second: jane_rotation_6
+  - first:
+      213: -3066903707275551598
+    second: jane_rotation_7
+  - first:
+      213: 3415322526442908665
+    second: jane_rotation_8
+  - first:
+      213: -8073015736829511103
+    second: jane_rotation_9
+  - first:
+      213: 5296869861990984414
+    second: jane_rotation_10
+  - first:
+      213: 755676778309684727
+    second: jane_rotation_11
+  - first:
+      213: -3680733931069129306
+    second: jane_rotation_12
+  - first:
+      213: -2577097135719146675
+    second: jane_rotation_13
+  - first:
+      213: -3134252275995894365
+    second: jane_rotation_14
+  - first:
+      213: -1639559410955657793
+    second: jane_rotation_15
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 1
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: jane_rotation_0
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 2
+        width: 28
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f20a207537b294980800000000000000
+      internalID: -8554258242832523217
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_rotation_1
+      rect:
+        serializedVersion: 2
+        x: 35
+        y: 2
+        width: 28
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3b5a7651c6c954060800000000000000
+      internalID: 6937122789063632307
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_rotation_2
+      rect:
+        serializedVersion: 2
+        x: 67
+        y: 3
+        width: 27
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c736d78e82dacc2d0800000000000000
+      internalID: -3257038039284882564
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_rotation_3
+      rect:
+        serializedVersion: 2
+        x: 100
+        y: 3
+        width: 25
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2ef9fc53c0ebaeca0800000000000000
+      internalID: -5986763794983968798
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_rotation_4
+      rect:
+        serializedVersion: 2
+        x: 133
+        y: 4
+        width: 22
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 83e1ec9ec96487470800000000000000
+      internalID: 8392535545356361272
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_rotation_5
+      rect:
+        serializedVersion: 2
+        x: 167
+        y: 4
+        width: 18
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6e042177cb16d1040800000000000000
+      internalID: 4619956254831427814
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_rotation_6
+      rect:
+        serializedVersion: 2
+        x: 198
+        y: 4
+        width: 17
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8b1a5ef351e131ab0800000000000000
+      internalID: -5038650481482292808
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_rotation_7
+      rect:
+        serializedVersion: 2
+        x: 230
+        y: 4
+        width: 18
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 29c138fc35b2075d0800000000000000
+      internalID: -3066903707275551598
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_rotation_8
+      rect:
+        serializedVersion: 2
+        x: 262
+        y: 3
+        width: 18
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9fbe40e1eb9a56f20800000000000000
+      internalID: 3415322526442908665
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_rotation_9
+      rect:
+        serializedVersion: 2
+        x: 291
+        y: 3
+        width: 21
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 14a7324c5f2e6ff80800000000000000
+      internalID: -8073015736829511103
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_rotation_10
+      rect:
+        serializedVersion: 2
+        x: 321
+        y: 3
+        width: 24
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: edae1715313428940800000000000000
+      internalID: 5296869861990984414
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_rotation_11
+      rect:
+        serializedVersion: 2
+        x: 352
+        y: 3
+        width: 25
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7fd0920b604bc7a00800000000000000
+      internalID: 755676778309684727
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_rotation_12
+      rect:
+        serializedVersion: 2
+        x: 385
+        y: 2
+        width: 24
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6adb5e5bdf76becc0800000000000000
+      internalID: -3680733931069129306
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_rotation_13
+      rect:
+        serializedVersion: 2
+        x: 418
+        y: 2
+        width: 23
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d4b98c12fcf4c3cd0800000000000000
+      internalID: -2577097135719146675
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_rotation_14
+      rect:
+        serializedVersion: 2
+        x: 451
+        y: 2
+        width: 22
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3ad1ec43926e084d0800000000000000
+      internalID: -3134252275995894365
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jane_rotation_15
+      rect:
+        serializedVersion: 2
+        x: 485
+        y: 2
+        width: 23
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fbdd6d9076d1f39e0800000000000000
+      internalID: -1639559410955657793
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      jane_rotation_0: -8554258242832523217
+      jane_rotation_1: 6937122789063632307
+      jane_rotation_10: 5296869861990984414
+      jane_rotation_11: 755676778309684727
+      jane_rotation_12: -3680733931069129306
+      jane_rotation_13: -2577097135719146675
+      jane_rotation_14: -3134252275995894365
+      jane_rotation_15: -1639559410955657793
+      jane_rotation_2: -3257038039284882564
+      jane_rotation_3: -5986763794983968798
+      jane_rotation_4: 8392535545356361272
+      jane_rotation_5: 4619956254831427814
+      jane_rotation_6: -5038650481482292808
+      jane_rotation_7: -3066903707275551598
+      jane_rotation_8: 3415322526442908665
+      jane_rotation_9: -8073015736829511103
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
