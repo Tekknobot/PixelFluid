@@ -12,10 +12,17 @@ namespace PixelOcean
         private readonly List<SpriteRenderer> renderers = new();
         private readonly List<Color> targetColors = new();
         private bool prepared;
+        private bool guaranteeVisibleTarget;
+        private bool completed;
 
-        public void Configure(float fadeDuration)
+        public bool IsComplete => completed;
+
+        public void Configure(
+            float fadeDuration,
+            bool ensureVisibleTarget = false)
         {
             duration = Mathf.Max(0.05f, fadeDuration);
+            guaranteeVisibleTarget |= ensureVisibleTarget;
 
             // AddComponent invokes Awake immediately. Awake may already have
             // captured the authored renderer colours and set their alpha to zero.
@@ -23,6 +30,14 @@ namespace PixelOcean
             // creature permanently invisible.
             if (!prepared)
                 PrepareExistingRenderersAtZeroAlpha();
+
+            if (guaranteeVisibleTarget)
+                NormalizeTargetAlpha();
+
+            // Race Mode checks its bosses every frame. A completed fade remains
+            // as a marker so it is not added and restarted over and over.
+            if (completed)
+                RepairZeroAlphaRenderers();
         }
 
         private void Awake()
@@ -36,14 +51,16 @@ namespace PixelOcean
         {
             renderers.Clear();
             targetColors.Clear();
-            GetComponentsInChildren(true, renderers);
+            List<SpriteRenderer> found = new();
+            GetComponentsInChildren(true, found);
 
-            foreach (SpriteRenderer renderer in renderers)
+            foreach (SpriteRenderer renderer in found)
             {
                 if (renderer == null)
                     continue;
 
-                Color target = renderer.color;
+                Color target = GetTargetColor(renderer.color);
+                renderers.Add(renderer);
                 targetColors.Add(target);
                 renderer.color = new Color(target.r, target.g, target.b, 0f);
             }
@@ -51,11 +68,38 @@ namespace PixelOcean
             prepared = renderers.Count > 0;
         }
 
+        private Color GetTargetColor(Color color)
+        {
+            if (guaranteeVisibleTarget && color.a <= 0.001f)
+                color.a = 1f;
+
+            return color;
+        }
+
+        private void NormalizeTargetAlpha()
+        {
+            for (int i = 0; i < targetColors.Count; i++)
+            {
+                Color target = targetColors[i];
+                if (target.a <= 0.001f)
+                {
+                    target.a = 1f;
+                    targetColors[i] = target;
+                }
+            }
+        }
+
         private IEnumerator Start()
         {
+            if (completed)
+                yield break;
+
             // Some spawners create child renderers during their own Start method.
             // Capture those late additions before beginning the visible fade.
             yield return null;
+
+            if (completed)
+                yield break;
 
             if (!prepared)
             {
@@ -70,7 +114,7 @@ namespace PixelOcean
                     if (renderer == null || renderers.Contains(renderer))
                         continue;
 
-                    Color target = renderer.color;
+                    Color target = GetTargetColor(renderer.color);
                     renderers.Add(renderer);
                     targetColors.Add(target);
                     renderer.color = new Color(target.r, target.g, target.b, 0f);
@@ -79,14 +123,15 @@ namespace PixelOcean
 
             if (renderers.Count == 0)
             {
-                Destroy(this);
+                completed = true;
+                enabled = false;
                 yield break;
             }
 
             float elapsed = 0f;
-            while (elapsed < duration)
+            while (!completed && elapsed < duration)
             {
-                elapsed += Time.deltaTime;
+                elapsed += Time.unscaledDeltaTime;
                 float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / duration));
 
                 for (int i = 0; i < renderers.Count; i++)
@@ -102,13 +147,44 @@ namespace PixelOcean
                 yield return null;
             }
 
+            if (!completed)
+                CompleteFade();
+        }
+
+        private void CompleteFade()
+        {
+            if (guaranteeVisibleTarget)
+                NormalizeTargetAlpha();
+
             for (int i = 0; i < renderers.Count; i++)
             {
                 if (renderers[i] != null)
                     renderers[i].color = targetColors[i];
             }
 
-            Destroy(this);
+            completed = true;
+            enabled = false;
+        }
+
+        private void RepairZeroAlphaRenderers()
+        {
+            int count = Mathf.Min(renderers.Count, targetColors.Count);
+            for (int i = 0; i < count; i++)
+            {
+                SpriteRenderer renderer = renderers[i];
+                if (renderer == null || renderer.color.a > 0.001f)
+                    continue;
+
+                renderer.color = targetColors[i];
+            }
+        }
+
+        private void OnDisable()
+        {
+            // If pausing, deactivation, or another system interrupts the fade,
+            // finalize it instead of leaving any renderer at alpha zero.
+            if (!completed && prepared)
+                CompleteFade();
         }
     }
 
@@ -173,7 +249,13 @@ namespace PixelOcean
 
                 // Race Mode may fade an entire school/group from its root.
                 // Do not layer another fade onto each child.
-                if (target.GetComponentInParent<OceanSpawnFadeIn>() != null)
+                if (target.GetComponent<OceanSpawnFadeIn>() != null)
+                    continue;
+
+                OceanSpawnFadeIn parentFade = target.transform.parent != null
+                    ? target.transform.parent.GetComponentInParent<OceanSpawnFadeIn>()
+                    : null;
+                if (parentFade != null && !parentFade.IsComplete)
                     continue;
 
                 target.AddComponent<OceanSpawnFadeIn>();

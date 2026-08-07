@@ -1350,7 +1350,9 @@ namespace PixelOcean
             if (fade == null)
                 fade = bossObject.AddComponent<OceanSpawnFadeIn>();
 
-            fade.Configure(raceCreatureFadeInDuration);
+            // Boss renderers must always finish with a visible target alpha,
+            // even if their component initially reports alpha zero.
+            fade.Configure(raceCreatureFadeInDuration, true);
         }
 
         private static Vector3 FindSafeRaceBossSpawn(
