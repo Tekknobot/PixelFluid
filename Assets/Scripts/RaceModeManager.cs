@@ -84,8 +84,8 @@ namespace PixelOcean
         private const float PrototypeRaceSeconds = 180f;
 
         [Header("Pole Position HUD Layout")]
-        [SerializeField] private Vector2 polePanelAnchorMin = new(0.025f, 0.70f);
-        [SerializeField] private Vector2 polePanelAnchorMax = new(0.975f, 0.95f);
+        [SerializeField] private Vector2 polePanelAnchorMin = new(0.025f, 0.75f);
+        [SerializeField] private Vector2 polePanelAnchorMax = new(0.975f, 1.0f);
         [SerializeField, Range(0f, 1f)] private float poleFirstSlotCenter = 0.1715f;
         [SerializeField, Range(0.02f, 0.2f)] private float poleSlotSpacing = 0.109f;
         [SerializeField, Range(0f, 1f)] private float poleRowVerticalAnchor = 0.36f;
@@ -99,7 +99,7 @@ namespace PixelOcean
         [SerializeField, Min(0.1f)] private float polePositionSlideSpeed = 10f;
 
         [Header("Pole Position Portrait Pixel Fade")]
-        [SerializeField, Range(0f, 0.5f)] private float polePortraitFadeBottom = 0f;
+        [SerializeField, Range(0f, 0.5f)] private float polePortraitFadeBottom = 0.25f;
         [SerializeField, Range(0.05f, 0.75f)] private float polePortraitFadeTop = 0.45f;
         [SerializeField, Range(1, 8)] private int polePortraitFadeSteps = 4;
 
