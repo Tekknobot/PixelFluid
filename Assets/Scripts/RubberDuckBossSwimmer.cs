@@ -15,9 +15,9 @@ namespace PixelOcean
         private enum CreatureState { Roam, Pursue, WindUp, Lunge, Recover, InvestigateDeath, MournDeath }
 
         [Header("Movement")]
-        [SerializeField, Min(0.05f)] private float cruiseSpeed = 0.52f;
-        [SerializeField, Min(0.05f)] private float pursuitSpeed = 0.78f;
-        [SerializeField, Min(0.1f)] private float lungeSpeed = 1.15f;
+        [SerializeField, Min(0.05f)] private float cruiseSpeed = 0.24f;
+        [SerializeField, Min(0.05f)] private float pursuitSpeed = 0.38f;
+        [SerializeField, Min(0.1f)] private float lungeSpeed = 0.68f;
         [SerializeField, Range(0f, 0.35f)] private float currentInfluence = 0.04f;
 
         [Header("Unique Behaviour")]
@@ -48,7 +48,7 @@ namespace PixelOcean
         [SerializeField, Range(0f, 1f)] private float hurtVolume = 1f;
         [SerializeField, Min(0.08f)] private float hitReactionDuration = 0.28f;
         [SerializeField, Range(0.01f, 0.35f)] private float hitReactionScalePunch = 0.14f;
-        [SerializeField, Range(0.05f, 0.6f)] private float hitCameraFocusDuration = 0.32f;
+        [SerializeField, Range(0.05f, 0.6f)] private float hitCameraFocusDuration = 3f;
 
         [Header("Boss Death Sequence")]
         [SerializeField, Min(0.5f)] private float bossDeathDuration = 3.6f;
@@ -100,13 +100,13 @@ namespace PixelOcean
 
         [Header("Arena Pursuit Stability")]
         [Tooltip("Preferred horizontal spacing from the player while the duck is not lunging.")]
-        [SerializeField, Range(0.6f, 4f)] private float arenaFollowDistance = 1.8f;
+        [SerializeField, Range(0.6f, 4f)] private float arenaFollowDistance = 2.25f;
         [Tooltip("Prevents tiny left/right corrections when the duck is already near its target position.")]
         [SerializeField, Range(0.02f, 0.5f)] private float arenaHorizontalDeadZone = 0.14f;
         [Tooltip("Smooth time for normal arena pursuit.")]
-        [SerializeField, Range(0.04f, 0.5f)] private float arenaHorizontalSmoothTime = 0.16f;
+        [SerializeField, Range(0.04f, 0.5f)] private float arenaHorizontalSmoothTime = 0.28f;
         [Tooltip("Maximum arena pursuit speed. This is intentionally much faster than free-roam speed.")]
-        [SerializeField, Range(1f, 15f)] private float arenaMaximumFollowSpeed = 6.5f;
+        [SerializeField, Range(1f, 15f)] private float arenaMaximumFollowSpeed = 2.4f;
 
         [Header("Attack Audio")]
         [SerializeField] private AudioClip attackClip;
@@ -203,7 +203,7 @@ namespace PixelOcean
             if (Mathf.Abs(position.x - arenaEntranceTargetX) <= 0.025f)
             {
                 arenaEntranceActive = false;
-                nextVulnerableTime = Time.time + Mathf.Max(0f, openingInvulnerability);
+                nextVulnerableTime = Time.time;
                 state = CreatureState.Roam;
                 ScheduleLaneShift();
             }
@@ -382,7 +382,7 @@ ResolveReferences();
                 UpdateBrain(position);
 
             Vector2 waterVelocity = GetLaneVelocity(currentLane, position.x);
-            float aggressionMultiplier = Time.time < enragedUntil ? 1.28f : 1f;
+            float aggressionMultiplier = Time.time < enragedUntil ? 1.08f : 1f;
             float speed = state switch
             {
                 CreatureState.Pursue => pursuitSpeed * aggressionMultiplier,
@@ -589,7 +589,7 @@ ResolveReferences();
                 if (animation == null || !animation.IsAttacking)
                 {
                     state = CreatureState.Recover;
-                    stateUntil = Time.time + (Time.time < enragedUntil ? 0.35f : 0.55f);
+                    stateUntil = Time.time + (Time.time < enragedUntil ? 0.7f : 0.9f);
                     nextAttackTime = Time.time + attackRecovery;
                     target = null;
                 }
@@ -693,8 +693,10 @@ ResolveReferences();
 
         public void ConfigureArenaArmour(bool enabled)
         {
-            arenaArmourEnabled = enabled;
-            arenaVulnerabilityUntil = enabled ? -1f : float.PositiveInfinity;
+            // Kept for BossArenaPrison compatibility. The duck is intentionally
+            // damageable for the entire encounter, so armour no longer blocks hits.
+            arenaArmourEnabled = false;
+            arenaVulnerabilityUntil = float.PositiveInfinity;
         }
 
         public void OpenArenaVulnerability(float duration)
@@ -721,19 +723,20 @@ ResolveReferences();
             if (defeated || arenaEntranceActive || damage <= 0)
                 return false;
 
-            // Boss armour only opens for one hit at a time. Returning false lets
-            // SodaCanProjectile continue its normal ricochet instead of melting
-            // the boss with a pile of projectiles in the same second.
-            if (arenaArmourEnabled && Time.time > arenaVulnerabilityUntil)
-                return false;
+            // The giant duck can now be damaged directly throughout the fight.
+            // Duckling defeats may still create a vulnerability presentation,
+            // but they are no longer required before a thrown item can hurt the boss.
+            // The normal cooldown still prevents stacked projectiles from applying
+            // several damage events during the same instant.
             if (Time.time < nextVulnerableTime)
                 return false;
 
             nextVulnerableTime = Time.time + Mathf.Max(0.05f, vulnerabilityCooldown);
             currentHealth = Mathf.Max(0, currentHealth - Mathf.Max(1, Mathf.Min(damage, thrownItemDamage)));
             ArenaHitAccepted?.Invoke(this);
-            if (arenaArmourEnabled)
-                CloseArenaVulnerability();
+
+            // Do not close an armour window after a successful hit. The boss remains
+            // directly damageable; vulnerabilityCooldown is the only per-hit limiter.
             enragedUntil = Mathf.Max(enragedUntil, Time.time + hitAggressionDuration);
 
             // Immediately retaliate against the active player after being struck.
@@ -1027,7 +1030,7 @@ ResolveReferences();
         public int CurrentHealth => currentHealth;
         public int MaximumHealth => Mathf.Max(1, maximumHealth);
         public bool IsDefeated => defeated;
-        public bool IsVulnerable => !defeated && Time.time >= nextVulnerableTime && (!arenaArmourEnabled || Time.time <= arenaVulnerabilityUntil);
+        public bool IsVulnerable => !defeated && !arenaEntranceActive && Time.time >= nextVulnerableTime;
         public float VulnerabilityTimeRemaining => Mathf.Max(0f, nextVulnerableTime - Time.time);
 
         private int GetTargetLane(TinyWaveSurfer surfer)
@@ -1170,10 +1173,10 @@ ResolveReferences();
                 return;
             }
 
-            float speedMultiplier = state == CreatureState.Lunge ? 1.45f : 1f;
+            float speedMultiplier = state == CreatureState.Lunge ? 1.15f : 1f;
             float maximumSpeed = Mathf.Max(
                 arenaMaximumFollowSpeed,
-                stateSpeed * 4f) * speedMultiplier;
+                stateSpeed * 2f) * speedMultiplier;
 
             position.x = Mathf.SmoothDamp(
                 position.x,
