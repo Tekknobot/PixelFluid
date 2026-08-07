@@ -2198,6 +2198,17 @@ namespace PixelOcean
 
             if (playerControlled)
             {
+                // When Race selection is reopened, release both assigned pads
+                // from the existing surfers so the selector has exclusive input.
+                if (raceModeSurfer && RaceModeManager.IsSelectingSurfer)
+                {
+                    playerHorizontalVelocity = 0f;
+                    previousAttackHeld = false;
+                    previousSpecialHeld = false;
+                    previousShoulderHeld = false;
+                    return;
+                }
+
                 UpdatePlayerControl(Time.deltaTime);
                 return;
             }

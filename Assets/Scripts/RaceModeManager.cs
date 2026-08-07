@@ -39,6 +39,7 @@ namespace PixelOcean
         public static RaceModeManager Instance { get; private set; }
         public static bool RaceActive { get; private set; }
         public static bool IsTwoPlayerRace => Instance != null && Instance.twoPlayerRace;
+        public static bool IsSelectingSurfer => Instance != null && Instance.selectionRoot != null;
 
         // Every selectable surfer also enters the race, so the player always has
         // a complete eight-surfer field to race against.
@@ -60,6 +61,7 @@ namespace PixelOcean
         private bool playerTwoLocked;
         private int playerOneIndex;
         private int playerTwoIndex;
+        private float selectionInputReadyAt;
         private Canvas canvas;
         private GameObject selectionRoot;
         private GameObject raceHud;
@@ -162,6 +164,7 @@ namespace PixelOcean
             playerOneIndex = 0;
             playerTwoIndex = 0;
             playerOneChoice = Roster[playerOneIndex];
+            selectionInputReadyAt = Time.unscaledTime + 0.25f;
 
             selectionRoot = CreatePanel(
                 canvas.transform,
@@ -331,6 +334,11 @@ namespace PixelOcean
         private void UpdateTwoPlayerPicker()
         {
             if (selectionRoot == null) return;
+            if (Time.unscaledTime < selectionInputReadyAt)
+            {
+                RefreshPlayerFrames();
+                return;
+            }
 #if ENABLE_INPUT_SYSTEM
             Gamepad p1 = Gamepad.all.Count > 0 ? Gamepad.all[0] : null;
             Keyboard keyboard = Keyboard.current;
@@ -484,7 +492,7 @@ namespace PixelOcean
                 return true;
             }
 
-            Gamepad gamepad = Gamepad.current;
+            Gamepad gamepad = Gamepad.all.Count > 0 ? Gamepad.all[0] : null;
             if (gamepad != null &&
                 gamepad.buttonEast.wasPressedThisFrame)
             {
@@ -1519,12 +1527,12 @@ namespace PixelOcean
             panelObject.transform.SetParent(raceHud.transform, false);
 
             RectTransform panel = panelObject.GetComponent<RectTransform>();
-            panel.anchorMin = new Vector2(0.025f, 0.815f);
-            panel.anchorMax = new Vector2(0.975f, 0.985f);
+            panel.anchorMin = new Vector2(0.025f, 0.78f);
+            panel.anchorMax = new Vector2(0.975f, 0.95f);
             panel.offsetMin = panel.offsetMax = Vector2.zero;
 
             Image panelImage = panelObject.GetComponent<Image>();
-            panelImage.color = new Color(0f, 0.025f, 0.04f, 0.78f);
+            panelImage.color = Color.clear;
             panelImage.raycastTarget = false;
 
             TextMeshProUGUI heading = CreateText(
@@ -1532,8 +1540,8 @@ namespace PixelOcean
                 "POLE POSITIONS",
                 20,
                 TextAlignmentOptions.Center);
-            heading.rectTransform.anchorMin = new Vector2(0.12f, 0.78f);
-            heading.rectTransform.anchorMax = new Vector2(0.99f, 0.98f);
+            heading.rectTransform.anchorMin = new Vector2(0.12f, 0.68f);
+            heading.rectTransform.anchorMax = new Vector2(0.99f, 0.86f);
             heading.rectTransform.offsetMin = heading.rectTransform.offsetMax = Vector2.zero;
             heading.color = new Color(0.72f, 0.9f, 0.94f, 1f);
 
@@ -1543,10 +1551,12 @@ namespace PixelOcean
                 typeof(Image));
             timerCard.transform.SetParent(panelObject.transform, false);
             RectTransform timerCardRect = timerCard.GetComponent<RectTransform>();
-            timerCardRect.anchorMin = new Vector2(0.012f, 0.08f);
-            timerCardRect.anchorMax = new Vector2(0.112f, 0.76f);
+            timerCardRect.anchorMin = new Vector2(0.012f, 0.04f);
+            timerCardRect.anchorMax = new Vector2(0.112f, 0.64f);
             timerCardRect.offsetMin = timerCardRect.offsetMax = Vector2.zero;
-            timerCard.GetComponent<Image>().color = new Color(0.01f, 0.12f, 0.15f, 0.94f);
+            Image timerCardImage = timerCard.GetComponent<Image>();
+            timerCardImage.color = Color.clear;
+            timerCardImage.raycastTarget = false;
 
             TextMeshProUGUI timerCaption = CreateText(
                 timerCard.transform,
@@ -1581,14 +1591,12 @@ namespace PixelOcean
 
             RectTransform row = rowObject.GetComponent<RectTransform>();
             float left = 0.12f + index * 0.109f;
-            row.anchorMin = new Vector2(left, 0.08f);
-            row.anchorMax = new Vector2(left + 0.103f, 0.76f);
+            row.anchorMin = new Vector2(left, 0.04f);
+            row.anchorMax = new Vector2(left + 0.103f, 0.64f);
             row.offsetMin = row.offsetMax = Vector2.zero;
 
             Image background = rowObject.GetComponent<Image>();
-            background.color = index % 2 == 0
-                ? new Color(0.025f, 0.09f, 0.115f, 0.88f)
-                : new Color(0.015f, 0.065f, 0.085f, 0.88f);
+            background.color = Color.clear;
             background.raycastTarget = false;
 
             GameObject portraitObject = new GameObject(
@@ -1603,7 +1611,7 @@ namespace PixelOcean
             portraitRect.anchorMin = portraitRect.anchorMax = new Vector2(0f, 0.5f);
             portraitRect.pivot = new Vector2(0f, 0.5f);
             portraitRect.anchoredPosition = new Vector2(6f, 0f);
-            portraitRect.sizeDelta = new Vector2(76f, 76f);
+            portraitRect.sizeDelta = new Vector2(64f, 64f);
 
             TextMeshProUGUI rank = CreateText(rowObject.transform, string.Empty, 23, TextAlignmentOptions.MidlineLeft);
             rank.rectTransform.anchorMin = new Vector2(0.46f, 0.62f);
@@ -1652,19 +1660,17 @@ namespace PixelOcean
 
                 if (racer.PlayerSlot == 1)
                 {
-                    row.Background.color = new Color(0.01f, 0.18f, 0.22f, 0.94f);
+                    row.Background.color = Color.clear;
                     row.Rank.color = row.Name.color = new Color(0.1f, 0.95f, 1f, 1f);
                 }
                 else if (racer.PlayerSlot == 2)
                 {
-                    row.Background.color = new Color(0.22f, 0.015f, 0.05f, 0.94f);
+                    row.Background.color = Color.clear;
                     row.Rank.color = row.Name.color = new Color(1f, 0.08f, 0.25f, 1f);
                 }
                 else
                 {
-                    row.Background.color = i % 2 == 0
-                        ? new Color(0.025f, 0.09f, 0.115f, 0.88f)
-                        : new Color(0.015f, 0.065f, 0.085f, 0.88f);
+                    row.Background.color = Color.clear;
                     row.Rank.color = row.Name.color = Color.white;
                 }
             }

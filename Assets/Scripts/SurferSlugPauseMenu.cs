@@ -228,6 +228,11 @@ namespace PixelOcean
                 return;
             }
 
+            // The racer picker owns both controllers while visible. Do not let
+            // Start also pause/resume the underlying Race session.
+            if (raceManager != null && raceManager.IsSelectionVisible)
+                return;
+
             if (menuVisible && saveWarningPanel != null && saveWarningPanel.activeSelf && SubPanelBackPressed())
             {
                 HideSaveWarning();
