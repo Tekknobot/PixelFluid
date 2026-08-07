@@ -424,9 +424,14 @@ namespace PixelOcean
         {
             firstMenu = isMainMenu;
             menuVisible = true;
-            showingTitleMenu = isMainMenu;
+            // Pausing restores the complete front-end presentation while
+            // firstMenu still tracks whether Start is allowed to resume play.
+            showingTitleMenu = true;
             if (continueButton != null) continueButton.gameObject.SetActive(SurfStageSaveSystem.HasSave);
             menuRoot.SetActive(true);
+
+            if (!isMainMenu)
+                HoldTitleGradientForMenu();
 
             // A previous sub-panel or developer overlay must never leave the main
             // pause-menu column visually enabled but unable to receive input.
@@ -441,7 +446,7 @@ namespace PixelOcean
             settingsPanel.SetActive(false);
             logoPanel.gameObject.SetActive(true);
             buttonPanel.gameObject.SetActive(true);
-            if (titleCreditPanel != null) titleCreditPanel.gameObject.SetActive(isMainMenu);
+            if (titleCreditPanel != null) titleCreditPanel.gameObject.SetActive(true);
             Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
 
@@ -514,6 +519,7 @@ namespace PixelOcean
             }
 
             menuRoot.SetActive(false);
+            yield return FadeStartupBlack(1f, 0f, 0.45f);
             menuVisible = false;
             GameplayPaused = false;
             RestoreGameplayBehaviours();

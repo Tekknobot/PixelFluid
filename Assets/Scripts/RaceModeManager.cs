@@ -29,6 +29,8 @@ namespace PixelOcean
 
         private sealed class StandingRow
         {
+            public string RacerName;
+            public RectTransform Root;
             public Image Background;
             public Image Portrait;
             public TextMeshProUGUI Rank;
@@ -62,6 +64,12 @@ namespace PixelOcean
         private int playerOneIndex;
         private int playerTwoIndex;
         private float selectionInputReadyAt;
+#if ENABLE_INPUT_SYSTEM
+        private Vector2Int playerOneStickDirection;
+        private Vector2Int playerTwoStickDirection;
+        private float playerOneStickRepeatAt;
+        private float playerTwoStickRepeatAt;
+#endif
         private Canvas canvas;
         private GameObject selectionRoot;
         private GameObject raceHud;
@@ -155,16 +163,40 @@ namespace PixelOcean
             if (selectionRoot != null) Destroy(selectionRoot);
             EnsureCanvas();
 
+            // Keep the current racers selected when this screen is reopened.
+            // The choices remain movable (not locked), but both controller
+            // cursors immediately return to the surfers they were controlling.
+            string currentPlayerOne = racers.FirstOrDefault(r => r.PlayerSlot == 1)?.Name;
+            string currentPlayerTwo = racers.FirstOrDefault(r => r.PlayerSlot == 2)?.Name;
+            if (Array.IndexOf(Roster, currentPlayerOne) < 0)
+                currentPlayerOne = Array.IndexOf(Roster, playerOneChoice) >= 0
+                    ? playerOneChoice
+                    : Roster[0];
+            if (Array.IndexOf(Roster, currentPlayerTwo) < 0)
+                currentPlayerTwo = Array.IndexOf(Roster, secondPlayerSurfer) >= 0
+                    ? secondPlayerSurfer
+                    : playerTwoChoice;
+
+            bool restorePlayerTwo = (twoPlayerRace || playerTwoJoined) &&
+                                    Array.IndexOf(Roster, currentPlayerTwo) >= 0;
+
             rosterButtons.Clear();
-            playerOneChoice = null;
-            playerTwoChoice = null;
-            playerTwoJoined = false;
             playerOneLocked = false;
             playerTwoLocked = false;
-            playerOneIndex = 0;
-            playerTwoIndex = 0;
+            playerOneIndex = Mathf.Max(0, Array.IndexOf(Roster, currentPlayerOne));
+            playerTwoIndex = restorePlayerTwo
+                ? Mathf.Max(0, Array.IndexOf(Roster, currentPlayerTwo))
+                : 0;
             playerOneChoice = Roster[playerOneIndex];
+            playerTwoJoined = restorePlayerTwo;
+            playerTwoChoice = restorePlayerTwo ? Roster[playerTwoIndex] : null;
             selectionInputReadyAt = Time.unscaledTime + 0.25f;
+#if ENABLE_INPUT_SYSTEM
+            playerOneStickDirection = Vector2Int.zero;
+            playerTwoStickDirection = Vector2Int.zero;
+            playerOneStickRepeatAt = 0f;
+            playerTwoStickRepeatAt = 0f;
+#endif
 
             selectionRoot = CreatePanel(
                 canvas.transform,
@@ -268,6 +300,7 @@ namespace PixelOcean
             help.color = new Color(0.72f, 0.88f, 0.92f, 1f);
 
             EventSystem.current?.SetSelectedGameObject(null);
+            RefreshPlayerFrames();
         }
 
         public void BeginRace(string selectedSurfer, bool showHudImmediately = true)
@@ -300,10 +333,15 @@ namespace PixelOcean
 
         private void Update()
         {
-            UpdateTwoPlayerPicker();
-            if (selectionRoot != null && CancelPressed())
+            // While the picker is visible it exclusively owns controller input.
+            // Do not advance the existing race, its camera, or its racers behind
+            // the selection screen.
+            if (selectionRoot != null)
             {
-                CloseSelection();
+                UpdateTwoPlayerPicker();
+                UpdateControllerStatus();
+                if (CancelPressed())
+                    CloseSelection();
                 return;
             }
 
@@ -342,16 +380,24 @@ namespace PixelOcean
 #if ENABLE_INPUT_SYSTEM
             Gamepad p1 = Gamepad.all.Count > 0 ? Gamepad.all[0] : null;
             Keyboard keyboard = Keyboard.current;
+            Vector2Int p1StickMove = ReadSelectorMove(
+                p1,
+                ref playerOneStickDirection,
+                ref playerOneStickRepeatAt);
 
             if (!playerOneLocked)
             {
                 bool left = (p1 != null && p1.dpad.left.wasPressedThisFrame) ||
+                            p1StickMove.x < 0 ||
                             (keyboard != null && keyboard.leftArrowKey.wasPressedThisFrame);
                 bool right = (p1 != null && p1.dpad.right.wasPressedThisFrame) ||
+                             p1StickMove.x > 0 ||
                              (keyboard != null && keyboard.rightArrowKey.wasPressedThisFrame);
                 bool up = (p1 != null && p1.dpad.up.wasPressedThisFrame) ||
+                          p1StickMove.y > 0 ||
                           (keyboard != null && keyboard.upArrowKey.wasPressedThisFrame);
                 bool down = (p1 != null && p1.dpad.down.wasPressedThisFrame) ||
+                            p1StickMove.y < 0 ||
                             (keyboard != null && keyboard.downArrowKey.wasPressedThisFrame);
 
                 if (left) playerOneIndex = (playerOneIndex + 7) % 8;
@@ -374,6 +420,10 @@ namespace PixelOcean
             if (Gamepad.all.Count > 1)
             {
                 Gamepad p2 = Gamepad.all[1];
+                Vector2Int p2StickMove = ReadSelectorMove(
+                    p2,
+                    ref playerTwoStickDirection,
+                    ref playerTwoStickRepeatAt);
                 bool joinedThisFrame = false;
                 if (!playerTwoJoined &&
                     (p2.startButton.wasPressedThisFrame || p2.buttonSouth.wasPressedThisFrame))
@@ -384,9 +434,17 @@ namespace PixelOcean
                 }
                 if (playerTwoJoined)
                 {
-                    if (!playerTwoLocked && p2.dpad.left.wasPressedThisFrame) playerTwoIndex = (playerTwoIndex + 7) % 8;
-                    if (!playerTwoLocked && p2.dpad.right.wasPressedThisFrame) playerTwoIndex = (playerTwoIndex + 1) % 8;
-                    if (!playerTwoLocked && (p2.dpad.up.wasPressedThisFrame || p2.dpad.down.wasPressedThisFrame)) playerTwoIndex = (playerTwoIndex + 4) % 8;
+                    if (!playerTwoLocked &&
+                        (p2.dpad.left.wasPressedThisFrame || p2StickMove.x < 0))
+                        playerTwoIndex = (playerTwoIndex + 7) % 8;
+                    if (!playerTwoLocked &&
+                        (p2.dpad.right.wasPressedThisFrame || p2StickMove.x > 0))
+                        playerTwoIndex = (playerTwoIndex + 1) % 8;
+                    if (!playerTwoLocked &&
+                        (p2.dpad.up.wasPressedThisFrame ||
+                         p2.dpad.down.wasPressedThisFrame ||
+                         p2StickMove.y != 0))
+                        playerTwoIndex = (playerTwoIndex + 4) % 8;
                     playerTwoChoice = Roster[playerTwoIndex];
 
                     if (!joinedThisFrame && !playerTwoLocked &&
@@ -410,6 +468,57 @@ namespace PixelOcean
 #endif
             RefreshPlayerFrames();
         }
+
+#if ENABLE_INPUT_SYSTEM
+        private static Vector2Int ReadSelectorMove(
+            Gamepad gamepad,
+            ref Vector2Int heldDirection,
+            ref float repeatAt)
+        {
+            Vector2Int direction = Vector2Int.zero;
+            if (gamepad != null)
+            {
+                // Read the D-pad as a held vector so it cannot be missed when
+                // another race component observes the same input frame. Fall
+                // back to the left stick when the D-pad is neutral.
+                Vector2 input = gamepad.dpad.ReadValue();
+                float threshold = 0.5f;
+                if (input.sqrMagnitude < 0.25f)
+                {
+                    input = gamepad.leftStick.ReadValue();
+                    threshold = 0.55f;
+                }
+
+                if (Mathf.Abs(input.x) >= threshold || Mathf.Abs(input.y) >= threshold)
+                {
+                    direction = Mathf.Abs(input.x) >= Mathf.Abs(input.y)
+                        ? new Vector2Int(input.x < 0f ? -1 : 1, 0)
+                        : new Vector2Int(0, input.y < 0f ? -1 : 1);
+                }
+            }
+
+            if (direction == Vector2Int.zero)
+            {
+                heldDirection = Vector2Int.zero;
+                repeatAt = 0f;
+                return Vector2Int.zero;
+            }
+
+            float now = Time.unscaledTime;
+            if (direction != heldDirection)
+            {
+                heldDirection = direction;
+                repeatAt = now + 0.32f;
+                return direction;
+            }
+
+            if (now < repeatAt)
+                return Vector2Int.zero;
+
+            repeatAt = now + 0.12f;
+            return direction;
+        }
+#endif
 
         private void StartPickerRace()
         {
@@ -796,7 +905,7 @@ namespace PixelOcean
             RaceActive = false;
             racers.Sort((a, b) => b.Distance.CompareTo(a.Distance));
             if (timerLabel != null) timerLabel.text = "RACE COMPLETE";
-            RefreshStandingRows(racers);
+            RefreshStandingRows(racers, true);
             BeginMusicFadeOut();
             if (ecosystemRoot != null)
             {
@@ -1527,7 +1636,7 @@ namespace PixelOcean
             panelObject.transform.SetParent(raceHud.transform, false);
 
             RectTransform panel = panelObject.GetComponent<RectTransform>();
-            panel.anchorMin = new Vector2(0.025f, 0.78f);
+            panel.anchorMin = new Vector2(0.025f, 0.70f);
             panel.anchorMax = new Vector2(0.975f, 0.95f);
             panel.offsetMin = panel.offsetMax = Vector2.zero;
 
@@ -1540,8 +1649,8 @@ namespace PixelOcean
                 "POLE POSITIONS",
                 20,
                 TextAlignmentOptions.Center);
-            heading.rectTransform.anchorMin = new Vector2(0.12f, 0.68f);
-            heading.rectTransform.anchorMax = new Vector2(0.99f, 0.86f);
+            heading.rectTransform.anchorMin = new Vector2(0.12f, 0.80f);
+            heading.rectTransform.anchorMax = new Vector2(0.99f, 0.94f);
             heading.rectTransform.offsetMin = heading.rectTransform.offsetMax = Vector2.zero;
             heading.color = new Color(0.72f, 0.9f, 0.94f, 1f);
 
@@ -1551,8 +1660,8 @@ namespace PixelOcean
                 typeof(Image));
             timerCard.transform.SetParent(panelObject.transform, false);
             RectTransform timerCardRect = timerCard.GetComponent<RectTransform>();
-            timerCardRect.anchorMin = new Vector2(0.012f, 0.04f);
-            timerCardRect.anchorMax = new Vector2(0.112f, 0.64f);
+            timerCardRect.anchorMin = new Vector2(0.012f, 0.10f);
+            timerCardRect.anchorMax = new Vector2(0.112f, 0.65f);
             timerCardRect.offsetMin = timerCardRect.offsetMax = Vector2.zero;
             Image timerCardImage = timerCard.GetComponent<Image>();
             timerCardImage.color = Color.clear;
@@ -1590,47 +1699,77 @@ namespace PixelOcean
             rowObject.transform.SetParent(parent, false);
 
             RectTransform row = rowObject.GetComponent<RectTransform>();
-            float left = 0.12f + index * 0.109f;
-            row.anchorMin = new Vector2(left, 0.04f);
-            row.anchorMax = new Vector2(left + 0.103f, 0.64f);
-            row.offsetMin = row.offsetMax = Vector2.zero;
+            float centerX = 0.1715f + index * 0.109f;
+            row.anchorMin = row.anchorMax = new Vector2(centerX, 0.36f);
+            row.pivot = new Vector2(0.5f, 0.5f);
+            row.anchoredPosition = Vector2.zero;
+            row.sizeDelta = new Vector2(140f, 132f);
+            row.localScale = Vector3.one;
 
             Image background = rowObject.GetComponent<Image>();
             background.color = Color.clear;
             background.raycastTarget = false;
 
             GameObject portraitObject = new GameObject(
-                "Portrait",
+                "Portrait Cell 64x64",
                 typeof(RectTransform),
                 typeof(Image));
             portraitObject.transform.SetParent(rowObject.transform, false);
             Image portrait = portraitObject.GetComponent<Image>();
-            portrait.preserveAspect = true;
+            portrait.type = Image.Type.Simple;
+            portrait.preserveAspect = false;
             portrait.raycastTarget = false;
             RectTransform portraitRect = portrait.rectTransform;
-            portraitRect.anchorMin = portraitRect.anchorMax = new Vector2(0f, 0.5f);
-            portraitRect.pivot = new Vector2(0f, 0.5f);
-            portraitRect.anchoredPosition = new Vector2(6f, 0f);
+            portraitRect.anchorMin = portraitRect.anchorMax = new Vector2(0.5f, 0.5f);
+            portraitRect.pivot = new Vector2(0.5f, 0.5f);
+            portraitRect.anchoredPosition = new Vector2(0f, 34f);
             portraitRect.sizeDelta = new Vector2(64f, 64f);
+            portraitRect.localScale = Vector3.one;
 
-            TextMeshProUGUI rank = CreateText(rowObject.transform, string.Empty, 23, TextAlignmentOptions.MidlineLeft);
-            rank.rectTransform.anchorMin = new Vector2(0.46f, 0.62f);
-            rank.rectTransform.anchorMax = new Vector2(0.96f, 0.98f);
+            // This is a separate, clipped cell below the portrait. Its contents
+            // cannot render into the 64x64 portrait rectangle above it.
+            GameObject infoObject = new GameObject(
+                "Info Cell Below Portrait",
+                typeof(RectTransform),
+                typeof(Image),
+                typeof(RectMask2D));
+            infoObject.transform.SetParent(rowObject.transform, false);
+            RectTransform infoRect = infoObject.GetComponent<RectTransform>();
+            infoRect.anchorMin = infoRect.anchorMax = new Vector2(0.5f, 0.5f);
+            infoRect.pivot = new Vector2(0.5f, 0.5f);
+            infoRect.anchoredPosition = new Vector2(0f, -33f);
+            infoRect.sizeDelta = new Vector2(140f, 60f);
+
+            Image infoCellImage = infoObject.GetComponent<Image>();
+            infoCellImage.color = Color.clear;
+            infoCellImage.raycastTarget = false;
+
+            TextMeshProUGUI rank = CreateText(infoObject.transform, string.Empty, 13, TextAlignmentOptions.Center);
+            rank.rectTransform.anchorMin = new Vector2(0.02f, 0f);
+            rank.rectTransform.anchorMax = new Vector2(0.48f, 0.52f);
             rank.rectTransform.offsetMin = rank.rectTransform.offsetMax = Vector2.zero;
+            rank.overflowMode = TextOverflowModes.Truncate;
+            ApplyPortraitTextOutline(rank);
 
-            TextMeshProUGUI name = CreateText(rowObject.transform, string.Empty, 15, TextAlignmentOptions.MidlineLeft);
-            name.rectTransform.anchorMin = new Vector2(0.46f, 0.31f);
-            name.rectTransform.anchorMax = new Vector2(0.98f, 0.65f);
+            TextMeshProUGUI name = CreateText(infoObject.transform, string.Empty, 16, TextAlignmentOptions.Center);
+            name.rectTransform.anchorMin = new Vector2(0.02f, 0.52f);
+            name.rectTransform.anchorMax = new Vector2(0.98f, 1f);
             name.rectTransform.offsetMin = name.rectTransform.offsetMax = Vector2.zero;
+            name.overflowMode = TextOverflowModes.Truncate;
+            ApplyPortraitTextOutline(name);
 
-            TextMeshProUGUI distance = CreateText(rowObject.transform, string.Empty, 14, TextAlignmentOptions.MidlineLeft);
-            distance.rectTransform.anchorMin = new Vector2(0.46f, 0.03f);
-            distance.rectTransform.anchorMax = new Vector2(0.98f, 0.34f);
+            TextMeshProUGUI distance = CreateText(infoObject.transform, string.Empty, 13, TextAlignmentOptions.Center);
+            distance.rectTransform.anchorMin = new Vector2(0.48f, 0f);
+            distance.rectTransform.anchorMax = new Vector2(0.98f, 0.52f);
             distance.rectTransform.offsetMin = distance.rectTransform.offsetMax = Vector2.zero;
+            distance.overflowMode = TextOverflowModes.Truncate;
             distance.color = new Color(0.72f, 0.88f, 0.92f, 1f);
+            ApplyPortraitTextOutline(distance);
 
             return new StandingRow
             {
+                RacerName = Roster[index],
+                Root = row,
                 Background = background,
                 Portrait = portrait,
                 Rank = rank,
@@ -1639,22 +1778,47 @@ namespace PixelOcean
             };
         }
 
-        private void RefreshStandingRows(IReadOnlyList<Racer> ordered)
+        private void RefreshStandingRows(IReadOnlyList<Racer> ordered, bool snap = false)
         {
             for (int i = 0; i < standingRows.Count; i++)
             {
                 StandingRow row = standingRows[i];
-                if (i >= ordered.Count)
+                Racer racer = null;
+                int rankIndex = -1;
+                for (int rank = 0; rank < ordered.Count; rank++)
+                {
+                    if (ordered[rank].Name != row.RacerName)
+                        continue;
+
+                    racer = ordered[rank];
+                    rankIndex = rank;
+                    break;
+                }
+
+                if (racer == null)
                 {
                     row.Background.gameObject.SetActive(false);
                     continue;
                 }
 
                 row.Background.gameObject.SetActive(true);
-                Racer racer = ordered[i];
+                Vector2 targetAnchor = new Vector2(
+                    0.1715f + rankIndex * 0.109f,
+                    0.36f);
+                float blend = snap
+                    ? 1f
+                    : 1f - Mathf.Exp(-10f * Time.unscaledDeltaTime);
+                Vector2 smoothAnchor = Vector2.Lerp(
+                    row.Root.anchorMin,
+                    targetAnchor,
+                    blend);
+                row.Root.anchorMin = row.Root.anchorMax = smoothAnchor;
+
                 row.Portrait.sprite = GetRacePortrait(racer.Name);
                 row.Portrait.enabled = row.Portrait.sprite != null;
-                row.Rank.text = (i + 1).ToString();
+                if (row.Portrait.enabled)
+                    row.Portrait.SetNativeSize();
+                row.Rank.text = $"POS {rankIndex + 1}";
                 row.Name.text = racer.Name.ToUpperInvariant();
                 row.Distance.text = $"{racer.Distance:0.0}m";
 
@@ -1674,6 +1838,12 @@ namespace PixelOcean
                     row.Rank.color = row.Name.color = Color.white;
                 }
             }
+        }
+
+        private static void ApplyPortraitTextOutline(TextMeshProUGUI label)
+        {
+            label.outlineColor = Color.black;
+            label.outlineWidth = 0.24f;
         }
 
         private Sprite GetRacePortrait(string racerName)
