@@ -46,6 +46,8 @@ namespace PixelOcean
         private string playerOneChoice;
         private string playerTwoChoice;
         private bool playerTwoJoined;
+        private bool playerOneLocked;
+        private bool playerTwoLocked;
         private int playerTwoIndex;
         private Canvas canvas;
         private GameObject selectionRoot;
@@ -139,6 +141,14 @@ namespace PixelOcean
             if (selectionRoot != null) Destroy(selectionRoot);
             EnsureCanvas();
 
+            rosterButtons.Clear();
+            playerOneChoice = null;
+            playerTwoChoice = null;
+            playerTwoJoined = false;
+            playerOneLocked = false;
+            playerTwoLocked = false;
+            playerTwoIndex = 0;
+
             selectionRoot = CreatePanel(
                 canvas.transform,
                 "Race Surfer Selection",
@@ -204,8 +214,17 @@ namespace PixelOcean
                     GetPortraitSprite(capturedRacer),
                     () =>
                     {
+                        if (playerTwoLocked && capturedRacer == playerTwoChoice)
+                            return;
+
                         playerOneChoice = capturedRacer;
+                        playerOneLocked = true;
                         RefreshPlayerFrames();
+
+                        // In single-player the first confirmation starts the race.
+                        // Once P2 has joined, both confirmations are mandatory.
+                        if (!playerTwoJoined || playerTwoLocked)
+                            StartPickerRace();
                     });
                 buttons.Add(button);
                 rosterButtons.Add(button);
@@ -307,15 +326,38 @@ namespace PixelOcean
             if (Gamepad.all.Count > 1)
             {
                 Gamepad p2 = Gamepad.all[1];
-                if (!playerTwoJoined && (p2.startButton.wasPressedThisFrame || p2.buttonSouth.wasPressedThisFrame)) playerTwoJoined = true;
+                bool joinedThisFrame = false;
+                if (!playerTwoJoined &&
+                    (p2.startButton.wasPressedThisFrame || p2.buttonSouth.wasPressedThisFrame))
+                {
+                    playerTwoJoined = true;
+                    joinedThisFrame = true;
+                    playerTwoChoice = Roster[playerTwoIndex];
+                }
                 if (playerTwoJoined)
                 {
-                    if (p2.dpad.left.wasPressedThisFrame) playerTwoIndex = (playerTwoIndex + 7) % 8;
-                    if (p2.dpad.right.wasPressedThisFrame) playerTwoIndex = (playerTwoIndex + 1) % 8;
-                    if (p2.dpad.up.wasPressedThisFrame || p2.dpad.down.wasPressedThisFrame) playerTwoIndex = (playerTwoIndex + 4) % 8;
+                    if (!playerTwoLocked && p2.dpad.left.wasPressedThisFrame) playerTwoIndex = (playerTwoIndex + 7) % 8;
+                    if (!playerTwoLocked && p2.dpad.right.wasPressedThisFrame) playerTwoIndex = (playerTwoIndex + 1) % 8;
+                    if (!playerTwoLocked && (p2.dpad.up.wasPressedThisFrame || p2.dpad.down.wasPressedThisFrame)) playerTwoIndex = (playerTwoIndex + 4) % 8;
                     playerTwoChoice = Roster[playerTwoIndex];
-                    if (!string.IsNullOrEmpty(playerOneChoice) && p2.buttonSouth.wasPressedThisFrame && playerOneChoice != playerTwoChoice) StartPickerRace();
+
+                    if (!joinedThisFrame && !playerTwoLocked &&
+                        p2.buttonSouth.wasPressedThisFrame &&
+                        playerOneChoice != playerTwoChoice)
+                    {
+                        playerTwoLocked = true;
+                        if (playerOneLocked)
+                            StartPickerRace();
+                    }
                 }
+            }
+            else if (playerTwoJoined)
+            {
+                // A disconnected second controller cleanly returns the menu to
+                // one-player selection instead of leaving an impossible lock.
+                playerTwoJoined = false;
+                playerTwoLocked = false;
+                playerTwoChoice = null;
             }
 #endif
             RefreshPlayerFrames();
@@ -323,7 +365,8 @@ namespace PixelOcean
 
         private void StartPickerRace()
         {
-            if (string.IsNullOrEmpty(playerOneChoice)) return;
+            if (!playerOneLocked) return;
+            if (playerTwoJoined && (!playerTwoLocked || playerOneChoice == playerTwoChoice)) return;
             twoPlayerRace = playerTwoJoined; secondPlayerSurfer = playerTwoChoice;
             Destroy(selectionRoot); selectionRoot = null; selectionMenu?.SetRaceSelectionPresentation(false);
             BeginRace(playerOneChoice);
@@ -334,8 +377,27 @@ namespace PixelOcean
             for (int i = 0; i < rosterButtons.Count; i++)
             {
                 Outline frame = rosterButtons[i].GetComponent<Outline>();
-                bool p1 = Roster[i] == playerOneChoice, p2 = playerTwoJoined && Roster[i] == playerTwoChoice;
-                frame.enabled = p1 || p2; frame.effectColor = p2 ? new Color(1f,.05f,.2f,1f) : new Color(.05f,.95f,1f,1f); frame.effectDistance = new Vector2(5f,-5f);
+                Image panel = rosterButtons[i].GetComponent<Image>();
+                bool p1Cursor = EventSystem.current != null &&
+                    EventSystem.current.currentSelectedGameObject == rosterButtons[i].gameObject;
+                bool p1 = p1Cursor || (playerOneLocked && Roster[i] == playerOneChoice);
+                bool p2 = playerTwoJoined && Roster[i] == playerTwoChoice;
+
+                frame.enabled = p1 || p2;
+                frame.effectColor = p2
+                    ? new Color(1f, 0.05f, 0.2f, 1f)
+                    : new Color(0.05f, 0.95f, 1f, 1f);
+                frame.effectDistance = new Vector2(5f, -5f);
+
+                if (panel != null)
+                {
+                    bool locked = (playerOneLocked && Roster[i] == playerOneChoice) ||
+                                  (playerTwoLocked && Roster[i] == playerTwoChoice);
+                    panel.color = locked
+                        ? (p2 ? new Color(0.22f, 0.015f, 0.045f, 0.94f)
+                              : new Color(0.01f, 0.19f, 0.22f, 0.94f))
+                        : new Color(0.015f, 0.055f, 0.075f, 0.82f);
+                }
             }
         }
 
