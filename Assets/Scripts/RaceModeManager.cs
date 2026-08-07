@@ -5,6 +5,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Sprites;
 using UnityEngine.UI;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -33,6 +34,7 @@ namespace PixelOcean
             public RectTransform Root;
             public Image Background;
             public Image Portrait;
+            public Material PortraitMaterial;
             public TextMeshProUGUI Rank;
             public TextMeshProUGUI Name;
             public TextMeshProUGUI Distance;
@@ -95,6 +97,9 @@ namespace PixelOcean
         [SerializeField, Range(8, 40)] private int poleNameFontSize = 16;
         [SerializeField, Range(8, 32)] private int poleDetailFontSize = 13;
         [SerializeField, Min(0.1f)] private float polePositionSlideSpeed = 10f;
+        [SerializeField, Range(0f, 1f)] private float polePortraitFadeBottom = 0.25f;
+        [SerializeField, Range(0f, 1f)] private float polePortraitFadeTop = 0.45f;
+        [SerializeField, Range(1, 8)] private int polePortraitFadeSteps = 4;
 
         private AudioSource musicSource;
         private Coroutine musicFadeCoroutine;
@@ -1629,7 +1634,10 @@ namespace PixelOcean
             EnsureCanvas();
 
             if (raceHud != null)
+            {
+                ReleaseStandingRowMaterials();
                 Destroy(raceHud);
+            }
 
             raceHud = new GameObject(
                 "Race HUD",
@@ -1659,6 +1667,7 @@ namespace PixelOcean
 
         private void BuildPolePositionsPanel()
         {
+            ReleaseStandingRowMaterials();
             standingRows.Clear();
 
             GameObject panelObject = new GameObject(
@@ -1763,6 +1772,31 @@ namespace PixelOcean
             portraitRect.sizeDelta = new Vector2(polePortraitSize, polePortraitSize);
             portraitRect.localScale = Vector3.one;
 
+            Shader fadeShader =
+                Resources.Load<Shader>("Shaders/PixelPortraitBottomFade");
+
+            if (fadeShader == null)
+                fadeShader = Shader.Find("UI/Pixel Portrait Bottom Fade");
+
+            Material portraitMaterial = null;
+            if (fadeShader != null)
+            {
+                // Each portrait needs its own material because atlas UVs can be
+                // different for every surfer portrait.
+                portraitMaterial = new Material(fadeShader)
+                {
+                    name = $"{Roster[index]} Portrait Bottom Fade"
+                };
+
+                portrait.material = portraitMaterial;
+            }
+            else
+            {
+                Debug.LogWarning(
+                    "Could not load Resources/Shaders/PixelPortraitBottomFade.shader.",
+                    this);
+            }
+
             // This is a separate, clipped cell below the portrait. Its contents
             // cannot render into the 64x64 portrait rectangle above it.
             GameObject infoObject = new GameObject(
@@ -1817,6 +1851,7 @@ namespace PixelOcean
                 Root = row,
                 Background = background,
                 Portrait = portrait,
+                PortraitMaterial = portraitMaterial,
                 Rank = rank,
                 Name = name,
                 Distance = distance
@@ -1879,6 +1914,27 @@ namespace PixelOcean
                     row.Portrait.preserveAspect = true;
                     row.Portrait.SetNativeSize();
                     row.Portrait.rectTransform.localScale = Vector3.one;
+
+                    if (row.PortraitMaterial != null)
+                    {
+                        Vector4 spriteUv =
+                            DataUtility.GetOuterUV(portraitSprite);
+
+                        row.PortraitMaterial.SetVector(
+                            "_SpriteUVRect",
+                            spriteUv);
+                        row.PortraitMaterial.SetFloat(
+                            "_FadeBottom",
+                            polePortraitFadeBottom);
+                        row.PortraitMaterial.SetFloat(
+                            "_FadeTop",
+                            Mathf.Max(
+                                polePortraitFadeBottom + 0.001f,
+                                polePortraitFadeTop));
+                        row.PortraitMaterial.SetFloat(
+                            "_FadeSteps",
+                            polePortraitFadeSteps);
+                    }
                 }
 
                 row.Rank.text = $"POS {rankIndex + 1}";
@@ -1901,6 +1957,18 @@ namespace PixelOcean
                 {
                     row.Background.color = Color.clear;
                     row.Rank.color = row.Name.color = Color.white;
+                }
+            }
+        }
+
+        private void ReleaseStandingRowMaterials()
+        {
+            foreach (StandingRow row in standingRows)
+            {
+                if (row != null && row.PortraitMaterial != null)
+                {
+                    Destroy(row.PortraitMaterial);
+                    row.PortraitMaterial = null;
                 }
             }
         }
