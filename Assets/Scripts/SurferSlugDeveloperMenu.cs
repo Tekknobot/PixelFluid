@@ -12,6 +12,9 @@ namespace PixelOcean
     public sealed class SurferSlugDeveloperMenu : MonoBehaviour
     {
         private const int MenuItemCount = 8;
+        // Canvas sorting order is clamped to a signed 16-bit range by Unity.
+        // Keep Developer Mode at the highest possible UI order.
+        private const int DeveloperCanvasOrder = 32767;
         private const string DeveloperUnlockedKey = "SurferSlug.DeveloperUnlocked";
 
         private static readonly Color PanelColor = new(0.015f, 0.11f, 0.15f, 0.985f);
@@ -149,8 +152,19 @@ namespace PixelOcean
 
         private void SetCanvasVisible(bool shouldShow)
         {
-            if (canvas != null)
-                canvas.enabled = shouldShow;
+            if (canvas == null)
+                return;
+
+            if (shouldShow)
+            {
+                // Reassert this whenever the menu opens. Runtime title, pause,
+                // cutscene, and race canvases may have been created afterward.
+                canvas.overrideSorting = true;
+                canvas.sortingOrder = DeveloperCanvasOrder;
+                canvas.transform.SetAsLastSibling();
+            }
+
+            canvas.enabled = shouldShow;
         }
 
         private static bool TogglePressed()
@@ -247,7 +261,8 @@ namespace PixelOcean
             canvasObject.transform.SetParent(transform, false);
             canvas = canvasObject.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 32700;
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = DeveloperCanvasOrder;
 
             CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
