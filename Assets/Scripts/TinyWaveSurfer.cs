@@ -58,6 +58,8 @@ namespace PixelOcean
         [Header("Player Control")]
         [SerializeField] private bool playerControlled;
         [SerializeField] private bool aiControlled;
+        private int raceGamepadIndex = -1;
+        private bool raceKeyboardControls;
         private bool raceModeSurfer;
         [SerializeField, Min(0.25f)] private float playerScrollSpeed = 2.4f;
         [SerializeField, Range(1f, 4f)] private float playerBoostMultiplier = 1.75f;
@@ -1175,13 +1177,13 @@ namespace PixelOcean
             ThrowSodaCan(aimAtUfo);
         }
 
-        private static bool ReadAttackInput()
+        private bool ReadAttackInput()
         {
 #if ENABLE_INPUT_SYSTEM
-            bool keyboard = Keyboard.current != null &&
+            bool keyboard = (!raceModeSurfer || raceKeyboardControls) && Keyboard.current != null &&
                 (Keyboard.current.fKey.isPressed || Keyboard.current.xKey.isPressed);
-            bool gamepad = Gamepad.current != null &&
-                Gamepad.current.buttonWest.isPressed;
+            Gamepad gamepadDevice = GetRaceGamepad();
+            bool gamepad = gamepadDevice != null && gamepadDevice.buttonWest.isPressed;
             if (keyboard || gamepad)
                 return true;
 #endif
@@ -2129,6 +2131,18 @@ namespace PixelOcean
             }
         }
 
+        public void ConfigureRaceInput(int gamepadIndex, bool useKeyboard)
+        {
+            raceGamepadIndex = gamepadIndex;
+            raceKeyboardControls = useKeyboard;
+        }
+
+        public void CatchUpToRaceLeader(float worldX, int requestedWave)
+        {
+            ForceRaceStartingLine(worldX, requestedWave);
+            invulnerableUntil = Mathf.Max(invulnerableUntil, Time.time + 1.15f);
+        }
+
         /// <summary>Assigns the voice set for a generated race competitor.</summary>
         public void ConfigureRaceReactionAudio(bool useWomanAudio)
         {
@@ -2472,11 +2486,11 @@ namespace PixelOcean
             return SurfAbilityProgression.Instance == null || SurfAbilityProgression.Instance.Has(ability);
         }
 
-        private static bool ReadShoulderInput()
+        private bool ReadShoulderInput()
         {
 #if ENABLE_INPUT_SYSTEM
-            return (Keyboard.current != null && Keyboard.current.rKey.isPressed) ||
-                (Gamepad.current != null && Gamepad.current.rightShoulder.isPressed);
+            return ((!raceModeSurfer || raceKeyboardControls) && Keyboard.current != null && Keyboard.current.rKey.isPressed) ||
+                (GetRaceGamepad() != null && GetRaceGamepad().rightShoulder.isPressed);
 #elif ENABLE_LEGACY_INPUT_MANAGER
             return Input.GetKey(KeyCode.R) || Input.GetKey(KeyCode.JoystickButton5);
 #else
@@ -2643,9 +2657,9 @@ namespace PixelOcean
         private bool ReadSpecialInput()
         {
 #if ENABLE_INPUT_SYSTEM
-            bool keyboardHeld = Keyboard.current != null &&
+            bool keyboardHeld = (!raceModeSurfer || raceKeyboardControls) && Keyboard.current != null &&
                 (Keyboard.current.eKey.isPressed || Keyboard.current.bKey.isPressed);
-            bool gamepadHeld = Gamepad.current != null && Gamepad.current.buttonEast.isPressed;
+            bool gamepadHeld = GetRaceGamepad() != null && GetRaceGamepad().buttonEast.isPressed;
             return keyboardHeld || gamepadHeld;
 #elif ENABLE_LEGACY_INPUT_MANAGER
             return Input.GetKey(KeyCode.E) || Input.GetKey(KeyCode.B) ||
@@ -2936,7 +2950,7 @@ namespace PixelOcean
             jump = layerUp = layerDown = boost = false;
             trick = 0f;
 
-            Keyboard keyboard = Keyboard.current;
+            Keyboard keyboard = (!raceModeSurfer || raceKeyboardControls) ? Keyboard.current : null;
             if (keyboard != null)
             {
                 horizontal += (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed ? 1f : 0f)
@@ -2948,7 +2962,7 @@ namespace PixelOcean
                 trick -= keyboard.qKey.isPressed ? 1f : 0f;
             }
 
-            Gamepad gamepad = Gamepad.current;
+            Gamepad gamepad = GetRaceGamepad();
             if (gamepad != null)
             {
                 float stickX = gamepad.leftStick.x.ReadValue();
@@ -2993,6 +3007,15 @@ namespace PixelOcean
             jump = layerUp = layerDown = boost = false;
 #endif
         }
+
+#if ENABLE_INPUT_SYSTEM
+        private Gamepad GetRaceGamepad()
+        {
+            if (raceModeSurfer && raceGamepadIndex >= 0 && raceGamepadIndex < Gamepad.all.Count)
+                return Gamepad.all[raceGamepadIndex];
+            return Gamepad.current;
+        }
+#endif
 
 
         private void UpdateAIIntent(float dt)

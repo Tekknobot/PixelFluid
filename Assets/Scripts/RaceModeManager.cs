@@ -37,6 +37,10 @@ namespace PixelOcean
             "Angie", "Ginger", "Summer", "Jane"
         };
         private readonly List<Racer> racers = new();
+        private bool twoPlayerRace;
+        private string secondPlayerSurfer;
+        private Racer cameraLeader;
+        private TextMeshProUGUI controllerStatusLabel;
         private Canvas canvas;
         private GameObject selectionRoot;
         private GameObject raceHud;
@@ -160,6 +164,12 @@ namespace PixelOcean
             titleRect.anchorMax = new Vector2(0.85f, 0.84f);
             titleRect.offsetMin = titleRect.offsetMax = Vector2.zero;
 
+            controllerStatusLabel = CreateText(window.transform, BuildControllerStatus(), 18, TextAlignmentOptions.Center);
+            controllerStatusLabel.rectTransform.anchorMin = new Vector2(0.12f, 0.85f);
+            controllerStatusLabel.rectTransform.anchorMax = new Vector2(0.88f, 0.92f);
+            controllerStatusLabel.rectTransform.offsetMin = controllerStatusLabel.rectTransform.offsetMax = Vector2.zero;
+            controllerStatusLabel.color = new Color(0.72f, 0.88f, 0.92f, 1f);
+
             GameObject row = new GameObject(
                 "Roster",
                 typeof(RectTransform),
@@ -215,7 +225,7 @@ namespace PixelOcean
 
             TextMeshProUGUI help = CreateText(
                 window.transform,
-                "CHOOSE  •  ENTER / A TO START  •  ESC / B TO BACK",
+                "P1 SELECTS  •  P2 JOINS AUTOMATICALLY WITH CONTROLLER 2  •  ESC / B TO BACK",
                 18,
                 TextAlignmentOptions.Center);
             RectTransform helpRect = help.rectTransform;
@@ -230,6 +240,10 @@ namespace PixelOcean
 
         public void BeginRace(string selectedSurfer, bool showHudImmediately = true)
         {
+            twoPlayerRace = ConnectedGamepadCount() >= 2;
+            secondPlayerSurfer = twoPlayerRace
+                ? Roster.First(name => !string.Equals(name, selectedSurfer, StringComparison.OrdinalIgnoreCase))
+                : null;
             GameModeSession.SelectRaceMode();
             ExitRaceMode(false);
             DestroyExistingSurfers(false);
@@ -281,6 +295,8 @@ namespace PixelOcean
             UpdateRaceEcosystem();
             UpdateRaceBosses();
             UpdateRaceWeatherPattern();
+            UpdateSharedRaceCamera();
+            UpdateControllerStatus();
             if (raceTimeRemaining <= 0f) FinishRace();
         }
 
@@ -353,7 +369,9 @@ namespace PixelOcean
             for (int i = 0; i < spawnOrder.Length; i++)
             {
                 string name = spawnOrder[i];
-                bool player = string.Equals(name, selected, StringComparison.OrdinalIgnoreCase);
+                bool player = string.Equals(name, selected, StringComparison.OrdinalIgnoreCase) ||
+                              (twoPlayerRace && string.Equals(name, secondPlayerSurfer, StringComparison.OrdinalIgnoreCase));
+                int playerIndex = string.Equals(name, selected, StringComparison.OrdinalIgnoreCase) ? 0 : 1;
                 int randomWave = i < shuffledWaves.Count
                     ? shuffledWaves[i]
                     : UnityEngine.Random.Range(0, waveCount);
@@ -362,6 +380,8 @@ namespace PixelOcean
                 TinyWaveSurfer surfer = go.AddComponent<TinyWaveSurfer>();
                 surfer.ConfigureGeneratedSurfer(randomWave, true, 0.95f, Color.white, Color.white, 100 + i, 0.2f + i * 0.1f, i * 0.08f);
                 surfer.ConfigureRaceSurfer(!player, speed * (player ? 1f : UnityEngine.Random.Range(0.93f, 1.07f)), boost);
+                if (player)
+                    surfer.ConfigureRaceInput(playerIndex, playerIndex == 0 && ConnectedGamepadCount() == 0);
                 surfer.ConfigureRaceReactionAudio(IsWomanRacer(name));
                 surfer.ForceRaceStartingLine(startX, randomWave);
 
@@ -410,6 +430,46 @@ namespace PixelOcean
                 follow.enabled = true;
                 follow.SetFollowTarget(selected.Surfer, true);
             }
+        }
+
+        private void UpdateSharedRaceCamera()
+        {
+            Racer leader = racers.Where(r => r.Player && r.Surfer != null && !r.Surfer.IsDead)
+                .OrderByDescending(r => r.Distance).FirstOrDefault();
+            if (leader == null) return;
+            if (cameraLeader == null || leader.Distance > cameraLeader.Distance + 0.75f)
+            {
+                cameraLeader = leader;
+                Camera.main?.GetComponent<TinySurferCinematicCamera>()?.SetFollowTarget(leader.Surfer, false);
+            }
+            foreach (Racer racer in racers.Where(r => r.Player && r != leader && r.Surfer != null && !r.Surfer.IsDead))
+            {
+                if (leader.Surfer.transform.position.x - racer.Surfer.transform.position.x > 8f)
+                    racer.Surfer.CatchUpToRaceLeader(leader.Surfer.transform.position.x - 4.5f, racer.Surfer.CurrentWave != null ? racer.Surfer.CurrentWave.IndependentLayerIndex : 0);
+            }
+        }
+
+        private string BuildControllerStatus()
+        {
+            int count = ConnectedGamepadCount();
+            return count >= 2 ? "2 CONTROLLERS CONNECTED  •  TWO PLAYER READY" :
+                count == 1 ? "1 CONTROLLER CONNECTED  •  CONNECT A SECOND FOR P2" :
+                "NO CONTROLLERS  •  CONNECT 1 FOR P1, 2 FOR TWO PLAYER";
+        }
+
+        private void UpdateControllerStatus()
+        {
+            if (controllerStatusLabel != null)
+                controllerStatusLabel.text = BuildControllerStatus();
+        }
+
+        private static int ConnectedGamepadCount()
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Gamepad.all.Count;
+#else
+            return 0;
+#endif
         }
 
         private static float DetermineRaceStartX(PixelWaterGPU master)
@@ -906,6 +966,11 @@ namespace PixelOcean
 
             if (existingBoss != null)
             {
+                // A boss may have been produced by a scene/developer spawner on
+                // the same frame Race Mode adopts it.  Those bosses previously
+                // skipped the Race-only fade because this early return bypassed
+                // the normal creation path.
+                EnsureRaceBossFade(existingBoss.gameObject);
                 EnsureRaceBossFollower(existingBoss);
                 return;
             }
@@ -958,6 +1023,18 @@ namespace PixelOcean
                 targetRacer != null ? targetRacer.Surfer : null,
                 raceBossChildRecycleDistance);
 
+            EnsureRaceBossFade(bossObject);
+        }
+
+        private void EnsureRaceBossFade(GameObject bossObject)
+        {
+            if (bossObject == null)
+                return;
+
+            // This is deliberately applied to the boss root, after its own
+            // components have made their renderer.  OceanSpawnFadeIn therefore
+            // captures the intended opaque colour, immediately sets alpha to
+            // zero, and then fades the whole boss in.
             OceanSpawnFadeIn fade =
                 bossObject.GetComponent<OceanSpawnFadeIn>();
 
@@ -1030,6 +1107,8 @@ namespace PixelOcean
 
             if (follower == null)
                 follower = boss.gameObject.AddComponent<RaceBossHasteFollower>();
+
+            EnsureRaceBossFade(boss.gameObject);
 
             Racer targetRacer = racers.FirstOrDefault(
                 racer =>

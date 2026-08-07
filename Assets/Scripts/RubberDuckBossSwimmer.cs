@@ -757,11 +757,16 @@ ResolveReferences();
                 StopCoroutine(hitReactionRoutine);
             hitReactionRoutine = StartCoroutine(HitReaction());
 
-            TinySurferCinematicCamera hitCamera =
-                FindFirstObjectByType<TinySurferCinematicCamera>();
-            hitCamera?.BeginBossHitFocus(
-                transform,
-                hitCameraFocusDuration);
+            // Race bosses stay in the racer camera; Story arenas retain their
+            // long boss-hit focus.
+            if (!GameModeSession.IsRace)
+            {
+                TinySurferCinematicCamera hitCamera =
+                    FindFirstObjectByType<TinySurferCinematicCamera>();
+                hitCamera?.BeginBossHitFocus(
+                    transform,
+                    hitCameraFocusDuration);
+            }
 
             if (hurtClip != null && audioSource != null)
                 audioSource.PlayOneShot(hurtClip, hurtVolume);
