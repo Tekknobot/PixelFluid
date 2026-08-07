@@ -1,0 +1,546 @@
+fileFormatVersion: 2
+guid: 924b1650803e97742837cf9a07571d5a
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -1658834578399141037
+    second: surveillance_buoy_scanning_0
+  - first:
+      213: 3830138309685777418
+    second: surveillance_buoy_scanning_1
+  - first:
+      213: 6674563758650641886
+    second: surveillance_buoy_scanning_2
+  - first:
+      213: -7637346587795256842
+    second: surveillance_buoy_scanning_3
+  - first:
+      213: 3989163458563448754
+    second: surveillance_buoy_scanning_4
+  - first:
+      213: 6664895365922823712
+    second: surveillance_buoy_scanning_5
+  - first:
+      213: -1373449359026103025
+    second: surveillance_buoy_scanning_6
+  - first:
+      213: -8560735935297611041
+    second: surveillance_buoy_scanning_7
+  - first:
+      213: 8459699909311979826
+    second: surveillance_buoy_scanning_8
+  - first:
+      213: -1297938806371584315
+    second: surveillance_buoy_scanning_9
+  - first:
+      213: 5007113346969493963
+    second: surveillance_buoy_scanning_10
+  - first:
+      213: -5083973428825591349
+    second: surveillance_buoy_scanning_11
+  - first:
+      213: 5503520958219194631
+    second: surveillance_buoy_scanning_12
+  - first:
+      213: -2921459518500370120
+    second: surveillance_buoy_scanning_13
+  - first:
+      213: 8762374961327855998
+    second: surveillance_buoy_scanning_14
+  - first:
+      213: -3482568784725532996
+    second: surveillance_buoy_scanning_15
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 1
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: surveillance_buoy_scanning_0
+      rect:
+        serializedVersion: 2
+        x: 10
+        y: 2
+        width: 44
+        height: 56
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 35362656db2aaf8e0800000000000000
+      internalID: -1658834578399141037
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_scanning_1
+      rect:
+        serializedVersion: 2
+        x: 74
+        y: 2
+        width: 44
+        height: 59
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a049f6def72672530800000000000000
+      internalID: 3830138309685777418
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_scanning_2
+      rect:
+        serializedVersion: 2
+        x: 138
+        y: 2
+        width: 44
+        height: 59
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: edd41190060d0ac50800000000000000
+      internalID: 6674563758650641886
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_scanning_3
+      rect:
+        serializedVersion: 2
+        x: 202
+        y: 2
+        width: 44
+        height: 59
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6f90ce72eb1b20690800000000000000
+      internalID: -7637346587795256842
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_scanning_4
+      rect:
+        serializedVersion: 2
+        x: 266
+        y: 2
+        width: 44
+        height: 59
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2bf94a2b70b5c5730800000000000000
+      internalID: 3989163458563448754
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_scanning_5
+      rect:
+        serializedVersion: 2
+        x: 330
+        y: 3
+        width: 44
+        height: 59
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 02e1afee5077e7c50800000000000000
+      internalID: 6664895365922823712
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_scanning_6
+      rect:
+        serializedVersion: 2
+        x: 394
+        y: 3
+        width: 44
+        height: 59
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f0dd246b51780fce0800000000000000
+      internalID: -1373449359026103025
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_scanning_7
+      rect:
+        serializedVersion: 2
+        x: 458
+        y: 3
+        width: 44
+        height: 56
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fda1aa80608223980800000000000000
+      internalID: -8560735935297611041
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_scanning_8
+      rect:
+        serializedVersion: 2
+        x: 522
+        y: 3
+        width: 44
+        height: 56
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 231e1f00f34e66570800000000000000
+      internalID: 8459699909311979826
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_scanning_9
+      rect:
+        serializedVersion: 2
+        x: 586
+        y: 3
+        width: 44
+        height: 56
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5c6f60a488bccfde0800000000000000
+      internalID: -1297938806371584315
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_scanning_10
+      rect:
+        serializedVersion: 2
+        x: 650
+        y: 3
+        width: 44
+        height: 59
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bc1eb3c6f07dc7540800000000000000
+      internalID: 5007113346969493963
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_scanning_11
+      rect:
+        serializedVersion: 2
+        x: 714
+        y: 3
+        width: 44
+        height: 60
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bc1735f3a191279b0800000000000000
+      internalID: -5083973428825591349
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_scanning_12
+      rect:
+        serializedVersion: 2
+        x: 778
+        y: 3
+        width: 44
+        height: 60
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7019290172f606c40800000000000000
+      internalID: 5503520958219194631
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_scanning_13
+      rect:
+        serializedVersion: 2
+        x: 842
+        y: 3
+        width: 44
+        height: 56
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8390a16eb04e477d0800000000000000
+      internalID: -2921459518500370120
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_scanning_14
+      rect:
+        serializedVersion: 2
+        x: 906
+        y: 2
+        width: 44
+        height: 61
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e7959be2a953a9970800000000000000
+      internalID: 8762374961327855998
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_scanning_15
+      rect:
+        serializedVersion: 2
+        x: 970
+        y: 2
+        width: 44
+        height: 56
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cbe1298442e6bafc0800000000000000
+      internalID: -3482568784725532996
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      surveillance_buoy_scanning_0: -1658834578399141037
+      surveillance_buoy_scanning_1: 3830138309685777418
+      surveillance_buoy_scanning_10: 5007113346969493963
+      surveillance_buoy_scanning_11: -5083973428825591349
+      surveillance_buoy_scanning_12: 5503520958219194631
+      surveillance_buoy_scanning_13: -2921459518500370120
+      surveillance_buoy_scanning_14: 8762374961327855998
+      surveillance_buoy_scanning_15: -3482568784725532996
+      surveillance_buoy_scanning_2: 6674563758650641886
+      surveillance_buoy_scanning_3: -7637346587795256842
+      surveillance_buoy_scanning_4: 3989163458563448754
+      surveillance_buoy_scanning_5: 6664895365922823712
+      surveillance_buoy_scanning_6: -1373449359026103025
+      surveillance_buoy_scanning_7: -8560735935297611041
+      surveillance_buoy_scanning_8: 8459699909311979826
+      surveillance_buoy_scanning_9: -1297938806371584315
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

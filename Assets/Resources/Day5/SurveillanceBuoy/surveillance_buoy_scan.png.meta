@@ -1,0 +1,546 @@
+fileFormatVersion: 2
+guid: 470fb02b6d34db747811ac3d9d37e3bf
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 4748215152516455604
+    second: surveillance_buoy_idle_0
+  - first:
+      213: -8277527006292811522
+    second: surveillance_buoy_idle_1
+  - first:
+      213: 6111911109985639346
+    second: surveillance_buoy_idle_2
+  - first:
+      213: 6336713307840244572
+    second: surveillance_buoy_idle_3
+  - first:
+      213: 5937760030631518224
+    second: surveillance_buoy_idle_4
+  - first:
+      213: 4093722321510603393
+    second: surveillance_buoy_idle_5
+  - first:
+      213: -5738915924871285377
+    second: surveillance_buoy_idle_6
+  - first:
+      213: -767873144791492028
+    second: surveillance_buoy_idle_7
+  - first:
+      213: 4191827418471984814
+    second: surveillance_buoy_idle_8
+  - first:
+      213: 4959022485788426361
+    second: surveillance_buoy_idle_9
+  - first:
+      213: -2991333116418619659
+    second: surveillance_buoy_idle_10
+  - first:
+      213: 1475221346132065429
+    second: surveillance_buoy_idle_11
+  - first:
+      213: -4864871792392221396
+    second: surveillance_buoy_idle_12
+  - first:
+      213: -5866108113561603947
+    second: surveillance_buoy_idle_13
+  - first:
+      213: -8854809590776560769
+    second: surveillance_buoy_idle_14
+  - first:
+      213: 4876807372632370977
+    second: surveillance_buoy_idle_15
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 1
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: surveillance_buoy_idle_0
+      rect:
+        serializedVersion: 2
+        x: 10
+        y: 2
+        width: 44
+        height: 56
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4bcdeda268c05e140800000000000000
+      internalID: 4748215152516455604
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_idle_1
+      rect:
+        serializedVersion: 2
+        x: 74
+        y: 2
+        width: 44
+        height: 60
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ef0e6334b01502d80800000000000000
+      internalID: -8277527006292811522
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_idle_2
+      rect:
+        serializedVersion: 2
+        x: 138
+        y: 3
+        width: 44
+        height: 56
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2bb1571b5ced1d450800000000000000
+      internalID: 6111911109985639346
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_idle_3
+      rect:
+        serializedVersion: 2
+        x: 202
+        y: 3
+        width: 44
+        height: 60
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c5bee4d1e2780f750800000000000000
+      internalID: 6336713307840244572
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_idle_4
+      rect:
+        serializedVersion: 2
+        x: 266
+        y: 3
+        width: 44
+        height: 60
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 010ed4bc949276250800000000000000
+      internalID: 5937760030631518224
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_idle_5
+      rect:
+        serializedVersion: 2
+        x: 330
+        y: 3
+        width: 44
+        height: 60
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 18a1abe03c2dfc830800000000000000
+      internalID: 4093722321510603393
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_idle_6
+      rect:
+        serializedVersion: 2
+        x: 394
+        y: 4
+        width: 44
+        height: 55
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f75f6365f564b50b0800000000000000
+      internalID: -5738915924871285377
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_idle_7
+      rect:
+        serializedVersion: 2
+        x: 458
+        y: 4
+        width: 44
+        height: 60
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 44a14247177f755f0800000000000000
+      internalID: -767873144791492028
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_idle_8
+      rect:
+        serializedVersion: 2
+        x: 522
+        y: 4
+        width: 44
+        height: 60
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eaee3cde3dc5c2a30800000000000000
+      internalID: 4191827418471984814
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_idle_9
+      rect:
+        serializedVersion: 2
+        x: 586
+        y: 4
+        width: 44
+        height: 60
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 97008924dacf1d440800000000000000
+      internalID: 4959022485788426361
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_idle_10
+      rect:
+        serializedVersion: 2
+        x: 650
+        y: 4
+        width: 44
+        height: 55
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5f6810f1166ac76d0800000000000000
+      internalID: -2991333116418619659
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_idle_11
+      rect:
+        serializedVersion: 2
+        x: 714
+        y: 3
+        width: 44
+        height: 60
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 59c764d8ff9097410800000000000000
+      internalID: 1475221346132065429
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_idle_12
+      rect:
+        serializedVersion: 2
+        x: 778
+        y: 3
+        width: 44
+        height: 60
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c2dc4a841e08c7cb0800000000000000
+      internalID: -4864871792392221396
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_idle_13
+      rect:
+        serializedVersion: 2
+        x: 842
+        y: 2
+        width: 44
+        height: 60
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 590bf1d20c5679ea0800000000000000
+      internalID: -5866108113561603947
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_idle_14
+      rect:
+        serializedVersion: 2
+        x: 906
+        y: 2
+        width: 44
+        height: 56
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f738a0c87956d1580800000000000000
+      internalID: -8854809590776560769
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surveillance_buoy_idle_15
+      rect:
+        serializedVersion: 2
+        x: 970
+        y: 2
+        width: 44
+        height: 60
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 12f22cb8776eda340800000000000000
+      internalID: 4876807372632370977
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      surveillance_buoy_idle_0: 4748215152516455604
+      surveillance_buoy_idle_1: -8277527006292811522
+      surveillance_buoy_idle_10: -2991333116418619659
+      surveillance_buoy_idle_11: 1475221346132065429
+      surveillance_buoy_idle_12: -4864871792392221396
+      surveillance_buoy_idle_13: -5866108113561603947
+      surveillance_buoy_idle_14: -8854809590776560769
+      surveillance_buoy_idle_15: 4876807372632370977
+      surveillance_buoy_idle_2: 6111911109985639346
+      surveillance_buoy_idle_3: 6336713307840244572
+      surveillance_buoy_idle_4: 5937760030631518224
+      surveillance_buoy_idle_5: 4093722321510603393
+      surveillance_buoy_idle_6: -5738915924871285377
+      surveillance_buoy_idle_7: -767873144791492028
+      surveillance_buoy_idle_8: 4191827418471984814
+      surveillance_buoy_idle_9: 4959022485788426361
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
