@@ -33,7 +33,7 @@ namespace PixelOcean
 
 
         [Header("Health and Thrown Item Damage")]
-        [SerializeField, Min(1)] private int maximumHealth = 16;
+        [SerializeField, Min(1)] private int maximumHealth = 8;
         [SerializeField, Min(1)] private int thrownItemDamage = 1;
         [SerializeField, Min(0.01f)] private float hurtFlashDuration = 0.12f;
         [SerializeField, Range(0f, 1f)] private float hurtFlashRed = 1f;

@@ -907,29 +907,29 @@ MonoBehaviour:
   simulationShader: {fileID: 7200000, guid: b8833bdeddba55b43baac6a4a940ba50, type: 3}
   renderingMaterial: {fileID: 2100000, guid: 8127f4053393d6f4a87ebd1fa6543df0, type: 2}
   columns: 150
-  rows: 150
-  particleSpacing: 0.052
+  rows: 125
+  particleSpacing: 0.075
   spawnOrigin: {x: -4.1, y: -2.2}
   tankMinimum: {x: -9, y: -3}
   tankMaximum: {x: 9, y: 3}
-  particleRadius: 0.022
+  particleRadius: 0.026
   interactionRadius: 0.075
-  pressureStrength: 38
-  viscosity: 1.4
+  pressureStrength: 32
+  viscosity: 1.7
   gravity: {x: 0, y: -9.81}
-  boundaryBounce: 0.08
-  maximumSpeed: 20
+  boundaryBounce: 1
+  maximumSpeed: 26
   substeps: 2
   simulationRate: 60
   waveEmitterEnabled: 1
-  surfWaveType: 3
-  waveEmitterWidth: 2
-  waveHorizontalForce: 25
-  waveVerticalForce: 8
-  waveFrequency: 0.28
-  waveVerticalVariation: 0.28
-  wavePulseSharpness: 3.2
-  layeredWaveEnabled: 1
+  surfWaveType: 2
+  waveEmitterWidth: 1.65
+  waveHorizontalForce: 18
+  waveVerticalForce: 5.5
+  waveFrequency: 0.24
+  waveVerticalVariation: 0.16
+  wavePulseSharpness: 2.6
+  layeredWaveEnabled: 0
   waveLayerCount: 3
   waveLayerPhaseOffset: 0.34
   deepSurgeForce: 13
@@ -939,18 +939,18 @@ MonoBehaviour:
   layerCompression: 0.72
   layerForwardStacking: 9
   lipThrowBoost: 8
-  bigWaveScale: 3.5
+  bigWaveScale: 1.35
   synchronizeBigWaveEmitters: 1
-  independentEmitterScale: 1.7
-  independentEmitterWidthScale: 1.35
-  independentEmitterLiftScale: 1.35
-  independentEmitterPushScale: 1.25
+  independentEmitterScale: 1.2
+  independentEmitterWidthScale: 1.2
+  independentEmitterLiftScale: 1.05
+  independentEmitterPushScale: 1.05
   createIndependentWaveLayers: 1
   independentLayerCount: 8
   varyIndependentWaveProfiles: 1
   independentProfileRandomness: 0.06
-  independentLayerDelay: 0.18
-  independentLayerBackOffset: 0.08
+  independentLayerDelay: 0.22
+  independentLayerBackOffset: 0.14
   independentLayerVerticalOffset: 0.34
   independentLayerDepthOffset: 0.06
   independentLayerScaleFalloff: 1
@@ -959,14 +959,14 @@ MonoBehaviour:
   independentLayerAlphaLoss: 0.035
   independentLayerForceFalloff: 1
   preswarmOnStart: 1
-  startupDropHeight: 1.15
-  startupDownwardSpeed: 2.4
-  startupDropVariation: 0.28
+  startupDropHeight: 0.35
+  startupDownwardSpeed: 0.55
+  startupDropVariation: 0.08
   startupPreswarmSteps: 24
   startupPreswarmDelta: 0.008333
   runtimeLayerPosition: {x: 0, y: 0}
   runtimeLayerRenderDepth: 0
-  runtimeLayerWaveDelay: 3
+  runtimeLayerWaveDelay: 0
   cascadeMode: 0
   cascadeEchoCount: 3
   cascadeDelay: 0.18
@@ -991,11 +991,11 @@ MonoBehaviour:
   shallowZoneWidth: 0.3
   beachHeight: 0.64
   singlePlayerModeEnabled: 1
-  singlePlayerScrollSpeed: 1.25
-  singlePlayerBoostMultiplier: 1.25
+  singlePlayerScrollSpeed: 1.4
+  singlePlayerBoostMultiplier: 1.75
   horizontalSeabedEnabled: 1
   horizontalSeabedHeight: -2.05
-  beachCurve: 0.35
+  beachCurve: 0.82
   shoreFriction: 0.32
   shallowWaterColor: {r: 0.3, g: 0.94, b: 0.84, a: 0.98}
   sandColor: {r: 0.88, g: 0.76, b: 0.5, a: 1}
@@ -1005,7 +1005,7 @@ MonoBehaviour:
   mainWaterColor: {r: 0.02, g: 0.5, b: 0.58, a: 0.97}
   surfaceWaterColor: {r: 0.16, g: 0.82, b: 0.8, a: 0.99}
   foamColor: {r: 0.95, g: 0.99, b: 1, a: 1}
-  surfaceBand: 0
+  surfaceBand: 0.38
   colourBrightness: 1
   foamSpeedThreshold: 4.5
   foamGeneration: 2.2
@@ -1017,7 +1017,7 @@ MonoBehaviour:
   renderedParticleSize: 0.035
   edgeSoftness: 0.28
   sectionEdgeFadeWidth: 1.5
-  softHorizontalBoundaryWidth: 1.5
+  softHorizontalBoundaryWidth: 1.8
   softHorizontalBoundaryStrength: 1
   synchronizeHorizontalSectionPhase: 1
   seamlessSectionColour: 1
@@ -1026,22 +1026,29 @@ MonoBehaviour:
   interleavedBaseRenderQueue: 3000
   interleavedQueueStep: 4
   interleavedBandOverlap: 0.04
+  enableSurfboardParticleCoupling: 0
   boardParticlePadding: 0.01
   boardParticlePush: 8
   boardVelocityTransfer: 0.18
   boardParticleDrain: 14
   boardSurfaceGrip: 0.08
   boardParticleRadiusScale: 0.28
-  maximumRideableSprayVelocity: 0.75
-  airborneFoamThreshold: 0.68
-  maximumRideableSurfaceOffset: 0.72
-  maximumGameplaySurfaceRise: 0.18
+  maximumRideableSprayVelocity: 0.15
+  airborneFoamThreshold: 0.2
+  maximumRideableSurfaceOffset: 0.25
+  maximumGameplaySurfaceRise: 0.06
   activeWaveReadbackInterval: 0.08
   adjacentWaveReadbackInterval: 0.2
   distantWaveReadbackInterval: 0.55
   noPlayerReadbackInterval: 0.25
   maximumSimulationStepsPerFrame: 2
   maximumAccumulatedFrameTime: 0.05
+  storyWaveProgressionEnabled: 1
+  storyWaveProgress: 0
+  storyHorizontalForceMultiplier: 1
+  storyVerticalForceMultiplier: 1
+  storyBodyForceMultiplier: 1
+  storyFrequencyMultiplier: 1
 --- !u!1 &8346545720097985516
 GameObject:
   m_ObjectHideFlags: 0

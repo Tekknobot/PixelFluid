@@ -6,7 +6,8 @@ namespace PixelOcean
     /// <summary>
     /// Day 4 environmental story layer. The classified research island
     /// approaches through the ocean and gradually replaces the distant sky.
-    /// The Day 3 secret facility is deliberately not recreated on Day 4.
+    /// A non-interactive facility display may also be shown at the Day 4 start
+    /// so the player can inspect the recovered structure artwork.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class DayFourConspiracyEncounter : MonoBehaviour

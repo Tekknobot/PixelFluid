@@ -289,7 +289,10 @@ namespace PixelOcean
             RestoreChapterPopulation();
 
             if (currentDay >= 4 && restoredPlayer != null)
+            {
                 DayFourConspiracyEncounter.Begin(this, restoredPlayer);
+                SecretFacilityEncounter.BeginDayFourDisplay(restoredPlayer);
+            }
 
             if (chapter >= Chapter.FinalWave)
             {
@@ -752,9 +755,12 @@ namespace PixelOcean
             SpawnMajor<WhaleLaneSpawner>("Day Four Dawn Whale", spawner => spawner.SpawnWhale(true));
             SpawnMajor<StingrayLaneSpawner>("Day Four Dawn Stingray", spawner => spawner.SpawnStingray(true));
 
-            TinyWaveSurfer surfer = FindFirstObjectByType<TinyWaveSurfer>();
+            TinyWaveSurfer surfer = FindPlayerControlledSurfer();
             if (surfer != null)
+            {
                 DayFourConspiracyEncounter.Begin(this, surfer);
+                SecretFacilityEncounter.BeginDayFourDisplay(surfer);
+            }
 
             SurfStageSaveSystem.Save(this);
         }
