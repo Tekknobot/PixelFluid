@@ -48,6 +48,7 @@ namespace PixelOcean
         private bool playerTwoJoined;
         private bool playerOneLocked;
         private bool playerTwoLocked;
+        private int playerOneIndex;
         private int playerTwoIndex;
         private Canvas canvas;
         private GameObject selectionRoot;
@@ -147,7 +148,9 @@ namespace PixelOcean
             playerTwoJoined = false;
             playerOneLocked = false;
             playerTwoLocked = false;
+            playerOneIndex = 0;
             playerTwoIndex = 0;
+            playerOneChoice = Roster[playerOneIndex];
 
             selectionRoot = CreatePanel(
                 canvas.transform,
@@ -232,14 +235,10 @@ namespace PixelOcean
 
             for (int i = 0; i < buttons.Count; i++)
             {
-                Navigation nav = new Navigation
-                {
-                    mode = Navigation.Mode.Explicit,
-                    selectOnLeft = buttons[(i - 1 + buttons.Count) % buttons.Count],
-                    selectOnRight = buttons[(i + 1) % buttons.Count],
-                    selectOnUp = buttons[(i - 4 + buttons.Count) % buttons.Count],
-                    selectOnDown = buttons[(i + 4) % buttons.Count]
-                };
+                // Race selection reads each paired controller directly. Leaving
+                // Unity UI navigation enabled makes both gamepads drive the same
+                // EventSystem cursor.
+                Navigation nav = new Navigation { mode = Navigation.Mode.None };
                 buttons[i].navigation = nav;
             }
 
@@ -254,8 +253,7 @@ namespace PixelOcean
             helpRect.offsetMin = helpRect.offsetMax = Vector2.zero;
             help.color = new Color(0.72f, 0.88f, 0.92f, 1f);
 
-            EventSystem.current?.SetSelectedGameObject(
-                buttons.Count > 0 ? buttons[0].gameObject : null);
+            EventSystem.current?.SetSelectedGameObject(null);
         }
 
         public void BeginRace(string selectedSurfer, bool showHudImmediately = true)
@@ -323,6 +321,37 @@ namespace PixelOcean
         {
             if (selectionRoot == null) return;
 #if ENABLE_INPUT_SYSTEM
+            Gamepad p1 = Gamepad.all.Count > 0 ? Gamepad.all[0] : null;
+            Keyboard keyboard = Keyboard.current;
+
+            if (!playerOneLocked)
+            {
+                bool left = (p1 != null && p1.dpad.left.wasPressedThisFrame) ||
+                            (keyboard != null && keyboard.leftArrowKey.wasPressedThisFrame);
+                bool right = (p1 != null && p1.dpad.right.wasPressedThisFrame) ||
+                             (keyboard != null && keyboard.rightArrowKey.wasPressedThisFrame);
+                bool up = (p1 != null && p1.dpad.up.wasPressedThisFrame) ||
+                          (keyboard != null && keyboard.upArrowKey.wasPressedThisFrame);
+                bool down = (p1 != null && p1.dpad.down.wasPressedThisFrame) ||
+                            (keyboard != null && keyboard.downArrowKey.wasPressedThisFrame);
+
+                if (left) playerOneIndex = (playerOneIndex + 7) % 8;
+                if (right) playerOneIndex = (playerOneIndex + 1) % 8;
+                if (up || down) playerOneIndex = (playerOneIndex + 4) % 8;
+                playerOneChoice = Roster[playerOneIndex];
+
+                bool confirm = (p1 != null && p1.buttonSouth.wasPressedThisFrame) ||
+                               (keyboard != null &&
+                                (keyboard.enterKey.wasPressedThisFrame ||
+                                 keyboard.numpadEnterKey.wasPressedThisFrame));
+                if (confirm && (!playerTwoLocked || playerOneChoice != playerTwoChoice))
+                {
+                    playerOneLocked = true;
+                    if (!playerTwoJoined || playerTwoLocked)
+                        StartPickerRace();
+                }
+            }
+
             if (Gamepad.all.Count > 1)
             {
                 Gamepad p2 = Gamepad.all[1];
@@ -389,9 +418,7 @@ namespace PixelOcean
             {
                 Outline frame = rosterButtons[i].GetComponent<Outline>();
                 Image panel = rosterButtons[i].GetComponent<Image>();
-                bool p1Cursor = EventSystem.current != null &&
-                    EventSystem.current.currentSelectedGameObject == rosterButtons[i].gameObject;
-                bool p1 = p1Cursor || (playerOneLocked && Roster[i] == playerOneChoice);
+                bool p1 = Roster[i] == playerOneChoice;
                 bool p2 = playerTwoJoined && Roster[i] == playerTwoChoice;
 
                 frame.enabled = p1 || p2;

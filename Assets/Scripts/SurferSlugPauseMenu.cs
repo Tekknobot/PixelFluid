@@ -2215,7 +2215,19 @@ namespace PixelOcean
         private bool PausePressed()
         {
 #if ENABLE_INPUT_SYSTEM
-            return (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) ||
+            bool keyboardPause = Keyboard.current != null &&
+                                 Keyboard.current.escapeKey.wasPressedThisFrame;
+
+            // During local two-player races only the first paired controller is
+            // allowed to open/close pause. P2 Start remains gameplay-safe.
+            if (RaceModeManager.IsTwoPlayerRace)
+            {
+                Gamepad playerOne = Gamepad.all.Count > 0 ? Gamepad.all[0] : null;
+                return keyboardPause ||
+                       (playerOne != null && playerOne.startButton.wasPressedThisFrame);
+            }
+
+            return keyboardPause ||
                    (Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame);
 #else
             return Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.JoystickButton7);
