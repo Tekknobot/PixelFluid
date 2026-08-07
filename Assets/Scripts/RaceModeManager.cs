@@ -164,11 +164,11 @@ namespace PixelOcean
             titleRect.anchorMax = new Vector2(0.85f, 0.84f);
             titleRect.offsetMin = titleRect.offsetMax = Vector2.zero;
 
-            controllerStatusLabel = CreateText(window.transform, BuildControllerStatus(), 18, TextAlignmentOptions.Center);
-            controllerStatusLabel.rectTransform.anchorMin = new Vector2(0.12f, 0.85f);
-            controllerStatusLabel.rectTransform.anchorMax = new Vector2(0.88f, 0.92f);
+            controllerStatusLabel = CreateText(selectionRoot.transform, BuildControllerStatus(), 20, TextAlignmentOptions.Center);
+            controllerStatusLabel.rectTransform.anchorMin = new Vector2(0.08f, 0.92f);
+            controllerStatusLabel.rectTransform.anchorMax = new Vector2(0.92f, 0.98f);
             controllerStatusLabel.rectTransform.offsetMin = controllerStatusLabel.rectTransform.offsetMax = Vector2.zero;
-            controllerStatusLabel.color = new Color(0.72f, 0.88f, 0.92f, 1f);
+            controllerStatusLabel.color = new Color(0.1f, 0.95f, 1f, 1f);
 
             GameObject row = new GameObject(
                 "Roster",
@@ -224,13 +224,13 @@ namespace PixelOcean
             }
 
             TextMeshProUGUI help = CreateText(
-                window.transform,
+                selectionRoot.transform,
                 "P1 SELECTS  •  P2 JOINS AUTOMATICALLY WITH CONTROLLER 2  •  ESC / B TO BACK",
                 18,
                 TextAlignmentOptions.Center);
             RectTransform helpRect = help.rectTransform;
-            helpRect.anchorMin = new Vector2(0.08f, 0.12f);
-            helpRect.anchorMax = new Vector2(0.92f, 0.22f);
+            helpRect.anchorMin = new Vector2(0.08f, 0.03f);
+            helpRect.anchorMax = new Vector2(0.92f, 0.09f);
             helpRect.offsetMin = helpRect.offsetMax = Vector2.zero;
             help.color = new Color(0.72f, 0.88f, 0.92f, 1f);
 
