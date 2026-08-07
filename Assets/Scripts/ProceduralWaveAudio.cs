@@ -13,7 +13,7 @@ namespace PixelOcean
     public sealed class ProceduralWaveAudio : MonoBehaviour
     {
         [Header("Output")]
-        [SerializeField, Range(0f, 1f)] private float masterVolume = 0.48f;
+        [SerializeField, Range(0f, 1f)] private float masterVolume = 0.68f;
         [SerializeField, Range(-1f, 1f)] private float stereoWidth = 0.35f;
         [SerializeField] private bool reactToWaterSimulation = true;
 
