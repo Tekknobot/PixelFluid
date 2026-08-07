@@ -2190,6 +2190,7 @@ namespace PixelOcean
                 Type type = behaviour.GetType();
                 if (type.Namespace != typeof(SurferSlugPauseMenu).Namespace ||
                     SimulationTypeNames.Contains(type.Name) ||
+                    behaviour is RaceModeManager ||
                     behaviour is RaceSurferSkin)
                 {
                     continue;
