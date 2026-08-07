@@ -15,8 +15,22 @@ namespace PixelOcean
         [ContextMenu("Spawn Godzilla Once")]
         public void SpawnGodzilla()
         {
-            if (spawnedGodzilla != null ||
-                FindFirstObjectByType<GodzillaLaneSwimmer>() != null)
+            if (spawnedGodzilla != null)
+                return;
+
+            GodzillaLaneSwimmer existingBoss =
+                BossSpawnAuthority.FindExistingBoss<GodzillaLaneSwimmer>();
+
+            if (existingBoss != null)
+            {
+                spawnedGodzilla = existingBoss.gameObject;
+                EnsureArena(existingBoss);
+                return;
+            }
+
+            // A duck, another Reaper, or a delayed Continue spawn already owns
+            // the one allowed story-boss slot. Do not start a second encounter.
+            if (!BossSpawnAuthority.TryReserveSpawn())
                 return;
 
             Sprite[] movement = LoadOrdered("Godzilla/godzilla_move");
@@ -26,6 +40,7 @@ namespace PixelOcean
                 Debug.LogError(
                     "GodzillaLaneSpawner could not load the Godzilla movement and attack sheets from Resources/Godzilla.",
                     this);
+                BossSpawnAuthority.ReleaseReservation();
                 return;
             }
 
@@ -48,6 +63,20 @@ namespace PixelOcean
 
             GodzillaLaneSwimmer swimmer = spawnedGodzilla.AddComponent<GodzillaLaneSwimmer>();
             swimmer.Initialise(startingLane);
+
+            if (!BossSpawnAuthority.RegisterBoss(swimmer))
+            {
+                spawnedGodzilla = null;
+                return;
+            }
+
+            EnsureArena(swimmer);
+        }
+
+        private static void EnsureArena(GodzillaLaneSwimmer swimmer)
+        {
+            if (swimmer == null)
+                return;
 
             BossArenaPrison arena = BossArenaPrison.Active;
             if (arena == null)

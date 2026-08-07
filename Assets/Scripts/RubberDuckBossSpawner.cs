@@ -17,7 +17,22 @@ namespace PixelOcean
         [ContextMenu("Spawn Giant Rubber Duck Boss")]
         public void SpawnRubberDuckBoss()
         {
-            if (spawnRoutine != null)
+            if (spawnRoutine != null || spawnedBoss != null)
+                return;
+
+            RubberDuckBossSwimmer existingBoss =
+                BossSpawnAuthority.FindExistingBoss<RubberDuckBossSwimmer>();
+
+            if (existingBoss != null)
+            {
+                spawnedBoss = existingBoss.gameObject;
+                EnsureArena(existingBoss);
+                return;
+            }
+
+            // Reserve before starting the delayed world-ready coroutine. This is
+            // what closes the race between natural progression and Continue.
+            if (!BossSpawnAuthority.TryReserveSpawn())
                 return;
 
             spawnRoutine = StartCoroutine(SpawnBossWhenWorldReady());
@@ -42,12 +57,22 @@ namespace PixelOcean
             }
 
             RubberDuckBossSwimmer existingBoss =
-                FindFirstObjectByType<RubberDuckBossSwimmer>();
+                BossSpawnAuthority.FindExistingBoss<RubberDuckBossSwimmer>();
 
             if (existingBoss != null)
             {
                 spawnedBoss = existingBoss.gameObject;
+                BossSpawnAuthority.ReleaseReservation();
                 EnsureArena(existingBoss);
+                spawnRoutine = null;
+                yield break;
+            }
+
+            // Another boss type may have been registered while this coroutine was
+            // waiting for the camera/water. Never replace it with a duck.
+            if (BossSpawnAuthority.HasBoss)
+            {
+                BossSpawnAuthority.ReleaseReservation();
                 spawnRoutine = null;
                 yield break;
             }
@@ -59,6 +84,7 @@ namespace PixelOcean
                 Debug.LogError(
                     "RubberDuckBossSpawner could not load Resources/RubberDuck sprite sheets.",
                     this);
+                BossSpawnAuthority.ReleaseReservation();
                 spawnRoutine = null;
                 yield break;
             }
@@ -93,10 +119,18 @@ namespace PixelOcean
             // before the arena captures and relocates the boss.
             yield return null;
 
-            if (swimmer != null)
+            if (swimmer != null && BossSpawnAuthority.RegisterBoss(swimmer))
                 EnsureArena(swimmer);
+            else
+                spawnedBoss = null;
 
             spawnRoutine = null;
+        }
+
+        private void OnDisable()
+        {
+            if (spawnRoutine != null && spawnedBoss == null)
+                BossSpawnAuthority.ReleaseReservation();
         }
 
         private static void EnsureArena(RubberDuckBossSwimmer swimmer)

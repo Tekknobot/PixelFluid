@@ -82,6 +82,12 @@ namespace PixelOcean
             if (bossBehaviour == null)
                 return;
 
+            // The arena is the final duplicate barrier. A delayed spawner may reach
+            // this method after Continue already restored the real boss. Keep the
+            // registered boss and remove the duplicate instead of rebinding.
+            if (!BossSpawnAuthority.RegisterBoss(bossBehaviour))
+                return;
+
             // The spawner and progression director can both discover the same arena.
             // Do not restart an entrance that is already correctly configured.
             if (ControlsBoss(bossBehaviour) && entranceStarted)
@@ -657,6 +663,7 @@ namespace PixelOcean
             {
                 SurfDayProgressionDirector progression = FindFirstObjectByType<SurfDayProgressionDirector>();
                 progression?.OnFinalBossDefeated();
+                BossSpawnAuthority.UnregisterBoss(boss);
                 Destroy(boss.gameObject);
             }
 
