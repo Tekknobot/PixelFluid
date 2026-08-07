@@ -28,6 +28,7 @@ namespace PixelOcean
 
         public static RaceModeManager Instance { get; private set; }
         public static bool RaceActive { get; private set; }
+        public static bool IsTwoPlayerRace => Instance != null && Instance.twoPlayerRace;
 
         // Every selectable surfer also enters the race, so the player always has
         // a complete eight-surfer field to race against.
@@ -41,6 +42,11 @@ namespace PixelOcean
         private string secondPlayerSurfer;
         private Racer cameraLeader;
         private TextMeshProUGUI controllerStatusLabel;
+        private readonly List<Button> rosterButtons = new();
+        private string playerOneChoice;
+        private string playerTwoChoice;
+        private bool playerTwoJoined;
+        private int playerTwoIndex;
         private Canvas canvas;
         private GameObject selectionRoot;
         private GameObject raceHud;
@@ -198,16 +204,11 @@ namespace PixelOcean
                     GetPortraitSprite(capturedRacer),
                     () =>
                     {
-                        if (selectionRoot != null)
-                        {
-                            Destroy(selectionRoot);
-                            selectionRoot = null;
-                        }
-
-                        selectionMenu?.SetRaceSelectionPresentation(false);
-                        selectionMenu?.BeginRaceMode(capturedRacer);
+                        playerOneChoice = capturedRacer;
+                        RefreshPlayerFrames();
                     });
                 buttons.Add(button);
+                rosterButtons.Add(button);
             }
 
             for (int i = 0; i < buttons.Count; i++)
@@ -240,10 +241,8 @@ namespace PixelOcean
 
         public void BeginRace(string selectedSurfer, bool showHudImmediately = true)
         {
-            twoPlayerRace = ConnectedGamepadCount() >= 2;
-            secondPlayerSurfer = twoPlayerRace
-                ? Roster.First(name => !string.Equals(name, selectedSurfer, StringComparison.OrdinalIgnoreCase))
-                : null;
+            twoPlayerRace = twoPlayerRace && !string.IsNullOrEmpty(secondPlayerSurfer);
+            secondPlayerSurfer = twoPlayerRace ? secondPlayerSurfer : null;
             GameModeSession.SelectRaceMode();
             ExitRaceMode(false);
             DestroyExistingSurfers(false);
@@ -270,6 +269,7 @@ namespace PixelOcean
 
         private void Update()
         {
+            UpdateTwoPlayerPicker();
             if (selectionRoot != null && CancelPressed())
             {
                 CloseSelection();
@@ -298,6 +298,45 @@ namespace PixelOcean
             UpdateSharedRaceCamera();
             UpdateControllerStatus();
             if (raceTimeRemaining <= 0f) FinishRace();
+        }
+
+        private void UpdateTwoPlayerPicker()
+        {
+            if (selectionRoot == null) return;
+#if ENABLE_INPUT_SYSTEM
+            if (Gamepad.all.Count > 1)
+            {
+                Gamepad p2 = Gamepad.all[1];
+                if (!playerTwoJoined && (p2.startButton.wasPressedThisFrame || p2.buttonSouth.wasPressedThisFrame)) playerTwoJoined = true;
+                if (playerTwoJoined)
+                {
+                    if (p2.dpad.left.wasPressedThisFrame) playerTwoIndex = (playerTwoIndex + 7) % 8;
+                    if (p2.dpad.right.wasPressedThisFrame) playerTwoIndex = (playerTwoIndex + 1) % 8;
+                    if (p2.dpad.up.wasPressedThisFrame || p2.dpad.down.wasPressedThisFrame) playerTwoIndex = (playerTwoIndex + 4) % 8;
+                    playerTwoChoice = Roster[playerTwoIndex];
+                    if (!string.IsNullOrEmpty(playerOneChoice) && p2.buttonSouth.wasPressedThisFrame && playerOneChoice != playerTwoChoice) StartPickerRace();
+                }
+            }
+#endif
+            RefreshPlayerFrames();
+        }
+
+        private void StartPickerRace()
+        {
+            if (string.IsNullOrEmpty(playerOneChoice)) return;
+            twoPlayerRace = playerTwoJoined; secondPlayerSurfer = playerTwoChoice;
+            Destroy(selectionRoot); selectionRoot = null; selectionMenu?.SetRaceSelectionPresentation(false);
+            BeginRace(playerOneChoice);
+        }
+
+        private void RefreshPlayerFrames()
+        {
+            for (int i = 0; i < rosterButtons.Count; i++)
+            {
+                Outline frame = rosterButtons[i].GetComponent<Outline>();
+                bool p1 = Roster[i] == playerOneChoice, p2 = playerTwoJoined && Roster[i] == playerTwoChoice;
+                frame.enabled = p1 || p2; frame.effectColor = p2 ? new Color(1f,.05f,.2f,1f) : new Color(.05f,.95f,1f,1f); frame.effectDistance = new Vector2(5f,-5f);
+            }
         }
 
 

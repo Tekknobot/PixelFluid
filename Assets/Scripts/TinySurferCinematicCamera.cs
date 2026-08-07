@@ -360,7 +360,7 @@ namespace PixelOcean
             Transform hitBoss,
             float duration = 0.32f)
         {
-            if (hitBoss == null || bossDeathFocusTarget != null)
+            if (RaceModeManager.IsTwoPlayerRace || hitBoss == null || bossDeathFocusTarget != null)
                 return;
 
             bossHitFocusTarget = hitBoss;
@@ -788,6 +788,12 @@ namespace PixelOcean
 
         private void UpdateManualZoomInput()
         {
+            if (RaceModeManager.IsTwoPlayerRace)
+            {
+                normalZoomAdjustment = 0f;
+                cinematicZoomAdjustment = 0f;
+                return;
+            }
             if (!enableGamepadCameraControls || controlledCamera == null)
                 return;
 
