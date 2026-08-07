@@ -75,6 +75,9 @@ namespace PixelOcean
         private bool facilityEncounterStarted;
         private int currentDay = 1;
         private ProceduralRainSystem rain;
+        private float nextAtmosphereRefreshTime;
+        private ProceduralRainSystem.RainSituation appliedProgressionWeather =
+            ProceduralRainSystem.RainSituation.Clear;
         private GUIStyle titleStyle;
         private GUIStyle objectiveStyle;
         private GUIStyle panelStyle;
@@ -145,9 +148,7 @@ namespace PixelOcean
             if (sky == null)
                 return;
 
-            float progress = dayEndsAt > 0f
-                ? Mathf.Clamp01(runTime / dayEndsAt)
-                : 0f;
+            float progress = NormalizedDayProgress;
 
             // 0.25 = 6:00 AM. Advancing 0.75 of a full cycle reaches midnight.
             float visualTime = Mathf.Repeat(0.25f + progress * 0.75f, 1f);
@@ -784,18 +785,58 @@ namespace PixelOcean
             QueueCheckpoint();
         }
 
+        private void UpdateProgressiveAtmosphere()
+        {
+            if (Time.unscaledTime < nextAtmosphereRefreshTime)
+                return;
+
+            nextAtmosphereRefreshTime = Time.unscaledTime + 0.35f;
+
+            float progress = NormalizedDayProgress;
+            bool stormActive = chapter >= Chapter.Storm;
+
+            ProceduralRainSystem.RainSituation desiredWeather;
+            if (stormActive || progress >= 0.76f)
+                desiredWeather = ProceduralRainSystem.RainSituation.HeavyRain;
+            else if (progress >= 0.60f)
+                desiredWeather = ProceduralRainSystem.RainSituation.WindDrivenRain;
+            else if (progress >= 0.43f)
+                desiredWeather = ProceduralRainSystem.RainSituation.SteadyRain;
+            else if (progress >= 0.27f)
+                desiredWeather = ProceduralRainSystem.RainSituation.LightRain;
+            else
+                desiredWeather = ProceduralRainSystem.RainSituation.Clear;
+
+            ProceduralRainSystem weather = EnsureRain();
+            if (desiredWeather != appliedProgressionWeather ||
+                weather.CurrentSituation != desiredWeather)
+            {
+                appliedProgressionWeather = desiredWeather;
+                weather.SetSituation(desiredWeather);
+            }
+
+            foreach (PixelWaterGPU water in FindObjectsByType<PixelWaterGPU>(
+                         FindObjectsInactive.Exclude,
+                         FindObjectsSortMode.None))
+            {
+                if (water != null)
+                    water.SetStoryWaveProgress(progress, currentDay, stormActive);
+            }
+        }
+
         private void Update()
         {
             if (chapter == Chapter.Complete || EndlessWaveSections.Instance == null)
                 return;
 
-            TinyWaveSurfer player = FindFirstObjectByType<TinyWaveSurfer>();
+            TinyWaveSurfer player = FindPlayerControlledSurfer();
             if (player == null || player.IsDead)
                 return;
 
             runTime += Time.deltaTime;
             TrackJourneyDistance(player);
             SyncDayNightToRunTime();
+            UpdateProgressiveAtmosphere();
             UpdateDayOneMechanicUnlocks();
 
             if (distanceTravelled >= dayEndDistance && finalWaveStarted)

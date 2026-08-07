@@ -341,6 +341,38 @@ namespace PixelOcean
 
         private float simulationAccumulator;
 
+        [Header("Story Wave Progression")]
+        [Tooltip("Allows Story mode to gradually strengthen and reshape the waves as the day advances.")]
+        [SerializeField] private bool storyWaveProgressionEnabled = true;
+        [SerializeField, Range(0f, 1f)] private float storyWaveProgress;
+        [SerializeField, Range(0.75f, 1.5f)] private float storyHorizontalForceMultiplier = 1f;
+        [SerializeField, Range(0.75f, 1.5f)] private float storyVerticalForceMultiplier = 1f;
+        [SerializeField, Range(0.75f, 1.5f)] private float storyBodyForceMultiplier = 1f;
+        [SerializeField, Range(0.75f, 1.35f)] private float storyFrequencyMultiplier = 1f;
+
+        public void SetStoryWaveProgress(float normalizedProgress, int storyDay, bool stormActive)
+        {
+            storyWaveProgress = Mathf.Clamp01(normalizedProgress);
+
+            if (!storyWaveProgressionEnabled)
+            {
+                storyHorizontalForceMultiplier = 1f;
+                storyVerticalForceMultiplier = 1f;
+                storyBodyForceMultiplier = 1f;
+                storyFrequencyMultiplier = 1f;
+                return;
+            }
+
+            float eased = storyWaveProgress * storyWaveProgress * (3f - 2f * storyWaveProgress);
+            float dayBoost = Mathf.Clamp(storyDay - 1, 0, 3) * 0.025f;
+            float stormBoost = stormActive ? 0.08f : 0f;
+
+            storyHorizontalForceMultiplier = 1f + eased * 0.14f + dayBoost + stormBoost;
+            storyVerticalForceMultiplier = 0.96f + eased * 0.10f + dayBoost * 0.5f + stormBoost * 0.35f;
+            storyBodyForceMultiplier = 1f + eased * 0.18f + dayBoost + stormBoost;
+            storyFrequencyMultiplier = Mathf.Lerp(0.94f, 1.08f, eased);
+        }
+
         private void EnsureUniqueRenderingMaterial()
         {
             if (renderingMaterial == null)
@@ -1537,9 +1569,9 @@ namespace PixelOcean
                     ? 1
                     : 0);
             simulationShader.SetFloat("_WaveEmitterWidth", waveEmitterWidth);
-            simulationShader.SetFloat("_WaveHorizontalForce", waveHorizontalForce);
-            simulationShader.SetFloat("_WaveVerticalForce", waveVerticalForce);
-            simulationShader.SetFloat("_WaveFrequency", waveFrequency);
+            simulationShader.SetFloat("_WaveHorizontalForce", waveHorizontalForce * storyHorizontalForceMultiplier);
+            simulationShader.SetFloat("_WaveVerticalForce", waveVerticalForce * storyVerticalForceMultiplier);
+            simulationShader.SetFloat("_WaveFrequency", waveFrequency * storyFrequencyMultiplier);
             simulationShader.SetFloat("_WaveVerticalVariation", waveVerticalVariation);
             simulationShader.SetFloat("_WavePulseSharpness", wavePulseSharpness);
             simulationShader.SetInt("_CascadeEnabled", cascadeMode == WaveCascadeMode.Disabled ? 0 : 1);
@@ -1558,9 +1590,9 @@ namespace PixelOcean
             simulationShader.SetInt("_LayeredWaveEnabled", layeredWaveEnabled ? 1 : 0);
             simulationShader.SetInt("_WaveLayerCount", waveLayerCount);
             simulationShader.SetFloat("_WaveLayerPhaseOffset", waveLayerPhaseOffset);
-            simulationShader.SetFloat("_DeepSurgeForce", deepSurgeForce);
-            simulationShader.SetFloat("_BodyPushForce", bodyPushForce);
-            simulationShader.SetFloat("_CrestLiftForce", crestLiftForce);
+            simulationShader.SetFloat("_DeepSurgeForce", deepSurgeForce * storyBodyForceMultiplier);
+            simulationShader.SetFloat("_BodyPushForce", bodyPushForce * storyBodyForceMultiplier);
+            simulationShader.SetFloat("_CrestLiftForce", crestLiftForce * storyVerticalForceMultiplier);
             simulationShader.SetFloat("_CrestLayerThickness", crestLayerThickness);
             simulationShader.SetFloat("_LayerCompression", layerCompression);
             simulationShader.SetFloat("_LayerForwardStacking", layerForwardStacking);
