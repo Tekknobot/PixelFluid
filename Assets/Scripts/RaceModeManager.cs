@@ -5,7 +5,6 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.Sprites;
 using UnityEngine.UI;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -34,7 +33,6 @@ namespace PixelOcean
             public RectTransform Root;
             public Image Background;
             public Image Portrait;
-            public Material PortraitMaterial;
             public TextMeshProUGUI Rank;
             public TextMeshProUGUI Name;
             public TextMeshProUGUI Distance;
@@ -97,11 +95,6 @@ namespace PixelOcean
         [SerializeField, Range(8, 40)] private int poleNameFontSize = 16;
         [SerializeField, Range(8, 32)] private int poleDetailFontSize = 13;
         [SerializeField, Min(0.1f)] private float polePositionSlideSpeed = 10f;
-
-        [Header("Pole Position Portrait Pixel Fade")]
-        [SerializeField, Range(0f, 0.5f)] private float polePortraitFadeBottom = 0.25f;
-        [SerializeField, Range(0.05f, 0.75f)] private float polePortraitFadeTop = 0.45f;
-        [SerializeField, Range(1, 8)] private int polePortraitFadeSteps = 4;
 
         private AudioSource musicSource;
         private Coroutine musicFadeCoroutine;
@@ -795,7 +788,6 @@ namespace PixelOcean
             RaceActive = false;
             raceTeardownInProgress = destroyRacers;
 
-            ReleaseStandingRowMaterials();
             DisableAndDestroy(ref selectionRoot);
             DisableAndDestroy(ref raceHud);
             DisableAndDestroy(ref ecosystemRoot);
@@ -1350,9 +1342,7 @@ namespace PixelOcean
             if (fade == null)
                 fade = bossObject.AddComponent<OceanSpawnFadeIn>();
 
-            // Boss renderers must always finish with a visible target alpha,
-            // even if their component initially reports alpha zero.
-            fade.Configure(raceCreatureFadeInDuration, true);
+            fade.Configure(raceCreatureFadeInDuration);
         }
 
         private static Vector3 FindSafeRaceBossSpawn(
@@ -1669,7 +1659,7 @@ namespace PixelOcean
 
         private void BuildPolePositionsPanel()
         {
-            ReleaseStandingRowMaterials();
+            standingRows.Clear();
 
             GameObject panelObject = new GameObject(
                 "Pole Positions Panel",
@@ -1762,7 +1752,7 @@ namespace PixelOcean
             portraitObject.transform.SetParent(rowObject.transform, false);
             Image portrait = portraitObject.GetComponent<Image>();
             portrait.type = Image.Type.Simple;
-            portrait.preserveAspect = false;
+            portrait.preserveAspect = true;
             portrait.raycastTarget = false;
             RectTransform portraitRect = portrait.rectTransform;
             portraitRect.anchorMin = portraitRect.anchorMax = new Vector2(0.5f, 0.5f);
@@ -1772,20 +1762,6 @@ namespace PixelOcean
                 (poleInfoCellHeight + polePortraitInfoGap) * 0.5f);
             portraitRect.sizeDelta = new Vector2(polePortraitSize, polePortraitSize);
             portraitRect.localScale = Vector3.one;
-
-            Shader fadeShader = Resources.Load<Shader>("Shaders/PixelPortraitBottomFade");
-            if (fadeShader == null)
-                fadeShader = Shader.Find("UI/Pixel Portrait Bottom Fade");
-
-            Material portraitMaterial = null;
-            if (fadeShader != null)
-            {
-                portraitMaterial = new Material(fadeShader)
-                {
-                    name = $"{Roster[index]} Portrait Pixel Fade"
-                };
-                portrait.material = portraitMaterial;
-            }
 
             // This is a separate, clipped cell below the portrait. Its contents
             // cannot render into the 64x64 portrait rectangle above it.
@@ -1841,20 +1817,22 @@ namespace PixelOcean
                 Root = row,
                 Background = background,
                 Portrait = portrait,
-                PortraitMaterial = portraitMaterial,
                 Rank = rank,
                 Name = name,
                 Distance = distance
             };
         }
 
-        private void RefreshStandingRows(IReadOnlyList<Racer> ordered, bool snap = false)
+        private void RefreshStandingRows(
+            IReadOnlyList<Racer> ordered,
+            bool snap = false)
         {
             for (int i = 0; i < standingRows.Count; i++)
             {
                 StandingRow row = standingRows[i];
                 Racer racer = null;
                 int rankIndex = -1;
+
                 for (int rank = 0; rank < ordered.Count; rank++)
                 {
                     if (ordered[rank].Name != row.RacerName)
@@ -1872,35 +1850,37 @@ namespace PixelOcean
                 }
 
                 row.Background.gameObject.SetActive(true);
+
                 Vector2 targetAnchor = new Vector2(
                     poleFirstSlotCenter + rankIndex * poleSlotSpacing,
                     poleRowVerticalAnchor);
+
                 float blend = snap
                     ? 1f
-                    : 1f - Mathf.Exp(-polePositionSlideSpeed * Time.unscaledDeltaTime);
+                    : 1f - Mathf.Exp(
+                        -polePositionSlideSpeed * Time.unscaledDeltaTime);
+
                 Vector2 smoothAnchor = Vector2.Lerp(
                     row.Root.anchorMin,
                     targetAnchor,
                     blend);
+
                 row.Root.anchorMin = row.Root.anchorMax = smoothAnchor;
 
-                row.Portrait.sprite = GetRacePortrait(racer.Name);
-                row.Portrait.enabled = row.Portrait.sprite != null;
-                if (row.Portrait.enabled)
-                {
-                    row.Portrait.SetNativeSize();
+                Sprite portraitSprite = GetRacePortrait(racer.Name);
+                row.Portrait.sprite = portraitSprite;
+                row.Portrait.enabled = portraitSprite != null;
 
-                    if (row.PortraitMaterial != null)
-                    {
-                        Vector4 outerUv = DataUtility.GetOuterUV(row.Portrait.sprite);
-                        row.PortraitMaterial.SetVector("_SpriteUVRect", outerUv);
-                        row.PortraitMaterial.SetFloat("_FadeBottom", polePortraitFadeBottom);
-                        row.PortraitMaterial.SetFloat(
-                            "_FadeTop",
-                            Mathf.Max(polePortraitFadeBottom + 0.001f, polePortraitFadeTop));
-                        row.PortraitMaterial.SetFloat("_FadeSteps", polePortraitFadeSteps);
-                    }
+                if (portraitSprite != null)
+                {
+                    // Render using the sprite's native imported dimensions.
+                    // Do not overwrite sizeDelta after SetNativeSize().
+                    row.Portrait.type = Image.Type.Simple;
+                    row.Portrait.preserveAspect = true;
+                    row.Portrait.SetNativeSize();
+                    row.Portrait.rectTransform.localScale = Vector3.one;
                 }
+
                 row.Rank.text = $"POS {rankIndex + 1}";
                 row.Name.text = racer.Name.ToUpperInvariant();
                 row.Distance.text = $"{racer.Distance:0.0}m";
@@ -1908,12 +1888,14 @@ namespace PixelOcean
                 if (racer.PlayerSlot == 1)
                 {
                     row.Background.color = Color.clear;
-                    row.Rank.color = row.Name.color = new Color(0.1f, 0.95f, 1f, 1f);
+                    row.Rank.color = row.Name.color =
+                        new Color(0.1f, 0.95f, 1f, 1f);
                 }
                 else if (racer.PlayerSlot == 2)
                 {
                     row.Background.color = Color.clear;
-                    row.Rank.color = row.Name.color = new Color(1f, 0.08f, 0.25f, 1f);
+                    row.Rank.color = row.Name.color =
+                        new Color(1f, 0.08f, 0.25f, 1f);
                 }
                 else
                 {
@@ -1921,17 +1903,6 @@ namespace PixelOcean
                     row.Rank.color = row.Name.color = Color.white;
                 }
             }
-        }
-
-        private void ReleaseStandingRowMaterials()
-        {
-            foreach (StandingRow row in standingRows)
-            {
-                if (row?.PortraitMaterial != null)
-                    Destroy(row.PortraitMaterial);
-            }
-
-            standingRows.Clear();
         }
 
         private static void ApplyPortraitTextOutline(TextMeshProUGUI label)
