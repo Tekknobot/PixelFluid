@@ -88,31 +88,45 @@ namespace PixelOcean
             if (registeredBoss != null)
                 return;
 
-            GodzillaLaneSwimmer[] reapers = Object.FindObjectsByType<GodzillaLaneSwimmer>(
-                FindObjectsInactive.Include,
-                FindObjectsSortMode.None);
+            MonoBehaviour survivor = null;
 
-            foreach (GodzillaLaneSwimmer boss in reapers)
+            foreach (GodzillaLaneSwimmer boss in Object.FindObjectsByType<GodzillaLaneSwimmer>(
+                         FindObjectsInactive.Include,
+                         FindObjectsSortMode.None))
             {
                 if (boss == null || boss == ignoredCandidate)
                     continue;
 
-                registeredBoss = boss;
-                return;
+                survivor = boss;
+                break;
             }
 
-            RubberDuckBossSwimmer[] ducks = Object.FindObjectsByType<RubberDuckBossSwimmer>(
-                FindObjectsInactive.Include,
-                FindObjectsSortMode.None);
-
-            foreach (RubberDuckBossSwimmer boss in ducks)
+            if (survivor == null)
             {
-                if (boss == null || boss == ignoredCandidate)
-                    continue;
+                foreach (RubberDuckBossSwimmer boss in Object.FindObjectsByType<RubberDuckBossSwimmer>(
+                             FindObjectsInactive.Include,
+                             FindObjectsSortMode.None))
+                {
+                    if (boss == null || boss == ignoredCandidate)
+                        continue;
 
-                registeredBoss = boss;
-                return;
+                    survivor = boss;
+                    break;
+                }
             }
+
+            if (survivor == null)
+                return;
+
+            registeredBoss = survivor;
+            DestroyOtherBosses(survivor);
+        }
+
+        public static void EnforceSingleBoss()
+        {
+            RefreshRegisteredBoss();
+            if (registeredBoss != null)
+                DestroyOtherBosses(registeredBoss);
         }
 
         private static void DestroyOtherBosses(MonoBehaviour keeper)

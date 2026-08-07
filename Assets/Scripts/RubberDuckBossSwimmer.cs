@@ -98,6 +98,16 @@ namespace PixelOcean
         [Tooltip("How often the player reference used only for visual facing is refreshed.")]
         [SerializeField, Range(0.1f, 2f)] private float playerFacingRefreshInterval = 0.45f;
 
+        [Header("Arena Pursuit Stability")]
+        [Tooltip("Preferred horizontal spacing from the player while the duck is not lunging.")]
+        [SerializeField, Range(0.6f, 4f)] private float arenaFollowDistance = 1.8f;
+        [Tooltip("Prevents tiny left/right corrections when the duck is already near its target position.")]
+        [SerializeField, Range(0.02f, 0.5f)] private float arenaHorizontalDeadZone = 0.14f;
+        [Tooltip("Smooth time for normal arena pursuit.")]
+        [SerializeField, Range(0.04f, 0.5f)] private float arenaHorizontalSmoothTime = 0.16f;
+        [Tooltip("Maximum arena pursuit speed. This is intentionally much faster than free-roam speed.")]
+        [SerializeField, Range(1f, 15f)] private float arenaMaximumFollowSpeed = 6.5f;
+
         [Header("Attack Audio")]
         [SerializeField] private AudioClip attackClip;
         [SerializeField, Range(0f, 1f)] private float attackVolume = 1f;
@@ -133,6 +143,7 @@ namespace PixelOcean
         private float nextWaterRefreshTime;
         private float nextDucklingSpawnTime;
         private float verticalWaterVelocity;
+        private float arenaHorizontalVelocity;
         private float waterTiltVelocity;
         private float smoothedWaterTilt;
         private TinyWaveSurfer visualFacingPlayer;
@@ -160,6 +171,7 @@ namespace PixelOcean
             arenaEntranceTargetX = targetX;
             arenaEntranceSpeed = Mathf.Max(0.5f, speed);
             arenaEntranceActive = true;
+            arenaHorizontalVelocity = 0f;
             respondingToDeath = false;
             target = null;
             changingLane = false;
@@ -333,13 +345,28 @@ ResolveReferences();
             CaptureTrackedSectionCentre();
         }
 
+        private bool IsControlledByStoryArena
+        {
+            get
+            {
+                if (GameModeSession.IsRace)
+                    return false;
+
+                BossArenaPrison arena = BossArenaPrison.Active;
+                return arena != null && BossArenaPrison.IsActive && arena.ControlsBoss(this);
+            }
+        }
+
         private void FixedUpdate()
         {
             if (defeated || !initialised || waterLayers.Count < 2)
                 return;
 
             RefreshWaterLayersIfNeeded();
-            FollowRecycledSection();
+
+            bool arenaControlled = IsControlledByStoryArena;
+            if (!arenaControlled)
+                FollowRecycledSection();
             Vector2 position = body != null ? body.position : (Vector2)transform.position;
             if (arenaEntranceActive)
             {
@@ -370,9 +397,22 @@ ResolveReferences();
             if (state == CreatureState.InvestigateDeath)
                 FaceWorldX(position, deathLocation.x);
 
-            if (state != CreatureState.MournDeath)
-                position.x += direction * Mathf.Max(0.05f, speed + waterVelocity.x * currentInfluence) * Time.fixedDeltaTime;
-            KeepInsideGameArea(ref position);
+            if (arenaControlled)
+            {
+                UpdateArenaHorizontalPursuit(ref position, speed);
+                KeepInsideArena(ref position);
+            }
+            else
+            {
+                if (state != CreatureState.MournDeath)
+                {
+                    position.x += direction *
+                        Mathf.Max(0.05f, speed + waterVelocity.x * currentInfluence) *
+                        Time.fixedDeltaTime;
+                }
+
+                KeepInsideGameArea(ref position);
+            }
 
             if (!respondingToDeath && !changingLane && state != CreatureState.WindUp && state != CreatureState.Lunge)
             {
@@ -1067,6 +1107,106 @@ ResolveReferences();
                 waterLayers[clamped].GetGameplayWaveVelocity(worldX),
                 waterLayers[clamped + 1].GetGameplayWaveVelocity(worldX),
                 0.5f);
+        }
+
+        private void UpdateArenaHorizontalPursuit(ref Vector2 position, float stateSpeed)
+        {
+            if (state == CreatureState.MournDeath)
+            {
+                arenaHorizontalVelocity = 0f;
+                return;
+            }
+
+            TinyWaveSurfer player = target;
+            if (player == null || player.IsDead || !player.IsPlayerControlled)
+            {
+                player = FindObjectsByType<TinyWaveSurfer>(
+                        FindObjectsInactive.Exclude,
+                        FindObjectsSortMode.None)
+                    .Where(surfer => surfer != null && !surfer.IsDead && surfer.IsPlayerControlled)
+                    .FirstOrDefault();
+
+                if (player != null)
+                    target = player;
+            }
+
+            if (player == null)
+            {
+                arenaHorizontalVelocity = 0f;
+                return;
+            }
+
+            float playerX = player.transform.position.x;
+            float deltaToPlayer = playerX - position.x;
+            float desiredDirection = Mathf.Abs(deltaToPlayer) > facingDeadZone
+                ? Mathf.Sign(deltaToPlayer)
+                : direction;
+
+            if (Mathf.Abs(deltaToPlayer) > arenaHorizontalDeadZone)
+                direction = desiredDirection;
+
+            float desiredX;
+            if (state == CreatureState.Lunge)
+            {
+                desiredX = playerX;
+            }
+            else if (state == CreatureState.WindUp)
+            {
+                desiredX = position.x;
+            }
+            else
+            {
+                float side = position.x <= playerX ? -1f : 1f;
+                desiredX = playerX + side * arenaFollowDistance;
+            }
+
+            float difference = desiredX - position.x;
+            if (Mathf.Abs(difference) <= arenaHorizontalDeadZone)
+            {
+                arenaHorizontalVelocity = Mathf.MoveTowards(
+                    arenaHorizontalVelocity,
+                    0f,
+                    arenaMaximumFollowSpeed * Time.fixedDeltaTime);
+                return;
+            }
+
+            float speedMultiplier = state == CreatureState.Lunge ? 1.45f : 1f;
+            float maximumSpeed = Mathf.Max(
+                arenaMaximumFollowSpeed,
+                stateSpeed * 4f) * speedMultiplier;
+
+            position.x = Mathf.SmoothDamp(
+                position.x,
+                desiredX,
+                ref arenaHorizontalVelocity,
+                arenaHorizontalSmoothTime,
+                maximumSpeed,
+                Time.fixedDeltaTime);
+        }
+
+        private void KeepInsideArena(ref Vector2 position)
+        {
+            BossArenaPrison arena = BossArenaPrison.Active;
+            if (arena == null || !arena.ControlsBoss(this))
+                return;
+
+            float halfWidth = spriteRenderer != null
+                ? Mathf.Max(0.15f, spriteRenderer.bounds.extents.x)
+                : 0.8f;
+
+            float minX = arena.LeftBoundary + halfWidth;
+            float maxX = arena.RightBoundary - halfWidth;
+            if (minX > maxX)
+            {
+                minX = arena.LeftBoundary;
+                maxX = arena.RightBoundary;
+            }
+
+            float clampedX = Mathf.Clamp(position.x, minX, maxX);
+            if (!Mathf.Approximately(clampedX, position.x))
+                arenaHorizontalVelocity = 0f;
+
+            position.x = clampedX;
         }
 
         private void KeepInsideGameArea(ref Vector2 position)

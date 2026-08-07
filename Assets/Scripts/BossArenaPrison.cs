@@ -600,21 +600,27 @@ namespace PixelOcean
             if (boss == null)
                 return;
 
-            Vector3 position = boss.transform.position;
+            Rigidbody2D bossBody = boss.GetComponent<Rigidbody2D>();
+            Vector2 physicsPosition = bossBody != null
+                ? bossBody.position
+                : (Vector2)boss.transform.position;
+
             float clampedX = Mathf.Clamp(
-                position.x,
+                physicsPosition.x,
                 LeftBoundary,
                 RightBoundary);
 
-            if (Mathf.Approximately(position.x, clampedX))
+            if (Mathf.Approximately(physicsPosition.x, clampedX))
                 return;
 
-            position.x = clampedX;
+            physicsPosition.x = clampedX;
 
-            Rigidbody2D bossBody = boss.GetComponent<Rigidbody2D>();
             if (bossBody != null)
             {
-                bossBody.position = new Vector2(position.x, position.y);
+                // Rigidbody2D.position is the movement authority. Writing the
+                // interpolated Transform in LateUpdate caused the duck to snap
+                // between two positions every rendered frame.
+                bossBody.position = physicsPosition;
 
                 Vector2 velocity = bossBody.linearVelocity;
                 if ((clampedX <= LeftBoundary && velocity.x < 0f) ||
@@ -623,9 +629,13 @@ namespace PixelOcean
                     velocity.x = 0f;
                     bossBody.linearVelocity = velocity;
                 }
+
+                return;
             }
 
-            boss.transform.position = position;
+            Vector3 transformPosition = boss.transform.position;
+            transformPosition.x = clampedX;
+            boss.transform.position = transformPosition;
         }
 
         private static TinyWaveSurfer FindPlayerControlledSurfer()

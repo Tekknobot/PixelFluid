@@ -17,6 +17,8 @@ namespace PixelOcean
         [ContextMenu("Spawn Giant Rubber Duck Boss")]
         public void SpawnRubberDuckBoss()
         {
+            BossSpawnAuthority.EnforceSingleBoss();
+
             if (spawnRoutine != null || spawnedBoss != null)
                 return;
 
@@ -120,7 +122,10 @@ namespace PixelOcean
             yield return null;
 
             if (swimmer != null && BossSpawnAuthority.RegisterBoss(swimmer))
+            {
+                BossSpawnAuthority.EnforceSingleBoss();
                 EnsureArena(swimmer);
+            }
             else
                 spawnedBoss = null;
 
