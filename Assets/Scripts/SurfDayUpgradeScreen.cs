@@ -13,6 +13,7 @@ namespace PixelOcean
         private bool chosen;
         private int selectedIndex;
         private bool horizontalHeld;
+        private float previousTimeScale = 1f;
 
         private GUIStyle titleStyle;
         private GUIStyle subtitleStyle;
@@ -55,14 +56,29 @@ namespace PixelOcean
             selectedIndex = 0;
             horizontalHeld = true; // Require the stick/d-pad to be released once.
 
-            float oldScale = Time.timeScale;
+            previousTimeScale = Time.timeScale;
             Time.timeScale = 0f;
 
             while (!chosen)
                 yield return null;
 
             visible = false;
-            Time.timeScale = oldScale;
+            Time.timeScale = previousTimeScale;
+        }
+
+        /// <summary>
+        /// Releases an upgrade screen immediately when Developer Mode replaces
+        /// an in-progress day transition. Without this, cancelling the owning
+        /// director coroutine can leave the game permanently paused.
+        /// </summary>
+        public void CancelImmediate()
+        {
+            if (!visible)
+                return;
+
+            chosen = true;
+            visible = false;
+            Time.timeScale = previousTimeScale;
         }
 
         private void Update()

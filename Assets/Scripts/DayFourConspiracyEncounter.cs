@@ -1,4 +1,4 @@
-using System.Linq;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace PixelOcean
@@ -30,7 +30,16 @@ namespace PixelOcean
         private bool islandAnnounced;
         private bool completed;
 
-        public static void Begin(SurfDayProgressionDirector progression, TinyWaveSurfer surfer)
+        public bool IslandRevealed => island != null;
+        public float IslandDistance => island != null && player != null
+            ? Mathf.Abs(player.position.x - island.position.x)
+            : -1f;
+
+        public static void Begin(
+            SurfDayProgressionDirector progression,
+            TinyWaveSurfer surfer,
+            bool restoreIsland = false,
+            float restoredIslandDistance = -1f)
         {
             if (progression == null || surfer == null)
                 return;
@@ -42,16 +51,26 @@ namespace PixelOcean
                 existing.director = progression;
                 existing.player = surfer.transform;
                 existing.previousPlayerX = surfer.transform.position.x;
+                if (restoreIsland && existing.island == null)
+                    existing.RevealIsland(false, restoredIslandDistance);
                 return;
             }
 
             GameObject host = new("Day Four Classified Research Route");
             DayFourConspiracyEncounter encounter =
                 host.AddComponent<DayFourConspiracyEncounter>();
-            encounter.Initialise(progression, surfer.transform);
+            encounter.Initialise(
+                progression,
+                surfer.transform,
+                restoreIsland,
+                restoredIslandDistance);
         }
 
-        private void Initialise(SurfDayProgressionDirector progression, Transform surfer)
+        private void Initialise(
+            SurfDayProgressionDirector progression,
+            Transform surfer,
+            bool restoreIsland,
+            float restoredIslandDistance)
         {
             director = progression;
             player = surfer;
@@ -65,12 +84,12 @@ namespace PixelOcean
                          FindObjectsInactive.Include,
                          FindObjectsSortMode.None))
             {
-                if (facility != null)
+                if (facility != null && !facility.IsDayFourDisplayOnly)
                     Destroy(facility.gameObject);
             }
 
-            if (director.RunTime >= islandRevealAt)
-                RevealIsland(false);
+            if (restoreIsland || director.RunTime >= islandRevealAt)
+                RevealIsland(false, restoredIslandDistance);
         }
 
         private void OnDestroy()
@@ -100,11 +119,7 @@ namespace PixelOcean
 
             previousPlayerX = player.position.x;
 
-            if (island == null || director.RunTime < director.DayDuration)
-                return;
-
-            float horizontalDistance = Mathf.Abs(player.position.x - island.position.x);
-            if (horizontalDistance > islandDiscoveryDistance)
+            if (director.RunTime < director.DayDuration)
                 return;
 
             completed = true;
@@ -143,7 +158,7 @@ namespace PixelOcean
             starryNight.SetExternalVisibility(visibility);
         }
 
-        private void RevealIsland(bool announce)
+        private void RevealIsland(bool announce, float restoredDistance = -1f)
         {
             if (island != null)
                 return;
@@ -157,29 +172,47 @@ namespace PixelOcean
                 return;
             }
 
+            Camera camera = Camera.main;
+            float halfWidth = camera != null
+                ? camera.orthographicSize * camera.aspect
+                : 8f;
+
+            Vector3 position = ResolveBetweenFourthAndFifthWaves(
+                player.position,
+                out PixelWaterGPU sortingWater,
+                out int sortingLane);
+            float startingDistance = halfWidth + islandOffscreenDistance;
+            float approachProgress = Mathf.SmoothStep(
+                0f,
+                1f,
+                Mathf.InverseLerp(islandRevealAt, director.DayDuration, director.RunTime));
+            float deterministicDistance = Mathf.Lerp(
+                startingDistance,
+                islandDiscoveryDistance * 0.8f,
+                approachProgress);
+            float spawnDistance = restoredDistance > 0f
+                ? restoredDistance
+                : deterministicDistance;
+            position.x = player.position.x + Mathf.Max(
+                islandDiscoveryDistance * 0.8f,
+                spawnDistance);
+            position += (Vector3)islandPositionOffset;
+
             GameObject islandObject = new("Classified Research Island");
             islandObject.transform.SetParent(transform, false);
             SpriteRenderer renderer = islandObject.AddComponent<SpriteRenderer>();
             renderer.sprite = sprite;
             renderer.sortingOrder = 0;
 
-            // Same ocean lane/depth treatment as the secret facility.
             InterWaveRenderItem renderItem = islandObject.AddComponent<InterWaveRenderItem>();
-            renderItem.SetLane(4);
-
-            Camera camera = Camera.main;
-            float halfWidth = camera != null
-                ? camera.orthographicSize * camera.aspect
-                : 8f;
-
-            Vector3 position = ResolveBetweenFourthAndFifthWaves(player.position);
-            position.x = player.position.x + halfWidth + islandOffscreenDistance;
-            position += (Vector3)islandPositionOffset;
+            renderItem.SetWaterAndLane(sortingWater, sortingLane);
             islandObject.transform.position = position;
 
             // No localScale assignment: the imported island size is preserved.
             island = islandObject.transform;
-            initialIslandDistance = Mathf.Abs(player.position.x - island.position.x);
+            initialIslandDistance = Mathf.Max(
+                startingDistance,
+                Mathf.Abs(player.position.x - island.position.x));
             previousPlayerX = player.position.x;
             starryNight?.SetExternalVisibility(1f);
 
@@ -190,19 +223,31 @@ namespace PixelOcean
             }
         }
 
-        private static Vector3 ResolveBetweenFourthAndFifthWaves(Vector3 fallback)
+        private static Vector3 ResolveBetweenFourthAndFifthWaves(
+            Vector3 fallback,
+            out PixelWaterGPU sortingWater,
+            out int sortingLane)
         {
-            PixelWaterGPU[] waters = FindObjectsByType<PixelWaterGPU>(
-                    FindObjectsInactive.Exclude,
-                    FindObjectsSortMode.None)
-                .OrderBy(water => water.transform.position.y)
-                .ToArray();
-
+            List<PixelWaterGPU> waters = EndlessWaveSections.LayersNearest(fallback.x);
+            waters.RemoveAll(water => water == null || !water.isActiveAndEnabled);
+            waters.Sort((a, b) =>
+                a.IndependentLayerIndex.CompareTo(b.IndependentLayerIndex));
+            sortingLane = Mathf.Clamp(3, 0, Mathf.Max(0, waters.Count - 2));
+            sortingWater = waters.Count > 0
+                ? waters[Mathf.Clamp(sortingLane, 0, waters.Count - 1)]
+                : null;
             float y = fallback.y;
-            if (waters.Length >= 5)
-                y = (waters[3].transform.position.y + waters[4].transform.position.y) * 0.5f;
-            else if (waters.Length > 0)
-                y = waters[Mathf.Clamp(4, 0, waters.Length - 1)].transform.position.y;
+            if (waters.Count >= 2)
+            {
+                y = Mathf.Lerp(
+                    waters[sortingLane].GetGameplaySurfaceHeight(fallback.x),
+                    waters[sortingLane + 1].GetGameplaySurfaceHeight(fallback.x),
+                    0.5f);
+            }
+            else if (waters.Count == 1)
+            {
+                y = waters[0].GetGameplaySurfaceHeight(fallback.x);
+            }
 
             return new Vector3(fallback.x, y, 0f);
         }

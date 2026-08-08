@@ -58,6 +58,8 @@ namespace PixelOcean
         private float floatPhase;
         private float frameClock;
         private int frameIndex;
+        private State animatedState;
+        private bool animationStateInitialised;
         private float nextAttackAt;
         private float stateClock;
         private float chargeDuration;
@@ -159,8 +161,10 @@ namespace PixelOcean
                     maximumHealth = 2;
                     viewportY = 0.80f;
                     moveSpeed = 3.8f;
-                    chargeDuration = 0.68f;
-                    recoveryDuration = 0.25f;
+                    // The drone replaces its pulse volley with the complete
+                    // yellow searchlight telegraph and firing cycle.
+                    chargeDuration = 1.15f;
+                    recoveryDuration = 0.28f;
                     transform.localScale = Vector3.one * 0.82f;
                     idleFrames = SliceSheet("Day5/Drone/drone_patrol", 64, 32f);
                     detectFrames = SliceSheet("Day5/Drone/drone_detect", 64, 32f);
@@ -196,6 +200,19 @@ namespace PixelOcean
                     shutdownFrames = SliceSheet("Day5/Warden/warden_shutdown", 128, 32f);
                     disabledFrames = SliceSheet("Day5/Warden/warden_diabled", 128, 32f);
                     break;
+            }
+
+            if (kind == DayFiveEnemyKind.SurveillanceBuoy)
+            {
+                const float actionAnimationRate = 14f;
+                if (detectFrames.Length > 0)
+                    chargeDuration = Mathf.Max(
+                        chargeDuration,
+                        detectFrames.Length / actionAnimationRate);
+                if (attackFrames.Length > 0)
+                    recoveryDuration = Mathf.Max(
+                        recoveryDuration,
+                        attackFrames.Length / actionAnimationRate);
             }
 
             currentHealth = maximumHealth;
@@ -262,7 +279,9 @@ namespace PixelOcean
             if (Vector2.Distance(transform.position, desiredPosition) <= 0.22f)
             {
                 state = State.Patrol;
-                nextAttackAt = Time.time + Random.Range(1.4f, 3.0f);
+                nextAttackAt = Time.time + (IsSearchlightAttacker()
+                    ? Random.Range(0.9f, 1.6f)
+                    : Random.Range(1.4f, 3.0f));
             }
         }
 
@@ -299,8 +318,12 @@ namespace PixelOcean
                 EnsureBeam();
         }
 
-        private bool UsesBeamAttack() =>
+        private bool IsSearchlightAttacker() =>
             kind == DayFiveEnemyKind.Searchlight ||
+            kind == DayFiveEnemyKind.Drone;
+
+        private bool UsesBeamAttack() =>
+            IsSearchlightAttacker() ||
             kind == DayFiveEnemyKind.SurveillanceBuoy ||
             (kind == DayFiveEnemyKind.Warden && wardenUsesBeam);
 
@@ -359,7 +382,7 @@ namespace PixelOcean
             {
                 DayFiveEnemyKind.Searchlight => Random.Range(3.8f, 5.6f),
                 DayFiveEnemyKind.SurveillanceBuoy => Random.Range(4.4f, 6.2f),
-                DayFiveEnemyKind.Drone => Random.Range(2.8f, 4.2f),
+                DayFiveEnemyKind.Drone => Random.Range(3.8f, 5.6f),
                 DayFiveEnemyKind.SignalRelay => Random.Range(2.5f, 3.7f),
                 _ => Random.Range(1.9f, 2.9f)
             };
@@ -528,6 +551,14 @@ namespace PixelOcean
 
         private void Animate()
         {
+            if (!animationStateInitialised || animatedState != state)
+            {
+                animatedState = state;
+                animationStateInitialised = true;
+                frameClock = 0f;
+                frameIndex = -1;
+            }
+
             Sprite[] active = state switch
             {
                 State.Charging => detectFrames.Length > 0 ? detectFrames : idleFrames,
@@ -770,6 +801,8 @@ namespace PixelOcean
                 if (waterRenderer != null)
                     spriteRenderer.sortingLayerID = waterRenderer.sortingLayerID;
             }
+
+            RefreshBeamSorting(clampedLane);
         }
 
         private float CurrentWaterBob() =>
@@ -793,6 +826,7 @@ namespace PixelOcean
             };
             beamGlow = CreateLine("Beam Glow", 0.17f, 12018);
             beamCore = CreateLine("Beam Core", 0.045f, 12019);
+            RefreshBeamSorting();
             SetBeamVisible(false);
         }
 
@@ -808,7 +842,34 @@ namespace PixelOcean
             line.numCapVertices = 2;
             line.sharedMaterial = beamMaterial;
             line.sortingOrder = order;
+            if (spriteRenderer != null)
+                line.sortingLayerID = spriteRenderer.sortingLayerID;
             return line;
+        }
+
+        private void RefreshBeamSorting(int laneOverride = -1)
+        {
+            if (beamGlow == null || beamCore == null)
+                return;
+
+            int sortingLayer = spriteRenderer != null
+                ? spriteRenderer.sortingLayerID
+                : 0;
+            beamGlow.sortingLayerID = sortingLayer;
+            beamCore.sortingLayerID = sortingLayer;
+
+            // InterWaveRenderItem captures the buoy before its runtime beam
+            // children exist. Assign the beam to the same interleaved water
+            // queue explicitly so it cannot disappear behind every wave.
+            if (UsesSharedWaveSorting() &&
+                beamMaterial != null && sharedWaterSortingSource != null)
+            {
+                beamMaterial.renderQueue =
+                    sharedWaterSortingSource.GetInterleavedObjectRenderQueue(
+                        laneOverride >= 0
+                            ? laneOverride
+                            : Mathf.Max(0, waterLaneIndex)) + 1;
+            }
         }
 
         private void DrawBeam(bool firing)
@@ -819,7 +880,8 @@ namespace PixelOcean
 
             Vector3 start;
             Vector3 end = lockedAimPoint;
-            if (kind == DayFiveEnemyKind.SurveillanceBuoy || kind == DayFiveEnemyKind.Warden)
+            if (kind == DayFiveEnemyKind.SurveillanceBuoy ||
+                kind == DayFiveEnemyKind.Warden)
             {
                 float skyY = worldCamera != null
                     ? ViewportWorld(0.5f, 1.12f).y
@@ -849,7 +911,8 @@ namespace PixelOcean
 
         private Color BeamColour(bool firing)
         {
-            if (kind == DayFiveEnemyKind.Searchlight)
+            if (kind == DayFiveEnemyKind.Searchlight ||
+                kind == DayFiveEnemyKind.Drone)
                 return firing
                     ? new Color(1f, 0.45f, 0.10f, 1f)
                     : new Color(1f, 0.82f, 0.24f, 1f);

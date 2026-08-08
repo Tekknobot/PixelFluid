@@ -72,10 +72,12 @@ namespace PixelOcean
         private string learningObjective = string.Empty;
         private bool finalWaveStarted;
         private bool changingDay;
+        private bool developerDaySwitchInProgress;
         private bool facilityEncounterStarted;
         private int currentDay = 1;
         private ProceduralRainSystem rain;
         private float nextAtmosphereRefreshTime;
+        private float nextDayFourEncounterCheck;
         private ProceduralRainSystem.RainSituation appliedProgressionWeather =
             ProceduralRainSystem.RainSituation.Clear;
         private GUIStyle titleStyle;
@@ -101,16 +103,32 @@ namespace PixelOcean
         public string CurrentBanner => banner;
         public bool IsBannerVisible => Time.unscaledTime < bannerUntil && !string.IsNullOrEmpty(banner);
 
-        public SurfStageSaveSystem.SaveData CaptureSaveData() => new()
+        public SurfStageSaveSystem.SaveData CaptureSaveData()
         {
-            day = currentDay,
-            chapter = (int)chapter,
-            runTime = runTime,
-            distanceTravelled = distanceTravelled,
-            rescues = rescues,
-            finalWaveStarted = finalWaveStarted,
-            bossDefeatedSunset = bossDefeatedSunset
-        };
+            SurfStageSaveSystem.SaveData data = new()
+            {
+                day = currentDay,
+                chapter = (int)chapter,
+                runTime = runTime,
+                distanceTravelled = distanceTravelled,
+                rescues = rescues,
+                finalWaveStarted = finalWaveStarted,
+                bossDefeatedSunset = bossDefeatedSunset
+            };
+
+            if (currentDay == 4)
+            {
+                DayFourConspiracyEncounter encounter =
+                    FindFirstObjectByType<DayFourConspiracyEncounter>();
+                if (encounter != null)
+                {
+                    data.dayFourIslandRevealed = encounter.IslandRevealed;
+                    data.dayFourIslandDistance = encounter.IslandDistance;
+                }
+            }
+
+            return data;
+        }
 
         private Coroutine pendingCheckpoint;
         private Coroutine pendingBossEncounter;
@@ -228,7 +246,7 @@ namespace PixelOcean
                 yield return null;
 
             currentDay = Mathf.Max(1, data.day);
-            chapter = (Chapter)Mathf.Clamp(data.chapter, 0, (int)Chapter.FinalWave);
+            chapter = (Chapter)Mathf.Clamp(data.chapter, 0, (int)Chapter.Complete);
             runTime = Mathf.Max(0f, data.runTime);
             distanceTravelled = Mathf.Max(0f, data.distanceTravelled);
             hasPreviousPlayerX = false;
@@ -288,17 +306,21 @@ namespace PixelOcean
             SpawnOceanItems(12);
             RestoreChapterPopulation();
 
-            if (currentDay == 4 && restoredPlayer != null)
+            if (currentDay == 4 && chapter != Chapter.Complete && restoredPlayer != null)
             {
-                DayFourConspiracyEncounter.Begin(this, restoredPlayer);
+                DayFourConspiracyEncounter.Begin(
+                    this,
+                    restoredPlayer,
+                    data.dayFourIslandRevealed,
+                    data.dayFourIslandDistance);
                 SecretFacilityEncounter.BeginDayFourDisplay(restoredPlayer);
             }
-            else if (currentDay == 5)
+            else if (currentDay == 5 && chapter != Chapter.Complete)
             {
                 DayFiveEncounter.Begin(this);
             }
 
-            if (chapter >= Chapter.FinalWave)
+            if (chapter == Chapter.FinalWave)
             {
                 yield return BuildBossEncounter(
                     rebuildExisting: false,
@@ -310,6 +332,15 @@ namespace PixelOcean
             RefreshLearningObjectiveForStage();
             SurfAbilityProgression.Instance?.ApplyUpgradesToAllPlayers();
             ShowBanner($"DAY {currentDay} CONTINUED", CurrentObjective, 4f);
+
+            if (chapter == Chapter.Complete && !changingDay)
+            {
+                changingDay = true;
+                if (currentDay == 4)
+                    StartCoroutine(BeginDayFive());
+                else if (currentDay == 5)
+                    StartCoroutine(BeginDaySixSandbox());
+            }
         }
 
         private IEnumerator EnsurePlayerReadyForLoadedRun(
@@ -348,7 +379,13 @@ namespace PixelOcean
             yield return null;
             player.RestorePersistentState(data);
             GameplayTargetCache.Refresh();
-            yield return new WaitForFixedUpdate();
+            // Developer Mode is normally opened from the paused menu. A fixed
+            // update never arrives while timeScale is zero, so do not let a day
+            // jump stall forever waiting for one.
+            if (Time.timeScale > 0f)
+                yield return new WaitForFixedUpdate();
+            else
+                yield return null;
             BindStoryCamera(player);
 
             completed?.Invoke(player);
@@ -399,6 +436,13 @@ namespace PixelOcean
 
             if (currentDay == 5)
             {
+                if (chapter == Chapter.Complete)
+                {
+                    objective = "SECURITY NETWORK DISABLED";
+                    learningObjective = string.Empty;
+                    return;
+                }
+
                 objective = chapter switch
                 {
                     Chapter.Dawn => "ENTER THE RESTRICTED SECURITY ZONE.",
@@ -417,6 +461,13 @@ namespace PixelOcean
 
             if (currentDay == 4)
             {
+                if (chapter == Chapter.Complete)
+                {
+                    objective = "CLASSIFIED RESEARCH ISLAND FOUND";
+                    learningObjective = string.Empty;
+                    return;
+                }
+
                 objective = chapter switch
                 {
                     Chapter.Dawn => "THE OUTPOST IS TRANSMITTING BEYOND THE WAVES.",
@@ -429,16 +480,30 @@ namespace PixelOcean
                 };
                 SpawnMajor<WhaleLaneSpawner>("Restored Day Four Whale", spawner => spawner.SpawnWhale(true));
                 SpawnMajor<StingrayLaneSpawner>("Restored Day Four Stingray", spawner => spawner.SpawnStingray(true));
-                if (chapter >= Chapter.FirstRescue) SpawnRescueSet(1);
+                if (chapter >= Chapter.FirstRescue)
+                    SpawnRescueSet(1);
                 if (chapter >= Chapter.DangerousWater)
+                {
                     SpawnMajor<TransparentSquidLaneSpawner>("Restored Day Four Squid", spawner => spawner.SpawnTransparentSquid(true));
+                    SpawnMajor<BloodSharkLaneSpawner>("Restored Day Four Blood Shark", spawner => spawner.SpawnBloodShark(true));
+                    SpawnMajor<StingrayLaneSpawner>("Restored Day Four Second Stingray", spawner => spawner.SpawnStingray(true));
+                    SpawnRescueSet(2);
+                }
                 if (chapter >= Chapter.StrangeTide)
                 {
                     SpawnUfo();
                     SpawnHelicopter();
+                    SpawnBloodfishEncounter("Restored Day Four Bloodfish", 2);
+                    SpawnMajor<TransparentSquidLaneSpawner>("Restored Day Four Veiled Squid", spawner => spawner.SpawnTransparentSquid(true));
                 }
                 if (chapter >= Chapter.Storm)
+                {
                     EnsureRain().SetSituation(ProceduralRainSystem.RainSituation.HeavyRain);
+                    SpawnMajor<BloodSharkLaneSpawner>("Restored Day Four Storm Blood Shark", spawner => spawner.SpawnBloodShark(true));
+                    SpawnMajor<TransparentSquidLaneSpawner>("Restored Day Four Storm Squid", spawner => spawner.SpawnTransparentSquid(true));
+                    SpawnMajor<StingrayLaneSpawner>("Restored Day Four Storm Stingray", spawner => spawner.SpawnStingray(true));
+                    SpawnBloodfishEncounter("Restored Day Four Storm Bloodfish", 3);
+                }
                 return;
             }
 
@@ -693,9 +758,13 @@ namespace PixelOcean
             DestroyAll<TransparentSquidLaneSwimmer>();
             DestroyAll<StingrayLaneSwimmer>();
             DestroyAll<GodzillaLaneSwimmer>();
+            DestroyAll<GodzillaSkullSwimmer>();
             DestroyAll<JellyfishSwimmer>();
             DestroyAll<BloodfishSwimmer>();
             DestroyAll<WhaleLaneSwimmer>();
+            DestroyAll<GiantTurtleSwimmer>();
+            DestroyAll<SeaTurtleSwimmer>();
+            DestroyAll<ShadowSurferEcho>();
             DestroyAll<StrugglingSwimmerDrifter>();
             DestroyAll<RescuedSurferExit>();
             DestroyAll<OceanItemBehaviour>();
@@ -800,7 +869,7 @@ namespace PixelOcean
 
         public void AnnounceDayFourIsland()
         {
-            if (currentDay < 4 || chapter == Chapter.Complete)
+            if (currentDay != 4 || chapter == Chapter.Complete)
                 return;
 
             objective = "FOLLOW THE TRANSMISSION TO THE ISLAND";
@@ -811,7 +880,7 @@ namespace PixelOcean
 
         public void CompleteDayFourAtIsland()
         {
-            if (currentDay < 4 || chapter == Chapter.Complete)
+            if (currentDay != 4 || chapter == Chapter.Complete)
                 return;
 
             BeginChapter(Chapter.Complete,
@@ -874,6 +943,7 @@ namespace PixelOcean
             if (currentDay != 5 || chapter == Chapter.Complete)
                 return;
 
+            FindFirstObjectByType<DayFiveEncounter>()?.EndEncounter();
             bossDefeatedSunset = true;
             BeginChapter(
                 Chapter.Complete,
@@ -884,6 +954,48 @@ namespace PixelOcean
             AirTrickScoreSystem.Instance?.ShowDayRecap(5, 10f);
             rain?.ClearRain();
             QueueCheckpoint();
+
+            if (!changingDay)
+            {
+                changingDay = true;
+                StartCoroutine(BeginDaySixSandbox());
+            }
+        }
+
+        private IEnumerator BeginDaySixSandbox()
+        {
+            yield return new WaitForSecondsRealtime(10f);
+            if (SurfDayUpgradeScreen.Instance != null)
+                yield return SurfDayUpgradeScreen.Instance.ShowAndWait();
+
+            ShowBanner("SECURITY GRID CLEARED", "DAY 6 — DEVELOPMENT SANDBOX", 4f);
+            rain?.ClearRain();
+            yield return new WaitForSecondsRealtime(3f);
+
+            ClearRunObjects();
+            yield return null;
+
+            currentDay = 6;
+            AirTrickScoreSystem.Instance?.BeginDay(6);
+            SurfAbilityProgression.Instance?.DebugUnlockAll();
+            runTime = 0f;
+            distanceTravelled = 0f;
+            hasPreviousPlayerX = false;
+            rescues = 0;
+            finalWaveStarted = false;
+            bossDefeatedSunset = false;
+            chapter = Chapter.Dawn;
+            changingDay = false;
+            facilityEncounterStarted = false;
+            SyncDayNightToRunTime();
+            BeginChapter(
+                Chapter.Dawn,
+                "DAY 6 — DEVELOPMENT SANDBOX",
+                "TEST THE NEXT DAY'S SYSTEMS.");
+            learningObjective = string.Empty;
+            SpawnPickupSet();
+            SpawnOceanItems(12);
+            SurfStageSaveSystem.Save(this);
         }
 
         private void UpdateProgressiveAtmosphere()
@@ -927,18 +1039,34 @@ namespace PixelOcean
 
         private void Update()
         {
-            if (chapter == Chapter.Complete || EndlessWaveSections.Instance == null)
+            if (developerDaySwitchInProgress || chapter == Chapter.Complete ||
+                EndlessWaveSections.Instance == null)
                 return;
 
             TinyWaveSurfer player = FindPlayerControlledSurfer();
             if (player == null || player.IsDead)
                 return;
 
+            if (currentDay == 4 && chapter != Chapter.Complete &&
+                Time.unscaledTime >= nextDayFourEncounterCheck)
+            {
+                nextDayFourEncounterCheck = Time.unscaledTime + 1f;
+                DayFourConspiracyEncounter.Begin(this, player);
+                SecretFacilityEncounter.BeginDayFourDisplay(player);
+            }
+
             runTime += Time.deltaTime;
             TrackJourneyDistance(player);
             SyncDayNightToRunTime();
             UpdateProgressiveAtmosphere();
             UpdateDayOneMechanicUnlocks();
+
+            if (currentDay == 5 && chapter == Chapter.FinalWave &&
+                runTime >= dayEndsAt)
+            {
+                CompleteDayFive();
+                return;
+            }
 
             if (distanceTravelled >= dayEndDistance && finalWaveStarted)
             {
@@ -977,7 +1105,8 @@ namespace PixelOcean
                 return;
             }
 
-            if (distanceTravelled >= finalWaveDistance && chapter < Chapter.FinalWave)
+            if ((distanceTravelled >= finalWaveDistance || runTime >= finalWaveBeginsAt) &&
+                chapter < Chapter.FinalWave)
             {
                 finalWaveStarted = true;
                 BeginChapter(Chapter.FinalWave,
@@ -1495,26 +1624,44 @@ namespace PixelOcean
 
         public void DebugResetCurrentDay()
         {
-            StartCoroutine(LoadSavedRun(new SurfStageSaveSystem.SaveData
-            {
-                day = currentDay,
-                chapter = (int)Chapter.Dawn,
-                runTime = 0f,
-                distanceTravelled = 0f,
-                rescues = 0,
-                finalWaveStarted = false,
-                bossDefeatedSunset = false,
-                unlockedAbilities = SurfAbilityProgression.Instance != null ? (int)SurfAbilityProgression.Instance.Unlocked : 0,
-                jumpUpgradeLevel = SurfAbilityProgression.Instance != null ? SurfAbilityProgression.Instance.JumpUpgradeLevel : 0,
-                waterSlashUpgradeLevel = SurfAbilityProgression.Instance != null ? SurfAbilityProgression.Instance.WaterSlashUpgradeLevel : 0,
-                skidUpgradeLevel = SurfAbilityProgression.Instance != null ? SurfAbilityProgression.Instance.SkidUpgradeLevel : 0
-            }));
+            DebugSelectDay(currentDay);
         }
 
         public void DebugSelectDay(int requestedDay)
         {
             int selectedDay = Mathf.Clamp(requestedDay, 1, 7);
-            StartCoroutine(LoadSavedRun(new SurfStageSaveSystem.SaveData
+
+            // A developer selection replaces every active transition. This makes
+            // repeated forward/backward jumps deterministic even if another day,
+            // checkpoint, boss build, upgrade screen, or storyboard was running.
+            StopAllCoroutines();
+            pendingCheckpoint = null;
+            pendingBossEncounter = null;
+            SurfDayUpgradeScreen.Instance?.CancelImmediate();
+            StoryboardCutsceneSystem.CancelImmediate();
+
+            developerDaySwitchInProgress = true;
+            currentDay = selectedDay;
+            chapter = Chapter.Complete;
+            changingDay = true;
+            facilityEncounterStarted = false;
+            finalWaveStarted = false;
+            bossDefeatedSunset = false;
+
+            FindFirstObjectByType<DayFiveEncounter>()?.EndEncounter();
+            rain?.ClearRain();
+            SurfRunLifeManager.Instance?.ResetLivesForNewRun();
+
+            StartCoroutine(SwitchToDeveloperDay(selectedDay));
+        }
+
+        private IEnumerator SwitchToDeveloperDay(int selectedDay)
+        {
+            // Zeroed progression fields deliberately use RestoreFor below. Day 1
+            // therefore returns to its starting Wave Switch only, while Day 2+
+            // receive their normal full core moveset. Later-day abilities can no
+            // longer leak backward into a Day 1 test.
+            SurfStageSaveSystem.SaveData freshDay = new()
             {
                 day = selectedDay,
                 chapter = (int)Chapter.Dawn,
@@ -1523,59 +1670,29 @@ namespace PixelOcean
                 rescues = 0,
                 finalWaveStarted = false,
                 bossDefeatedSunset = false,
-                unlockedAbilities = SurfAbilityProgression.Instance != null ? (int)SurfAbilityProgression.Instance.Unlocked : 0,
-                jumpUpgradeLevel = SurfAbilityProgression.Instance != null ? SurfAbilityProgression.Instance.JumpUpgradeLevel : 0,
-                waterSlashUpgradeLevel = SurfAbilityProgression.Instance != null ? SurfAbilityProgression.Instance.WaterSlashUpgradeLevel : 0,
-                skidUpgradeLevel = SurfAbilityProgression.Instance != null ? SurfAbilityProgression.Instance.SkidUpgradeLevel : 0
-            }));
+                lives = SurfRunLifeManager.Instance != null
+                    ? SurfRunLifeManager.Instance.StartingLives
+                    : 3,
+                unlockedAbilities = 0,
+                jumpUpgradeLevel = 0,
+                waterSlashUpgradeLevel = 0,
+                skidUpgradeLevel = 0,
+                totalStoke = 0,
+                dayStoke = 0,
+                hasPlayerState = false
+            };
+
+            yield return LoadSavedRun(freshDay);
+
+            developerDaySwitchInProgress = false;
+            changingDay = false;
+            ShowBanner($"DEVELOPER DAY {selectedDay}", "CLEAN DAWN STATE READY.", 3.5f);
+            SurfStageSaveSystem.Save(this);
         }
 
         public void DebugNextDay()
         {
-            // Developer advancement from Day 1 uses the real transition so the
-            // Day 2 storyboard, pause, black fade and spawn timing are tested too.
-            if (currentDay == 1 && !changingDay)
-            {
-                changingDay = true;
-                StartCoroutine(BeginDayTwo());
-                return;
-            }
-            if (currentDay == 2 && !changingDay)
-            {
-                changingDay = true;
-                StartCoroutine(BeginDayThree());
-                return;
-            }
-            if (currentDay == 3 && !changingDay)
-            {
-                changingDay = true;
-                StartCoroutine(BeginDayFour());
-                return;
-            }
-            if (currentDay == 4 && !changingDay)
-            {
-                changingDay = true;
-                StartCoroutine(BeginDayFive());
-                return;
-            }
-
-            if (currentDay == 5)
-                return;
-
-            StartCoroutine(LoadSavedRun(new SurfStageSaveSystem.SaveData
-            {
-                day = currentDay + 1,
-                chapter = (int)Chapter.Dawn,
-                runTime = 0f,
-                distanceTravelled = 0f,
-                rescues = 0,
-                finalWaveStarted = false,
-                bossDefeatedSunset = false,
-                unlockedAbilities = SurfAbilityProgression.Instance != null ? (int)SurfAbilityProgression.Instance.Unlocked : 0,
-                jumpUpgradeLevel = SurfAbilityProgression.Instance != null ? SurfAbilityProgression.Instance.JumpUpgradeLevel : 0,
-                waterSlashUpgradeLevel = SurfAbilityProgression.Instance != null ? SurfAbilityProgression.Instance.WaterSlashUpgradeLevel : 0,
-                skidUpgradeLevel = SurfAbilityProgression.Instance != null ? SurfAbilityProgression.Instance.SkidUpgradeLevel : 0
-            }));
+            DebugSelectDay(Mathf.Clamp(currentDay + 1, 1, 7));
         }
 
         private void BeginRetreat<T>() where T : MonoBehaviour

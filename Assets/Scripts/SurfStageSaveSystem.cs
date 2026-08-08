@@ -10,7 +10,7 @@ namespace PixelOcean
     /// </summary>
     public static class SurfStageSaveSystem
     {
-        private const int CurrentVersion = 2;
+        private const int CurrentVersion = 3;
         private const string LegacySaveKey = "SurferSlug.StageSave.v1";
         private const string SaveFileName = "surfer_slug_save.json";
         private const string BackupFileName = "surfer_slug_save.backup.json";
@@ -28,6 +28,8 @@ namespace PixelOcean
             public int rescues;
             public bool finalWaveStarted;
             public bool bossDefeatedSunset;
+            public bool dayFourIslandRevealed;
+            public float dayFourIslandDistance = -1f;
 
             public int lives = 3;
             public int unlockedAbilities;

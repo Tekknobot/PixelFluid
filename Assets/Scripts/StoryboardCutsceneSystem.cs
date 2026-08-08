@@ -44,6 +44,19 @@ namespace PixelOcean
 
         public static bool IsPlaying => instance != null && instance.playing;
 
+        /// <summary>
+        /// Restores presentation state when Developer Mode interrupts a day
+        /// transition. The sequence is normally cleaned up by PlaySequence,
+        /// but that code is not reached when its owning coroutine is cancelled.
+        /// </summary>
+        public static void CancelImmediate()
+        {
+            if (instance == null || !instance.playing)
+                return;
+
+            instance.ResetPresentationImmediately();
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Install()
         {
@@ -313,6 +326,34 @@ namespace PixelOcean
             rootGroup.gameObject.SetActive(false);
 
             Time.timeScale = previousTimeScale;
+            playing = false;
+            typing = false;
+            skipTyping = false;
+        }
+
+        private void ResetPresentationImmediately()
+        {
+            if (boardImage != null)
+            {
+                boardImage.sprite = null;
+                boardImage.enabled = false;
+            }
+
+            if (boardBorder != null)
+                boardBorder.enabled = false;
+
+            if (dialogueText != null)
+                dialogueText.text = string.Empty;
+            if (continueText != null)
+                continueText.text = string.Empty;
+            if (rootGroup != null)
+            {
+                rootGroup.alpha = 0f;
+                rootGroup.gameObject.SetActive(false);
+            }
+
+            Time.timeScale = previousTimeScale;
+            AudioListener.volume = previousAudioVolume;
             playing = false;
             typing = false;
             skipTyping = false;

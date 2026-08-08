@@ -75,7 +75,7 @@ namespace PixelOcean
                          FindObjectsInactive.Exclude,
                          FindObjectsSortMode.None))
             {
-                if (combatant != null)
+                if (combatant != null && !combatant.IsDefeated)
                     combatant.BeginRetreat(true);
             }
 
@@ -85,6 +85,7 @@ namespace PixelOcean
 
         private void SpawnPair(bool countsForFinalWave)
         {
+            RetreatActiveCombatants();
             RefreshSharedWaveSorting(true);
             DayFiveCombatant drone = Spawn(DayFiveEnemyKind.Drone);
             DayFiveCombatant buoy = Spawn(DayFiveEnemyKind.SurveillanceBuoy);
@@ -101,6 +102,24 @@ namespace PixelOcean
                 return;
 
             director?.CompleteDayFive();
+        }
+
+        public void EndEncounter()
+        {
+            finalPair.Clear();
+            RetreatActiveCombatants();
+            initialised = false;
+        }
+
+        private static void RetreatActiveCombatants()
+        {
+            foreach (DayFiveCombatant combatant in FindObjectsByType<DayFiveCombatant>(
+                         FindObjectsInactive.Exclude,
+                         FindObjectsSortMode.None))
+            {
+                if (combatant != null && !combatant.IsDefeated)
+                    combatant.BeginRetreat(true);
+            }
         }
 
         private DayFiveCombatant Spawn(DayFiveEnemyKind kind)

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -18,6 +19,8 @@ namespace PixelOcean
         private Transform player;
         private bool discovered;
         private bool dayFourDisplayOnly;
+
+        public bool IsDayFourDisplayOnly => dayFourDisplayOnly;
 
         public static void Begin(SurfDayProgressionDirector director, TinyWaveSurfer surfer)
         {
@@ -67,31 +70,29 @@ namespace PixelOcean
             renderer.sprite = sprite;
             renderer.sortingOrder = 0;
 
-            InterWaveRenderItem renderItem = gameObject.AddComponent<InterWaveRenderItem>();
-            renderItem.SetLane(4);
-
             transform.localScale = Vector3.one;
-            transform.position = ResolveDayFourDisplayPosition(surfer.position);
+            transform.position = ResolveDayFourDisplayPosition(
+                surfer.position,
+                out PixelWaterGPU sortingWater,
+                out int sortingLane);
+            InterWaveRenderItem renderItem = gameObject.AddComponent<InterWaveRenderItem>();
+            renderItem.SetWaterAndLane(sortingWater, sortingLane);
         }
 
-        private Vector3 ResolveDayFourDisplayPosition(Vector3 playerPosition)
+        private Vector3 ResolveDayFourDisplayPosition(
+            Vector3 playerPosition,
+            out PixelWaterGPU sortingWater,
+            out int sortingLane)
         {
             Camera camera = Camera.main;
             float halfWidth = camera != null
                 ? camera.orthographicSize * camera.aspect
                 : 8f;
 
-            PixelWaterGPU[] waters = FindObjectsByType<PixelWaterGPU>(
-                    FindObjectsInactive.Exclude,
-                    FindObjectsSortMode.None)
-                .OrderBy(water => water.transform.position.y)
-                .ToArray();
-
-            float y = playerPosition.y;
-            if (waters.Length >= 5)
-                y = (waters[3].transform.position.y + waters[4].transform.position.y) * 0.5f;
-            else if (waters.Length > 0)
-                y = waters[Mathf.Clamp(4, 0, waters.Length - 1)].transform.position.y;
+            float y = ResolveBetweenFourthAndFifthWaves(
+                playerPosition,
+                out sortingWater,
+                out sortingLane);
 
             // Keep the full artwork inside the opening camera view, slightly ahead
             // of Chuck, so the player can immediately inspect it on Day 4.
@@ -116,14 +117,19 @@ namespace PixelOcean
             renderer.sprite = sprite;
             renderer.sortingOrder = 0;
 
-            InterWaveRenderItem renderItem = gameObject.AddComponent<InterWaveRenderItem>();
-            renderItem.SetLane(4); // Between the fourth and fifth wave simulations.
-
             transform.localScale = Vector3.one;
-            transform.position = ResolveSpawnPosition(surfer.position);
+            transform.position = ResolveSpawnPosition(
+                surfer.position,
+                out PixelWaterGPU sortingWater,
+                out int sortingLane);
+            InterWaveRenderItem renderItem = gameObject.AddComponent<InterWaveRenderItem>();
+            renderItem.SetWaterAndLane(sortingWater, sortingLane);
         }
 
-        private Vector3 ResolveSpawnPosition(Vector3 playerPosition)
+        private Vector3 ResolveSpawnPosition(
+            Vector3 playerPosition,
+            out PixelWaterGPU sortingWater,
+            out int sortingLane)
         {
             Camera camera = Camera.main;
             float halfWidth = camera != null
@@ -133,19 +139,39 @@ namespace PixelOcean
             // Put it beyond the right edge so the player discovers it naturally.
             float x = playerPosition.x + halfWidth + offscreenDistance;
 
-            PixelWaterGPU[] waters = FindObjectsByType<PixelWaterGPU>(
-                    FindObjectsInactive.Exclude,
-                    FindObjectsSortMode.None)
-                .OrderBy(water => water.transform.position.y)
-                .ToArray();
-
-            float y = playerPosition.y;
-            if (waters.Length >= 5)
-                y = (waters[3].transform.position.y + waters[4].transform.position.y) * 0.5f;
-            else if (waters.Length > 0)
-                y = waters[Mathf.Clamp(4, 0, waters.Length - 1)].transform.position.y;
+            float y = ResolveBetweenFourthAndFifthWaves(
+                playerPosition,
+                out sortingWater,
+                out sortingLane);
 
             return new Vector3(x + positionOffset.x, y + positionOffset.y, 0f);
+        }
+
+        private static float ResolveBetweenFourthAndFifthWaves(
+            Vector3 playerPosition,
+            out PixelWaterGPU sortingWater,
+            out int sortingLane)
+        {
+            List<PixelWaterGPU> waters = EndlessWaveSections.LayersNearest(playerPosition.x);
+            waters.RemoveAll(water => water == null || !water.isActiveAndEnabled);
+            waters.Sort((a, b) =>
+                a.IndependentLayerIndex.CompareTo(b.IndependentLayerIndex));
+            sortingLane = Mathf.Clamp(3, 0, Mathf.Max(0, waters.Count - 2));
+            sortingWater = waters.Count > 0
+                ? waters[Mathf.Clamp(sortingLane, 0, waters.Count - 1)]
+                : null;
+
+            if (waters.Count >= 2)
+            {
+                return Mathf.Lerp(
+                    waters[sortingLane].GetGameplaySurfaceHeight(playerPosition.x),
+                    waters[sortingLane + 1].GetGameplaySurfaceHeight(playerPosition.x),
+                    0.5f);
+            }
+
+            return waters.Count == 1
+                ? waters[0].GetGameplaySurfaceHeight(playerPosition.x)
+                : playerPosition.y;
         }
 
         private void Update()
