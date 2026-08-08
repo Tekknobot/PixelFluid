@@ -11,7 +11,7 @@ namespace PixelOcean
     [DisallowMultipleComponent]
     public sealed class SurferSlugDeveloperMenu : MonoBehaviour
     {
-        private const int MenuItemCount = 8;
+        private const int MenuItemCount = 14;
         // Canvas sorting order is clamped to a signed 16-bit range by Unity.
         // Keep Developer Mode at the highest possible UI order.
         private const int DeveloperCanvasOrder = 32767;
@@ -239,10 +239,19 @@ namespace PixelOcean
                     FindFirstObjectByType<SurfDayProgressionDirector>()?.DebugSpawnBoss();
                     break;
                 case 6:
-                    SetVisible(false);
-                    FindFirstObjectByType<SurfDayProgressionDirector>()?.DebugNextDay();
-                    break;
                 case 7:
+                case 8:
+                case 9:
+                case 10:
+                case 11:
+                case 12:
+                {
+                    int selectedDay = selectedIndex - 5;
+                    SetVisible(false);
+                    FindFirstObjectByType<SurfDayProgressionDirector>()?.DebugSelectDay(selectedDay);
+                    break;
+                }
+                case 13:
                     SetVisible(false);
                     FindFirstObjectByType<SurfDayProgressionDirector>()?.DebugResetCurrentDay();
                     break;
@@ -278,7 +287,7 @@ namespace PixelOcean
             RectTransform panelRect = panelRoot.GetComponent<RectTransform>();
             panelRect.anchorMin = panelRect.anchorMax = new Vector2(0.5f, 0.5f);
             panelRect.pivot = new Vector2(0.5f, 0.5f);
-            panelRect.sizeDelta = new Vector2(650f, 820f);
+            panelRect.sizeDelta = new Vector2(680f, 1010f);
             panelRoot.GetComponent<Image>().color = PanelColor;
 
             VerticalLayoutGroup layout = panelRoot.AddComponent<VerticalLayoutGroup>();
@@ -306,8 +315,18 @@ namespace PixelOcean
             CreateSection("PROGRESSION");
             CreateMenuButton(4);
             CreateMenuButton(5);
+
+            CreateSection("SELECT DAY");
             CreateMenuButton(6);
             CreateMenuButton(7);
+            CreateMenuButton(8);
+            CreateMenuButton(9);
+            CreateMenuButton(10);
+            CreateMenuButton(11);
+            CreateMenuButton(12);
+
+            CreateSection("CURRENT DAY");
+            CreateMenuButton(13);
 
             GameObject spacer = new("Flexible Spacer", typeof(RectTransform), typeof(LayoutElement));
             spacer.transform.SetParent(panelRoot.transform, false);
@@ -344,8 +363,8 @@ namespace PixelOcean
             buttonObject.transform.SetParent(panelRoot.transform, false);
 
             LayoutElement element = buttonObject.GetComponent<LayoutElement>();
-            element.preferredHeight = 48f;
-            element.minHeight = 48f;
+            element.preferredHeight = 40f;
+            element.minHeight = 40f;
 
             Image background = buttonObject.GetComponent<Image>();
             background.color = ButtonColor;
@@ -370,15 +389,15 @@ namespace PixelOcean
             });
             buttons[index] = button;
 
-            TMP_Text label = CreateText("Label", buttonObject.transform, string.Empty, 16f,
-                TextAlignmentOptions.MidlineLeft, Color.white, 48f);
+            TMP_Text label = CreateText("Label", buttonObject.transform, string.Empty, 15f,
+                TextAlignmentOptions.MidlineLeft, Color.white, 40f);
             Stretch(label.rectTransform, Vector2.zero, new Vector2(index < 2 ? 0.76f : 1f, 1f), new Vector2(16f, 0f), new Vector2(index < 2 ? -6f : -16f, 0f));
             buttonLabels[index] = label;
 
             if (index < 2)
             {
                 TMP_Text badge = CreateText("State Badge", buttonObject.transform, "OFF", 13f,
-                    TextAlignmentOptions.Center, OffColor, 48f);
+                    TextAlignmentOptions.Center, OffColor, 40f);
                 Stretch(badge.rectTransform, new Vector2(0.76f, 0f), Vector2.one,
                     new Vector2(4f, 7f), new Vector2(-12f, -7f));
                 badge.fontStyle = FontStyles.Bold;
@@ -401,9 +420,17 @@ namespace PixelOcean
                 "MAX FLOW / ON FIRE",
                 "ADVANCE TO NEXT CHAPTER",
                 "SPAWN CURRENT DAY BOSS",
-                "ADVANCE TO NEXT DAY",
+                "LOAD DAY 1",
+                "LOAD DAY 2",
+                "LOAD DAY 3",
+                "LOAD DAY 4",
+                "LOAD DAY 5",
+                "LOAD DAY 6",
+                "LOAD DAY 7",
                 "RESET CURRENT DAY"
             };
+
+            SurfDayProgressionDirector director = FindFirstObjectByType<SurfDayProgressionDirector>();
 
             for (int i = 0; i < MenuItemCount; i++)
             {
@@ -412,7 +439,10 @@ namespace PixelOcean
 
                 bool selected = selectedIndex == i;
                 buttonLabels[i].font = developerFont;
-                buttonLabels[i].text = (selected ? "▶  " : "   ") + labels[i];
+                string label = labels[i];
+                if (i >= 6 && i <= 12 && director != null && director.CurrentDay == i - 5)
+                    label += "  [CURRENT]";
+                buttonLabels[i].text = (selected ? "▶  " : "   ") + label;
                 buttonLabels[i].color = selected ? Color.white : new Color(0.88f, 0.97f, 0.97f, 1f);
                 buttonBackgrounds[i].color = selected ? SelectedColor : ButtonColor;
 
@@ -423,7 +453,6 @@ namespace PixelOcean
             RefreshStateBadge(0, godMode);
             RefreshStateBadge(1, infiniteLives);
 
-            SurfDayProgressionDirector director = FindFirstObjectByType<SurfDayProgressionDirector>();
             if (statusText != null)
             {
                 statusText.font = developerFont;

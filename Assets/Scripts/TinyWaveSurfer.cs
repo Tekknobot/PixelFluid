@@ -1067,7 +1067,19 @@ namespace PixelOcean
                 else if (ufo != null && ufo.CanBeHit)
                     nearest = ufo.transform;
                 else
-                    return; // Do not spend an item when no sky target can be hit.
+                {
+                    foreach (DayFiveCombatant security in FindObjectsByType<DayFiveCombatant>(FindObjectsSortMode.None))
+                    {
+                        if (security == null || !security.CanBeHit ||
+                            security.Kind != DayFiveEnemyKind.Drone)
+                            continue;
+                        float d = Vector2.Distance(transform.position, security.transform.position);
+                        if (d < best) { best = d; nearest = security.transform; }
+                    }
+
+                    if (nearest == null)
+                        return; // Do not spend an item when no sky target can be hit.
+                }
             }
             else
             {
@@ -1084,6 +1096,18 @@ namespace PixelOcean
                     if (duckling == null || !duckling.isActiveAndEnabled || !duckling.CanBeHit) continue;
                     float d = Vector2.Distance(transform.position, duckling.transform.position);
                     if (d < best) { best = d; nearest = duckling.transform; }
+                }
+
+                // Day 5 bosses own the combat target before ordinary patrol units.
+                if (nearest == null)
+                {
+                    foreach (DayFiveCombatant securityBoss in FindObjectsByType<DayFiveCombatant>(FindObjectsSortMode.None))
+                    {
+                        if (securityBoss == null || !securityBoss.CanBeHit || !securityBoss.IsBoss)
+                            continue;
+                        float d = Vector2.Distance(transform.position, securityBoss.transform.position);
+                        if (d < best) { best = d; nearest = securityBoss.transform; }
+                    }
                 }
 
                 // When no duckling is incoming, prioritize the active Day 2 boss.
@@ -1148,6 +1172,14 @@ namespace PixelOcean
                         if (stingray == null) continue;
                         float d = Vector2.Distance(transform.position, stingray.transform.position);
                         if (d < best) { best = d; nearest = stingray.transform; }
+                    }
+
+                    foreach (DayFiveCombatant security in FindObjectsByType<DayFiveCombatant>(FindObjectsSortMode.None))
+                    {
+                        if (security == null || !security.CanBeHit)
+                            continue;
+                        float d = Vector2.Distance(transform.position, security.transform.position);
+                        if (d < best) { best = d; nearest = security.transform; }
                     }
                 }
             }

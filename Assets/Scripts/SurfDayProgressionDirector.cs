@@ -288,10 +288,14 @@ namespace PixelOcean
             SpawnOceanItems(12);
             RestoreChapterPopulation();
 
-            if (currentDay >= 4 && restoredPlayer != null)
+            if (currentDay == 4 && restoredPlayer != null)
             {
                 DayFourConspiracyEncounter.Begin(this, restoredPlayer);
                 SecretFacilityEncounter.BeginDayFourDisplay(restoredPlayer);
+            }
+            else if (currentDay == 5)
+            {
+                DayFiveEncounter.Begin(this);
             }
 
             if (chapter >= Chapter.FinalWave)
@@ -386,7 +390,32 @@ namespace PixelOcean
 
         private void RestoreChapterPopulation()
         {
-            if (currentDay >= 4)
+            if (currentDay >= 6)
+            {
+                objective = $"DAY {currentDay} DEVELOPMENT SANDBOX";
+                learningObjective = string.Empty;
+                return;
+            }
+
+            if (currentDay == 5)
+            {
+                objective = chapter switch
+                {
+                    Chapter.Dawn => "ENTER THE RESTRICTED SECURITY ZONE.",
+                    Chapter.FirstRescue => "BREAK THROUGH THE DRONE AND BUOY PATROL.",
+                    Chapter.DangerousWater => "DISABLE THE DRONE AND BUOY.",
+                    Chapter.StrangeTide => "DODGE THE BUOY'S RED SKY BEAM.",
+                    Chapter.Storm => "SURVIVE FACILITY LOCKDOWN.",
+                    Chapter.FinalWave => "DISABLE THE FINAL DRONE AND BUOY.",
+                    _ => "ESCAPE THE SECURITY NETWORK."
+                };
+                DayFiveEncounter.Begin(this);
+                if (chapter >= Chapter.Storm)
+                    EnsureRain().SetSituation(ProceduralRainSystem.RainSituation.HeavyRain);
+                return;
+            }
+
+            if (currentDay == 4)
             {
                 objective = chapter switch
                 {
@@ -681,6 +710,10 @@ namespace PixelOcean
             DestroyAll<BossArenaPrison>();
             DestroyAll<SecretFacilityEncounter>();
             DestroyAll<DayFourConspiracyEncounter>();
+            DestroyAll<DayFiveCombatant>();
+            DestroyAll<DayFiveSecurityPulse>();
+            DestroyAll<DayFiveSecurityImpact>();
+            DestroyAll<DayFiveEncounter>();
         }
 
         private static void DestroyAll<T>() where T : Component
@@ -789,6 +822,68 @@ namespace PixelOcean
             AirTrickScoreSystem.Instance?.ShowDayRecap(4, 10f);
             rain?.ClearRain();
             QueueCheckpoint();
+
+            if (!changingDay)
+            {
+                changingDay = true;
+                StartCoroutine(BeginDayFive());
+            }
+        }
+
+        private IEnumerator BeginDayFive()
+        {
+            yield return new WaitForSecondsRealtime(10f);
+            if (SurfDayUpgradeScreen.Instance != null)
+                yield return SurfDayUpgradeScreen.Instance.ShowAndWait();
+
+            ShowBanner("ACCESS DENIED", "DAY 5 — RED HORIZON", 4f);
+            rain?.ClearRain();
+            yield return new WaitForSecondsRealtime(3f);
+
+            ClearRunObjects();
+            DestroyAll<DayFourConspiracyEncounter>();
+            DestroyAll<SecretFacilityEncounter>();
+            yield return null;
+
+            currentDay = 5;
+            AirTrickScoreSystem.Instance?.BeginDay(5);
+            SurfAbilityProgression.Instance?.DebugUnlockAll();
+            runTime = 0f;
+            distanceTravelled = 0f;
+            hasPreviousPlayerX = false;
+            rescues = 0;
+            finalWaveStarted = false;
+            bossDefeatedSunset = false;
+            chapter = Chapter.Dawn;
+            changingDay = false;
+            facilityEncounterStarted = false;
+            SyncDayNightToRunTime();
+            BeginChapter(
+                Chapter.Dawn,
+                "DAY 5 — RED HORIZON",
+                "ENTER THE RESTRICTED ZONE. WATCH FOR SEARCH BEAMS.");
+            learningObjective = "Dodge telegraphed beams and attack the security units.";
+            SpawnPickupSet();
+            SpawnOceanItems(12);
+            DayFiveEncounter.Begin(this);
+            SurfStageSaveSystem.Save(this);
+        }
+
+        public void CompleteDayFive()
+        {
+            if (currentDay != 5 || chapter == Chapter.Complete)
+                return;
+
+            bossDefeatedSunset = true;
+            BeginChapter(
+                Chapter.Complete,
+                "DAY 5 COMPLETE",
+                "THE DRONE AND BUOY ARE OFFLINE. THE RED HORIZON GOES DARK.");
+            objective = "SECURITY NETWORK DISABLED";
+            learningObjective = string.Empty;
+            AirTrickScoreSystem.Instance?.ShowDayRecap(5, 10f);
+            rain?.ClearRain();
+            QueueCheckpoint();
         }
 
         private void UpdateProgressiveAtmosphere()
@@ -867,9 +962,16 @@ namespace PixelOcean
                     rain?.ClearRain();
                     SecretFacilityEncounter.Begin(this, player);
                 }
+                else if (currentDay >= 6)
+                {
+                    objective = $"DAY {currentDay} DEVELOPMENT SANDBOX";
+                    learningObjective = string.Empty;
+                }
                 else if (currentDay >= 4)
                 {
-                    objective = "REACH THE CLASSIFIED ISLAND";
+                    objective = currentDay == 5
+                        ? "DISABLE THE DRONE AND BUOY"
+                        : "REACH THE CLASSIFIED ISLAND";
                     learningObjective = string.Empty;
                 }
                 return;
@@ -879,8 +981,8 @@ namespace PixelOcean
             {
                 finalWaveStarted = true;
                 BeginChapter(Chapter.FinalWave,
-                    currentDay >= 4 ? "THE ISLAND ON THE HORIZON" : currentDay == 3 ? "THE LAST ECHO" : currentDay == 2 ? "DUCK STORM" : "THE LAST WAVE",
-                    currentDay >= 4 ? "FOLLOW THE TRANSMISSION TO ITS SOURCE." : currentDay == 3 ? "SURVIVE UNTIL THE OCEAN FALLS SILENT." : currentDay == 2 ? "BREAK THROUGH THE ARMOURED FLOCK." : $"SURVIVE {finalSurvivalSeconds} SECONDS.");
+                    currentDay == 5 ? "FINAL SECURITY PAIR" : currentDay == 4 ? "THE ISLAND ON THE HORIZON" : currentDay == 3 ? "THE LAST ECHO" : currentDay == 2 ? "DUCK STORM" : "THE LAST WAVE",
+                    currentDay == 5 ? "DISABLE THE DRONE AND BUOY." : currentDay == 4 ? "FOLLOW THE TRANSMISSION TO ITS SOURCE." : currentDay == 3 ? "SURVIVE UNTIL THE OCEAN FALLS SILENT." : currentDay == 2 ? "BREAK THROUGH THE ARMOURED FLOCK." : $"SURVIVE {finalSurvivalSeconds} SECONDS.");
                 if (pendingBossEncounter == null)
                 {
                     pendingBossEncounter = StartCoroutine(
@@ -896,60 +998,66 @@ namespace PixelOcean
             if ((distanceTravelled >= stormDistance || runTime >= stormBeginsAt) && chapter < Chapter.Storm)
             {
                 BeginChapter(Chapter.Storm,
-                    currentDay >= 4 ? "ENCRYPTED WEATHER" : currentDay == 3 ? "SIGNAL IN THE STORM" : currentDay == 2 ? "RED WEATHER" : "STORM FRONT",
-                    currentDay >= 4 ? "THE TRANSMISSION IS DISTORTING THE SEA AND SKY." : currentDay == 3 ? "FOLLOW THE DISTANT LIGHT THROUGH THE BLACK WATER." : currentDay == 2 ? "OUTRUN THE HUNTERS ABOVE AND BELOW." : "KEEP MOVING. RESCUE ANYONE LEFT OUT THERE.");
+                    currentDay == 5 ? "FACILITY LOCKDOWN" : currentDay == 4 ? "ENCRYPTED WEATHER" : currentDay == 3 ? "SIGNAL IN THE STORM" : currentDay == 2 ? "RED WEATHER" : "STORM FRONT",
+                    currentDay == 5 ? "THE SECURITY GRID IS FIRING FROM EVERY DIRECTION." : currentDay == 4 ? "THE TRANSMISSION IS DISTORTING THE SEA AND SKY." : currentDay == 3 ? "FOLLOW THE DISTANT LIGHT THROUGH THE BLACK WATER." : currentDay == 2 ? "OUTRUN THE HUNTERS ABOVE AND BELOW." : "KEEP MOVING. RESCUE ANYONE LEFT OUT THERE.");
                 EnsureRain().SetSituation(ProceduralRainSystem.RainSituation.HeavyRain);
-                if (currentDay == 1)
-                    SpawnMajor<GiantSquidLaneSpawner>("Storm Squid", spawner => spawner.SpawnSquid(true));
-                else
+                if (currentDay < 5)
                 {
-                    SpawnMajor<BloodSharkLaneSpawner>("Storm Blood Shark", spawner => spawner.SpawnBloodShark(true));
-                    SpawnMajor<TransparentSquidLaneSpawner>("Storm Transparent Squid", spawner => spawner.SpawnTransparentSquid(true));
-                    SpawnMajor<StingrayLaneSpawner>("Storm Stingray", spawner => spawner.SpawnStingray(true));
+                    if (currentDay == 1)
+                        SpawnMajor<GiantSquidLaneSpawner>("Storm Squid", spawner => spawner.SpawnSquid(true));
+                    else
+                    {
+                        SpawnMajor<BloodSharkLaneSpawner>("Storm Blood Shark", spawner => spawner.SpawnBloodShark(true));
+                        SpawnMajor<TransparentSquidLaneSpawner>("Storm Transparent Squid", spawner => spawner.SpawnTransparentSquid(true));
+                        SpawnMajor<StingrayLaneSpawner>("Storm Stingray", spawner => spawner.SpawnStingray(true));
+                    }
+                    if (currentDay == 1)
+                        SpawnJellyfishEncounter("Storm Jellyfish", 3);
+                    else
+                        SpawnBloodfishEncounter("Storm Bloodfish", 3);
                 }
-                if (currentDay == 1)
-                    SpawnJellyfishEncounter("Storm Jellyfish", 3);
-                else
-                    SpawnBloodfishEncounter("Storm Bloodfish", 3);
                 return;
             }
 
             if ((distanceTravelled >= strangeTideDistance || runTime >= strangeTideBeginsAt) && chapter < Chapter.StrangeTide)
             {
                 BeginChapter(Chapter.StrangeTide,
-                    currentDay >= 4 ? "RECOVERY SIGNAL" : currentDay == 3 ? "THE SHADOW RETURNS" : currentDay == 2 ? "EYES IN THE SKY" : "STRANGE TIDE",
-                    currentDay >= 4 ? "ALIEN MACHINERY IS ACTIVE BENEATH THE TRANSMISSION." : currentDay == 3 ? "IT COPIES YOU. DO NOT LET IT TURN YOU BACK." : currentDay == 2 ? "THE HELICOPTER HAS LOCKED ON." : "SOMETHING IS WATCHING THE WATER.");
+                    currentDay == 5 ? "RED SKY" : currentDay == 4 ? "RECOVERY SIGNAL" : currentDay == 3 ? "THE SHADOW RETURNS" : currentDay == 2 ? "EYES IN THE SKY" : "STRANGE TIDE",
+                    currentDay == 5 ? "THE DRONE AND BUOY HAVE YOUR POSITION." : currentDay == 4 ? "ALIEN MACHINERY IS ACTIVE BENEATH THE TRANSMISSION." : currentDay == 3 ? "IT COPIES YOU. DO NOT LET IT TURN YOU BACK." : currentDay == 2 ? "THE HELICOPTER HAS LOCKED ON." : "SOMETHING IS WATCHING THE WATER.");
                 if (currentDay == 1)
                     UnlockAbility(SurfAbility.Rotation | SurfAbility.Flip |
                         SurfAbility.DoubleChain | SurfAbility.TripleChain,
                         "FULL TRICK CHAINS UNLOCKED",
                         "CHAIN EACH UNIQUE AIR TRICK ONCE BEFORE LANDING.");
-                SpawnBoombox();
-                if (currentDay == 1)
-                    SpawnUfo();
-                else if (currentDay == 2)
-                    SpawnHelicopter();
-                else if (currentDay >= 4)
+                if (currentDay < 5)
                 {
-                    SpawnUfo();
-                    SpawnHelicopter();
+                    SpawnBoombox();
+                    if (currentDay == 1)
+                        SpawnUfo();
+                    else if (currentDay == 2)
+                        SpawnHelicopter();
+                    else if (currentDay == 4)
+                    {
+                        SpawnUfo();
+                        SpawnHelicopter();
+                    }
+                    if (currentDay == 1)
+                        SpawnJellyfishEncounter("Strange Tide Jellyfish", 2);
+                    else
+                        SpawnBloodfishEncounter("Strange Tide Bloodfish", 2);
+                    if (currentDay == 1)
+                        SpawnMajor<WhaleLaneSpawner>("Strange Tide Whale", spawner => spawner.SpawnWhale(true));
+                    else
+                        SpawnMajor<TransparentSquidLaneSpawner>("Veiled Squid", spawner => spawner.SpawnTransparentSquid(true));
                 }
-                if (currentDay == 1)
-                    SpawnJellyfishEncounter("Strange Tide Jellyfish", 2);
-                else
-                    SpawnBloodfishEncounter("Strange Tide Bloodfish", 2);
-                if (currentDay == 1)
-                    SpawnMajor<WhaleLaneSpawner>("Strange Tide Whale", spawner => spawner.SpawnWhale(true));
-                else
-                    SpawnMajor<TransparentSquidLaneSpawner>("Veiled Squid", spawner => spawner.SpawnTransparentSquid(true));
                 return;
             }
 
             if ((distanceTravelled >= dangerDistance || runTime >= dangerBeginsAt) && chapter < Chapter.DangerousWater)
             {
                 BeginChapter(Chapter.DangerousWater,
-                    currentDay >= 4 ? "CLASSIFIED CURRENT" : currentDay == 3 ? "MEMORY CURRENT" : currentDay == 2 ? "BLOOD CURRENT" : "DANGEROUS WATER",
-                    currentDay >= 4 ? "THE OUTPOST SIGNAL IS DRAWING PREDATORS AND MACHINES." : currentDay == 3 ? "OLD THREATS RETURN IN THE WRONG ORDER." : currentDay == 2 ? "SURVIVE THE NEW PREDATORS." : "SAVE 3 SWIMMERS. USE CANS TO FIGHT BACK.");
+                    currentDay == 5 ? "SHARED WAVE LOCK" : currentDay == 4 ? "CLASSIFIED CURRENT" : currentDay == 3 ? "MEMORY CURRENT" : currentDay == 2 ? "BLOOD CURRENT" : "DANGEROUS WATER",
+                    currentDay == 5 ? "THE DRONE AND BUOY ARE SHARING THE WAVE GRID." : currentDay == 4 ? "THE OUTPOST SIGNAL IS DRAWING PREDATORS AND MACHINES." : currentDay == 3 ? "OLD THREATS RETURN IN THE WRONG ORDER." : currentDay == 2 ? "SURVIVE THE NEW PREDATORS." : "SAVE 3 SWIMMERS. USE CANS TO FIGHT BACK.");
                 if (currentDay == 1)
                     UnlockAbility(SurfAbility.ChargedJump,
                         "CHARGED JUMP UNLOCKED",
@@ -959,32 +1067,37 @@ namespace PixelOcean
                     SpawnMajor<GiantSquidLaneSpawner>("First Squid", spawner => spawner.SpawnSquid(true));
                     SpawnMajor<SharkLaneSpawner>("Second Shark", spawner => spawner.SpawnShark(true));
                 }
-                else
+                else if (currentDay < 5)
                 {
                     SpawnMajor<TransparentSquidLaneSpawner>("First Transparent Squid", spawner => spawner.SpawnTransparentSquid(true));
                     SpawnMajor<BloodSharkLaneSpawner>("Second Blood Shark", spawner => spawner.SpawnBloodShark(true));
                     SpawnMajor<StingrayLaneSpawner>("First Stingray", spawner => spawner.SpawnStingray(true));
                 }
-                SpawnRescueSet(2);
+                if (currentDay < 5)
+                    SpawnRescueSet(2);
                 return;
             }
 
             if ((distanceTravelled >= rescueDistance || runTime >= rescueBeginsAt) && chapter < Chapter.FirstRescue)
             {
                 BeginChapter(Chapter.FirstRescue,
-                    currentDay >= 4 ? "NO AUTHORIZED TRAFFIC" : currentDay == 3 ? "A FAMILIAR VOICE" : currentDay == 2 ? "AFTER THE WRECK" : "DISTRESS CALL",
-                    currentDay >= 4 ? "RESCUE THE SWIMMER CAUGHT NEAR THE RESTRICTED ROUTE." : currentDay == 3 ? "SAVE THE SWIMMER THE OCEAN BROUGHT BACK." : currentDay == 2 ? "PULL THE SURVIVOR OUT OF THE DEEP CURRENT." : "FIND AND SAVE THE STRUGGLING SWIMMER.");
+                    currentDay == 5 ? "SECURITY NET" : currentDay == 4 ? "NO AUTHORIZED TRAFFIC" : currentDay == 3 ? "A FAMILIAR VOICE" : currentDay == 2 ? "AFTER THE WRECK" : "DISTRESS CALL",
+                    currentDay == 5 ? "BREAK THROUGH THE DRONE AND BUOY PATROL." : currentDay == 4 ? "RESCUE THE SWIMMER CAUGHT NEAR THE RESTRICTED ROUTE." : currentDay == 3 ? "SAVE THE SWIMMER THE OCEAN BROUGHT BACK." : currentDay == 2 ? "PULL THE SURVIVOR OUT OF THE DEEP CURRENT." : "FIND AND SAVE THE STRUGGLING SWIMMER.");
                 SpawnRescueSet(1);
             }
 
             if (chapter == Chapter.DangerousWater)
-                objective = currentDay >= 4
+                objective = currentDay == 5
+                    ? "DISABLE THE DRONE AND BUOY."
+                    : currentDay == 4
                     ? "FOLLOW THE OUTPOST TRANSMISSION."
                     : currentDay == 3
                         ? "SURVIVE THE THREATS THE OCEAN REMEMBERS."
                         : $"RESCUES  {rescues}/{rescuesRequired}";
             else if (chapter == Chapter.FinalWave)
-                objective = currentDay >= 4
+                objective = currentDay == 5
+                    ? "DISABLE THE DRONE AND BUOY"
+                    : currentDay == 4
                     ? $"ISLAND SIGNAL  {Mathf.Max(0, Mathf.CeilToInt(dayEndsAt - runTime))}s"
                     : currentDay == 3
                         ? $"LAST ECHO  {Mathf.Max(0, Mathf.CeilToInt(dayEndsAt - runTime))}s"
@@ -1099,10 +1212,21 @@ namespace PixelOcean
                 DestroyAll<RubberDucklingSwimmer>();
                 DestroyAll<GodzillaLaneSpawner>();
                 DestroyAll<RubberDuckBossSpawner>();
+                DestroyAll<DayFiveCombatant>();
+                DestroyAll<DayFiveSecurityPulse>();
+                DestroyAll<DayFiveSecurityImpact>();
 
                 yield return null;
                 yield return new WaitForEndOfFrame();
                 yield return null;
+            }
+
+            if (currentDay == 5)
+            {
+                DayFiveEncounter encounter = DayFiveEncounter.Begin(this);
+                encounter?.SpawnFinalPair();
+                FinishBossEncounterBuild(showReadyBanner, saveWhenReady);
+                yield break;
             }
 
             // Day 3 uses the Shadow Surfer. Day 4 is an environmental pursuit
@@ -1387,6 +1511,25 @@ namespace PixelOcean
             }));
         }
 
+        public void DebugSelectDay(int requestedDay)
+        {
+            int selectedDay = Mathf.Clamp(requestedDay, 1, 7);
+            StartCoroutine(LoadSavedRun(new SurfStageSaveSystem.SaveData
+            {
+                day = selectedDay,
+                chapter = (int)Chapter.Dawn,
+                runTime = 0f,
+                distanceTravelled = 0f,
+                rescues = 0,
+                finalWaveStarted = false,
+                bossDefeatedSunset = false,
+                unlockedAbilities = SurfAbilityProgression.Instance != null ? (int)SurfAbilityProgression.Instance.Unlocked : 0,
+                jumpUpgradeLevel = SurfAbilityProgression.Instance != null ? SurfAbilityProgression.Instance.JumpUpgradeLevel : 0,
+                waterSlashUpgradeLevel = SurfAbilityProgression.Instance != null ? SurfAbilityProgression.Instance.WaterSlashUpgradeLevel : 0,
+                skidUpgradeLevel = SurfAbilityProgression.Instance != null ? SurfAbilityProgression.Instance.SkidUpgradeLevel : 0
+            }));
+        }
+
         public void DebugNextDay()
         {
             // Developer advancement from Day 1 uses the real transition so the
@@ -1409,6 +1552,15 @@ namespace PixelOcean
                 StartCoroutine(BeginDayFour());
                 return;
             }
+            if (currentDay == 4 && !changingDay)
+            {
+                changingDay = true;
+                StartCoroutine(BeginDayFive());
+                return;
+            }
+
+            if (currentDay == 5)
+                return;
 
             StartCoroutine(LoadSavedRun(new SurfStageSaveSystem.SaveData
             {
@@ -1533,6 +1685,21 @@ namespace PixelOcean
         private void RefreshLearningObjectiveForStage()
         {
             SurfAbilityProgression abilities = SurfAbilityProgression.Instance;
+
+            if (currentDay == 5)
+            {
+                learningObjective = chapter switch
+                {
+                    Chapter.Dawn => "The buoy attacks from the water while the drone patrols overhead.",
+                    Chapter.FirstRescue => "Hold Up while throwing to prioritize the drone.",
+                    Chapter.DangerousWater => "The drone and buoy share the same wave render lane.",
+                    Chapter.StrangeTide => "The buoy's red sky beam locks early; keep moving.",
+                    Chapter.Storm => "Keep moving while the pair attacks from both sides.",
+                    Chapter.FinalWave => "Disable both members of the final security pair.",
+                    _ => string.Empty
+                };
+                return;
+            }
 
             if (currentDay >= 2)
             {

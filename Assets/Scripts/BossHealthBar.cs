@@ -41,8 +41,15 @@ namespace PixelOcean
         private void LateUpdate()
         {
             if (boss == null)
-                boss = GetComponent<GodzillaLaneSwimmer>() as MonoBehaviour
-                    ?? GetComponent<RubberDuckBossSwimmer>();
+            {
+                boss = GetComponent<GodzillaLaneSwimmer>();
+
+                if (boss == null)
+                    boss = GetComponent<RubberDuckBossSwimmer>();
+
+                if (boss == null)
+                    boss = GetComponent<DayFiveCombatant>();
+            }
 
             if (boss == null)
             {
@@ -107,6 +114,12 @@ namespace PixelOcean
                 maximum = duck.MaximumHealth;
                 defeated = duck.IsDefeated;
             }
+            else if (boss is DayFiveCombatant securityBoss)
+            {
+                current = securityBoss.CurrentHealth;
+                maximum = securityBoss.MaximumHealth;
+                defeated = securityBoss.IsDefeated;
+            }
 
             float ratio = defeated ? 0f : Mathf.Clamp01((float)current / Mathf.Max(1, maximum));
             float borderWidth = barSize.x + 0.06f;
@@ -121,7 +134,8 @@ namespace PixelOcean
                 0f,
                 -0.01f);
 
-            bool visible = !defeated && BossArenaPrison.IsActive;
+            bool visible = !defeated &&
+                (BossArenaPrison.IsActive || boss is DayFiveCombatant { IsBoss: true });
             if (borderRenderer != null) borderRenderer.enabled = visible;
             if (backgroundRenderer != null) backgroundRenderer.enabled = visible;
             if (fillRenderer != null) fillRenderer.enabled = visible;

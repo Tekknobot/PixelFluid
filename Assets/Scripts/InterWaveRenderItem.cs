@@ -121,6 +121,19 @@ namespace PixelOcean
             ApplyRenderQueue();
         }
 
+        public void SetWaterAndLane(PixelWaterGPU targetWater, int newLaneIndex)
+        {
+            int clampedLane = Mathf.Max(0, newLaneIndex);
+            if (water == targetWater && laneIndex == clampedLane &&
+                runtimeMaterials.Count > 0)
+                return;
+
+            water = targetWater;
+            laneIndex = clampedLane;
+            lastAppliedQueue = -1;
+            ApplyRenderQueue();
+        }
+
         private void OnDisable()
         {
             RestoreOriginalMaterials();

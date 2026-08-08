@@ -15,6 +15,7 @@ namespace PixelOcean
         private Transform lockedTarget;
         private GodzillaLaneSwimmer lockedBoss;
         private RubberDuckBossSwimmer lockedDuckBoss;
+        private DayFiveCombatant lockedSecurity;
 
         public void Launch(
             Vector2 start,
@@ -30,6 +31,9 @@ namespace PixelOcean
                 : null;
             lockedDuckBoss = target != null
                 ? target.GetComponentInParent<RubberDuckBossSwimmer>()
+                : null;
+            lockedSecurity = target != null
+                ? target.GetComponentInParent<DayFiveCombatant>()
                 : null;
             SpriteRenderer renderer = GetComponent<SpriteRenderer>();
             renderer.sprite = sprite;
@@ -136,6 +140,12 @@ namespace PixelOcean
                 if (hitBoss != lockedDuckBoss)
                     return;
             }
+            if (lockedSecurity != null && lockedSecurity.CanBeHit)
+            {
+                DayFiveCombatant hitSecurity = other.GetComponentInParent<DayFiveCombatant>();
+                if (hitSecurity != lockedSecurity)
+                    return;
+            }
 
             HitTarget(other.transform);
         }
@@ -198,6 +208,18 @@ namespace PixelOcean
                 PlaySfx(sharkHitClip, 1f);
                 boss.TakeThrownItemHit(1, transform.position);
                 Bounce(boss.transform.position);
+                return;
+            }
+
+            DayFiveCombatant dayFiveEnemy =
+                hitTransform.GetComponentInParent<DayFiveCombatant>();
+
+            if (dayFiveEnemy != null && dayFiveEnemy.CanBeHit)
+            {
+                LoadSfx();
+                PlaySfx(sharkHitClip, dayFiveEnemy.IsBoss ? 1f : 0.9f);
+                dayFiveEnemy.TakeThrownItemHit(1, transform.position);
+                Bounce(dayFiveEnemy.transform.position);
                 return;
             }
 
