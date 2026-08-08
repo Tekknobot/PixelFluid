@@ -10,7 +10,7 @@ namespace PixelOcean
     /// </summary>
     public static class SurfStageSaveSystem
     {
-        private const int CurrentVersion = 3;
+        private const int CurrentVersion = 4;
         private const string LegacySaveKey = "SurferSlug.StageSave.v1";
         private const string SaveFileName = "surfer_slug_save.json";
         private const string BackupFileName = "surfer_slug_save.backup.json";
@@ -89,10 +89,10 @@ namespace PixelOcean
             data = null;
 
             if (TryReadFile(SavePath, out data))
-                return Validate(data);
+                return PrepareLoadedData(data);
 
             if (TryReadFile(BackupPath, out data))
-                return Validate(data);
+                return PrepareLoadedData(data);
 
             // One-time migration from the original PlayerPrefs implementation.
             if (PlayerPrefs.HasKey(LegacySaveKey))
@@ -105,7 +105,7 @@ namespace PixelOcean
                         data = JsonUtility.FromJson<SaveData>(legacyJson);
                         if (Validate(data))
                         {
-                            data.version = CurrentVersion;
+                            MigrateToCurrentVersion(data);
                             data.savedAtUtc = DateTime.UtcNow.ToString("O");
                             WriteAtomic(JsonUtility.ToJson(data, true));
                             PlayerPrefs.DeleteKey(LegacySaveKey);
@@ -148,6 +148,34 @@ namespace PixelOcean
         private static bool Validate(SaveData data)
         {
             return data != null && data.day >= 1 && data.chapter >= 0;
+        }
+
+        private static bool PrepareLoadedData(SaveData data)
+        {
+            if (!Validate(data))
+                return false;
+
+            if (MigrateToCurrentVersion(data))
+            {
+                data.savedAtUtc = DateTime.UtcNow.ToString("O");
+                WriteAtomic(JsonUtility.ToJson(data, true));
+            }
+
+            return true;
+        }
+
+        private static bool MigrateToCurrentVersion(SaveData data)
+        {
+            if (data == null || data.version >= CurrentVersion)
+                return false;
+
+            // Version 4 halves the full day, every chapter time, and every
+            // journey distance. Preserve the player's proportional position in
+            // an older 12-minute save instead of loading it near the new ending.
+            data.runTime = Mathf.Max(0f, data.runTime * 0.5f);
+            data.distanceTravelled = Mathf.Max(0f, data.distanceTravelled * 0.5f);
+            data.version = CurrentVersion;
+            return true;
         }
 
         private static bool TryReadFile(string path, out SaveData data)

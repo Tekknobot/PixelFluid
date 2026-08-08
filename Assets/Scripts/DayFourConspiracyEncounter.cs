@@ -13,10 +13,10 @@ namespace PixelOcean
     public sealed class DayFourConspiracyEncounter : MonoBehaviour
     {
         [Header("Island Approach")]
-        [SerializeField, Min(0f)] private float islandRevealAt = 480f;
+        [SerializeField, Min(0f)] private float islandRevealAt = 240f;
         [SerializeField, Range(0.5f, 0.95f)] private float islandRevealJourneyProgress = 0.80f;
         [SerializeField, Min(2f)] private float islandOffscreenDistance = 18f;
-        [SerializeField, Min(0f)] private float islandApproachSpeed = 0.08f;
+        [SerializeField, Min(0f)] private float islandApproachSpeed = 0.16f;
         [SerializeField, Range(0f, 0.08f)] private float oppositePlayerMovement = 0.015f;
         [SerializeField, Min(0.5f)] private float islandDiscoveryDistance = 5f;
         [SerializeField, Min(1f)] private float skyFullyGoneDistance = 11f;

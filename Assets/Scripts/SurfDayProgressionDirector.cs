@@ -24,45 +24,45 @@ namespace PixelOcean
         }
 
         [Header("Run Length")]
-        [SerializeField, Min(10f)] private float rescueBeginsAt = 40f;
-        [SerializeField, Min(20f)] private float dangerBeginsAt = 120f;
-        [SerializeField, Min(30f)] private float strangeTideBeginsAt = 260f; // 260
-        [SerializeField, Min(40f)] private float stormBeginsAt = 430f;
-        [SerializeField, Min(5f)] private float finalWaveBeginsAt = 480f; // 480
-        [SerializeField, Min(60f)] private float dayEndsAt = 720f; // atmospheric fallback
+        [SerializeField, Min(10f)] private float rescueBeginsAt = 20f;
+        [SerializeField, Min(20f)] private float dangerBeginsAt = 60f;
+        [SerializeField, Min(30f)] private float strangeTideBeginsAt = 130f;
+        [SerializeField, Min(40f)] private float stormBeginsAt = 215f;
+        [SerializeField, Min(5f)] private float finalWaveBeginsAt = 240f;
+        [SerializeField, Min(60f)] private float dayEndsAt = 360f; // six-minute atmospheric fallback
 
         [Header("Journey Distance")]
-        [SerializeField, Min(10f)] private float rescueDistance = 120f;
-        [SerializeField, Min(20f)] private float dangerDistance = 320f;
-        [SerializeField, Min(30f)] private float strangeTideDistance = 600f;
-        [SerializeField, Min(40f)] private float stormDistance = 850f;
-        [SerializeField, Min(50f)] private float finalWaveDistance = 1050f;
-        [SerializeField, Min(60f)] private float dayEndDistance = 1300f;
-        [SerializeField, Min(60f)] private float dayTwoEndDistance = 1450f;
-        [SerializeField, Min(60f)] private float dayThreeEndDistance = 1600f;
-        [SerializeField, Min(60f)] private float dayFourEndDistance = 2200f;
-        [SerializeField, Min(60f)] private float dayFiveEndDistance = 1800f;
-        [SerializeField, Min(60f)] private float sandboxDayEndDistance = 1800f;
+        [SerializeField, Min(10f)] private float rescueDistance = 60f;
+        [SerializeField, Min(20f)] private float dangerDistance = 160f;
+        [SerializeField, Min(30f)] private float strangeTideDistance = 300f;
+        [SerializeField, Min(40f)] private float stormDistance = 425f;
+        [SerializeField, Min(50f)] private float finalWaveDistance = 525f;
+        [SerializeField, Min(60f)] private float dayEndDistance = 650f;
+        [SerializeField, Min(60f)] private float dayTwoEndDistance = 725f;
+        [SerializeField, Min(60f)] private float dayThreeEndDistance = 800f;
+        [SerializeField, Min(60f)] private float dayFourEndDistance = 1100f;
+        [SerializeField, Min(60f)] private float dayFiveEndDistance = 900f;
+        [SerializeField, Min(60f)] private float sandboxDayEndDistance = 900f;
         [SerializeField, Min(0.001f)] private float distanceDeadZone = 0.015f;
         [SerializeField, Min(0.25f)] private float teleportRejectDistance = 8f;
 
         [Header("Progressive Ambient Hostiles")]
-        [SerializeField, Min(4f)] private float busiestThreatInterval = 18f;
-        [SerializeField, Min(6f)] private float quietestThreatInterval = 38f;
+        [SerializeField, Min(4f)] private float busiestThreatInterval = 9f;
+        [SerializeField, Min(6f)] private float quietestThreatInterval = 19f;
         [SerializeField, Min(1)] private int maximumAmbientHostiles = 7;
 
         [Header("Day 1 Mechanic Introduction")]
-        [SerializeField, Min(0f)] private float handstandUnlockAt = 150f;
-        [SerializeField, Min(0f)] private float throwingUnlockAt = 180f;
-        [SerializeField, Min(0f)] private float waterSkidUnlockAt = 375f;
-        [SerializeField, Min(0f)] private float waterSlashUnlockAt = 430f;
+        [SerializeField, Min(0f)] private float handstandUnlockAt = 75f;
+        [SerializeField, Min(0f)] private float throwingUnlockAt = 90f;
+        [SerializeField, Min(0f)] private float waterSkidUnlockAt = 187.5f;
+        [SerializeField, Min(0f)] private float waterSlashUnlockAt = 215f;
 
         [Header("Objectives")]
         [SerializeField, Min(1)] private int rescuesRequired = 3;
-        [SerializeField, Min(1)] private int finalSurvivalSeconds = 240;
+        [SerializeField, Min(1)] private int finalSurvivalSeconds = 120;
 
         [Header("Boss Defeat Sunset")]
-        [SerializeField, Min(10f)] private float acceleratedSunsetSeconds = 75f;
+        [SerializeField, Min(10f)] private float acceleratedSunsetSeconds = 37.5f;
         [SerializeField, Min(1f)] private float retreatSpeedMultiplier = 0.75f;
 
         private bool bossDefeatedSunset;
