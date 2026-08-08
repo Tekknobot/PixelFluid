@@ -14,6 +14,7 @@ namespace PixelOcean
     {
         [Header("Island Approach")]
         [SerializeField, Min(0f)] private float islandRevealAt = 480f;
+        [SerializeField, Range(0.5f, 0.95f)] private float islandRevealJourneyProgress = 0.80f;
         [SerializeField, Min(2f)] private float islandOffscreenDistance = 18f;
         [SerializeField, Min(0f)] private float islandApproachSpeed = 0.08f;
         [SerializeField, Range(0f, 0.08f)] private float oppositePlayerMovement = 0.015f;
@@ -88,7 +89,7 @@ namespace PixelOcean
                     Destroy(facility.gameObject);
             }
 
-            if (restoreIsland || director.RunTime >= islandRevealAt)
+            if (restoreIsland || ShouldRevealIsland())
                 RevealIsland(false, restoredIslandDistance);
         }
 
@@ -108,7 +109,7 @@ namespace PixelOcean
             if (starryNight == null)
                 starryNight = FindFirstObjectByType<ProceduralStarryNight>();
 
-            if (island == null && director.RunTime >= islandRevealAt)
+            if (island == null && ShouldRevealIsland())
                 RevealIsland(true);
 
             if (island != null)
@@ -119,12 +120,23 @@ namespace PixelOcean
 
             previousPlayerX = player.position.x;
 
-            if (director.RunTime < director.DayDuration)
+            if (director.RunTime < director.DayDuration &&
+                director.DistanceTravelled < director.DayDistance)
                 return;
 
             completed = true;
             starryNight?.SetExternalVisibility(0f);
             director.CompleteDayFourAtIsland();
+        }
+
+        private bool ShouldRevealIsland()
+        {
+            if (director == null)
+                return false;
+
+            return director.RunTime >= islandRevealAt ||
+                   director.DistanceTravelled >=
+                   director.DayDistance * islandRevealJourneyProgress;
         }
 
         private void UpdateIslandApproach()
@@ -182,10 +194,20 @@ namespace PixelOcean
                 out PixelWaterGPU sortingWater,
                 out int sortingLane);
             float startingDistance = halfWidth + islandOffscreenDistance;
-            float approachProgress = Mathf.SmoothStep(
+            float timeApproachProgress = Mathf.SmoothStep(
                 0f,
                 1f,
                 Mathf.InverseLerp(islandRevealAt, director.DayDuration, director.RunTime));
+            float distanceApproachProgress = Mathf.SmoothStep(
+                0f,
+                1f,
+                Mathf.InverseLerp(
+                    director.DayDistance * islandRevealJourneyProgress,
+                    director.DayDistance,
+                    director.DistanceTravelled));
+            float approachProgress = Mathf.Max(
+                timeApproachProgress,
+                distanceApproachProgress);
             float deterministicDistance = Mathf.Lerp(
                 startingDistance,
                 islandDiscoveryDistance * 0.8f,
