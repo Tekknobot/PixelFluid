@@ -11,26 +11,70 @@ namespace PixelOcean
     [DisallowMultipleComponent]
     public sealed class SecretFacilityEncounter : MonoBehaviour
     {
-        [SerializeField, Min(2f)] private float offscreenDistance = 14f;
+        [SerializeField, Min(2f)] private float offscreenDistance = 6f;
         [SerializeField, Min(0.5f)] private float discoveryDistance = 3.25f;
+        [SerializeField, Min(0.25f)] private float approachSpeed = 4f;
+        [SerializeField, Min(0f)] private float minimumVisibleSeconds = 1.25f;
         [SerializeField] private Vector2 positionOffset = new(0f, 0.35f);
 
         private SurfDayProgressionDirector director;
         private Transform player;
         private bool discovered;
         private bool dayFourDisplayOnly;
+        private SpriteRenderer facilityRenderer;
+        private float previousPlayerX;
+        private float visibleSince = -1f;
 
         public bool IsDayFourDisplayOnly => dayFourDisplayOnly;
 
-        public static void Begin(SurfDayProgressionDirector director, TinyWaveSurfer surfer)
+        public static SecretFacilityEncounter Begin(
+            SurfDayProgressionDirector director,
+            TinyWaveSurfer surfer)
         {
-            if (director == null || surfer == null ||
-                FindFirstObjectByType<SecretFacilityEncounter>() != null)
-                return;
+            if (director == null || surfer == null)
+                return null;
+
+            SecretFacilityEncounter existing =
+                FindObjectsByType<SecretFacilityEncounter>(
+                    FindObjectsInactive.Include,
+                    FindObjectsSortMode.None)
+                .FirstOrDefault(encounter =>
+                    encounter != null && !encounter.dayFourDisplayOnly);
+            if (existing != null)
+            {
+                SpriteRenderer existingRenderer =
+                    existing.GetComponent<SpriteRenderer>();
+                if (!existing.discovered && existingRenderer != null &&
+                    existingRenderer.sprite != null)
+                {
+                    existing.director = director;
+                    existing.player = surfer.transform;
+                    existing.facilityRenderer = existingRenderer;
+                    existing.previousPlayerX = surfer.transform.position.x;
+                    existing.gameObject.SetActive(true);
+                    existing.enabled = true;
+                    return existing;
+                }
+
+                Destroy(existing.gameObject);
+            }
+
+            // A display-only copy belongs to Day 4 and must never block the real
+            // Day 3 discovery encounter if one survived a load or developer jump.
+            foreach (SecretFacilityEncounter display in
+                     FindObjectsByType<SecretFacilityEncounter>(
+                         FindObjectsInactive.Include,
+                         FindObjectsSortMode.None))
+            {
+                if (display != null && display.dayFourDisplayOnly)
+                    Destroy(display.gameObject);
+            }
 
             GameObject host = new("Secret Military Research Facility");
             SecretFacilityEncounter encounter = host.AddComponent<SecretFacilityEncounter>();
-            encounter.Initialise(director, surfer.transform);
+            return encounter.Initialise(director, surfer.transform)
+                ? encounter
+                : null;
         }
 
 
@@ -100,7 +144,9 @@ namespace PixelOcean
             return new Vector3(x + positionOffset.x, y + positionOffset.y, 0f);
         }
 
-        private void Initialise(SurfDayProgressionDirector progression, Transform surfer)
+        private bool Initialise(
+            SurfDayProgressionDirector progression,
+            Transform surfer)
         {
             director = progression;
             player = surfer;
@@ -110,20 +156,23 @@ namespace PixelOcean
             {
                 Debug.LogError("Secret facility sprite was not found at Resources/Structures/secret_facility.", this);
                 Destroy(gameObject);
-                return;
+                return false;
             }
 
-            SpriteRenderer renderer = gameObject.AddComponent<SpriteRenderer>();
-            renderer.sprite = sprite;
-            renderer.sortingOrder = 0;
+            facilityRenderer = gameObject.AddComponent<SpriteRenderer>();
+            facilityRenderer.sprite = sprite;
+            facilityRenderer.sortingOrder = 0;
 
             transform.localScale = Vector3.one;
             transform.position = ResolveSpawnPosition(
                 surfer.position,
                 out PixelWaterGPU sortingWater,
                 out int sortingLane);
+            previousPlayerX = surfer.position.x;
+            visibleSince = -1f;
             InterWaveRenderItem renderItem = gameObject.AddComponent<InterWaveRenderItem>();
             renderItem.SetWaterAndLane(sortingWater, sortingLane);
+            return true;
         }
 
         private Vector3 ResolveSpawnPosition(
@@ -163,14 +212,29 @@ namespace PixelOcean
 
             if (waters.Count >= 2)
             {
+                // Use the simulations' stable world-space centres rather than
+                // their animated surface samples. Day 3 and Day 4 create this
+                // artwork at different moments; sampling moving crests made the
+                // same facility jump vertically between the two days.
+                float foregroundCentre = Mathf.Lerp(
+                    waters[sortingLane].TankMinimum.y,
+                    waters[sortingLane].TankMaximum.y,
+                    0.5f);
+                float backgroundCentre = Mathf.Lerp(
+                    waters[sortingLane + 1].TankMinimum.y,
+                    waters[sortingLane + 1].TankMaximum.y,
+                    0.5f);
                 return Mathf.Lerp(
-                    waters[sortingLane].GetGameplaySurfaceHeight(playerPosition.x),
-                    waters[sortingLane + 1].GetGameplaySurfaceHeight(playerPosition.x),
+                    foregroundCentre,
+                    backgroundCentre,
                     0.5f);
             }
 
             return waters.Count == 1
-                ? waters[0].GetGameplaySurfaceHeight(playerPosition.x)
+                ? Mathf.Lerp(
+                    waters[0].TankMinimum.y,
+                    waters[0].TankMaximum.y,
+                    0.5f)
                 : playerPosition.y;
         }
 
@@ -182,8 +246,43 @@ namespace PixelOcean
             if (discovered || player == null || director == null)
                 return;
 
+            // DistanceTravelled counts useful surfing in either horizontal
+            // direction. Keep the revealed facility camera-relative while it
+            // approaches, so reaching the 800 m story gate always produces the
+            // discovery instead of leaving a static object far behind/ahead.
+            float playerDeltaX = player.position.x - previousPlayerX;
+            previousPlayerX = player.position.x;
+            Vector3 position = transform.position;
+            position.x += playerDeltaX;
+            float approachTargetX = player.position.x + discoveryDistance * 0.68f;
+            position.x = Mathf.MoveTowards(
+                position.x,
+                approachTargetX,
+                Mathf.Max(0.25f, approachSpeed) * Time.deltaTime);
+            transform.position = position;
+
+            Camera camera = Camera.main;
+            bool visible = camera == null;
+            if (camera != null)
+            {
+                Vector3 viewport = camera.WorldToViewportPoint(transform.position);
+                visible = viewport.z > 0f && viewport.x >= 0.04f &&
+                    viewport.x <= 0.96f;
+            }
+
+            if (visible)
+            {
+                if (visibleSince < 0f)
+                    visibleSince = Time.time;
+            }
+            else
+            {
+                visibleSince = -1f;
+            }
+
             float horizontalDistance = Mathf.Abs(player.position.x - transform.position.x);
-            if (horizontalDistance > discoveryDistance)
+            if (horizontalDistance > discoveryDistance || visibleSince < 0f ||
+                Time.time - visibleSince < minimumVisibleSeconds)
                 return;
 
             discovered = true;

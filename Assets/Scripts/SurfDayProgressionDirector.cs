@@ -88,6 +88,8 @@ namespace PixelOcean
         private ProceduralRainSystem rain;
         private float nextAtmosphereRefreshTime;
         private float nextDayFourEncounterCheck;
+        private float nextFinalEncounterRecoveryCheck;
+        private float nextFacilitySpawnAttemptAt;
         private float nextAmbientThreatAt;
         private int ambientThreatDay = -1;
         private ProceduralRainSystem.RainSituation appliedProgressionWeather =
@@ -816,7 +818,7 @@ namespace PixelOcean
 
         public void CompleteDayThreeAtFacility()
         {
-            if (currentDay < 3 || chapter == Chapter.Complete)
+            if (currentDay != 3 || chapter == Chapter.Complete)
                 return;
 
             facilityEncounterStarted = false;
@@ -1190,6 +1192,13 @@ namespace PixelOcean
                 SecretFacilityEncounter.BeginDayFourDisplay(player);
             }
 
+            if (chapter == Chapter.FinalWave &&
+                Time.unscaledTime >= nextFinalEncounterRecoveryCheck)
+            {
+                nextFinalEncounterRecoveryCheck = Time.unscaledTime + 1.5f;
+                RecoverMissingFinalEncounter(player);
+            }
+
             runTime += Time.deltaTime;
             TrackJourneyDistance(player);
             SyncDayNightToRunTime();
@@ -1204,8 +1213,12 @@ namespace PixelOcean
                 return;
             }
 
-            if (distanceTravelled >= GetDistanceThresholdForChapter(Chapter.Complete) &&
-                finalWaveStarted)
+            bool reachedJourneyEnd = distanceTravelled >=
+                GetDistanceThresholdForChapter(Chapter.Complete);
+            bool reachedDayThreeTimedEnd = currentDay == 3 &&
+                runTime >= dayEndsAt;
+
+            if (finalWaveStarted && (reachedJourneyEnd || reachedDayThreeTimedEnd))
             {
                 if (currentDay == 1 && !changingDay)
                 {
@@ -1217,15 +1230,9 @@ namespace PixelOcean
                     changingDay = true;
                     StartCoroutine(BeginDayThree());
                 }
-                else if (currentDay == 3 && !facilityEncounterStarted)
+                else if (currentDay == 3)
                 {
-                    facilityEncounterStarted = true;
-                    objective = "FOLLOW THE LIGHTS ON THE HORIZON";
-                    learningObjective = string.Empty;
-                    banner = "SOMETHING IS OUT THERE";
-                    bannerUntil = Time.unscaledTime + 4f;
-                    rain?.ClearRain();
-                    SecretFacilityEncounter.Begin(this, player);
+                    EnsureDayThreeFacility(player);
                 }
                 else if (currentDay >= 6)
                 {
@@ -1382,11 +1389,14 @@ namespace PixelOcean
         {
             float currentX = player.transform.position.x;
 
-            // Freeze stage distance for the entire live boss encounter. The player can
-            // move freely inside the arena without accidentally reaching dayEndDistance.
-            // Reset the sample every frame so arena movement is not added in one large
-            // burst after the boss is defeated and the sunset run resumes.
-            if (chapter == Chapter.FinalWave && !bossDefeatedSunset)
+            // Freeze distance only for finales that use a locked combat arena.
+            // Days 3 and 4 are travel finales, so freezing them here would make
+            // their facility/island destinations impossible to reach.
+            // Reset the sample while locked so arena movement is not added in one
+            // large burst after the encounter ends.
+            bool finalWaveUsesLockedArena = currentDay <= 2 || currentDay == 5;
+            if (chapter == Chapter.FinalWave && finalWaveUsesLockedArena &&
+                !bossDefeatedSunset)
             {
                 previousPlayerX = currentX;
                 hasPreviousPlayerX = true;
@@ -1688,6 +1698,86 @@ namespace PixelOcean
             SyncDayNightToRunTime();
             objective = $"SUNSET RUN  {Mathf.Max(0, Mathf.CeilToInt(DayDistance - distanceTravelled))} m";
             ShowBanner("THE DEEP RETREATS", "THE OCEAN GROWS QUIET AS SUNSET FALLS.", 5f);
+            QueueCheckpoint();
+        }
+
+        /// <summary>
+        /// Final chapters are entered before their runtime objects finish spawning.
+        /// If an object or arena fails to appear (or is removed after a load), the
+        /// chapter would otherwise have no transition capable of rebuilding it.
+        /// </summary>
+        private void RecoverMissingFinalEncounter(TinyWaveSurfer player)
+        {
+            if (player == null || chapter != Chapter.FinalWave)
+                return;
+
+            if (currentDay == 1 || currentDay == 2)
+            {
+                MonoBehaviour boss;
+                if (currentDay == 1)
+                    boss = FindFirstObjectByType<GodzillaLaneSwimmer>();
+                else
+                    boss = FindFirstObjectByType<RubberDuckBossSwimmer>();
+                BossArenaPrison arena = BossArenaPrison.Active != null
+                    ? BossArenaPrison.Active
+                    : FindFirstObjectByType<BossArenaPrison>();
+                bool encounterReady = boss != null && arena != null &&
+                    arena.ControlsBoss(boss);
+
+                if (!bossDefeatedSunset && !encounterReady &&
+                    pendingBossEncounter == null)
+                {
+                    pendingBossEncounter = StartCoroutine(
+                        BuildBossEncounter(
+                            rebuildExisting: false,
+                            grantCompleteDeveloperLoadout: false,
+                            showReadyBanner: false,
+                            saveWhenReady: true));
+                }
+                return;
+            }
+
+            if (currentDay == 3)
+            {
+                if (distanceTravelled >= GetDistanceThresholdForChapter(Chapter.Complete) ||
+                    runTime >= dayEndsAt)
+                    EnsureDayThreeFacility(player);
+                return;
+            }
+
+            if (currentDay == 4)
+            {
+                DayFourConspiracyEncounter.Begin(this, player);
+                return;
+            }
+
+            if (currentDay == 5)
+                DayFiveEncounter.Begin(this)?.SpawnFinalPair();
+        }
+
+        private void EnsureDayThreeFacility(TinyWaveSurfer player)
+        {
+            if (Time.unscaledTime < nextFacilitySpawnAttemptAt)
+                return;
+
+            nextFacilitySpawnAttemptAt = Time.unscaledTime + 1.5f;
+            SecretFacilityEncounter facility =
+                SecretFacilityEncounter.Begin(this, player);
+            if (facility == null)
+            {
+                facilityEncounterStarted = false;
+                return;
+            }
+
+            if (facilityEncounterStarted)
+                return;
+
+            facilityEncounterStarted = true;
+            objective = "FOLLOW THE LIGHTS ON THE HORIZON";
+            learningObjective = string.Empty;
+            banner = "SOMETHING IS OUT THERE";
+            bannerUntil = Time.unscaledTime + 4f;
+            rain?.ClearRain();
             QueueCheckpoint();
         }
 
