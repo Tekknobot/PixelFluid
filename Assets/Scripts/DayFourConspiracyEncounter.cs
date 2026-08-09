@@ -20,7 +20,7 @@ namespace PixelOcean
         [SerializeField, Range(0f, 0.08f)] private float oppositePlayerMovement = 0.015f;
         [SerializeField, Min(0.5f)] private float islandDiscoveryDistance = 5f;
         [SerializeField, Min(1f)] private float skyFullyGoneDistance = 11f;
-        [SerializeField] private Vector2 islandPositionOffset = new(0f, 0.2f);
+        [SerializeField] private Vector2 islandPositionOffset = new(0f, 0.35f);
 
         private SurfDayProgressionDirector director;
         private Transform player;

@@ -23,6 +23,19 @@ namespace PixelOcean
     public sealed class DayFiveCombatant : MonoBehaviour
     {
         private enum State { Entering, Patrol, Charging, Recovery, Hit, Shutdown }
+        private enum BuoyLaserPattern { MultiLock, Scatter, Sweep }
+
+        private sealed class ScheduledBuoyStrike
+        {
+            public GameObject Root;
+            public LineRenderer Glow;
+            public LineRenderer Core;
+            public Vector3 AimPoint;
+            public float RevealAt;
+            public float FireAt;
+            public float HideAt;
+            public bool Fired;
+        }
 
         private DayFiveEnemyKind kind;
         private SurfDayProgressionDirector director;
@@ -75,6 +88,8 @@ namespace PixelOcean
         private LineRenderer beamGlow;
         private LineRenderer beamCore;
         private Material beamMaterial;
+        private readonly List<ScheduledBuoyStrike> buoyStrikes = new();
+        private bool buoyPatternHitPlayer;
 
         public DayFiveEnemyKind Kind => kind;
         public int CurrentHealth => currentHealth;
@@ -242,6 +257,7 @@ namespace PixelOcean
                 FindTarget();
 
             Animate();
+            UpdateBuoyLaserPattern();
 
             switch (state)
             {
@@ -316,6 +332,9 @@ namespace PixelOcean
 
             if (UsesBeamAttack())
                 EnsureBeam();
+
+            if (kind == DayFiveEnemyKind.SurveillanceBuoy)
+                PrepareBuoyLaserPattern();
         }
 
         private bool IsSearchlightAttacker() =>
@@ -333,13 +352,18 @@ namespace PixelOcean
             if (target != null && stateClock < chargeDuration * 0.58f)
                 lockedAimPoint = target.transform.position;
 
-            if (UsesBeamAttack())
+            if (UsesBeamAttack() && kind != DayFiveEnemyKind.SurveillanceBuoy)
                 DrawBeam(false);
 
             if (stateClock < chargeDuration)
                 return;
 
-            if (UsesBeamAttack())
+            if (kind == DayFiveEnemyKind.SurveillanceBuoy)
+            {
+                // Every scheduled strike resolves independently during the
+                // charge. No extra single beam is fired at the end.
+            }
+            else if (UsesBeamAttack())
                 FireBeam();
             else
                 FireSecurityPulseVolley();
@@ -353,7 +377,8 @@ namespace PixelOcean
         private void UpdateRecovery()
         {
             stateClock += Time.deltaTime;
-            if (UsesBeamAttack() && stateClock < 0.16f)
+            if (UsesBeamAttack() && kind != DayFiveEnemyKind.SurveillanceBuoy &&
+                stateClock < 0.16f)
                 DrawBeam(true);
             else
                 SetBeamVisible(false);
@@ -402,6 +427,215 @@ namespace PixelOcean
                 target.TakeSharkHit(transform.position);
         }
 
+        private void PrepareBuoyLaserPattern()
+        {
+            ClearBuoyLaserPattern();
+            if (target == null)
+                return;
+
+            EnsureBeam();
+            buoyPatternHitPlayer = false;
+            Vector3 targetPoint = target.transform.position;
+            lockedAimPoint = targetPoint;
+
+            SurfDayProgressionDirector.Chapter chapter = director != null
+                ? director.CurrentChapter
+                : SurfDayProgressionDirector.Chapter.Dawn;
+            int strikeCount = chapter >= SurfDayProgressionDirector.Chapter.FinalWave
+                ? 6
+                : chapter >= SurfDayProgressionDirector.Chapter.Storm
+                    ? 5
+                    : chapter >= SurfDayProgressionDirector.Chapter.StrangeTide
+                        ? 4
+                        : 3;
+            float telegraphSeconds = chapter >= SurfDayProgressionDirector.Chapter.FinalWave
+                ? 0.62f
+                : chapter >= SurfDayProgressionDirector.Chapter.StrangeTide
+                    ? 0.70f
+                    : 0.82f;
+
+            BuoyLaserPattern pattern = (BuoyLaserPattern)Random.Range(0, 3);
+            bool reverseSweep = Random.value < 0.5f;
+            float now = Time.time;
+
+            for (int i = 0; i < strikeCount; i++)
+            {
+                Vector3 aimPoint = targetPoint;
+                float revealDelay;
+
+                switch (pattern)
+                {
+                    case BuoyLaserPattern.MultiLock:
+                    {
+                        int pair = (i + 1) / 2;
+                        float side = i == 0 ? 0f : i % 2 == 1 ? -1f : 1f;
+                        aimPoint.x += pair * 1.22f * side;
+                        revealDelay = i * 0.035f;
+                        break;
+                    }
+                    case BuoyLaserPattern.Scatter:
+                    {
+                        if (i > 0)
+                        {
+                            aimPoint.x = ViewportWorld(
+                                Random.Range(0.10f, 0.90f),
+                                0.5f).x;
+                            aimPoint.y += Random.Range(-0.18f, 0.18f);
+                        }
+                        revealDelay = i * 0.08f;
+                        break;
+                    }
+                    default:
+                    {
+                        float sweep = strikeCount <= 1
+                            ? 0.5f
+                            : i / (float)(strikeCount - 1);
+                        if (reverseSweep)
+                            sweep = 1f - sweep;
+                        aimPoint.x = ViewportWorld(
+                            Mathf.Lerp(0.12f, 0.88f, sweep),
+                            0.5f).x;
+                        revealDelay = i * 0.10f;
+                        break;
+                    }
+                }
+
+                CreateScheduledBuoyStrike(
+                    pattern,
+                    i,
+                    aimPoint,
+                    now + revealDelay,
+                    now + revealDelay + telegraphSeconds);
+            }
+        }
+
+        private void CreateScheduledBuoyStrike(
+            BuoyLaserPattern pattern,
+            int index,
+            Vector3 aimPoint,
+            float revealAt,
+            float fireAt)
+        {
+            GameObject root = new($"Buoy {pattern} Lock {index + 1}");
+            root.transform.SetParent(transform, false);
+            LineRenderer glow = CreateLine(
+                "Lock Glow",
+                0.14f,
+                12018,
+                root.transform);
+            LineRenderer core = CreateLine(
+                "Lock Core",
+                0.038f,
+                12019,
+                root.transform);
+            glow.enabled = false;
+            core.enabled = false;
+
+            buoyStrikes.Add(new ScheduledBuoyStrike
+            {
+                Root = root,
+                Glow = glow,
+                Core = core,
+                AimPoint = aimPoint,
+                RevealAt = revealAt,
+                FireAt = fireAt,
+                HideAt = fireAt + 0.15f
+            });
+        }
+
+        private void UpdateBuoyLaserPattern()
+        {
+            if (buoyStrikes.Count == 0)
+                return;
+
+            float now = Time.time;
+            for (int i = buoyStrikes.Count - 1; i >= 0; i--)
+            {
+                ScheduledBuoyStrike strike = buoyStrikes[i];
+                if (strike == null || strike.Root == null)
+                {
+                    buoyStrikes.RemoveAt(i);
+                    continue;
+                }
+
+                if (now < strike.RevealAt)
+                    continue;
+
+                if (!strike.Fired && now >= strike.FireAt)
+                {
+                    strike.Fired = true;
+                    ResolveBuoyStrike(strike.AimPoint);
+                }
+
+                DrawScheduledBuoyStrike(strike);
+                if (now < strike.HideAt)
+                    continue;
+
+                Destroy(strike.Root);
+                buoyStrikes.RemoveAt(i);
+            }
+        }
+
+        private void DrawScheduledBuoyStrike(ScheduledBuoyStrike strike)
+        {
+            if (strike.Glow == null || strike.Core == null)
+                return;
+
+            Vector3 sky = ViewportWorld(0.5f, 1.12f);
+            Vector3 start = new(strike.AimPoint.x, sky.y, 0f);
+            float pulse = 0.55f + Mathf.Sin(Time.time * 22f) * 0.25f;
+            Color red = strike.Fired
+                ? new Color(1f, 0.01f, 0.01f, 1f)
+                : new Color(1f, 0.06f, 0.06f, Mathf.Clamp01(pulse));
+            Color glow = red;
+            glow.a *= strike.Fired ? 0.78f : 0.42f;
+            Color core = Color.Lerp(red, Color.white, strike.Fired ? 0.68f : 0.20f);
+            core.a = strike.Fired ? 1f : 0.76f;
+
+            strike.Glow.sortingLayerID = spriteRenderer.sortingLayerID;
+            strike.Core.sortingLayerID = spriteRenderer.sortingLayerID;
+            strike.Glow.startColor = strike.Glow.endColor = glow;
+            strike.Core.startColor = strike.Core.endColor = core;
+            strike.Glow.SetPosition(0, start);
+            strike.Glow.SetPosition(1, strike.AimPoint);
+            strike.Core.SetPosition(0, start);
+            strike.Core.SetPosition(1, strike.AimPoint);
+            strike.Glow.enabled = true;
+            strike.Core.enabled = true;
+        }
+
+        private void ResolveBuoyStrike(Vector3 aimPoint)
+        {
+            ExplosionBasicEffect.Spawn(aimPoint);
+            DayFiveSecurityImpact.Spawn(
+                aimPoint,
+                new Color(1f, 0.02f, 0.02f, 1f));
+
+            if (buoyPatternHitPlayer || target == null || target.IsDead)
+                return;
+
+            float hitRadius = director != null &&
+                director.CurrentChapter >= SurfDayProgressionDirector.Chapter.FinalWave
+                    ? 0.72f
+                    : 0.62f;
+            if (Vector2.Distance(target.transform.position, aimPoint) <= hitRadius)
+            {
+                buoyPatternHitPlayer = target.TakeSharkHit(transform.position);
+            }
+        }
+
+        private void ClearBuoyLaserPattern()
+        {
+            for (int i = buoyStrikes.Count - 1; i >= 0; i--)
+            {
+                ScheduledBuoyStrike strike = buoyStrikes[i];
+                if (strike != null && strike.Root != null)
+                    Destroy(strike.Root);
+            }
+            buoyStrikes.Clear();
+            buoyPatternHitPlayer = false;
+        }
+
         private void FireSecurityPulseVolley()
         {
             if (target == null)
@@ -442,6 +676,7 @@ namespace PixelOcean
             nextDamageAt = Time.time + (IsBoss ? 0.16f : 0.08f);
             currentHealth = Mathf.Max(0, currentHealth - Mathf.Max(1, damage));
             SetBeamVisible(false);
+            ClearBuoyLaserPattern();
 
             Vector2 away = ((Vector2)transform.position - impactPosition).normalized;
             if (away.sqrMagnitude < 0.01f)
@@ -468,6 +703,7 @@ namespace PixelOcean
             state = State.Shutdown;
             hitCollider.enabled = false;
             SetBeamVisible(false);
+            ClearBuoyLaserPattern();
             velocity = Vector3.zero;
             frameClock = 0f;
             frameIndex = 0;
@@ -507,6 +743,7 @@ namespace PixelOcean
 
             StopAllCoroutines();
             SetBeamVisible(false);
+            ClearBuoyLaserPattern();
             hitCollider.enabled = false;
             StartCoroutine(RetreatRoutine());
         }
@@ -830,10 +1067,16 @@ namespace PixelOcean
             SetBeamVisible(false);
         }
 
-        private LineRenderer CreateLine(string objectName, float width, int order)
+        private LineRenderer CreateLine(
+            string objectName,
+            float width,
+            int order,
+            Transform requestedParent = null)
         {
             GameObject lineObject = new(objectName);
-            lineObject.transform.SetParent(transform, false);
+            lineObject.transform.SetParent(
+                requestedParent != null ? requestedParent : transform,
+                false);
             LineRenderer line = lineObject.AddComponent<LineRenderer>();
             line.useWorldSpace = true;
             line.positionCount = 2;
@@ -980,6 +1223,7 @@ namespace PixelOcean
 
         private void OnDestroy()
         {
+            ClearBuoyLaserPattern();
             if (beamMaterial != null)
                 Destroy(beamMaterial);
         }
