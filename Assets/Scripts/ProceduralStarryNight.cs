@@ -21,6 +21,12 @@ namespace PixelOcean
         [SerializeField, Range(0.1f, 20f)] private float editorFastForwardMultiplier = 1f;
         [SerializeField] private bool useUnscaledTime;
 
+        [Header("Time Transition Smoothing")]
+        [Tooltip("Seconds used to ease story, chapter, and save-load clock changes.")]
+        [SerializeField, Range(0.1f, 5f)] private float storyTimeSmoothSeconds = 1.25f;
+        [Tooltip("Safety cap for unusually large clock jumps, measured around the 360-degree day clock.")]
+        [SerializeField, Range(15f, 360f)] private float storyTimeMaximumDegreesPerSecond = 120f;
+
         [Header("Generated Texture")]
         [SerializeField, Range(64, 1024)] private int textureWidth = 512;
         [SerializeField, Range(64, 1024)] private int textureHeight = 512;
@@ -85,6 +91,9 @@ namespace PixelOcean
         private float externalTimeTarget;
         private float externalTimeTransitionDuration;
         private float externalTimeTransitionElapsed;
+        private float storyTimeTarget;
+        private float storyTimeVelocity;
+        private bool storyTimeTargetActive;
 
         public float TimeOfDay => timeOfDay;
         public bool IsNight => timeOfDay < 0.225f || timeOfDay > 0.775f;
@@ -143,6 +152,9 @@ namespace PixelOcean
         {
             gameplayCamera = Camera.main;
             timeOfDay = Mathf.Repeat(startingTimeOfDay, 1f);
+            storyTimeTarget = timeOfDay;
+            storyTimeVelocity = 0f;
+            storyTimeTargetActive = false;
             BuildNightSky();
         }
 
@@ -167,6 +179,21 @@ namespace PixelOcean
 
                 if (externalTimeTransitionElapsed >= duration)
                     timeOfDay = externalTimeTarget;
+            }
+            else if (storyTimeTargetActive)
+            {
+                // Story progress can jump when a shortened distance threshold,
+                // boss sunset, chapter skip, or save load advances the clock.
+                // Smooth in degrees so wrapping through midnight always follows
+                // the short circular route rather than snapping from 1 back to 0.
+                float smoothedDegrees = Mathf.SmoothDampAngle(
+                    timeOfDay * 360f,
+                    storyTimeTarget * 360f,
+                    ref storyTimeVelocity,
+                    storyTimeSmoothSeconds,
+                    storyTimeMaximumDegreesPerSecond,
+                    dt);
+                timeOfDay = Mathf.Repeat(smoothedDegrees / 360f, 1f);
             }
             else if (runCycle)
             {
@@ -498,6 +525,9 @@ namespace PixelOcean
         public void ResetDayNightCycle()
         {
             timeOfDay = Mathf.Repeat(startingTimeOfDay, 1f);
+            storyTimeTarget = timeOfDay;
+            storyTimeVelocity = 0f;
+            storyTimeTargetActive = false;
             updateTimer = 0f;
             RenderSky(useUnscaledTime ? Time.unscaledTime : Time.time);
         }
@@ -508,9 +538,8 @@ namespace PixelOcean
             if (externalTimeOverrideActive)
                 return;
 
-            timeOfDay = Mathf.Repeat(normalizedTime, 1f);
-            updateTimer = 0f;
-            RenderSky(useUnscaledTime ? Time.unscaledTime : Time.time);
+            storyTimeTarget = Mathf.Repeat(normalizedTime, 1f);
+            storyTimeTargetActive = true;
         }
 
         public void BeginExternalTimeTransition(
@@ -522,6 +551,7 @@ namespace PixelOcean
             externalTimeTarget = Mathf.Repeat(normalizedTarget, 1f);
             externalTimeTransitionDuration = Mathf.Max(0.01f, transitionSeconds);
             externalTimeTransitionElapsed = 0f;
+            storyTimeVelocity = 0f;
             updateTimer = 0f;
         }
 
@@ -529,6 +559,9 @@ namespace PixelOcean
         {
             externalTimeOverrideActive = false;
             externalTimeTransitionElapsed = 0f;
+            storyTimeTarget = timeOfDay;
+            storyTimeVelocity = 0f;
+            storyTimeTargetActive = false;
             updateTimer = 0f;
         }
 

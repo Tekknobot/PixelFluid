@@ -64,7 +64,12 @@ namespace PixelOcean
         private float floatPhase;
         private float attackDirection;
         private float retreatDirection;
+        private float horizontalVelocity;
+        private float smoothedLaneY;
+        private float laneYVelocity;
         private bool changingLane;
+        private bool laneYReady;
+        private bool defeatAnimating;
         private bool initialised;
         private bool removalNotified;
         private Color baseColour;
@@ -115,7 +120,11 @@ namespace PixelOcean
             FindTarget();
 
             float spawnX = ChooseEntryX();
-            transform.position = new Vector3(spawnX, GetLaneY(currentLane, spawnX), 0f);
+            smoothedLaneY = GetLaneY(currentLane, spawnX);
+            laneYVelocity = 0f;
+            laneYReady = true;
+            horizontalVelocity = direction * moveSpeed;
+            transform.position = new Vector3(spawnX, smoothedLaneY, 0f);
             spriteRenderer.flipX = direction < 0f;
             floatPhase = Random.Range(0f, Mathf.PI * 2f);
             nextLaneChangeAt = Time.time + Random.Range(1.5f, 3.2f);
@@ -264,11 +273,34 @@ namespace PixelOcean
                 case State.Attack: UpdateAttack(); break;
                 case State.Recovery: UpdateRecovery(); break;
                 case State.Hit: UpdateHit(); break;
-                case State.Retreat: UpdateRetreat(); return;
+                case State.Retreat:
+                    if (!defeatAnimating)
+                        UpdateRetreat();
+                    return;
             }
 
             Vector3 position = transform.position;
-            position.y = UpdateLanePosition(position.x) + CurrentBob();
+            float targetY = UpdateLanePosition(position.x) + CurrentBob();
+            if (!laneYReady)
+            {
+                smoothedLaneY = targetY;
+                laneYVelocity = 0f;
+                laneYReady = true;
+            }
+            else
+            {
+                // Wave sections can exchange ownership at their seam. Damping the
+                // sampled lane height prevents a one-frame seam change from making
+                // a hostile visibly shake while it remains attached to that lane.
+                smoothedLaneY = Mathf.SmoothDamp(
+                    smoothedLaneY,
+                    targetY,
+                    ref laneYVelocity,
+                    0.075f,
+                    Mathf.Infinity,
+                    Time.deltaTime);
+            }
+            position.y = smoothedLaneY;
             transform.position = position;
         }
 
@@ -288,14 +320,20 @@ namespace PixelOcean
             stateClock += Time.deltaTime;
             float left = ViewportWorldX(0.12f);
             float right = ViewportWorldX(0.88f);
-            float x = transform.position.x + direction * moveSpeed * Time.deltaTime;
-            if (x <= left || x >= right)
+            if (transform.position.x <= left)
             {
-                x = Mathf.Clamp(x, left, right);
-                direction *= -1f;
+                direction = 1f;
+                horizontalVelocity = Mathf.Max(0f, horizontalVelocity);
+                SetX(left);
             }
-            SetX(x);
-            SetFacing(direction);
+            else if (transform.position.x >= right)
+            {
+                direction = -1f;
+                horizontalVelocity = Mathf.Min(0f, horizontalVelocity);
+                SetX(right);
+            }
+
+            MoveWithAcceleration(direction * moveSpeed, 8f);
 
             if (Time.time >= nextLaneChangeAt && !changingLane)
             {
@@ -313,6 +351,8 @@ namespace PixelOcean
             stateClock = 0f;
             attackStep = 0;
             attackDirection = target != null && target.transform.position.x < transform.position.x ? -1f : 1f;
+            if (kind == DaySixCreatureKind.MustacheShark)
+                horizontalVelocity = direction * Mathf.Min(Mathf.Abs(horizontalVelocity), moveSpeed);
             int targetWaterLane = FindTargetLane();
 
             switch (kind)
@@ -340,6 +380,12 @@ namespace PixelOcean
                 Color colour = spriteRenderer.color;
                 colour.a = Mathf.Lerp(1f, 0.28f, Mathf.PingPong(stateClock * 2.4f, 1f));
                 spriteRenderer.color = colour;
+            }
+            else if (kind == DaySixCreatureKind.MustacheShark)
+            {
+                // Let the shark visibly settle before its feint instead of
+                // stopping on a single frame.
+                MoveWithAcceleration(0f, 7.5f);
             }
 
             if (stateClock >= telegraphDuration)
@@ -392,9 +438,19 @@ namespace PixelOcean
 
                 case DaySixCreatureKind.MustacheShark:
                     if (stateClock < 0.42f)
-                        SetX(transform.position.x - attackDirection * 2.2f * Time.deltaTime);
+                    {
+                        MoveWithAcceleration(-attackDirection * 2.2f, 9.5f);
+                    }
+                    else if (stateClock < 0.58f)
+                    {
+                        // A short eased turn keeps the feint readable without an
+                        // instantaneous velocity reversal.
+                        MoveWithAcceleration(0f, 16f);
+                    }
                     else
-                        SetX(transform.position.x + attackDirection * 7.4f * Time.deltaTime);
+                    {
+                        MoveWithAcceleration(attackDirection * 7.4f, 13.5f);
+                    }
                     break;
 
                 case DaySixCreatureKind.Resort:
@@ -452,7 +508,10 @@ namespace PixelOcean
         {
             stateClock += Time.deltaTime;
             spriteRenderer.color = Color.Lerp(baseColour, Color.white, Mathf.Max(0f, 0.25f - stateClock));
-            SetX(transform.position.x + direction * moveSpeed * 0.35f * Time.deltaTime);
+            if (kind == DaySixCreatureKind.MustacheShark)
+                MoveWithAcceleration(direction * moveSpeed * 0.35f, 7f);
+            else
+                SetX(transform.position.x + direction * moveSpeed * 0.35f * Time.deltaTime);
             if (stateClock >= recoveryDuration)
             {
                 state = State.Patrol;
@@ -527,6 +586,7 @@ namespace PixelOcean
         private IEnumerator DefeatRoutine(Vector2 impactPosition)
         {
             state = State.Retreat;
+            defeatAnimating = true;
             hitCollider.enabled = false;
             float directionAway = transform.position.x >= impactPosition.x ? 1f : -1f;
             float elapsed = 0f;
@@ -549,6 +609,7 @@ namespace PixelOcean
                 return;
             NotifyRemoved(false);
             state = State.Retreat;
+            defeatAnimating = false;
             hitCollider.enabled = false;
             float centre = gameplayCamera != null ? gameplayCamera.transform.position.x : transform.position.x;
             retreatDirection = transform.position.x < centre ? -1f : 1f;
@@ -691,9 +752,25 @@ namespace PixelOcean
 
         private void MoveHorizontalToward(float destination, float speed)
         {
-            float before = transform.position.x;
-            SetX(Mathf.MoveTowards(before, destination, speed * Time.deltaTime));
-            SetFacing(transform.position.x - before);
+            float x = Mathf.SmoothDamp(
+                transform.position.x,
+                destination,
+                ref horizontalVelocity,
+                0.16f,
+                speed,
+                Time.deltaTime);
+            SetX(x);
+            SetFacing(horizontalVelocity);
+        }
+
+        private void MoveWithAcceleration(float targetSpeed, float acceleration)
+        {
+            horizontalVelocity = Mathf.MoveTowards(
+                horizontalVelocity,
+                targetSpeed,
+                Mathf.Max(0.1f, acceleration) * Time.deltaTime);
+            SetX(transform.position.x + horizontalVelocity * Time.deltaTime);
+            SetFacing(horizontalVelocity);
         }
 
         private void SetX(float x)

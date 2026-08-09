@@ -29,6 +29,7 @@ namespace PixelOcean
         private float age;
         private float phase;
         private int lane;
+        private bool resolved;
 
         public static DaySixHazardProjectile Spawn(
             DaySixHazardKind hazardKind,
@@ -132,16 +133,35 @@ namespace PixelOcean
 
         private void OnTriggerEnter2D(Collider2D other)
         {
-            if (other == null)
+            if (resolved || other == null)
                 return;
 
             TinyWaveSurfer surfer = other.GetComponentInParent<TinyWaveSurfer>();
             if (surfer == null || !surfer.IsPlayerControlled)
                 return;
 
-            surfer.TakeSharkHit(transform.position);
+            resolved = true;
             hitCollider.enabled = false;
+            surfer.TakeSharkHit(transform.position);
+
+            SpawnImpactExplosion();
+
             Destroy(gameObject);
+        }
+
+        private void SpawnImpactExplosion()
+        {
+            // Keep the effect in the same inter-wave lane as the projectile so
+            // foreground water continues to occlude it correctly.
+            ResolveLaneY(transform.position.x);
+            PixelWaterGPU sortingWater = waterLayers.Count > 0
+                ? waterLayers[Mathf.Clamp(lane, 0, waterLayers.Count - 1)]
+                : null;
+            ExplosionBasicEffect.SpawnInterWave(
+                transform.position,
+                spriteRenderer,
+                sortingWater,
+                lane);
         }
 
         private static Sprite GetSprite(DaySixHazardKind hazardKind)

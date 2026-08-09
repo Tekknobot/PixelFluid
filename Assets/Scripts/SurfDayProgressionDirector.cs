@@ -174,7 +174,8 @@ namespace PixelOcean
         /// <summary>
         /// Keeps the procedural sky tied to the run clock. Each surf day starts
         /// at 6:00 AM and reaches midnight at the end of the configured day.
-        /// This also makes Continue loads and developer time jumps visually exact.
+        /// Continue loads and developer jumps still target the exact story time,
+        /// while ProceduralStarryNight eases any large correction without a snap.
         /// </summary>
         private void SyncDayNightToRunTime()
         {
