@@ -24,6 +24,7 @@ namespace PixelOcean
     {
         private enum State { Entering, Patrol, Charging, Recovery, Hit, Shutdown }
         private enum BuoyLaserPattern { MultiLock, Scatter, Sweep }
+        private enum WardenAttackPattern { MissileSalvo, Crossfire, PrismFan, LockGrid }
 
         private sealed class ScheduledBuoyStrike
         {
@@ -34,6 +35,21 @@ namespace PixelOcean
             public float RevealAt;
             public float FireAt;
             public float HideAt;
+            public bool Fired;
+        }
+
+        private sealed class ScheduledBossLaser
+        {
+            public GameObject Root;
+            public LineRenderer Glow;
+            public LineRenderer Core;
+            public Vector3 StartPoint;
+            public Vector3 AimPoint;
+            public Color Colour;
+            public float RevealAt;
+            public float FireAt;
+            public float HideAt;
+            public float HitRadius;
             public bool Fired;
         }
 
@@ -81,7 +97,8 @@ namespace PixelOcean
         private Vector3 desiredPosition;
         private Vector3 velocity;
         private Vector3 lockedAimPoint;
-        private bool wardenUsesBeam;
+        private WardenAttackPattern wardenAttackPattern;
+        private int wardenAttackSequence;
         private bool initialised;
         private Color baseColour = Color.white;
 
@@ -90,6 +107,8 @@ namespace PixelOcean
         private Material beamMaterial;
         private readonly List<ScheduledBuoyStrike> buoyStrikes = new();
         private bool buoyPatternHitPlayer;
+        private readonly List<ScheduledBossLaser> bossLasers = new();
+        private bool bossPatternHitPlayer;
 
         public DayFiveEnemyKind Kind => kind;
         public int CurrentHealth => currentHealth;
@@ -258,6 +277,7 @@ namespace PixelOcean
 
             Animate();
             UpdateBuoyLaserPattern();
+            UpdateBossLaserPattern();
 
             switch (state)
             {
@@ -328,13 +348,22 @@ namespace PixelOcean
             velocity *= 0.25f;
 
             if (kind == DayFiveEnemyKind.Warden)
-                wardenUsesBeam = !wardenUsesBeam;
+            {
+                wardenAttackPattern =
+                    (WardenAttackPattern)(wardenAttackSequence % 4);
+                wardenAttackSequence++;
+            }
 
             if (UsesBeamAttack())
                 EnsureBeam();
 
             if (kind == DayFiveEnemyKind.SurveillanceBuoy)
                 PrepareBuoyLaserPattern();
+            else if (kind == DayFiveEnemyKind.SignalRelay)
+                PrepareRelaySpectrumPattern();
+            else if (kind == DayFiveEnemyKind.Warden &&
+                     wardenAttackPattern != WardenAttackPattern.MissileSalvo)
+                PrepareWardenLaserPattern();
         }
 
         private bool IsSearchlightAttacker() =>
@@ -343,8 +372,12 @@ namespace PixelOcean
 
         private bool UsesBeamAttack() =>
             IsSearchlightAttacker() ||
-            kind == DayFiveEnemyKind.SurveillanceBuoy ||
-            (kind == DayFiveEnemyKind.Warden && wardenUsesBeam);
+            kind == DayFiveEnemyKind.SurveillanceBuoy;
+
+        private bool UsesScheduledBossLasers() =>
+            kind == DayFiveEnemyKind.SignalRelay ||
+            (kind == DayFiveEnemyKind.Warden &&
+             wardenAttackPattern != WardenAttackPattern.MissileSalvo);
 
         private void UpdateCharging()
         {
@@ -358,11 +391,14 @@ namespace PixelOcean
             if (stateClock < chargeDuration)
                 return;
 
-            if (kind == DayFiveEnemyKind.SurveillanceBuoy)
+            if (kind == DayFiveEnemyKind.SurveillanceBuoy ||
+                UsesScheduledBossLasers())
             {
                 // Every scheduled strike resolves independently during the
                 // charge. No extra single beam is fired at the end.
             }
+            else if (kind == DayFiveEnemyKind.Warden)
+                LaunchWardenMissileSalvo();
             else if (UsesBeamAttack())
                 FireBeam();
             else
@@ -636,6 +672,289 @@ namespace PixelOcean
             buoyPatternHitPlayer = false;
         }
 
+        private void PrepareRelaySpectrumPattern()
+        {
+            ClearBossLaserPattern();
+            if (target == null)
+                return;
+
+            EnsureBeam();
+            bossPatternHitPlayer = false;
+            const int laserCount = 6;
+            bool slantFromLeft = Random.value < 0.5f;
+            float skyY = ViewportWorld(0.5f, 1.12f).y;
+            float now = Time.time;
+
+            for (int i = 0; i < laserCount; i++)
+            {
+                float across = i / (float)(laserCount - 1);
+                Vector3 aim = ViewportWorld(
+                    Mathf.Lerp(0.12f, 0.88f, across),
+                    0.5f);
+                aim.y = target.transform.position.y +
+                        Mathf.Sin(across * Mathf.PI) * 0.12f;
+
+                float horizontalSlant = slantFromLeft ? -3.1f : 3.1f;
+                Vector3 start = new(
+                    aim.x + horizontalSlant,
+                    skyY,
+                    0f);
+                Color spectrum = Color.HSVToRGB(
+                    Mathf.Lerp(0f, 0.82f, across),
+                    0.92f,
+                    1f);
+
+                CreateScheduledBossLaser(
+                    $"Relay Spectrum {i + 1}",
+                    start,
+                    aim,
+                    spectrum,
+                    now + i * 0.035f,
+                    now + 0.48f + i * 0.055f,
+                    0.56f);
+            }
+        }
+
+        private void PrepareWardenLaserPattern()
+        {
+            ClearBossLaserPattern();
+            if (target == null)
+                return;
+
+            EnsureBeam();
+            bossPatternHitPlayer = false;
+            Vector3 targetPoint = target.transform.position;
+            float skyY = ViewportWorld(0.5f, 1.12f).y;
+            float now = Time.time;
+
+            switch (wardenAttackPattern)
+            {
+                case WardenAttackPattern.Crossfire:
+                {
+                    const int count = 6;
+                    for (int i = 0; i < count; i++)
+                    {
+                        float centred = i - (count - 1) * 0.5f;
+                        Vector3 aim = targetPoint + Vector3.right * centred * 0.72f;
+                        Vector3 start = ViewportWorld(i % 2 == 0 ? -0.08f : 1.08f, 1.08f);
+                        start.y = skyY;
+                        Color colour = i % 2 == 0
+                            ? new Color(1f, 0.04f, 0.20f, 1f)
+                            : new Color(0.08f, 0.78f, 1f, 1f);
+                        CreateScheduledBossLaser(
+                            $"Warden Crossfire {i + 1}",
+                            start,
+                            aim,
+                            colour,
+                            now + i * 0.04f,
+                            now + 0.54f + i * 0.045f,
+                            0.66f);
+                    }
+                    break;
+                }
+
+                case WardenAttackPattern.PrismFan:
+                {
+                    const int count = 7;
+                    for (int i = 0; i < count; i++)
+                    {
+                        float across = i / (float)(count - 1);
+                        Vector3 aim = ViewportWorld(
+                            Mathf.Lerp(0.07f, 0.93f, across),
+                            0.5f);
+                        aim.y = targetPoint.y;
+                        Color colour = Color.HSVToRGB(across * 0.86f, 0.88f, 1f);
+                        CreateScheduledBossLaser(
+                            $"Warden Prism Fan {i + 1}",
+                            transform.position,
+                            aim,
+                            colour,
+                            now + i * 0.025f,
+                            now + 0.56f + i * 0.03f,
+                            0.60f);
+                    }
+                    break;
+                }
+
+                case WardenAttackPattern.LockGrid:
+                {
+                    const int count = 6;
+                    for (int i = 0; i < count; i++)
+                    {
+                        int pair = (i + 1) / 2;
+                        float side = i == 0 ? 0f : i % 2 == 1 ? -1f : 1f;
+                        Vector3 aim = targetPoint + Vector3.right * pair * side * 1.15f;
+                        float startOffset = i % 2 == 0 ? -1.8f : 1.8f;
+                        Vector3 start = new(aim.x + startOffset, skyY, 0f);
+                        Color colour = i == 0
+                            ? new Color(1f, 0.08f, 0.08f, 1f)
+                            : new Color(0.78f, 0.05f, 1f, 1f);
+                        CreateScheduledBossLaser(
+                            $"Warden Lock Grid {i + 1}",
+                            start,
+                            aim,
+                            colour,
+                            now + i * 0.055f,
+                            now + 0.50f + i * 0.055f,
+                            0.70f);
+                    }
+                    break;
+                }
+            }
+        }
+
+        private void CreateScheduledBossLaser(
+            string laserName,
+            Vector3 startPoint,
+            Vector3 aimPoint,
+            Color colour,
+            float revealAt,
+            float fireAt,
+            float hitRadius)
+        {
+            GameObject root = new(laserName);
+            root.transform.SetParent(transform, false);
+            LineRenderer glow = CreateLine(
+                "Boss Laser Glow",
+                0.19f,
+                12020,
+                root.transform);
+            LineRenderer core = CreateLine(
+                "Boss Laser Core",
+                0.052f,
+                12021,
+                root.transform);
+            glow.enabled = false;
+            core.enabled = false;
+
+            bossLasers.Add(new ScheduledBossLaser
+            {
+                Root = root,
+                Glow = glow,
+                Core = core,
+                StartPoint = startPoint,
+                AimPoint = aimPoint,
+                Colour = colour,
+                RevealAt = revealAt,
+                FireAt = fireAt,
+                HideAt = fireAt + 0.17f,
+                HitRadius = hitRadius
+            });
+        }
+
+        private void UpdateBossLaserPattern()
+        {
+            if (bossLasers.Count == 0)
+                return;
+
+            float now = Time.time;
+            for (int i = bossLasers.Count - 1; i >= 0; i--)
+            {
+                ScheduledBossLaser laser = bossLasers[i];
+                if (laser == null || laser.Root == null)
+                {
+                    bossLasers.RemoveAt(i);
+                    continue;
+                }
+
+                if (now < laser.RevealAt)
+                    continue;
+
+                if (!laser.Fired && now >= laser.FireAt)
+                {
+                    laser.Fired = true;
+                    ResolveBossLaser(laser);
+                }
+
+                DrawScheduledBossLaser(laser);
+                if (now < laser.HideAt)
+                    continue;
+
+                Destroy(laser.Root);
+                bossLasers.RemoveAt(i);
+            }
+        }
+
+        private void DrawScheduledBossLaser(ScheduledBossLaser laser)
+        {
+            if (laser.Glow == null || laser.Core == null)
+                return;
+
+            float pulse = 0.62f + Mathf.Sin(Time.time * 24f) * 0.25f;
+            Color glow = laser.Colour;
+            glow.a = laser.Fired ? 0.82f : 0.36f * pulse;
+            Color core = Color.Lerp(
+                laser.Colour,
+                Color.white,
+                laser.Fired ? 0.76f : 0.28f);
+            core.a = laser.Fired ? 1f : 0.72f;
+
+            laser.Glow.sortingLayerID = spriteRenderer.sortingLayerID;
+            laser.Core.sortingLayerID = spriteRenderer.sortingLayerID;
+            laser.Glow.startColor = laser.Glow.endColor = glow;
+            laser.Core.startColor = laser.Core.endColor = core;
+            laser.Glow.SetPosition(0, laser.StartPoint);
+            laser.Glow.SetPosition(1, laser.AimPoint);
+            laser.Core.SetPosition(0, laser.StartPoint);
+            laser.Core.SetPosition(1, laser.AimPoint);
+            laser.Glow.enabled = true;
+            laser.Core.enabled = true;
+        }
+
+        private void ResolveBossLaser(ScheduledBossLaser laser)
+        {
+            ExplosionBasicEffect.Spawn(laser.AimPoint);
+            DayFiveSecurityImpact.Spawn(laser.AimPoint, laser.Colour);
+
+            if (bossPatternHitPlayer || target == null || target.IsDead)
+                return;
+            if (Vector2.Distance(target.transform.position, laser.AimPoint) <=
+                laser.HitRadius)
+            {
+                bossPatternHitPlayer = target.TakeSharkHit(laser.StartPoint);
+            }
+        }
+
+        private void ClearBossLaserPattern()
+        {
+            for (int i = bossLasers.Count - 1; i >= 0; i--)
+            {
+                ScheduledBossLaser laser = bossLasers[i];
+                if (laser != null && laser.Root != null)
+                    Destroy(laser.Root);
+            }
+            bossLasers.Clear();
+            bossPatternHitPlayer = false;
+        }
+
+        private void LaunchWardenMissileSalvo()
+        {
+            if (target == null)
+                return;
+
+            int count = currentHealth <= maximumHealth / 2 ? 5 : 3;
+            for (int i = 0; i < count; i++)
+            {
+                float centred = i - (count - 1) * 0.5f;
+                Vector2 direction =
+                    ((Vector2)target.transform.position - (Vector2)transform.position).normalized;
+                direction = Quaternion.Euler(0f, 0f, centred * 13f) * direction;
+
+                GameObject missile = new($"Warden Missile {i + 1}");
+                missile.transform.position =
+                    transform.position + Vector3.right * centred * 0.22f;
+                missile.AddComponent<SpriteRenderer>();
+                missile.AddComponent<CircleCollider2D>();
+                missile.AddComponent<Rigidbody2D>();
+                missile.AddComponent<DayFiveWardenMissile>().Launch(
+                    this,
+                    target,
+                    direction,
+                    5.8f,
+                    i * 0.11f);
+            }
+        }
+
         private void FireSecurityPulseVolley()
         {
             if (target == null)
@@ -677,6 +996,7 @@ namespace PixelOcean
             currentHealth = Mathf.Max(0, currentHealth - Mathf.Max(1, damage));
             SetBeamVisible(false);
             ClearBuoyLaserPattern();
+            ClearBossLaserPattern();
 
             Vector2 away = ((Vector2)transform.position - impactPosition).normalized;
             if (away.sqrMagnitude < 0.01f)
@@ -704,6 +1024,7 @@ namespace PixelOcean
             hitCollider.enabled = false;
             SetBeamVisible(false);
             ClearBuoyLaserPattern();
+            ClearBossLaserPattern();
             velocity = Vector3.zero;
             frameClock = 0f;
             frameIndex = 0;
@@ -744,6 +1065,7 @@ namespace PixelOcean
             StopAllCoroutines();
             SetBeamVisible(false);
             ClearBuoyLaserPattern();
+            ClearBossLaserPattern();
             hitCollider.enabled = false;
             StartCoroutine(RetreatRoutine());
         }
@@ -839,11 +1161,15 @@ namespace PixelOcean
         }
 
         private bool UsesWaterGap() =>
-            kind == DayFiveEnemyKind.SurveillanceBuoy;
+            kind == DayFiveEnemyKind.SurveillanceBuoy ||
+            kind == DayFiveEnemyKind.SignalRelay ||
+            kind == DayFiveEnemyKind.Warden;
 
         private bool UsesSharedWaveSorting() =>
             kind == DayFiveEnemyKind.SurveillanceBuoy ||
-            kind == DayFiveEnemyKind.Drone;
+            kind == DayFiveEnemyKind.Drone ||
+            kind == DayFiveEnemyKind.SignalRelay ||
+            kind == DayFiveEnemyKind.Warden;
 
         private void ConfigureWaterLane()
         {
@@ -1224,8 +1550,175 @@ namespace PixelOcean
         private void OnDestroy()
         {
             ClearBuoyLaserPattern();
+            ClearBossLaserPattern();
             if (beamMaterial != null)
                 Destroy(beamMaterial);
+        }
+    }
+
+    [DisallowMultipleComponent]
+    [RequireComponent(typeof(SpriteRenderer), typeof(CircleCollider2D), typeof(Rigidbody2D))]
+    public sealed class DayFiveWardenMissile : MonoBehaviour
+    {
+        private DayFiveCombatant owner;
+        private TinyWaveSurfer target;
+        private SpriteRenderer spriteRenderer;
+        private CircleCollider2D hitCollider;
+        private Sprite[] frames;
+        private Vector2 velocity;
+        private float speed;
+        private float age;
+        private float ignitionDelay;
+        private float frameClock;
+        private float weavePhase;
+        private bool armed;
+
+        public void Launch(
+            DayFiveCombatant missileOwner,
+            TinyWaveSurfer surfer,
+            Vector2 direction,
+            float travelSpeed,
+            float delay)
+        {
+            owner = missileOwner;
+            target = surfer;
+            speed = Mathf.Max(1f, travelSpeed);
+            velocity = direction.sqrMagnitude > 0.01f
+                ? direction.normalized * speed
+                : Vector2.down * speed;
+            ignitionDelay = Mathf.Max(0f, delay);
+            weavePhase = Random.Range(0f, Mathf.PI * 2f);
+
+            spriteRenderer = GetComponent<SpriteRenderer>();
+            spriteRenderer.sortingOrder = 12026;
+            frames = SliceSheet("Day5/Warden/warden_missile", 32, 32f);
+            if (frames.Length == 0)
+                frames = SliceSheet("Day5/SecurityPulse/security_pulse_flying", 32, 32f);
+            if (frames.Length > 0)
+                spriteRenderer.sprite = frames[0];
+            spriteRenderer.color = new Color(1f, 0.42f, 0.12f, 1f);
+            transform.localScale = Vector3.one * 0.92f;
+
+            hitCollider = GetComponent<CircleCollider2D>();
+            hitCollider.isTrigger = true;
+            hitCollider.radius = 0.30f;
+            hitCollider.enabled = false;
+
+            Rigidbody2D body = GetComponent<Rigidbody2D>();
+            body.bodyType = RigidbodyType2D.Kinematic;
+            body.gravityScale = 0f;
+            body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+            body.freezeRotation = true;
+        }
+
+        private void Update()
+        {
+            age += Time.deltaTime;
+            if (owner == null || owner.IsDefeated)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            if (age >= 5.2f)
+            {
+                ExplosionBasicEffect.Spawn(transform.position);
+                Destroy(gameObject);
+                return;
+            }
+
+            if (age < ignitionDelay)
+            {
+                float flash = Mathf.PingPong(Time.time * 8f, 1f);
+                spriteRenderer.color = Color.Lerp(
+                    new Color(1f, 0.12f, 0.05f, 1f),
+                    Color.white,
+                    flash);
+                transform.position += (Vector3)(velocity * 0.16f * Time.deltaTime);
+                return;
+            }
+
+            if (!armed)
+            {
+                armed = true;
+                hitCollider.enabled = true;
+                spriteRenderer.color = new Color(1f, 0.42f, 0.12f, 1f);
+                DayFiveSecurityImpact.Spawn(
+                    transform.position,
+                    new Color(1f, 0.38f, 0.08f, 1f));
+            }
+
+            if (target != null && !target.IsDead && target.IsPlayerControlled)
+            {
+                Vector2 desired =
+                    ((Vector2)target.transform.position - (Vector2)transform.position).normalized * speed;
+                velocity = Vector2.Lerp(
+                    velocity,
+                    desired,
+                    1f - Mathf.Exp(-2.25f * Time.deltaTime));
+                velocity = velocity.normalized * speed;
+            }
+
+            Vector2 perpendicular = new(-velocity.y, velocity.x);
+            if (perpendicular.sqrMagnitude > 0.01f)
+                perpendicular.Normalize();
+            Vector2 weave = perpendicular *
+                            (Mathf.Sin(age * 8.5f + weavePhase) * 0.34f);
+            transform.position += (Vector3)((velocity + weave) * Time.deltaTime);
+            transform.rotation = Quaternion.Euler(
+                0f,
+                0f,
+                Mathf.Atan2(velocity.y, velocity.x) * Mathf.Rad2Deg);
+
+            if (frames != null && frames.Length > 0)
+            {
+                frameClock += Time.deltaTime * 18f;
+                spriteRenderer.sprite =
+                    frames[Mathf.FloorToInt(frameClock) % frames.Length];
+            }
+        }
+
+        private void OnTriggerEnter2D(Collider2D other)
+        {
+            if (!armed || other == null ||
+                other.GetComponentInParent<DayFiveCombatant>() != null)
+                return;
+
+            TinyWaveSurfer surfer = other.GetComponentInParent<TinyWaveSurfer>();
+            if (surfer == null || !surfer.IsPlayerControlled)
+                return;
+
+            surfer.TakeSharkHit(transform.position);
+            DayFiveSecurityImpact.Spawn(
+                transform.position,
+                new Color(1f, 0.18f, 0.05f, 1f));
+            ExplosionBasicEffect.Spawn(transform.position);
+            Destroy(gameObject);
+        }
+
+        private static Sprite[] SliceSheet(string path, int frameSize, float ppu)
+        {
+            Texture2D sheet = Resources.Load<Texture2D>(path);
+            if (sheet == null)
+                return System.Array.Empty<Sprite>();
+            int columns = Mathf.Max(1, sheet.width / frameSize);
+            int rows = Mathf.Max(1, sheet.height / frameSize);
+            Sprite[] result = new Sprite[columns * rows];
+            int index = 0;
+            for (int row = rows - 1; row >= 0; row--)
+            {
+                for (int column = 0; column < columns; column++)
+                {
+                    result[index++] = Sprite.Create(
+                        sheet,
+                        new Rect(column * frameSize, row * frameSize, frameSize, frameSize),
+                        new Vector2(0.5f, 0.5f),
+                        ppu,
+                        0,
+                        SpriteMeshType.FullRect);
+                }
+            }
+            return result;
         }
     }
 

@@ -16,8 +16,23 @@ namespace PixelOcean
         private PixelWaterGPU sharedSortingSource;
         private int sharedLane;
         private float nextSharedSortingRefresh;
-        private readonly HashSet<DayFiveCombatant> finalPair = new();
+        private readonly HashSet<DayFiveCombatant> finalWaveTargets = new();
+        private DayFiveCombatant activeSignalRelay;
+        private bool signalRelaySpawned;
+        private bool signalRelayDefeated;
+        private float signalRelayFallbackAt;
+        private float nextSignalRelayRecoveryAt;
         private bool initialised;
+
+        public bool CanAdvanceFromSignalRelay =>
+            signalRelayDefeated ||
+            (signalRelaySpawned && Time.time >= signalRelayFallbackAt);
+
+        public void DebugAllowFinalWave()
+        {
+            signalRelaySpawned = true;
+            signalRelayDefeated = true;
+        }
 
         public static DayFiveEncounter Begin(SurfDayProgressionDirector progression)
         {
@@ -27,6 +42,8 @@ namespace PixelOcean
             DayFiveEncounter existing = FindFirstObjectByType<DayFiveEncounter>();
             if (existing != null)
             {
+                if (!existing.initialised || existing.director != progression)
+                    existing.lastChapter = -1;
                 existing.director = progression;
                 existing.initialised = true;
                 return existing;
@@ -47,27 +64,41 @@ namespace PixelOcean
             RefreshSharedWaveSorting(false);
 
             int chapter = (int)director.CurrentChapter;
-            if (chapter == lastChapter)
-                return;
+            if (chapter != lastChapter)
+            {
+                lastChapter = chapter;
+                SpawnForChapter(director.CurrentChapter);
+            }
 
-            lastChapter = chapter;
-            SpawnForChapter(director.CurrentChapter);
+            if (director.CurrentChapter == SurfDayProgressionDirector.Chapter.Storm &&
+                !signalRelayDefeated &&
+                activeSignalRelay == null &&
+                Time.time >= nextSignalRelayRecoveryAt)
+            {
+                nextSignalRelayRecoveryAt = Time.time + 1f;
+                SpawnSignalRelayMiniBoss();
+            }
         }
 
         private void SpawnForChapter(SurfDayProgressionDirector.Chapter chapter)
         {
-            if (chapter == SurfDayProgressionDirector.Chapter.FinalWave)
+            switch (chapter)
             {
-                SpawnFinalPair();
-                return;
+                case SurfDayProgressionDirector.Chapter.Storm:
+                    SpawnSignalRelayMiniBoss();
+                    break;
+                case SurfDayProgressionDirector.Chapter.FinalWave:
+                    SpawnFinalPair();
+                    break;
+                default:
+                    SpawnPatrolPair();
+                    break;
             }
-
-            SpawnPair(false);
         }
 
         public void SpawnFinalPair()
         {
-            foreach (DayFiveCombatant combatant in finalPair)
+            foreach (DayFiveCombatant combatant in finalWaveTargets)
                 if (combatant != null && !combatant.IsDefeated)
                     return;
 
@@ -79,26 +110,43 @@ namespace PixelOcean
                     combatant.BeginRetreat(true);
             }
 
-            finalPair.Clear();
-            SpawnPair(true);
+            finalWaveTargets.Clear();
+            activeSignalRelay = null;
+            finalWaveTargets.Add(Spawn(DayFiveEnemyKind.Warden));
         }
 
-        private void SpawnPair(bool countsForFinalWave)
+        private void SpawnSignalRelayMiniBoss()
+        {
+            if (activeSignalRelay != null && !activeSignalRelay.IsDefeated)
+                return;
+
+            RetreatActiveCombatants();
+            RefreshSharedWaveSorting(true);
+            activeSignalRelay = Spawn(DayFiveEnemyKind.SignalRelay);
+            signalRelaySpawned = true;
+            signalRelayDefeated = false;
+            signalRelayFallbackAt = Time.time + 25f;
+        }
+
+        private void SpawnPatrolPair()
         {
             RetreatActiveCombatants();
             RefreshSharedWaveSorting(true);
-            DayFiveCombatant drone = Spawn(DayFiveEnemyKind.Drone);
-            DayFiveCombatant buoy = Spawn(DayFiveEnemyKind.SurveillanceBuoy);
-            if (countsForFinalWave)
-            {
-                finalPair.Add(drone);
-                finalPair.Add(buoy);
-            }
+            Spawn(DayFiveEnemyKind.Drone);
+            Spawn(DayFiveEnemyKind.SurveillanceBuoy);
         }
 
         public void NotifyCombatantDefeated(DayFiveCombatant combatant)
         {
-            if (!finalPair.Remove(combatant) || finalPair.Count > 0)
+            if (combatant != null &&
+                combatant.Kind == DayFiveEnemyKind.SignalRelay)
+            {
+                signalRelayDefeated = true;
+                activeSignalRelay = null;
+                return;
+            }
+
+            if (!finalWaveTargets.Remove(combatant) || finalWaveTargets.Count > 0)
                 return;
 
             director?.CompleteDayFive();
@@ -106,7 +154,10 @@ namespace PixelOcean
 
         public void EndEncounter()
         {
-            finalPair.Clear();
+            finalWaveTargets.Clear();
+            activeSignalRelay = null;
+            signalRelaySpawned = false;
+            signalRelayDefeated = false;
             RetreatActiveCombatants();
             initialised = false;
         }
@@ -199,7 +250,9 @@ namespace PixelOcean
             {
                 if (combatant != null &&
                     (combatant.Kind == DayFiveEnemyKind.Drone ||
-                     combatant.Kind == DayFiveEnemyKind.SurveillanceBuoy))
+                     combatant.Kind == DayFiveEnemyKind.SurveillanceBuoy ||
+                     combatant.Kind == DayFiveEnemyKind.SignalRelay ||
+                     combatant.Kind == DayFiveEnemyKind.Warden))
                     combatant.SetSharedWaveSorting(sharedSortingSource, sharedLane);
             }
         }

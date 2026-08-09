@@ -470,8 +470,8 @@ namespace PixelOcean
                     Chapter.FirstRescue => "BREAK THROUGH THE DRONE AND BUOY PATROL.",
                     Chapter.DangerousWater => "DISABLE THE DRONE AND BUOY.",
                     Chapter.StrangeTide => "DODGE THE BUOY'S RED SKY BEAM.",
-                    Chapter.Storm => "SURVIVE FACILITY LOCKDOWN.",
-                    Chapter.FinalWave => "DISABLE THE FINAL DRONE AND BUOY.",
+                    Chapter.Storm => "DISABLE THE SPECTRUM SIGNAL RELAY.",
+                    Chapter.FinalWave => "DEFEAT THE WARDEN.",
                     _ => "ESCAPE THE SECURITY NETWORK."
                 };
                 DayFiveEncounter.Begin(this);
@@ -801,6 +801,7 @@ namespace PixelOcean
             DestroyAll<SecretFacilityEncounter>();
             DestroyAll<DayFourConspiracyEncounter>();
             DestroyAll<DayFiveCombatant>();
+            DestroyAll<DayFiveWardenMissile>();
             DestroyAll<DayFiveSecurityPulse>();
             DestroyAll<DayFiveSecurityImpact>();
             DestroyAll<DayFiveEncounter>();
@@ -971,7 +972,7 @@ namespace PixelOcean
             BeginChapter(
                 Chapter.Complete,
                 "DAY 5 COMPLETE",
-                "THE DRONE AND BUOY ARE OFFLINE. THE RED HORIZON GOES DARK.");
+                "THE WARDEN IS OFFLINE. THE RED HORIZON GOES DARK.");
             objective = "SECURITY NETWORK DISABLED";
             learningObjective = string.Empty;
             AirTrickScoreSystem.Instance?.ShowDayRecap(5, 10f);
@@ -1242,21 +1243,25 @@ namespace PixelOcean
                 else if (currentDay >= 4)
                 {
                     objective = currentDay == 5
-                        ? "DISABLE THE DRONE AND BUOY"
+                        ? "SECURITY NETWORK DISABLED"
                         : "REACH THE CLASSIFIED ISLAND";
                     learningObjective = string.Empty;
                 }
                 return;
             }
 
+            bool finalWaveGateOpen = currentDay != 5 ||
+                (chapter == Chapter.Storm &&
+                 DayFiveEncounter.Begin(this)?.CanAdvanceFromSignalRelay == true);
             if ((distanceTravelled >= GetDistanceThresholdForChapter(Chapter.FinalWave) ||
                  runTime >= finalWaveBeginsAt) &&
-                chapter < Chapter.FinalWave)
+                chapter < Chapter.FinalWave &&
+                finalWaveGateOpen)
             {
                 finalWaveStarted = true;
                 BeginChapter(Chapter.FinalWave,
-                    currentDay == 5 ? "FINAL SECURITY PAIR" : currentDay == 4 ? "THE ISLAND ON THE HORIZON" : currentDay == 3 ? "THE LAST ECHO" : currentDay == 2 ? "DUCK STORM" : "THE LAST WAVE",
-                    currentDay == 5 ? "DISABLE THE DRONE AND BUOY." : currentDay == 4 ? "FOLLOW THE TRANSMISSION TO ITS SOURCE." : currentDay == 3 ? "SURVIVE UNTIL THE OCEAN FALLS SILENT." : currentDay == 2 ? "BREAK THROUGH THE ARMOURED FLOCK." : $"SURVIVE {finalSurvivalSeconds} SECONDS.");
+                    currentDay == 5 ? "THE WARDEN" : currentDay == 4 ? "THE ISLAND ON THE HORIZON" : currentDay == 3 ? "THE LAST ECHO" : currentDay == 2 ? "DUCK STORM" : "THE LAST WAVE",
+                    currentDay == 5 ? "DEFEAT THE WARDEN." : currentDay == 4 ? "FOLLOW THE TRANSMISSION TO ITS SOURCE." : currentDay == 3 ? "SURVIVE UNTIL THE OCEAN FALLS SILENT." : currentDay == 2 ? "BREAK THROUGH THE ARMOURED FLOCK." : $"SURVIVE {finalSurvivalSeconds} SECONDS.");
                 if (pendingBossEncounter == null)
                 {
                     pendingBossEncounter = StartCoroutine(
@@ -1273,8 +1278,8 @@ namespace PixelOcean
                  runTime >= stormBeginsAt) && chapter < Chapter.Storm)
             {
                 BeginChapter(Chapter.Storm,
-                    currentDay == 5 ? "FACILITY LOCKDOWN" : currentDay == 4 ? "ENCRYPTED WEATHER" : currentDay == 3 ? "SIGNAL IN THE STORM" : currentDay == 2 ? "RED WEATHER" : "STORM FRONT",
-                    currentDay == 5 ? "THE SECURITY GRID IS FIRING FROM EVERY DIRECTION." : currentDay == 4 ? "THE TRANSMISSION IS DISTORTING THE SEA AND SKY." : currentDay == 3 ? "FOLLOW THE DISTANT LIGHT THROUGH THE BLACK WATER." : currentDay == 2 ? "OUTRUN THE HUNTERS ABOVE AND BELOW." : "KEEP MOVING. RESCUE ANYONE LEFT OUT THERE.");
+                    currentDay == 5 ? "SPECTRUM RELAY" : currentDay == 4 ? "ENCRYPTED WEATHER" : currentDay == 3 ? "SIGNAL IN THE STORM" : currentDay == 2 ? "RED WEATHER" : "STORM FRONT",
+                    currentDay == 5 ? "DISABLE THE SIGNAL RELAY AND DODGE ITS ANGLED SPECTRUM." : currentDay == 4 ? "THE TRANSMISSION IS DISTORTING THE SEA AND SKY." : currentDay == 3 ? "FOLLOW THE DISTANT LIGHT THROUGH THE BLACK WATER." : currentDay == 2 ? "OUTRUN THE HUNTERS ABOVE AND BELOW." : "KEEP MOVING. RESCUE ANYONE LEFT OUT THERE.");
                 EnsureRain().SetSituation(ProceduralRainSystem.RainSituation.HeavyRain);
                 if (currentDay < 5)
                 {
@@ -1374,7 +1379,7 @@ namespace PixelOcean
                         : $"RESCUES  {rescues}/{rescuesRequired}";
             else if (chapter == Chapter.FinalWave)
                 objective = currentDay == 5
-                    ? "DISABLE THE DRONE AND BUOY"
+                    ? "DEFEAT THE WARDEN"
                     : currentDay == 4
                     ? $"ISLAND SIGNAL  {Mathf.Max(0, Mathf.CeilToInt(dayEndsAt - runTime))}s"
                     : currentDay == 3
@@ -1515,6 +1520,7 @@ namespace PixelOcean
                 DestroyAll<GodzillaLaneSpawner>();
                 DestroyAll<RubberDuckBossSpawner>();
                 DestroyAll<DayFiveCombatant>();
+                DestroyAll<DayFiveWardenMissile>();
                 DestroyAll<DayFiveSecurityPulse>();
                 DestroyAll<DayFiveSecurityImpact>();
 
@@ -1845,6 +1851,8 @@ namespace PixelOcean
                     break;
                 case Chapter.Storm:
                     targetChapter = Chapter.FinalWave;
+                    if (currentDay == 5)
+                        DayFiveEncounter.Begin(this)?.DebugAllowFinalWave();
                     runTime = Mathf.Max(runTime, finalWaveBeginsAt + 0.05f);
                     distanceTravelled = Mathf.Max(distanceTravelled,
                         GetDistanceThresholdForChapter(Chapter.FinalWave) + 0.05f);
@@ -2070,8 +2078,8 @@ namespace PixelOcean
                     Chapter.FirstRescue => "Hold Up while throwing to prioritize the drone.",
                     Chapter.DangerousWater => "The drone and buoy share the same wave render lane.",
                     Chapter.StrangeTide => "The buoy's red sky beam locks early; keep moving.",
-                    Chapter.Storm => "Keep moving while the pair attacks from both sides.",
-                    Chapter.FinalWave => "Disable both members of the final security pair.",
+                    Chapter.Storm => "The signal relay fires angled spectrum beams across the waterline.",
+                    Chapter.FinalWave => "The Warden cycles through missiles, crossfire, prism fans, and lock grids.",
                     _ => string.Empty
                 };
                 return;
