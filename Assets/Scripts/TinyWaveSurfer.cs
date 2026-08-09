@@ -2549,11 +2549,30 @@ namespace PixelOcean
             if (GameModeSession.IsRace || raceModeSurfer)
                 return;
 
-            if (!enableWaterSlash || !HasAbility(SurfAbility.WaterSlash) || state != RiderState.Riding || Time.time < nextWaterSlashTime || specialCharging || specialSkidding)
+            if (!enableWaterSlash || state != RiderState.Riding ||
+                specialCharging || specialSkidding)
                 return;
-            specialAttackIsFinisher = HasAbility(SurfAbility.FlowFinisher) && AirTrickScoreSystem.Instance != null && AirTrickScoreSystem.Instance.IsOnFire;
-            if (specialAttackIsFinisher && !AirTrickScoreSystem.Instance.ConsumeFlowFinisher(transform.position))
-                specialAttackIsFinisher = false;
+
+            AirTrickScoreSystem scoreSystem = AirTrickScoreSystem.Instance;
+            bool canUseFinisher = HasAbility(SurfAbility.FlowFinisher) &&
+                scoreSystem != null && scoreSystem.IsOnFire;
+            bool canUseWaterSlash = HasAbility(SurfAbility.WaterSlash);
+
+            // Flow Finisher is its own ON FIRE ability. It must not be blocked by
+            // the ordinary Water Slash unlock or by a slash that is cooling down.
+            if (!canUseFinisher &&
+                (!canUseWaterSlash || Time.time < nextWaterSlashTime))
+                return;
+
+            specialAttackIsFinisher = canUseFinisher &&
+                scoreSystem.ConsumeFlowFinisher(transform.position);
+
+            // If ON FIRE ended between the input check and consumption, only fall
+            // back to Water Slash when that separate ability is ready.
+            if (!specialAttackIsFinisher &&
+                (!canUseWaterSlash || Time.time < nextWaterSlashTime))
+                return;
+
             specialAttackActive = true;
             specialAttackProjectileReleased = false;
             specialAttackTimer = 0f;

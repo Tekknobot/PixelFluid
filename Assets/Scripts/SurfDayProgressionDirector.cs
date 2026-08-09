@@ -180,6 +180,11 @@ namespace PixelOcean
             if (sky == null)
                 return;
 
+            // Runtime scenes can retain the old serialized twelve-minute sky
+            // value even after the script default changes. Keep the fallback
+            // cycle duration synchronized with the shortened story day too.
+            sky.SetCycleLengthSeconds(dayEndsAt);
+
             float progress = NormalizedDayProgress;
 
             // 0.25 = 6:00 AM. Advancing 0.75 of a full cycle reaches midnight.

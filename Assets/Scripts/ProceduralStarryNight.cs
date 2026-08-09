@@ -15,7 +15,7 @@ namespace PixelOcean
         [Header("Day / Night Cycle")]
         [SerializeField] private bool runCycle = true;
         [Tooltip("Real-world minutes required for one complete 24-hour cycle.")]
-        [SerializeField, Min(0.25f)] private float fullDayLengthMinutes = 12f;
+        [SerializeField, Min(0.25f)] private float fullDayLengthMinutes = 6f;
         [Tooltip("0 = midnight, 0.25 = sunrise, 0.5 = noon, 0.75 = sunset.")]
         [SerializeField, Range(0f, 1f)] private float startingTimeOfDay = 0.25f;
         [SerializeField, Range(0.1f, 20f)] private float editorFastForwardMultiplier = 1f;
@@ -89,6 +89,16 @@ namespace PixelOcean
         public float TimeOfDay => timeOfDay;
         public bool IsNight => timeOfDay < 0.225f || timeOfDay > 0.775f;
         public bool IsDay => timeOfDay > 0.30f && timeOfDay < 0.70f;
+
+        /// <summary>
+        /// Keeps scene-authored skies on the same shortened schedule as the
+        /// story director. This also updates older scenes whose serialized
+        /// cycle length still contains the previous twelve-minute value.
+        /// </summary>
+        public void SetCycleLengthSeconds(float seconds)
+        {
+            fullDayLengthMinutes = Mathf.Max(15f, seconds) / 60f;
+        }
 
         /// <summary>
         /// Allows story encounters to fade the generated sky without changing

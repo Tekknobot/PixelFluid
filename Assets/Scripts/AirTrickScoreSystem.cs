@@ -138,10 +138,25 @@ namespace PixelOcean
 
         public void DebugMaxFlow()
         {
+            // This developer action is intended to create a complete, immediately
+            // testable ON FIRE state. Unlocking only the meter could leave the
+            // right bumper with no valid Flow Finisher action.
+            if (SurfAbilityProgression.Instance != null)
+                SurfAbilityProgression.Instance.Unlock(
+                    SurfAbility.Flow | SurfAbility.FlowFinisher);
+
+            bool wasOnFire = IsOnFire;
             currentFlow = MaximumFlow;
             onFireUntil = Time.unscaledTime + Mathf.Max(10f, onFireDuration);
             onFireWasActive = true;
             lastFlowGainTime = Time.unscaledTime;
+
+            if (!wasOnFire)
+            {
+                OnFireActivated?.Invoke();
+                if (onFireActivationClip != null && flowAudioSource != null)
+                    flowAudioSource.PlayOneShot(onFireActivationClip, flowAudioVolume);
+            }
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]

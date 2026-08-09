@@ -88,9 +88,10 @@ namespace PixelOcean
             if (!active || sky == null || director == null)
                 return;
 
-            float baseProgress = director.DayDuration > 0f
-                ? Mathf.Clamp01(director.RunTime / director.DayDuration)
-                : 0f;
+            // Day 3 owns the final sky write so it can add its time anomalies,
+            // but its underlying clock must use the same shortened time/distance
+            // progress as every other story day.
+            float baseProgress = director.NormalizedDayProgress;
             float normalTime = Mathf.Repeat(0.25f + baseProgress * 0.75f, 1f);
 
             if (!skyTimeInitialised)
