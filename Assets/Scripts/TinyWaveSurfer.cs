@@ -1139,6 +1139,16 @@ namespace PixelOcean
                 // Only use ordinary sea hazards when no active boss exists.
                 if (nearest == null)
                 {
+                    // Day 6 oddities use the same sea-target throw controls as
+                    // sharks, squid and stingrays. Their own controller handles
+                    // health, reactions and unique attack interruption.
+                    foreach (DaySixCreature creature in FindObjectsByType<DaySixCreature>(FindObjectsSortMode.None))
+                    {
+                        if (creature == null || !creature.CanBeHit) continue;
+                        float d = Vector2.Distance(transform.position, creature.transform.position);
+                        if (d < best) { best = d; nearest = creature.transform; }
+                    }
+
                     foreach (SharkLaneSwimmer shark in FindObjectsByType<SharkLaneSwimmer>(FindObjectsSortMode.None))
                     {
                         if (shark == null) continue;

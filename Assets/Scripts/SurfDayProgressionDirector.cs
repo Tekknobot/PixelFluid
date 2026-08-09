@@ -340,6 +340,10 @@ namespace PixelOcean
             {
                 DayFiveEncounter.Begin(this);
             }
+            else if (currentDay == 6 && chapter != Chapter.Complete)
+            {
+                DaySixEncounter.Begin(this);
+            }
 
             if (chapter == Chapter.FinalWave)
             {
@@ -448,7 +452,31 @@ namespace PixelOcean
 
         private void RestoreChapterPopulation()
         {
-            if (currentDay >= 6)
+            if (currentDay == 6)
+            {
+                if (chapter == Chapter.Complete)
+                {
+                    objective = "THE SEVENTH CURRENT FOUND";
+                    learningObjective = string.Empty;
+                    return;
+                }
+
+                objective = chapter switch
+                {
+                    Chapter.Dawn => "LEAVE THE RESEARCH ISLAND BEHIND.",
+                    Chapter.FirstRescue => "RESCUE THE LAST PROJECT HORIZON RESEARCHER.",
+                    Chapter.DangerousWater => "SURVIVE THE IMPOSSIBLE WILDLIFE.",
+                    Chapter.StrangeTide => "FOLLOW THE CREATURES INTO THE STARLIT CURRENT.",
+                    Chapter.Storm => "RIDE THE SILENT SWELLS BEYOND THE MAP.",
+                    Chapter.FinalWave => "FOLLOW THE SEVENTH CURRENT.",
+                    _ => "SURF BEYOND THE KNOWN OCEAN."
+                };
+                learningObjective = string.Empty;
+                DaySixEncounter.Begin(this);
+                return;
+            }
+
+            if (currentDay >= 7)
             {
                 objective = $"DAY {currentDay} DEVELOPMENT SANDBOX";
                 learningObjective = string.Empty;
@@ -805,6 +833,9 @@ namespace PixelOcean
             DestroyAll<DayFiveSecurityPulse>();
             DestroyAll<DayFiveSecurityImpact>();
             DestroyAll<DayFiveEncounter>();
+            DestroyAll<DaySixCreature>();
+            DestroyAll<DaySixHazardProjectile>();
+            DestroyAll<DaySixEncounter>();
             ambientThreatDay = -1;
             nextAmbientThreatAt = 0f;
         }
@@ -992,7 +1023,7 @@ namespace PixelOcean
             if (SurfDayUpgradeScreen.Instance != null)
                 yield return SurfDayUpgradeScreen.Instance.ShowAndWait();
 
-            ShowBanner("SECURITY GRID CLEARED", "DAY 6 — DEVELOPMENT SANDBOX", 4f);
+            ShowBanner("SECURITY GRID CLEARED", "DAY 6 — BEYOND THE HORIZON", 4f);
             rain?.ClearRain();
             yield return new WaitForSecondsRealtime(3f);
 
@@ -1014,12 +1045,31 @@ namespace PixelOcean
             SyncDayNightToRunTime();
             BeginChapter(
                 Chapter.Dawn,
-                "DAY 6 — DEVELOPMENT SANDBOX",
-                "TEST THE NEXT DAY'S SYSTEMS.");
-            learningObjective = string.Empty;
+                "DAY 6 — BEYOND THE HORIZON",
+                "THE MAP ENDS HERE. THE CURRENT DOES NOT.");
+            learningObjective = "Every oddity swims inside the familiar wave lanes, but none attacks the same way.";
             SpawnPickupSet();
             SpawnOceanItems(12);
+            DaySixEncounter.Begin(this);
             SurfStageSaveSystem.Save(this);
+        }
+
+        public void CompleteDaySix()
+        {
+            if (currentDay != 6 || chapter == Chapter.Complete)
+                return;
+
+            FindFirstObjectByType<DaySixEncounter>()?.EndEncounter();
+            bossDefeatedSunset = true;
+            BeginChapter(
+                Chapter.Complete,
+                "DAY 6 COMPLETE",
+                "YOU HAVE LEFT THE KNOWN OCEAN.");
+            objective = "THE SEVENTH CURRENT FOUND";
+            learningObjective = string.Empty;
+            AirTrickScoreSystem.Instance?.ShowDayRecap(6, 10f);
+            rain?.ClearRain();
+            QueueCheckpoint();
         }
 
         private void UpdateProgressiveAtmosphere()
@@ -1235,7 +1285,11 @@ namespace PixelOcean
                 {
                     EnsureDayThreeFacility(player);
                 }
-                else if (currentDay >= 6)
+                else if (currentDay == 6)
+                {
+                    CompleteDaySix();
+                }
+                else if (currentDay >= 7)
                 {
                     objective = $"DAY {currentDay} DEVELOPMENT SANDBOX";
                     learningObjective = string.Empty;
@@ -1260,8 +1314,8 @@ namespace PixelOcean
             {
                 finalWaveStarted = true;
                 BeginChapter(Chapter.FinalWave,
-                    currentDay == 5 ? "THE WARDEN" : currentDay == 4 ? "THE ISLAND ON THE HORIZON" : currentDay == 3 ? "THE LAST ECHO" : currentDay == 2 ? "DUCK STORM" : "THE LAST WAVE",
-                    currentDay == 5 ? "DEFEAT THE WARDEN." : currentDay == 4 ? "FOLLOW THE TRANSMISSION TO ITS SOURCE." : currentDay == 3 ? "SURVIVE UNTIL THE OCEAN FALLS SILENT." : currentDay == 2 ? "BREAK THROUGH THE ARMOURED FLOCK." : $"SURVIVE {finalSurvivalSeconds} SECONDS.");
+                    currentDay == 6 ? "THE SEVENTH CURRENT" : currentDay == 5 ? "THE WARDEN" : currentDay == 4 ? "THE ISLAND ON THE HORIZON" : currentDay == 3 ? "THE LAST ECHO" : currentDay == 2 ? "DUCK STORM" : "THE LAST WAVE",
+                    currentDay == 6 ? "FOLLOW THE IMPOSSIBLE MIGRATION BEYOND THE MAP." : currentDay == 5 ? "DEFEAT THE WARDEN." : currentDay == 4 ? "FOLLOW THE TRANSMISSION TO ITS SOURCE." : currentDay == 3 ? "SURVIVE UNTIL THE OCEAN FALLS SILENT." : currentDay == 2 ? "BREAK THROUGH THE ARMOURED FLOCK." : $"SURVIVE {finalSurvivalSeconds} SECONDS.");
                 if (pendingBossEncounter == null)
                 {
                     pendingBossEncounter = StartCoroutine(
@@ -1278,8 +1332,8 @@ namespace PixelOcean
                  runTime >= stormBeginsAt) && chapter < Chapter.Storm)
             {
                 BeginChapter(Chapter.Storm,
-                    currentDay == 5 ? "SPECTRUM RELAY" : currentDay == 4 ? "ENCRYPTED WEATHER" : currentDay == 3 ? "SIGNAL IN THE STORM" : currentDay == 2 ? "RED WEATHER" : "STORM FRONT",
-                    currentDay == 5 ? "DISABLE THE SIGNAL RELAY AND DODGE ITS ANGLED SPECTRUM." : currentDay == 4 ? "THE TRANSMISSION IS DISTORTING THE SEA AND SKY." : currentDay == 3 ? "FOLLOW THE DISTANT LIGHT THROUGH THE BLACK WATER." : currentDay == 2 ? "OUTRUN THE HUNTERS ABOVE AND BELOW." : "KEEP MOVING. RESCUE ANYONE LEFT OUT THERE.");
+                    currentDay == 6 ? "THE SILENT SWELL" : currentDay == 5 ? "SPECTRUM RELAY" : currentDay == 4 ? "ENCRYPTED WEATHER" : currentDay == 3 ? "SIGNAL IN THE STORM" : currentDay == 2 ? "RED WEATHER" : "STORM FRONT",
+                    currentDay == 6 ? "THE WIND IS GONE. EVERY WAVE IS MOVING THE SAME WAY." : currentDay == 5 ? "DISABLE THE SIGNAL RELAY AND DODGE ITS ANGLED SPECTRUM." : currentDay == 4 ? "THE TRANSMISSION IS DISTORTING THE SEA AND SKY." : currentDay == 3 ? "FOLLOW THE DISTANT LIGHT THROUGH THE BLACK WATER." : currentDay == 2 ? "OUTRUN THE HUNTERS ABOVE AND BELOW." : "KEEP MOVING. RESCUE ANYONE LEFT OUT THERE.");
                 EnsureRain().SetSituation(ProceduralRainSystem.RainSituation.HeavyRain);
                 if (currentDay < 5)
                 {
@@ -1303,8 +1357,8 @@ namespace PixelOcean
                  runTime >= strangeTideBeginsAt) && chapter < Chapter.StrangeTide)
             {
                 BeginChapter(Chapter.StrangeTide,
-                    currentDay == 5 ? "RED SKY" : currentDay == 4 ? "RECOVERY SIGNAL" : currentDay == 3 ? "THE SHADOW RETURNS" : currentDay == 2 ? "EYES IN THE SKY" : "STRANGE TIDE",
-                    currentDay == 5 ? "THE DRONE AND BUOY HAVE YOUR POSITION." : currentDay == 4 ? "ALIEN MACHINERY IS ACTIVE BENEATH THE TRANSMISSION." : currentDay == 3 ? "IT COPIES YOU. DO NOT LET IT TURN YOU BACK." : currentDay == 2 ? "THE HELICOPTER HAS LOCKED ON." : "SOMETHING IS WATCHING THE WATER.");
+                    currentDay == 6 ? "STARS BELOW" : currentDay == 5 ? "RED SKY" : currentDay == 4 ? "RECOVERY SIGNAL" : currentDay == 3 ? "THE SHADOW RETURNS" : currentDay == 2 ? "EYES IN THE SKY" : "STRANGE TIDE",
+                    currentDay == 6 ? "THE WATER IS REFLECTING A NIGHT THAT HAS NOT HAPPENED." : currentDay == 5 ? "THE DRONE AND BUOY HAVE YOUR POSITION." : currentDay == 4 ? "ALIEN MACHINERY IS ACTIVE BENEATH THE TRANSMISSION." : currentDay == 3 ? "IT COPIES YOU. DO NOT LET IT TURN YOU BACK." : currentDay == 2 ? "THE HELICOPTER HAS LOCKED ON." : "SOMETHING IS WATCHING THE WATER.");
                 if (currentDay == 1)
                     UnlockAbility(SurfAbility.Rotation | SurfAbility.Flip |
                         SurfAbility.DoubleChain | SurfAbility.TripleChain,
@@ -1338,8 +1392,8 @@ namespace PixelOcean
                  runTime >= dangerBeginsAt) && chapter < Chapter.DangerousWater)
             {
                 BeginChapter(Chapter.DangerousWater,
-                    currentDay == 5 ? "SHARED WAVE LOCK" : currentDay == 4 ? "CLASSIFIED CURRENT" : currentDay == 3 ? "MEMORY CURRENT" : currentDay == 2 ? "BLOOD CURRENT" : "DANGEROUS WATER",
-                    currentDay == 5 ? "THE DRONE AND BUOY ARE SHARING THE WAVE GRID." : currentDay == 4 ? "THE OUTPOST SIGNAL IS DRAWING PREDATORS AND MACHINES." : currentDay == 3 ? "OLD THREATS RETURN IN THE WRONG ORDER." : currentDay == 2 ? "SURVIVE THE NEW PREDATORS." : "SAVE 3 SWIMMERS. USE CANS TO FIGHT BACK.");
+                    currentDay == 6 ? "IMPOSSIBLE WILDLIFE" : currentDay == 5 ? "SHARED WAVE LOCK" : currentDay == 4 ? "CLASSIFIED CURRENT" : currentDay == 3 ? "MEMORY CURRENT" : currentDay == 2 ? "BLOOD CURRENT" : "DANGEROUS WATER",
+                    currentDay == 6 ? "LEARN EACH CREATURE'S LANE PATTERN." : currentDay == 5 ? "THE DRONE AND BUOY ARE SHARING THE WAVE GRID." : currentDay == 4 ? "THE OUTPOST SIGNAL IS DRAWING PREDATORS AND MACHINES." : currentDay == 3 ? "OLD THREATS RETURN IN THE WRONG ORDER." : currentDay == 2 ? "SURVIVE THE NEW PREDATORS." : "SAVE 3 SWIMMERS. USE CANS TO FIGHT BACK.");
                 if (currentDay == 1)
                     UnlockAbility(SurfAbility.ChargedJump,
                         "CHARGED JUMP UNLOCKED",
@@ -1364,13 +1418,15 @@ namespace PixelOcean
                  runTime >= rescueBeginsAt) && chapter < Chapter.FirstRescue)
             {
                 BeginChapter(Chapter.FirstRescue,
-                    currentDay == 5 ? "SECURITY NET" : currentDay == 4 ? "NO AUTHORIZED TRAFFIC" : currentDay == 3 ? "A FAMILIAR VOICE" : currentDay == 2 ? "AFTER THE WRECK" : "DISTRESS CALL",
-                    currentDay == 5 ? "BREAK THROUGH THE DRONE AND BUOY PATROL." : currentDay == 4 ? "RESCUE THE SWIMMER CAUGHT NEAR THE RESTRICTED ROUTE." : currentDay == 3 ? "SAVE THE SWIMMER THE OCEAN BROUGHT BACK." : currentDay == 2 ? "PULL THE SURVIVOR OUT OF THE DEEP CURRENT." : "FIND AND SAVE THE STRUGGLING SWIMMER.");
+                    currentDay == 6 ? "THE LAST WARNING" : currentDay == 5 ? "SECURITY NET" : currentDay == 4 ? "NO AUTHORIZED TRAFFIC" : currentDay == 3 ? "A FAMILIAR VOICE" : currentDay == 2 ? "AFTER THE WRECK" : "DISTRESS CALL",
+                    currentDay == 6 ? "RESCUE THE RESEARCHER CARRYING THE FINAL HORIZON RECORD." : currentDay == 5 ? "BREAK THROUGH THE DRONE AND BUOY PATROL." : currentDay == 4 ? "RESCUE THE SWIMMER CAUGHT NEAR THE RESTRICTED ROUTE." : currentDay == 3 ? "SAVE THE SWIMMER THE OCEAN BROUGHT BACK." : currentDay == 2 ? "PULL THE SURVIVOR OUT OF THE DEEP CURRENT." : "FIND AND SAVE THE STRUGGLING SWIMMER.");
                 SpawnRescueSet(1);
             }
 
             if (chapter == Chapter.DangerousWater)
-                objective = currentDay == 5
+                objective = currentDay == 6
+                    ? "SURVIVE THE IMPOSSIBLE WILDLIFE."
+                    : currentDay == 5
                     ? "DISABLE THE DRONE AND BUOY."
                     : currentDay == 4
                     ? "FOLLOW THE OUTPOST TRANSMISSION."
@@ -1378,7 +1434,9 @@ namespace PixelOcean
                         ? "SURVIVE THE THREATS THE OCEAN REMEMBERS."
                         : $"RESCUES  {rescues}/{rescuesRequired}";
             else if (chapter == Chapter.FinalWave)
-                objective = currentDay == 5
+                objective = currentDay == 6
+                    ? $"SEVENTH CURRENT  {Mathf.Max(0, Mathf.CeilToInt(DayDistance - distanceTravelled))} m"
+                    : currentDay == 5
                     ? "DEFEAT THE WARDEN"
                     : currentDay == 4
                     ? $"ISLAND SIGNAL  {Mathf.Max(0, Mathf.CeilToInt(dayEndsAt - runTime))}s"
@@ -1916,6 +1974,7 @@ namespace PixelOcean
             bossDefeatedSunset = false;
 
             FindFirstObjectByType<DayFiveEncounter>()?.EndEncounter();
+            FindFirstObjectByType<DaySixEncounter>()?.EndEncounter();
             rain?.ClearRain();
             SurfRunLifeManager.Instance?.ResetLivesForNewRun();
 
@@ -2035,6 +2094,15 @@ namespace PixelOcean
         private void OnSwimmerSaved()
         {
             rescues++;
+            if (currentDay == 6)
+            {
+                ShowBanner("HORIZON RECORD RECOVERED", "THE SEVENTH CURRENT IS FARTHER OUT.", 3.5f);
+                objective = "FOLLOW THE CREATURES BEYOND THE MAP";
+                learningObjective = string.Empty;
+                QueueCheckpoint();
+                return;
+            }
+
             ShowBanner("SWIMMER SAVED", $"RESCUES  {rescues}/{rescuesRequired}", 2.5f);
             QueueCheckpoint();
 
@@ -2069,6 +2137,21 @@ namespace PixelOcean
         private void RefreshLearningObjectiveForStage()
         {
             SurfAbilityProgression abilities = SurfAbilityProgression.Instance;
+
+            if (currentDay == 6)
+            {
+                learningObjective = chapter switch
+                {
+                    Chapter.Dawn => "Watch how the fishbowl ricochets and how the starfish changes lanes.",
+                    Chapter.FirstRescue => "The small oddities still obey the inter-wave gaps.",
+                    Chapter.DangerousWater => "The shark feints before charging; the toaster fires down a lane.",
+                    Chapter.StrangeTide => "Mushroom spores and resort wakes occupy visible lanes.",
+                    Chapter.Storm => "The toilet alternates lanes during its Royal Flush volley.",
+                    Chapter.FinalWave => "Use wave switches, thrown items and Water Slash against the full roster.",
+                    _ => string.Empty
+                };
+                return;
+            }
 
             if (currentDay == 5)
             {

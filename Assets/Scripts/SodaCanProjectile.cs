@@ -16,6 +16,7 @@ namespace PixelOcean
         private GodzillaLaneSwimmer lockedBoss;
         private RubberDuckBossSwimmer lockedDuckBoss;
         private DayFiveCombatant lockedSecurity;
+        private DaySixCreature lockedDaySixCreature;
 
         public void Launch(
             Vector2 start,
@@ -34,6 +35,9 @@ namespace PixelOcean
                 : null;
             lockedSecurity = target != null
                 ? target.GetComponentInParent<DayFiveCombatant>()
+                : null;
+            lockedDaySixCreature = target != null
+                ? target.GetComponentInParent<DaySixCreature>()
                 : null;
             SpriteRenderer renderer = GetComponent<SpriteRenderer>();
             renderer.sprite = sprite;
@@ -118,7 +122,8 @@ namespace PixelOcean
             // deflect, collect, or consume a thrown item travelling through them.
             if (other.GetComponentInParent<OceanItemBehaviour>() != null ||
                 other.GetComponentInParent<SodaCanPickup>() != null ||
-                other.GetComponentInParent<HeartLaneDrifter>() != null)
+                other.GetComponentInParent<HeartLaneDrifter>() != null ||
+                other.GetComponentInParent<DaySixHazardProjectile>() != null)
             {
                 return;
             }
@@ -144,6 +149,12 @@ namespace PixelOcean
             {
                 DayFiveCombatant hitSecurity = other.GetComponentInParent<DayFiveCombatant>();
                 if (hitSecurity != lockedSecurity)
+                    return;
+            }
+            if (lockedDaySixCreature != null && lockedDaySixCreature.CanBeHit)
+            {
+                DaySixCreature hitCreature = other.GetComponentInParent<DaySixCreature>();
+                if (hitCreature != lockedDaySixCreature)
                     return;
             }
 
@@ -220,6 +231,18 @@ namespace PixelOcean
                 PlaySfx(sharkHitClip, dayFiveEnemy.IsBoss ? 1f : 0.9f);
                 dayFiveEnemy.TakeThrownItemHit(1, transform.position);
                 Bounce(dayFiveEnemy.transform.position);
+                return;
+            }
+
+            DaySixCreature daySixCreature =
+                hitTransform.GetComponentInParent<DaySixCreature>();
+
+            if (daySixCreature != null && daySixCreature.CanBeHit)
+            {
+                LoadSfx();
+                PlaySfx(sharkHitClip, 0.9f);
+                daySixCreature.TakeThrownItemHit(1, transform.position);
+                Bounce(daySixCreature.transform.position);
                 return;
             }
 

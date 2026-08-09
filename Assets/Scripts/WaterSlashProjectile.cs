@@ -188,6 +188,10 @@ namespace PixelOcean
             {
                 hitSomething = security.TakeThrownItemHit(finisher ? 3 : 1, hit);
             }
+            else if (other.GetComponentInParent<DaySixCreature>() is { CanBeHit: true } daySixCreature)
+            {
+                hitSomething = daySixCreature.TakeThrownItemHit(finisher ? 3 : 1, hit);
+            }
             else if (other.GetComponent<DayTwoHelicopterMissile>() is { } missile) { missile.Intercept(hit); hitSomething = true; }
             else if (other.GetComponent<DayTwoHelicopterController>() is { } helicopter) { helicopter.TakeThrownItemHit(hit); hitSomething = true; }
 
