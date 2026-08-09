@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace PixelOcean
@@ -7,7 +8,7 @@ namespace PixelOcean
     [RequireComponent(typeof(SpriteRenderer), typeof(BoxCollider2D), typeof(Rigidbody2D))]
     public sealed class DayTwoHelicopterController : MonoBehaviour
     {
-        private enum State { Arrival, Patrol, Aim, Fire, Retreat, Disabled }
+        private enum State { Arrival, Patrol, Aim, Fire, Crashing, Disabled }
 
         [Header("Animation")]
         [SerializeField, Min(1f)] private float moveFramesPerSecond = 12f;
@@ -40,8 +41,14 @@ namespace PixelOcean
         [SerializeField] private float missileSpawnOffsetX = 0.34f;
         [SerializeField] private float missileSpawnOffsetY = -0.16f;
 
-        [Header("Thrown Item Response")]
-        [SerializeField] private float hitRetreatSpeed = 5.2f;
+        [Header("Crash and Respawn")]
+        [SerializeField, Min(0.5f)] private float crashDuration = 3.4f;
+        [SerializeField, Range(0.1f, 0.9f)] private float crashFadeBeginsAt = 0.52f;
+        [SerializeField, Min(0f)] private float crashSinkDepth = 0.42f;
+        [SerializeField] private Vector2 crashHorizontalDriftRange = new(-1.8f, 1.8f);
+        [SerializeField] private Vector2 crashSpinSpeedRange = new(115f, 220f);
+        [SerializeField] private Vector2 crashExplosionIntervalRange = new(0.16f, 0.32f);
+        [SerializeField, Range(0.1f, 1.5f)] private float crashExplosionRadius = 0.62f;
         [SerializeField] private Vector2 returnDelayRange = new(10f, 16f);
 
         private SpriteRenderer spriteRenderer;
@@ -61,13 +68,22 @@ namespace PixelOcean
         private float stateClock;
         private float moveSpeed;
         private bool missileFired;
-        private bool waitingOffscreen;
         private float returnAt;
         private Color baseTint = Color.white;
         private AudioSource movementAudioSource;
         private AudioSource oneShotAudioSource;
+        private Vector3 crashStartPosition;
+        private float crashTargetX;
+        private float crashSpinSpeed;
+        private float nextCrashExplosionAt;
+        private int originalSortingLayerId;
+        private InterWaveRenderItem crashRenderItem;
+        private PixelWaterGPU crashForegroundWater;
+        private PixelWaterGPU crashBackgroundWater;
+        private int crashInterWaveLane = -1;
 
-        public bool CanBeHit => isActiveAndEnabled && spriteRenderer != null && spriteRenderer.enabled && !waitingOffscreen;
+        public bool CanBeHit => isActiveAndEnabled && spriteRenderer != null &&
+            spriteRenderer.enabled && state != State.Crashing && state != State.Disabled;
 
         private void Awake()
         {
@@ -80,6 +96,7 @@ namespace PixelOcean
             attackFrames = LoadSheet("Helicopter/helicopter_attack", 128, 32f, "helicopter_attack");
             if (moveFrames.Length > 0) spriteRenderer.sprite = moveFrames[0];
             spriteRenderer.sortingOrder = sortingOrder;
+            originalSortingLayerId = spriteRenderer.sortingLayerID;
             baseTint = spriteRenderer.color;
 
             transform.localScale = Vector3.one * helicopterScale;
@@ -139,8 +156,8 @@ namespace PixelOcean
                 case State.Patrol: UpdatePatrol(); break;
                 case State.Aim: UpdateAim(); break;
                 case State.Fire: UpdateFire(); break;
-                case State.Retreat: UpdateRetreat(); break;
-                case State.Disabled: break;
+                case State.Crashing: UpdateCrash(); return;
+                case State.Disabled: UpdateDisabled(); return;
             }
 
             ApplyMovement();
@@ -280,51 +297,167 @@ namespace PixelOcean
             foreach (DayTwoHelicopterMissile missile in FindObjectsByType<DayTwoHelicopterMissile>(FindObjectsSortMode.None))
                 if (missile != null && missile.Owner == this) missile.Intercept(hitPosition);
 
-            StopAllCoroutines();
-            StartCoroutine(HitFlash());
-            state = State.Retreat;
-            waitingOffscreen = false;
-            returnAt = Time.time + Random.Range(returnDelayRange.x, returnDelayRange.y);
-            Vector2 away = ((Vector2)transform.position - hitPosition).normalized;
-            if (away.sqrMagnitude < 0.01f) away = Vector2.up;
-            velocity = away * hitRetreatSpeed;
-            desiredPosition = new Vector3(
-                ViewportWorldX(transform.position.x < worldCamera.transform.position.x ? -0.25f : 1.25f),
-                ViewportWorldY(1.08f), 0f);
-            moveSpeed = hitRetreatSpeed;
+            BeginCrash();
         }
 
-        private IEnumerator HitFlash()
+        private void BeginCrash()
         {
-            for (int i = 0; i < 6; i++)
-            {
-                spriteRenderer.color = i % 2 == 0 ? new Color(1f, 0.08f, 0.08f, baseTint.a) : baseTint;
-                yield return new WaitForSeconds(0.055f);
-            }
-            spriteRenderer.color = baseTint;
+            state = State.Crashing;
+            stateClock = 0f;
+            crashStartPosition = transform.position;
+            crashTargetX = Mathf.Clamp(
+                transform.position.x + Random.Range(
+                    crashHorizontalDriftRange.x,
+                    crashHorizontalDriftRange.y),
+                ViewportWorldX(0.08f),
+                ViewportWorldX(0.92f));
+            crashSpinSpeed = Random.Range(crashSpinSpeedRange.x, crashSpinSpeedRange.y) *
+                (Random.value < 0.5f ? -1f : 1f);
+            velocity = Vector3.zero;
+            hitCollider.enabled = false;
+
+            AssignRandomInterWaveCrashLane();
+            SpawnCrashExplosion();
+            nextCrashExplosionAt = Time.time + Random.Range(
+                Mathf.Min(crashExplosionIntervalRange.x, crashExplosionIntervalRange.y),
+                Mathf.Max(crashExplosionIntervalRange.x, crashExplosionIntervalRange.y));
         }
 
-        private void UpdateRetreat()
+        private void AssignRandomInterWaveCrashLane()
         {
-            if (waitingOffscreen)
-            {
-                if (Time.time < returnAt) return;
-                waitingOffscreen = false;
-                spriteRenderer.enabled = true;
-                hitCollider.enabled = true;
-                PlaceForArrival();
-                nextAttackTime = Time.time + Random.Range(firstAttackDelayRange.x, firstAttackDelayRange.y);
-                state = State.Arrival;
+            crashForegroundWater = null;
+            crashBackgroundWater = null;
+            crashInterWaveLane = -1;
+
+            List<PixelWaterGPU> waterLayers = new(
+                EndlessWaveSections.LayersNearest(transform.position.x));
+            waterLayers.RemoveAll(water => water == null || !water.isActiveAndEnabled);
+            waterLayers.Sort((a, b) =>
+                a.IndependentLayerIndex.CompareTo(b.IndependentLayerIndex));
+
+            if (waterLayers.Count < 2)
                 return;
+
+            crashInterWaveLane = Random.Range(0, waterLayers.Count - 1);
+            crashForegroundWater = waterLayers[crashInterWaveLane];
+            crashBackgroundWater = waterLayers[crashInterWaveLane + 1];
+
+            Renderer waterRenderer = crashForegroundWater.GetComponent<Renderer>();
+            if (waterRenderer == null)
+                waterRenderer = crashForegroundWater.GetComponentInChildren<Renderer>();
+            if (waterRenderer != null)
+                spriteRenderer.sortingLayerID = waterRenderer.sortingLayerID;
+            spriteRenderer.sortingOrder = 0;
+
+            if (crashRenderItem == null)
+                crashRenderItem = gameObject.AddComponent<InterWaveRenderItem>();
+            crashRenderItem.enabled = true;
+            crashRenderItem.SetWaterAndLane(
+                crashForegroundWater,
+                crashInterWaveLane);
+        }
+
+        private void UpdateCrash()
+        {
+            stateClock += Time.deltaTime;
+            float duration = Mathf.Max(0.5f, crashDuration);
+            float progress = Mathf.Clamp01(stateClock / duration);
+            float fallProgress = progress * progress;
+
+            float targetY = ViewportWorldY(0.02f);
+            if (crashForegroundWater != null && crashBackgroundWater != null)
+            {
+                float frontSurface = crashForegroundWater.GetGameplaySurfaceHeight(crashTargetX);
+                float backSurface = crashBackgroundWater.GetGameplaySurfaceHeight(crashTargetX);
+                targetY = Mathf.Lerp(frontSurface, backSurface, 0.5f) - crashSinkDepth;
             }
 
-            if (!spriteRenderer.isVisible)
+            transform.position = new Vector3(
+                Mathf.Lerp(crashStartPosition.x, crashTargetX, progress),
+                Mathf.Lerp(crashStartPosition.y, targetY, fallProgress),
+                crashStartPosition.z);
+            transform.rotation = Quaternion.Euler(0f, 0f, crashSpinSpeed * stateClock);
+
+            float fade = 1f - Mathf.InverseLerp(
+                Mathf.Clamp01(crashFadeBeginsAt),
+                1f,
+                progress);
+            bool redFlash = Mathf.FloorToInt(stateClock * 12f) % 2 == 0;
+            Color tint = redFlash
+                ? new Color(1f, 0.06f, 0.04f, baseTint.a)
+                : baseTint;
+            tint.a = baseTint.a * fade;
+            spriteRenderer.color = tint;
+
+            if (movementAudioSource != null)
+                movementAudioSource.volume = movementVolume * fade;
+
+            if (Time.time >= nextCrashExplosionAt)
             {
-                waitingOffscreen = true;
-                spriteRenderer.enabled = false;
-                hitCollider.enabled = false;
-                velocity = Vector3.zero;
+                SpawnCrashExplosion();
+                nextCrashExplosionAt = Time.time + Random.Range(
+                    Mathf.Min(crashExplosionIntervalRange.x, crashExplosionIntervalRange.y),
+                    Mathf.Max(crashExplosionIntervalRange.x, crashExplosionIntervalRange.y));
             }
+
+            if (progress >= 1f)
+                FinishCrash();
+        }
+
+        private void SpawnCrashExplosion()
+        {
+            Vector2 offset = Random.insideUnitCircle * crashExplosionRadius;
+            ExplosionBasicEffect.SpawnInterWave(
+                transform.position + (Vector3)offset,
+                spriteRenderer,
+                crashForegroundWater,
+                crashInterWaveLane);
+        }
+
+        private void FinishCrash()
+        {
+            SpawnCrashExplosion();
+            spriteRenderer.enabled = false;
+            spriteRenderer.color = baseTint;
+            if (movementAudioSource != null)
+                movementAudioSource.Stop();
+            if (crashRenderItem != null)
+                crashRenderItem.enabled = false;
+
+            state = State.Disabled;
+            returnAt = Time.time + Random.Range(
+                Mathf.Min(returnDelayRange.x, returnDelayRange.y),
+                Mathf.Max(returnDelayRange.x, returnDelayRange.y));
+        }
+
+        private void UpdateDisabled()
+        {
+            if (Time.time < returnAt)
+                return;
+
+            spriteRenderer.sortingLayerID = originalSortingLayerId;
+            spriteRenderer.sortingOrder = sortingOrder;
+            spriteRenderer.color = baseTint;
+            spriteRenderer.enabled = true;
+            hitCollider.enabled = true;
+            transform.rotation = Quaternion.identity;
+            velocity = Vector3.zero;
+            crashForegroundWater = null;
+            crashBackgroundWater = null;
+            crashInterWaveLane = -1;
+
+            if (movementAudioSource != null)
+            {
+                movementAudioSource.volume = movementVolume;
+                if (movementAudioSource.clip != null && !movementAudioSource.isPlaying)
+                    movementAudioSource.Play();
+            }
+
+            PlaceForArrival();
+            nextAttackTime = Time.time + Random.Range(
+                firstAttackDelayRange.x,
+                firstAttackDelayRange.y);
+            state = State.Arrival;
         }
 
         private void Animate()

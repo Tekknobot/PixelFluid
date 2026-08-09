@@ -27,6 +27,34 @@ namespace PixelOcean
             effect.AddComponent<ExplosionBasicEffect>();
         }
 
+        /// <summary>
+        /// Spawns a crash explosion in the same real inter-wave render queue as
+        /// its source, so the effect is occluded by the correct water passes.
+        /// </summary>
+        public static void SpawnInterWave(
+            Vector3 worldPosition,
+            SpriteRenderer sortingSource,
+            PixelWaterGPU water,
+            int laneIndex)
+        {
+            GameObject effect = new("Helicopter Crash Explosion");
+            effect.transform.position = worldPosition;
+            SpriteRenderer renderer = effect.AddComponent<SpriteRenderer>();
+            effect.AddComponent<ExplosionBasicEffect>();
+
+            if (sortingSource != null)
+            {
+                renderer.sortingLayerID = sortingSource.sortingLayerID;
+                renderer.sortingOrder = sortingSource.sortingOrder + 1;
+            }
+
+            if (water != null && laneIndex >= 0)
+            {
+                InterWaveRenderItem renderItem = effect.AddComponent<InterWaveRenderItem>();
+                renderItem.SetWaterAndLane(water, laneIndex);
+            }
+        }
+
         private void Awake()
         {
             spriteRenderer = GetComponent<SpriteRenderer>();
