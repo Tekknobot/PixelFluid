@@ -1,0 +1,546 @@
+fileFormatVersion: 2
+guid: 7451808604faba4489f24fa0463d331f
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -4764175789612432029
+    second: 50s_ufo_move_0
+  - first:
+      213: -6162861243903789075
+    second: 50s_ufo_move_1
+  - first:
+      213: 7244892323511888296
+    second: 50s_ufo_move_2
+  - first:
+      213: -4697058754224810249
+    second: 50s_ufo_move_3
+  - first:
+      213: -2737888773165080998
+    second: 50s_ufo_move_4
+  - first:
+      213: -4024890259513588019
+    second: 50s_ufo_move_5
+  - first:
+      213: 2369595657594424697
+    second: 50s_ufo_move_6
+  - first:
+      213: -6821015105224765944
+    second: 50s_ufo_move_7
+  - first:
+      213: 7905615021123428522
+    second: 50s_ufo_move_8
+  - first:
+      213: 4361748928851897575
+    second: 50s_ufo_move_9
+  - first:
+      213: -2182075752274026983
+    second: 50s_ufo_move_10
+  - first:
+      213: -4475419676951051820
+    second: 50s_ufo_move_11
+  - first:
+      213: 6300080281106396480
+    second: 50s_ufo_move_12
+  - first:
+      213: 7890719636212647353
+    second: 50s_ufo_move_13
+  - first:
+      213: 5742156059751128425
+    second: 50s_ufo_move_14
+  - first:
+      213: -6684112777003219053
+    second: 50s_ufo_move_15
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: 50s_ufo_move_0
+      rect:
+        serializedVersion: 2
+        x: 2
+        y: 10
+        width: 60
+        height: 44
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 36582ac6c5f32edb0800000000000000
+      internalID: -4764175789612432029
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_move_1
+      rect:
+        serializedVersion: 2
+        x: 66
+        y: 11
+        width: 60
+        height: 44
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: de7b715d95e197aa0800000000000000
+      internalID: -6162861243903789075
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_move_2
+      rect:
+        serializedVersion: 2
+        x: 130
+        y: 11
+        width: 60
+        height: 44
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8a961e2ee270b8460800000000000000
+      internalID: 7244892323511888296
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_move_3
+      rect:
+        serializedVersion: 2
+        x: 194
+        y: 12
+        width: 60
+        height: 44
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7f69a49f2f1b0deb0800000000000000
+      internalID: -4697058754224810249
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_move_4
+      rect:
+        serializedVersion: 2
+        x: 258
+        y: 12
+        width: 60
+        height: 44
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a5e17f0baa0110ad0800000000000000
+      internalID: -2737888773165080998
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_move_5
+      rect:
+        serializedVersion: 2
+        x: 322
+        y: 13
+        width: 60
+        height: 43
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dc643cd32a7b428c0800000000000000
+      internalID: -4024890259513588019
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_move_6
+      rect:
+        serializedVersion: 2
+        x: 386
+        y: 13
+        width: 60
+        height: 43
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 97d493822be72e020800000000000000
+      internalID: 2369595657594424697
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_move_7
+      rect:
+        serializedVersion: 2
+        x: 450
+        y: 13
+        width: 60
+        height: 44
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 80e018da6e2e651a0800000000000000
+      internalID: -6821015105224765944
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_move_8
+      rect:
+        serializedVersion: 2
+        x: 514
+        y: 13
+        width: 60
+        height: 44
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aa0ed09d9f266bd60800000000000000
+      internalID: 7905615021123428522
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_move_9
+      rect:
+        serializedVersion: 2
+        x: 578
+        y: 12
+        width: 60
+        height: 44
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7ec68af8a8b088c30800000000000000
+      internalID: 4361748928851897575
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_move_10
+      rect:
+        serializedVersion: 2
+        x: 642
+        y: 12
+        width: 60
+        height: 44
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 91e96b81aa5b7b1e0800000000000000
+      internalID: -2182075752274026983
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_move_11
+      rect:
+        serializedVersion: 2
+        x: 706
+        y: 11
+        width: 60
+        height: 44
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4d10a8ef38d14e1c0800000000000000
+      internalID: -4475419676951051820
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_move_12
+      rect:
+        serializedVersion: 2
+        x: 770
+        y: 11
+        width: 60
+        height: 44
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0453acbe2a16e6750800000000000000
+      internalID: 6300080281106396480
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_move_13
+      rect:
+        serializedVersion: 2
+        x: 834
+        y: 10
+        width: 60
+        height: 44
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9b587aac3b7718d60800000000000000
+      internalID: 7890719636212647353
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_move_14
+      rect:
+        serializedVersion: 2
+        x: 898
+        y: 10
+        width: 60
+        height: 44
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 96d925a538c30bf40800000000000000
+      internalID: 5742156059751128425
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_move_15
+      rect:
+        serializedVersion: 2
+        x: 962
+        y: 10
+        width: 60
+        height: 44
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 397c210e7d24d33a0800000000000000
+      internalID: -6684112777003219053
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      50s_ufo_move_0: -4764175789612432029
+      50s_ufo_move_1: -6162861243903789075
+      50s_ufo_move_10: -2182075752274026983
+      50s_ufo_move_11: -4475419676951051820
+      50s_ufo_move_12: 6300080281106396480
+      50s_ufo_move_13: 7890719636212647353
+      50s_ufo_move_14: 5742156059751128425
+      50s_ufo_move_15: -6684112777003219053
+      50s_ufo_move_2: 7244892323511888296
+      50s_ufo_move_3: -4697058754224810249
+      50s_ufo_move_4: -2737888773165080998
+      50s_ufo_move_5: -4024890259513588019
+      50s_ufo_move_6: 2369595657594424697
+      50s_ufo_move_7: -6821015105224765944
+      50s_ufo_move_8: 7905615021123428522
+      50s_ufo_move_9: 4361748928851897575
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

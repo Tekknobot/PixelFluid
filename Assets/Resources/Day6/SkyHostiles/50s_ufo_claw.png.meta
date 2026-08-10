@@ -1,0 +1,546 @@
+fileFormatVersion: 2
+guid: 34806966cbbf552449e2cd9f0f8a77f0
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -6008718912252828082
+    second: 50s_ufo_claw_0
+  - first:
+      213: -4506710161552317547
+    second: 50s_ufo_claw_1
+  - first:
+      213: 6596449007427859269
+    second: 50s_ufo_claw_2
+  - first:
+      213: 4330381391480444928
+    second: 50s_ufo_claw_3
+  - first:
+      213: 1830762299761419231
+    second: 50s_ufo_claw_4
+  - first:
+      213: -8508246390628766920
+    second: 50s_ufo_claw_5
+  - first:
+      213: -612056499498732822
+    second: 50s_ufo_claw_6
+  - first:
+      213: 9157087588770652291
+    second: 50s_ufo_claw_7
+  - first:
+      213: -4490603273558972483
+    second: 50s_ufo_claw_8
+  - first:
+      213: -5790617521128509229
+    second: 50s_ufo_claw_9
+  - first:
+      213: 7341800994634580673
+    second: 50s_ufo_claw_10
+  - first:
+      213: 7587337702275032828
+    second: 50s_ufo_claw_11
+  - first:
+      213: -4489723850234489206
+    second: 50s_ufo_claw_12
+  - first:
+      213: -7119969380239436872
+    second: 50s_ufo_claw_13
+  - first:
+      213: -3718894024915900341
+    second: 50s_ufo_claw_14
+  - first:
+      213: -749430327977887983
+    second: 50s_ufo_claw_15
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: 50s_ufo_claw_0
+      rect:
+        serializedVersion: 2
+        x: 2
+        y: 10
+        width: 60
+        height: 44
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e46afff1cfdbc9ca0800000000000000
+      internalID: -6008718912252828082
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_claw_1
+      rect:
+        serializedVersion: 2
+        x: 66
+        y: 10
+        width: 60
+        height: 45
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 593e7035cf2f471c0800000000000000
+      internalID: -4506710161552317547
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_claw_2
+      rect:
+        serializedVersion: 2
+        x: 130
+        y: 11
+        width: 60
+        height: 45
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 54337ba3c6b4b8b50800000000000000
+      internalID: 6596449007427859269
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_claw_3
+      rect:
+        serializedVersion: 2
+        x: 194
+        y: 11
+        width: 60
+        height: 45
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0085725aeea981c30800000000000000
+      internalID: 4330381391480444928
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_claw_4
+      rect:
+        serializedVersion: 2
+        x: 258
+        y: 11
+        width: 60
+        height: 45
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fd3e471ac9c286910800000000000000
+      internalID: 1830762299761419231
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_claw_5
+      rect:
+        serializedVersion: 2
+        x: 322
+        y: 11
+        width: 60
+        height: 45
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 83ba2118cf2ace980800000000000000
+      internalID: -8508246390628766920
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_claw_6
+      rect:
+        serializedVersion: 2
+        x: 386
+        y: 11
+        width: 60
+        height: 45
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ae2b8e44bd98187f0800000000000000
+      internalID: -612056499498732822
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_claw_7
+      rect:
+        serializedVersion: 2
+        x: 450
+        y: 14
+        width: 60
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 38020d945a2841f70800000000000000
+      internalID: 9157087588770652291
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_claw_8
+      rect:
+        serializedVersion: 2
+        x: 514
+        y: 11
+        width: 60
+        height: 45
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: db7af4c6d1c2ea1c0800000000000000
+      internalID: -4490603273558972483
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_claw_9
+      rect:
+        serializedVersion: 2
+        x: 578
+        y: 10
+        width: 60
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3d07bf66b0893afa0800000000000000
+      internalID: -5790617521128509229
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_claw_10
+      rect:
+        serializedVersion: 2
+        x: 642
+        y: 10
+        width: 60
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1c2cdc82b1153e560800000000000000
+      internalID: 7341800994634580673
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_claw_11
+      rect:
+        serializedVersion: 2
+        x: 706
+        y: 9
+        width: 60
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cf62807d073ab4960800000000000000
+      internalID: 7587337702275032828
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_claw_12
+      rect:
+        serializedVersion: 2
+        x: 770
+        y: 9
+        width: 60
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a869c2f12fb41b1c0800000000000000
+      internalID: -4489723850234489206
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_claw_13
+      rect:
+        serializedVersion: 2
+        x: 834
+        y: 9
+        width: 60
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8b39b276299c03d90800000000000000
+      internalID: -7119969380239436872
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_claw_14
+      rect:
+        serializedVersion: 2
+        x: 898
+        y: 9
+        width: 60
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b48a09f7695d36cc0800000000000000
+      internalID: -3718894024915900341
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 50s_ufo_claw_15
+      rect:
+        serializedVersion: 2
+        x: 962
+        y: 10
+        width: 60
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 11739fc561d7995f0800000000000000
+      internalID: -749430327977887983
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      50s_ufo_claw_0: -6008718912252828082
+      50s_ufo_claw_1: -4506710161552317547
+      50s_ufo_claw_10: 7341800994634580673
+      50s_ufo_claw_11: 7587337702275032828
+      50s_ufo_claw_12: -4489723850234489206
+      50s_ufo_claw_13: -7119969380239436872
+      50s_ufo_claw_14: -3718894024915900341
+      50s_ufo_claw_15: -749430327977887983
+      50s_ufo_claw_2: 6596449007427859269
+      50s_ufo_claw_3: 4330381391480444928
+      50s_ufo_claw_4: 1830762299761419231
+      50s_ufo_claw_5: -8508246390628766920
+      50s_ufo_claw_6: -612056499498732822
+      50s_ufo_claw_7: 9157087588770652291
+      50s_ufo_claw_8: -4490603273558972483
+      50s_ufo_claw_9: -5790617521128509229
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

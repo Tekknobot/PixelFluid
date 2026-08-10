@@ -1,0 +1,546 @@
+fileFormatVersion: 2
+guid: 11e838f9d91f6314b9a29cafa0231658
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -962178786184005836
+    second: racer_ufo_move_0
+  - first:
+      213: 3926251305347730712
+    second: racer_ufo_move_1
+  - first:
+      213: -5976024594520411160
+    second: racer_ufo_move_2
+  - first:
+      213: -3113076931202666700
+    second: racer_ufo_move_3
+  - first:
+      213: -6873064426591869872
+    second: racer_ufo_move_4
+  - first:
+      213: 5124788017537168453
+    second: racer_ufo_move_5
+  - first:
+      213: 8815570904564907172
+    second: racer_ufo_move_6
+  - first:
+      213: 8110546736782579751
+    second: racer_ufo_move_7
+  - first:
+      213: 6277888884331083899
+    second: racer_ufo_move_8
+  - first:
+      213: -6539635234675504514
+    second: racer_ufo_move_9
+  - first:
+      213: 4660741018502944024
+    second: racer_ufo_move_10
+  - first:
+      213: -36392088762124435
+    second: racer_ufo_move_11
+  - first:
+      213: -2304827154491846382
+    second: racer_ufo_move_12
+  - first:
+      213: 6812797853773928603
+    second: racer_ufo_move_13
+  - first:
+      213: 1095382948538235023
+    second: racer_ufo_move_14
+  - first:
+      213: 5562030866198310699
+    second: racer_ufo_move_15
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: racer_ufo_move_0
+      rect:
+        serializedVersion: 2
+        x: 2
+        y: 14
+        width: 60
+        height: 45
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 437f517ed77a5a2f0800000000000000
+      internalID: -962178786184005836
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: racer_ufo_move_1
+      rect:
+        serializedVersion: 2
+        x: 66
+        y: 14
+        width: 60
+        height: 45
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 81d4a2292c8dc7630800000000000000
+      internalID: 3926251305347730712
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: racer_ufo_move_2
+      rect:
+        serializedVersion: 2
+        x: 130
+        y: 13
+        width: 60
+        height: 45
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8e3fc9a2b45e01da0800000000000000
+      internalID: -5976024594520411160
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: racer_ufo_move_3
+      rect:
+        serializedVersion: 2
+        x: 194
+        y: 12
+        width: 60
+        height: 45
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 43fa33d56012cc4d0800000000000000
+      internalID: -3113076931202666700
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: racer_ufo_move_4
+      rect:
+        serializedVersion: 2
+        x: 258
+        y: 12
+        width: 60
+        height: 45
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0542e9ea158fd90a0800000000000000
+      internalID: -6873064426591869872
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: racer_ufo_move_5
+      rect:
+        serializedVersion: 2
+        x: 322
+        y: 13
+        width: 60
+        height: 44
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5443b76bc87ee1740800000000000000
+      internalID: 5124788017537168453
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: racer_ufo_move_6
+      rect:
+        serializedVersion: 2
+        x: 386
+        y: 14
+        width: 60
+        height: 44
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4ac3cd2e703375a70800000000000000
+      internalID: 8815570904564907172
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: racer_ufo_move_7
+      rect:
+        serializedVersion: 2
+        x: 450
+        y: 16
+        width: 60
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 728112c19437e8070800000000000000
+      internalID: 8110546736782579751
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: racer_ufo_move_8
+      rect:
+        serializedVersion: 2
+        x: 514
+        y: 16
+        width: 60
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b787de9bdaa8f1750800000000000000
+      internalID: 6277888884331083899
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: racer_ufo_move_9
+      rect:
+        serializedVersion: 2
+        x: 578
+        y: 16
+        width: 60
+        height: 41
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e7ac98c076c8e35a0800000000000000
+      internalID: -6539635234675504514
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: racer_ufo_move_10
+      rect:
+        serializedVersion: 2
+        x: 642
+        y: 16
+        width: 60
+        height: 40
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 815d5fd33474ea040800000000000000
+      internalID: 4660741018502944024
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: racer_ufo_move_11
+      rect:
+        serializedVersion: 2
+        x: 706
+        y: 16
+        width: 60
+        height: 40
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d67f2bc8695be7ff0800000000000000
+      internalID: -36392088762124435
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: racer_ufo_move_12
+      rect:
+        serializedVersion: 2
+        x: 770
+        y: 16
+        width: 60
+        height: 41
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 211d6db1aeb9300e0800000000000000
+      internalID: -2304827154491846382
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: racer_ufo_move_13
+      rect:
+        serializedVersion: 2
+        x: 834
+        y: 16
+        width: 60
+        height: 41
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b981db06d8beb8e50800000000000000
+      internalID: 6812797853773928603
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: racer_ufo_move_14
+      rect:
+        serializedVersion: 2
+        x: 898
+        y: 15
+        width: 60
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f8834a4fcf4933f00800000000000000
+      internalID: 1095382948538235023
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: racer_ufo_move_15
+      rect:
+        serializedVersion: 2
+        x: 962
+        y: 15
+        width: 60
+        height: 43
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b2f22899a9d403d40800000000000000
+      internalID: 5562030866198310699
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      racer_ufo_move_0: -962178786184005836
+      racer_ufo_move_1: 3926251305347730712
+      racer_ufo_move_10: 4660741018502944024
+      racer_ufo_move_11: -36392088762124435
+      racer_ufo_move_12: -2304827154491846382
+      racer_ufo_move_13: 6812797853773928603
+      racer_ufo_move_14: 1095382948538235023
+      racer_ufo_move_15: 5562030866198310699
+      racer_ufo_move_2: -5976024594520411160
+      racer_ufo_move_3: -3113076931202666700
+      racer_ufo_move_4: -6873064426591869872
+      racer_ufo_move_5: 5124788017537168453
+      racer_ufo_move_6: 8815570904564907172
+      racer_ufo_move_7: 8110546736782579751
+      racer_ufo_move_8: 6277888884331083899
+      racer_ufo_move_9: -6539635234675504514
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
