@@ -49,7 +49,7 @@ namespace PixelOcean
         [SerializeField, Min(0.1f)] private float animationFramesPerSecond = 12f;
         [Tooltip("When enabled, the opening frames reverse to close the eye.")]
         [SerializeField] private bool reverseAtEnd = true;
-        [SerializeField, Min(0f)] private float openFramePause = 1.55f;
+        [SerializeField, Min(0f)] private float openFramePause = 0.25f;
         [SerializeField, Min(0f)] private float closedFramePause = 3.25f;
         [SerializeField, Range(0.8f, 1f)] private float animationCenterThreshold = 0.985f;
 
@@ -57,12 +57,12 @@ namespace PixelOcean
         [SerializeField] private string idleResourcePath =
             "Day6/SleepingEye/eye_idle";
         [Tooltip("Chance to branch into eye_idle once during each opening.")]
-        [SerializeField, Range(0f, 1f)] private float idlePlayChance = 0.45f;
+        [SerializeField, Range(0f, 1f)] private float idlePlayChance = 0.55f;
         [Tooltip("Opening-sheet position where the idle branch may begin.")]
         [SerializeField, Range(0.15f, 0.85f)] private float idleTriggerNormalizedFrame = 0.50f;
-        [SerializeField, Min(0.1f)] private float idleFramesPerSecond = 8f;
+        [SerializeField, Min(0.1f)] private float idleFramesPerSecond = 12f;
         [Tooltip("Complete forward-and-back idle cycles before resuming the opening sheet.")]
-        [SerializeField] private Vector2Int idlePingPongCountRange = new(1, 3);
+        [SerializeField] private Vector2Int idlePingPongCountRange = new(1, 9);
 
         private SurfDayProgressionDirector director;
         private TinyWaveSurfer surfer;
