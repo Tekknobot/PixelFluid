@@ -114,7 +114,7 @@ namespace PixelOcean
             NormalizedJourneyProgress);
         public string CurrentObjective => string.IsNullOrWhiteSpace(learningObjective)
             ? objective
-            : objective + "\nLEARN\n" + learningObjective;
+            : objective + "\n\nLEARN\n" + learningObjective;
         public string CurrentLearningObjective => learningObjective;
         public string CurrentBanner => banner;
         public bool IsBannerVisible => Time.unscaledTime < bannerUntil && !string.IsNullOrEmpty(banner);
@@ -2183,7 +2183,7 @@ namespace PixelOcean
 
             if (chapter == Chapter.FirstRescue)
             {
-                learningObjective = "Reach struggling swimmers. A rescue restores 1 life.";
+                learningObjective = "Reach struggling swimmers. Rescue restores 1 life.";
                 return;
             }
 
