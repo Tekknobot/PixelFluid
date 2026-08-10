@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace PixelOcean
 {
@@ -48,9 +49,20 @@ namespace PixelOcean
         [SerializeField, Min(0.1f)] private float animationFramesPerSecond = 12f;
         [Tooltip("When enabled, the opening frames reverse to close the eye.")]
         [SerializeField] private bool reverseAtEnd = true;
-        [SerializeField, Min(0f)] private float openFramePause = 5.55f;
+        [SerializeField, Min(0f)] private float openFramePause = 1.55f;
         [SerializeField, Min(0f)] private float closedFramePause = 3.25f;
         [SerializeField, Range(0.8f, 1f)] private float animationCenterThreshold = 0.985f;
+
+        [Header("Open Eye Idle Branch")]
+        [SerializeField] private string idleResourcePath =
+            "Day6/SleepingEye/eye_idle";
+        [Tooltip("Chance to branch into eye_idle once during each opening.")]
+        [SerializeField, Range(0f, 1f)] private float idlePlayChance = 0.45f;
+        [Tooltip("Opening-sheet position where the idle branch may begin.")]
+        [SerializeField, Range(0.15f, 0.85f)] private float idleTriggerNormalizedFrame = 0.50f;
+        [SerializeField, Min(0.1f)] private float idleFramesPerSecond = 8f;
+        [Tooltip("Complete forward-and-back idle cycles before resuming the opening sheet.")]
+        [SerializeField] private Vector2Int idlePingPongCountRange = new(1, 3);
 
         private SurfDayProgressionDirector director;
         private TinyWaveSurfer surfer;
@@ -58,6 +70,7 @@ namespace PixelOcean
         private GameObject eyeObject;
         private SpriteRenderer eyeRenderer;
         private Sprite[] frames = Array.Empty<Sprite>();
+        private Sprite[] idleFrames = Array.Empty<Sprite>();
         private float visibility;
         private float visibilityVelocity;
         private float centeredProgress;
@@ -68,6 +81,12 @@ namespace PixelOcean
         private float animationClock;
         private float endpointPauseRemaining;
         private bool restartAfterOpenPause;
+        private bool playingIdle;
+        private bool idleAttemptedThisOpening;
+        private int idleFrame;
+        private int idleDirection = 1;
+        private int idlePingPongsRemaining;
+        private float idleClock;
         private float nextResolveAt;
         private bool presentationCopied;
 
@@ -205,7 +224,14 @@ namespace PixelOcean
                 animationClock = 0f;
                 endpointPauseRemaining = 0f;
                 restartAfterOpenPause = false;
+                ResetIdleBranch();
                 eyeRenderer.sprite = frames[0];
+                return;
+            }
+
+            if (playingIdle)
+            {
+                UpdateIdleAnimation(dt);
                 return;
             }
 
@@ -219,6 +245,7 @@ namespace PixelOcean
                     restartAfterOpenPause = false;
                     animationFrame = 0;
                     animationDirection = 1;
+                    idleAttemptedThisOpening = false;
                     eyeRenderer.sprite = frames[0];
                 }
                 return;
@@ -229,6 +256,11 @@ namespace PixelOcean
             {
                 animationClock -= 1f;
                 AdvanceAnimationFrame();
+                if (playingIdle)
+                {
+                    eyeRenderer.sprite = idleFrames[idleFrame];
+                    return;
+                }
                 if (endpointPauseRemaining > 0f)
                     break;
             }
@@ -244,6 +276,22 @@ namespace PixelOcean
 
             animationFrame += animationDirection;
             int last = frames.Length - 1;
+            int idleTriggerFrame = Mathf.Clamp(
+                Mathf.RoundToInt(last * idleTriggerNormalizedFrame),
+                1,
+                Mathf.Max(1, last - 1));
+            if (animationDirection > 0 &&
+                animationFrame == idleTriggerFrame &&
+                !idleAttemptedThisOpening)
+            {
+                idleAttemptedThisOpening = true;
+                if (idleFrames.Length > 0 && Random.value <= idlePlayChance)
+                {
+                    BeginIdleAnimation();
+                    return;
+                }
+            }
+
             if (animationFrame >= last)
             {
                 animationFrame = last;
@@ -259,8 +307,94 @@ namespace PixelOcean
             {
                 animationFrame = 0;
                 animationDirection = 1;
+                idleAttemptedThisOpening = false;
                 endpointPauseRemaining = closedFramePause;
             }
+        }
+
+        private void BeginIdleAnimation()
+        {
+            playingIdle = true;
+            idleFrame = 0;
+            idleDirection = 1;
+            idleClock = 0f;
+            int minimumCycles = Mathf.Max(1,
+                Mathf.Min(idlePingPongCountRange.x, idlePingPongCountRange.y));
+            int maximumCycles = Mathf.Max(minimumCycles,
+                Mathf.Max(idlePingPongCountRange.x, idlePingPongCountRange.y));
+            idlePingPongsRemaining = Random.Range(minimumCycles, maximumCycles + 1);
+            eyeRenderer.sprite = idleFrames[0];
+        }
+
+        private void UpdateIdleAnimation(float dt)
+        {
+            if (!playingIdle || idleFrames.Length == 0)
+            {
+                playingIdle = false;
+                return;
+            }
+
+            idleClock += dt * Mathf.Max(0.1f, idleFramesPerSecond);
+            while (idleClock >= 1f)
+            {
+                idleClock -= 1f;
+
+                if (idleFrames.Length == 1)
+                {
+                    idlePingPongsRemaining--;
+                    if (idlePingPongsRemaining <= 0)
+                    {
+                        FinishIdleAnimation();
+                        return;
+                    }
+                    continue;
+                }
+
+                idleFrame += idleDirection;
+                int lastIdleFrame = idleFrames.Length - 1;
+                if (idleFrame >= lastIdleFrame)
+                {
+                    idleFrame = lastIdleFrame;
+                    idleDirection = -1;
+                }
+                else if (idleFrame <= 0 && idleDirection < 0)
+                {
+                    idleFrame = 0;
+                    idleDirection = 1;
+                    idlePingPongsRemaining--;
+                    if (idlePingPongsRemaining <= 0)
+                    {
+                        FinishIdleAnimation();
+                        return;
+                    }
+                }
+            }
+
+            eyeRenderer.sprite = idleFrames[Mathf.Clamp(
+                idleFrame,
+                0,
+                idleFrames.Length - 1)];
+        }
+
+        private void FinishIdleAnimation()
+        {
+            playingIdle = false;
+            idleClock = 0f;
+            animationClock = 0f;
+            eyeRenderer.sprite = frames[Mathf.Clamp(
+                animationFrame,
+                0,
+                frames.Length - 1)];
+        }
+
+        private void ResetIdleBranch()
+        {
+            playingIdle = false;
+            idleAttemptedThisOpening = false;
+            idleFrame = 0;
+            idleDirection = 1;
+            idlePingPongsRemaining = 0;
+            idleClock = 0f;
         }
 
         private void ResolveSceneReferences()
@@ -272,15 +406,25 @@ namespace PixelOcean
 
         private void LoadFrames()
         {
-            frames = Resources.LoadAll<Sprite>(resourcePath);
-            Array.Sort(frames, (a, b) =>
-                ExtractFrameNumber(a != null ? a.name : string.Empty)
-                    .CompareTo(ExtractFrameNumber(b != null ? b.name : string.Empty)));
+            frames = LoadOrderedFrames(resourcePath);
+            idleFrames = LoadOrderedFrames(idleResourcePath);
 
             if (frames.Length == 0)
                 Debug.LogWarning(
                     $"Sleeping Eye could not load Resources/{resourcePath}.",
                     this);
+        }
+
+        private static Sprite[] LoadOrderedFrames(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                return Array.Empty<Sprite>();
+
+            Sprite[] loaded = Resources.LoadAll<Sprite>(path);
+            Array.Sort(loaded, (a, b) =>
+                ExtractFrameNumber(a != null ? a.name : string.Empty)
+                    .CompareTo(ExtractFrameNumber(b != null ? b.name : string.Empty)));
+            return loaded;
         }
 
         private void EnsureEyeObject()
