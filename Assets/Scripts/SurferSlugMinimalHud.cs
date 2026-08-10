@@ -88,6 +88,14 @@ namespace PixelOcean
         private RectTransform chapterBannerRect;
         private string heldChapterText = string.Empty;
         private float chapterHoldUntil;
+        private float chapterTypewriterStartedAt;
+        private int chapterTypewriterCharacterCount;
+
+        [Header("Chapter Banner Typewriter")]
+        [SerializeField, Min(1f)]
+        private float chapterCharactersPerSecond = 32f;
+        [SerializeField, Min(0f)]
+        private float chapterTypewriterDelay = 0.08f;
 
         private const float HudIconReferenceSize = 48f;
         private const float InventoryReferenceSize = 48f;
@@ -489,22 +497,24 @@ namespace PixelOcean
 
         private void BuildChapterBanner(Transform parent)
         {
-            chapterBannerRect = CreateRect("Chapter Banner", parent, new Vector2(1500f, 120f));
-            chapterBannerRect.anchorMin = chapterBannerRect.anchorMax = new Vector2(0.5f, 1f);
-            chapterBannerRect.pivot = new Vector2(0.5f, 1f);
-            chapterBannerRect.anchoredPosition = new Vector2(0f, -(Mathf.Max(32f, safeMargin.y) + 218f));
+            chapterBannerRect = CreateRect("Chapter Banner", parent, new Vector2(780f, 120f));
+            chapterBannerRect.anchorMin = chapterBannerRect.anchorMax = new Vector2(0f, 1f);
+            chapterBannerRect.pivot = new Vector2(0f, 1f);
+            chapterBannerRect.anchoredPosition = new Vector2(
+                Mathf.Max(32f, safeMargin.x),
+                -(Mathf.Max(32f, safeMargin.y) + 218f));
             AddImage(chapterBannerRect.gameObject, panelColour);
             AddPixelBorder(chapterBannerRect, borderColour, borderThickness);
             chapterGroup = chapterBannerRect.gameObject.AddComponent<CanvasGroup>();
             chapterGroup.alpha = 0f;
 
-            chapterLabel = CreateText(string.Empty, chapterBannerRect, 38, TextAnchor.MiddleLeft, foregroundColour);
+            chapterLabel = CreateText(string.Empty, chapterBannerRect, 16, TextAnchor.MiddleLeft, foregroundColour);
             chapterLabel.alignment = TextAlignmentOptions.MidlineLeft;
             chapterLabel.horizontalAlignment = HorizontalAlignmentOptions.Left;
             chapterLabel.verticalAlignment = VerticalAlignmentOptions.Middle;
             chapterLabel.enableAutoSizing = true;
-            chapterLabel.fontSizeMin = 22f;
-            chapterLabel.fontSizeMax = 40f;
+            chapterLabel.fontSizeMin = 16f;
+            chapterLabel.fontSizeMax = 32f;
             chapterLabel.enableWordWrapping = true;
             chapterLabel.overflowMode = TextOverflowModes.Overflow;
             Stretch(chapterLabel.rectTransform, Vector2.zero, Vector2.one, new Vector2(28f, 18f), new Vector2(-28f, -18f));
@@ -565,7 +575,21 @@ namespace PixelOcean
             if (chapterLabel != null && showBanner && chapterLabel.text != heldChapterText)
             {
                 chapterLabel.text = heldChapterText;
+                chapterLabel.maxVisibleCharacters = 0;
+                chapterTypewriterStartedAt = Time.unscaledTime + chapterTypewriterDelay;
                 ResizeChapterBannerToText();
+                chapterLabel.ForceMeshUpdate();
+                chapterTypewriterCharacterCount = chapterLabel.textInfo.characterCount;
+            }
+
+            if (chapterLabel != null && showBanner)
+            {
+                float typingTime = Mathf.Max(0f,
+                    Time.unscaledTime - chapterTypewriterStartedAt);
+                int visibleCharacters = Mathf.FloorToInt(
+                    typingTime * Mathf.Max(1f, chapterCharactersPerSecond));
+                chapterLabel.maxVisibleCharacters = Mathf.Clamp(
+                    visibleCharacters, 0, chapterTypewriterCharacterCount);
             }
 
             if (chapterGroup != null)

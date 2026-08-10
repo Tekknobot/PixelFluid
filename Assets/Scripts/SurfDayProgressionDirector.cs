@@ -114,7 +114,7 @@ namespace PixelOcean
             NormalizedJourneyProgress);
         public string CurrentObjective => string.IsNullOrWhiteSpace(learningObjective)
             ? objective
-            : objective + "\nLEARN  •  " + learningObjective;
+            : objective + "\nLEARN\n" + learningObjective;
         public string CurrentLearningObjective => learningObjective;
         public string CurrentBanner => banner;
         public bool IsBannerVisible => Time.unscaledTime < bannerUntil && !string.IsNullOrEmpty(banner);
@@ -1420,7 +1420,7 @@ namespace PixelOcean
             {
                 BeginChapter(Chapter.FirstRescue,
                     currentDay == 6 ? "THE LAST WARNING" : currentDay == 5 ? "SECURITY NET" : currentDay == 4 ? "NO AUTHORIZED TRAFFIC" : currentDay == 3 ? "A FAMILIAR VOICE" : currentDay == 2 ? "AFTER THE WRECK" : "DISTRESS CALL",
-                    currentDay == 6 ? "RESCUE THE RESEARCHER CARRYING THE FINAL HORIZON RECORD." : currentDay == 5 ? "BREAK THROUGH THE DRONE AND BUOY PATROL." : currentDay == 4 ? "RESCUE THE SWIMMER CAUGHT NEAR THE RESTRICTED ROUTE." : currentDay == 3 ? "SAVE THE SWIMMER THE OCEAN BROUGHT BACK." : currentDay == 2 ? "PULL THE SURVIVOR OUT OF THE DEEP CURRENT." : "FIND AND SAVE THE STRUGGLING SWIMMER.");
+                    currentDay == 6 ? "RESCUE THE RESEARCHER CARRYING THE FINAL HORIZON RECORD." : currentDay == 5 ? "BREAK THROUGH THE DRONE AND BUOY PATROL." : currentDay == 4 ? "RESCUE THE SWIMMER CAUGHT NEAR THE RESTRICTED ROUTE." : currentDay == 3 ? "SAVE THE SWIMMER THE OCEAN BROUGHT BACK." : currentDay == 2 ? "PULL THE SURVIVOR OUT OF THE DEEP CURRENT." : "SAVE THE STRUGGLING SWIMMER IF YOU WANT.");
                 SpawnRescueSet(1);
             }
 
