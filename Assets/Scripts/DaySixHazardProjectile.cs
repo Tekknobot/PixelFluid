@@ -12,13 +12,22 @@ namespace PixelOcean
     }
 
     /// <summary>
-    /// Small runtime-drawn Day 6 hazards. They travel inside a selected water
-    /// lane and share the surfer's normal invulnerability and hit response.
+    /// Day 6 hazards use authored resource variations where available and a
+    /// runtime-drawn fallback otherwise. They stay in a selected water lane and
+    /// share the surfer's normal invulnerability and hit response.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class DaySixHazardProjectile : MonoBehaviour
     {
-        private static readonly Dictionary<DaySixHazardKind, Sprite> CachedSprites = new();
+        private const int AuthoredProjectileCellSize = 32;
+        private const float MushroomAnimationFramesPerSecond = 12f;
+        private static readonly Dictionary<DaySixHazardKind, Sprite> CachedFallbackSprites = new();
+        private static readonly Dictionary<DaySixHazardKind, Sprite[]> ResourceSpritePools = new();
+        private static readonly Dictionary<DaySixHazardKind, int> ResourceSpritePoolIndices = new();
+        private static readonly List<Sprite> RuntimeSheetSlices = new();
+        private static System.Random ResourceSpriteRandom = new(6106);
+        private static Sprite[] mushroomAnimationFrames = System.Array.Empty<Sprite>();
+        private static bool mushroomAnimationLoaded;
         private readonly List<PixelWaterGPU> waterLayers = new();
         private DaySixHazardKind kind;
         private SpriteRenderer spriteRenderer;
@@ -28,8 +37,25 @@ namespace PixelOcean
         private float lifetime;
         private float age;
         private float phase;
+        private float laneHeightOffset;
+        private float lastResolvedLaneY;
+        private Sprite[] animationFrames = System.Array.Empty<Sprite>();
         private int lane;
         private bool resolved;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticProjectilePools()
+        {
+            // This also runs when Enter Play Mode skips domain reload. Asset edits
+            // must therefore never leave an old empty pool or fallback sprite cached.
+            CachedFallbackSprites.Clear();
+            ResourceSpritePools.Clear();
+            ResourceSpritePoolIndices.Clear();
+            RuntimeSheetSlices.Clear();
+            ResourceSpriteRandom = new System.Random(6106);
+            mushroomAnimationFrames = System.Array.Empty<Sprite>();
+            mushroomAnimationLoaded = false;
+        }
 
         public static DaySixHazardProjectile Spawn(
             DaySixHazardKind hazardKind,
@@ -37,7 +63,8 @@ namespace PixelOcean
             float travelDirection,
             float travelSpeed,
             int laneIndex,
-            PixelWaterGPU sortingWater)
+            PixelWaterGPU sortingWater,
+            float projectileLaneHeightOffset = 0f)
         {
             GameObject projectileObject = new($"Day 6 {ReadableName(hazardKind)} Hazard");
             projectileObject.transform.position = position;
@@ -53,7 +80,14 @@ namespace PixelOcean
             body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
             collider.isTrigger = true;
             renderItem.SetWaterAndLane(sortingWater, laneIndex);
-            projectile.Initialise(hazardKind, renderer, collider, travelDirection, travelSpeed, laneIndex);
+            projectile.Initialise(
+                hazardKind,
+                renderer,
+                collider,
+                travelDirection,
+                travelSpeed,
+                laneIndex,
+                projectileLaneHeightOffset);
             return projectile;
         }
 
@@ -63,7 +97,8 @@ namespace PixelOcean
             CircleCollider2D collider,
             float travelDirection,
             float travelSpeed,
-            int laneIndex)
+            int laneIndex,
+            float projectileLaneHeightOffset)
         {
             kind = hazardKind;
             spriteRenderer = renderer;
@@ -71,13 +106,24 @@ namespace PixelOcean
             direction = travelDirection < 0f ? -1f : 1f;
             speed = Mathf.Max(0.5f, travelSpeed);
             lane = Mathf.Max(0, laneIndex);
+            laneHeightOffset = projectileLaneHeightOffset;
+            lastResolvedLaneY = transform.position.y - laneHeightOffset;
             phase = Random.Range(0f, Mathf.PI * 2f);
-            spriteRenderer.sprite = GetSprite(kind);
+            if (kind == DaySixHazardKind.Spore)
+                animationFrames = GetMushroomAnimationFrames();
+            spriteRenderer.sprite = animationFrames.Length > 0
+                ? animationFrames[0]
+                : GetSprite(kind);
             spriteRenderer.flipX = direction < 0f;
             spriteRenderer.sortingOrder = 4;
-            hitCollider.radius = kind == DaySixHazardKind.ResortWake ? 0.42f : 0.25f;
-            transform.localScale = kind == DaySixHazardKind.ResortWake
-                ? new Vector3(1.35f, 0.72f, 1f)
+            hitCollider.radius = kind == DaySixHazardKind.ResortWake ? 0.34f :
+                kind == DaySixHazardKind.Toast || kind == DaySixHazardKind.Spore
+                    ? 0.30f
+                    : 0.25f;
+            transform.localScale = kind == DaySixHazardKind.ResortWake ||
+                                   kind == DaySixHazardKind.Toast ||
+                                   kind == DaySixHazardKind.Spore
+                ? Vector3.one * 0.78f
                 : Vector3.one;
             lifetime = kind == DaySixHazardKind.ResortWake ? 3.2f : 2.6f;
         }
@@ -91,18 +137,32 @@ namespace PixelOcean
                 return;
             }
 
+            UpdateSpriteAnimation();
+
             Vector3 position = transform.position;
             position.x += direction * speed * Time.deltaTime;
-            position.y = ResolveLaneY(position.x) + VerticalMotion();
+            position.y = ResolveLaneY(position.x) + laneHeightOffset + VerticalMotion();
             transform.position = position;
 
-            float spin = kind == DaySixHazardKind.ResortWake ? 0f :
+            float spin = kind == DaySixHazardKind.ResortWake ? 250f :
                 kind == DaySixHazardKind.Toast ? -520f : 330f;
             transform.Rotate(0f, 0f, spin * direction * Time.deltaTime);
 
             Color colour = spriteRenderer.color;
             colour.a = Mathf.Clamp01((lifetime - age) / 0.35f);
             spriteRenderer.color = colour;
+        }
+
+        private void UpdateSpriteAnimation()
+        {
+            if (animationFrames == null || animationFrames.Length <= 1)
+                return;
+
+            int frameIndex = Mathf.FloorToInt(age * MushroomAnimationFramesPerSecond) %
+                             animationFrames.Length;
+            Sprite frame = animationFrames[frameIndex];
+            if (frame != null && spriteRenderer.sprite != frame)
+                spriteRenderer.sprite = frame;
         }
 
         private float VerticalMotion()
@@ -122,13 +182,14 @@ namespace PixelOcean
             waterLayers.RemoveAll(layer => layer == null || !layer.isActiveAndEnabled);
             waterLayers.Sort((a, b) => a.IndependentLayerIndex.CompareTo(b.IndependentLayerIndex));
             if (waterLayers.Count < 2)
-                return transform.position.y;
+                return lastResolvedLaneY;
 
             lane = Mathf.Clamp(lane, 0, waterLayers.Count - 2);
-            return Mathf.Lerp(
+            lastResolvedLaneY = Mathf.Lerp(
                 waterLayers[lane].GetGameplaySurfaceHeight(worldX),
                 waterLayers[lane + 1].GetGameplaySurfaceHeight(worldX),
                 0.5f);
+            return lastResolvedLaneY;
         }
 
         private void OnTriggerEnter2D(Collider2D other)
@@ -166,7 +227,11 @@ namespace PixelOcean
 
         private static Sprite GetSprite(DaySixHazardKind hazardKind)
         {
-            if (CachedSprites.TryGetValue(hazardKind, out Sprite existing) && existing != null)
+            Sprite resourceSprite = GetNextResourceSprite(hazardKind);
+            if (resourceSprite != null)
+                return resourceSprite;
+
+            if (CachedFallbackSprites.TryGetValue(hazardKind, out Sprite existing) && existing != null)
                 return existing;
 
             const int size = 16;
@@ -217,8 +282,155 @@ namespace PixelOcean
                 SpriteMeshType.FullRect);
             sprite.name = $"day6_{ReadableName(hazardKind).ToLowerInvariant()}";
             sprite.hideFlags = HideFlags.HideAndDontSave;
-            CachedSprites[hazardKind] = sprite;
+            CachedFallbackSprites[hazardKind] = sprite;
             return sprite;
+        }
+
+        private static Sprite GetNextResourceSprite(DaySixHazardKind hazardKind)
+        {
+            string resourcePath = hazardKind switch
+            {
+                DaySixHazardKind.Toast => "Day6/Toast",
+                DaySixHazardKind.ResortWake => "Day6/IceCube",
+                _ => null
+            };
+            if (string.IsNullOrEmpty(resourcePath))
+                return null;
+
+            if (!ResourceSpritePools.TryGetValue(hazardKind, out Sprite[] pool))
+            {
+                pool = LoadAuthoredSpritePool(resourcePath);
+                System.Array.Sort(pool, (left, right) =>
+                    string.CompareOrdinal(left.name, right.name));
+                ShuffleResourcePool(pool);
+                ResourceSpritePools[hazardKind] = pool;
+                ResourceSpritePoolIndices[hazardKind] = 0;
+
+                if (pool.Length == 0)
+                {
+                    Debug.LogWarning(
+                        $"DaySixHazardProjectile found no sprites in Resources/{resourcePath}; " +
+                        "using the runtime fallback projectile.");
+                    return null;
+                }
+            }
+
+            if (pool.Length == 0)
+                return null;
+
+            int index = ResourceSpritePoolIndices.TryGetValue(hazardKind, out int savedIndex)
+                ? savedIndex
+                : 0;
+            if (index >= pool.Length)
+            {
+                Sprite previous = pool[pool.Length - 1];
+                ShuffleResourcePool(pool);
+                if (pool.Length > 1 && pool[0] == previous)
+                    (pool[0], pool[1]) = (pool[1], pool[0]);
+                index = 0;
+            }
+
+            Sprite selected = pool[index];
+            ResourceSpritePoolIndices[hazardKind] = index + 1;
+            return selected;
+        }
+
+        private static Sprite[] GetMushroomAnimationFrames()
+        {
+            if (mushroomAnimationLoaded)
+                return mushroomAnimationFrames;
+
+            mushroomAnimationLoaded = true;
+            mushroomAnimationFrames = LoadAuthoredSpritePool("Day6/Mushroom");
+            System.Array.Sort(mushroomAnimationFrames, CompareAnimationFrames);
+            if (mushroomAnimationFrames.Length == 0)
+            {
+                Debug.LogWarning(
+                    "DaySixHazardProjectile found no animation frames in " +
+                    "Resources/Day6/Mushroom; using the runtime fallback spore.");
+            }
+            return mushroomAnimationFrames;
+        }
+
+        private static int CompareAnimationFrames(Sprite left, Sprite right)
+        {
+            int textureOrder = string.CompareOrdinal(
+                left != null && left.texture != null ? left.texture.name : string.Empty,
+                right != null && right.texture != null ? right.texture.name : string.Empty);
+            if (textureOrder != 0)
+                return textureOrder;
+
+            // Unity sprite rect Y starts at the bottom, while animation sheets
+            // are normally authored from the top-left across each row.
+            int rowOrder = right.rect.y.CompareTo(left.rect.y);
+            return rowOrder != 0 ? rowOrder : left.rect.x.CompareTo(right.rect.x);
+        }
+
+        private static Sprite[] LoadAuthoredSpritePool(string resourcePath)
+        {
+            Sprite[] imported = System.Array.FindAll(
+                Resources.LoadAll<Sprite>(resourcePath),
+                sprite => sprite != null);
+
+            // A correctly sliced Multiple sprite sheet already exposes every cell.
+            // A Single sprite import exposes one oversized sprite instead, while a
+            // Default texture exposes no sprites. Handle both cases by slicing every
+            // 32x32 texture in the folder at runtime.
+            bool oneOversizedSprite = imported.Length == 1 &&
+                (imported[0].rect.width > AuthoredProjectileCellSize + 0.5f ||
+                 imported[0].rect.height > AuthoredProjectileCellSize + 0.5f);
+            if (imported.Length > 0 && !oneOversizedSprite)
+                return imported;
+
+            Texture2D[] textures = Resources.LoadAll<Texture2D>(resourcePath);
+            List<Sprite> slices = new();
+            foreach (Texture2D texture in textures)
+            {
+                if (texture == null ||
+                    texture.width < AuthoredProjectileCellSize ||
+                    texture.height < AuthoredProjectileCellSize ||
+                    texture.width % AuthoredProjectileCellSize != 0 ||
+                    texture.height % AuthoredProjectileCellSize != 0)
+                    continue;
+
+                int columns = texture.width / AuthoredProjectileCellSize;
+                int rows = texture.height / AuthoredProjectileCellSize;
+                if (columns * rows <= 1 && imported.Length > 0)
+                    return imported;
+
+                for (int row = 0; row < rows; row++)
+                {
+                    for (int column = 0; column < columns; column++)
+                    {
+                        Sprite slice = Sprite.Create(
+                            texture,
+                            new Rect(
+                                column * AuthoredProjectileCellSize,
+                                row * AuthoredProjectileCellSize,
+                                AuthoredProjectileCellSize,
+                                AuthoredProjectileCellSize),
+                            new Vector2(0.5f, 0.5f),
+                            AuthoredProjectileCellSize,
+                            0,
+                            SpriteMeshType.FullRect);
+                        slice.name = $"{texture.name}_runtime_{row:00}_{column:00}";
+                        slice.hideFlags = HideFlags.HideAndDontSave;
+                        slices.Add(slice);
+                        RuntimeSheetSlices.Add(slice);
+                    }
+                }
+            }
+
+            return slices.Count > 0 ? slices.ToArray() : imported;
+        }
+
+        private static void ShuffleResourcePool(Sprite[] pool)
+        {
+            for (int i = pool.Length - 1; i > 0; i--)
+            {
+                int swapIndex = ResourceSpriteRandom.Next(i + 1);
+                (pool[i], pool[swapIndex]) = (pool[swapIndex], pool[i]);
+            }
         }
 
         private static void Fill(
@@ -257,7 +469,8 @@ namespace PixelOcean
 
         private static string ReadableName(DaySixHazardKind hazardKind) => hazardKind switch
         {
-            DaySixHazardKind.ResortWake => "Resort Wake",
+            DaySixHazardKind.Spore => "Mushroom Spore",
+            DaySixHazardKind.ResortWake => "Resort Ice Cube",
             _ => hazardKind.ToString()
         };
     }

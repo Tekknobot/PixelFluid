@@ -24,6 +24,7 @@ namespace PixelOcean
     [RequireComponent(typeof(SpriteRenderer), typeof(BoxCollider2D), typeof(Rigidbody2D))]
     public sealed class DaySixCreature : MonoBehaviour
     {
+        private const float ResortLaneHeightOffset = 0.18f;
         private enum State { Entering, Patrol, Telegraph, Attack, Recovery, Hit, Retreat }
 
         private readonly List<PixelWaterGPU> waterLayers = new();
@@ -120,7 +121,7 @@ namespace PixelOcean
             FindTarget();
 
             float spawnX = ChooseEntryX();
-            smoothedLaneY = GetLaneY(currentLane, spawnX);
+            smoothedLaneY = GetLaneY(currentLane, spawnX) + LaneHeightOffset;
             laneYVelocity = 0f;
             laneYReady = true;
             horizontalVelocity = direction * moveSpeed;
@@ -280,7 +281,7 @@ namespace PixelOcean
             }
 
             Vector3 position = transform.position;
-            float targetY = UpdateLanePosition(position.x) + CurrentBob();
+            float targetY = UpdateLanePosition(position.x) + LaneHeightOffset + CurrentBob();
             if (!laneYReady)
             {
                 smoothedLaneY = targetY;
@@ -553,12 +554,22 @@ namespace PixelOcean
             int laneCount = Mathf.Max(1, waterLayers.Count - 1);
             int lane = Mathf.Clamp(requestedLane, 0, laneCount - 1);
             float travelDirection = target != null && target.transform.position.x < transform.position.x ? -1f : 1f;
+            float projectileHeightOffset = hazard == DaySixHazardKind.ResortWake
+                ? ResortLaneHeightOffset
+                : 0f;
             Vector3 position = transform.position;
-            position.y = GetLaneY(lane, position.x);
+            position.y = GetLaneY(lane, position.x) + projectileHeightOffset;
             PixelWaterGPU water = waterLayers.Count > 0
                 ? waterLayers[Mathf.Clamp(lane, 0, waterLayers.Count - 1)]
                 : null;
-            DaySixHazardProjectile.Spawn(hazard, position, travelDirection, speed, lane, water);
+            DaySixHazardProjectile.Spawn(
+                hazard,
+                position,
+                travelDirection,
+                speed,
+                lane,
+                water,
+                projectileHeightOffset);
         }
 
         public bool TakeThrownItemHit(int damage, Vector2 impactPosition)
@@ -792,6 +803,10 @@ namespace PixelOcean
                 kind == DaySixCreatureKind.Starfish ? 0.09f : 0.065f;
             return Mathf.Sin(Time.time * 2.2f + floatPhase) * amount;
         }
+
+        private float LaneHeightOffset => kind == DaySixCreatureKind.Resort
+            ? ResortLaneHeightOffset
+            : 0f;
 
         private Color TelegraphColour()
         {
