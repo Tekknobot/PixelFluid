@@ -607,6 +607,11 @@ namespace PixelOcean
 
         private Transform externalCarrier;
         private Vector3 externalCarryOffset;
+        private bool externalFallActive;
+        private Vector2 externalFallVelocity;
+        private float externalFallLandingProtection;
+        private const float ExternalFallGravity = 8.8f;
+        private const float ExternalFallMaximumSpeed = 8.5f;
 
         /// <summary>
         /// Gives a short-lived hostile exclusive movement control without
@@ -615,8 +620,9 @@ namespace PixelOcean
         /// </summary>
         public bool TryBeginExternalCarry(Transform carrier, Vector3 offset)
         {
-            if (carrier == null || externalCarrier != null || IsDead ||
-                !IsPlayerControlled || IsSwitchingWave || IsAirborneDoingTricks)
+            if (carrier == null || externalCarrier != null || externalFallActive ||
+                IsDead || !IsPlayerControlled || state != RiderState.Riding ||
+                IsSwitchingWave || IsAirborneDoingTricks)
                 return false;
 
             externalCarrier = carrier;
@@ -638,13 +644,76 @@ namespace PixelOcean
             if (externalCarrier == null)
                 return;
 
+            // Do not restore the saved pre-grab position here. The surfer stays
+            // exactly where the claw released them, then falls toward the live
+            // surface of their current PixelWaterGPU simulation.
             externalCarrier = null;
-            transform.position = releasePosition;
-            localRideX = releasePosition.x;
+            externalFallActive = true;
+            localRideX = ClampPlayerXToSandbox(transform.position.x);
+            float horizontalReturn = Mathf.Clamp(
+                releasePosition.x - transform.position.x,
+                -1f,
+                1f);
+            externalFallVelocity = new Vector2(horizontalReturn * 0.65f, -0.35f);
+            externalFallLandingProtection = Mathf.Max(0f, protectionSeconds);
             playerHorizontalVelocity = 0f;
             verticalWaterVelocity = 0f;
             smoothedRideYInitialised = false;
-            invulnerableUntil = Mathf.Max(invulnerableUntil, Time.time + Mathf.Max(0f, protectionSeconds));
+        }
+
+        private void UpdateExternalFall(float dt)
+        {
+            if (currentWave == null || !currentWave.isActiveAndEnabled)
+            {
+                RefreshWaveList();
+                if (currentWave == null)
+                    return;
+            }
+
+            localRideX += externalFallVelocity.x * dt;
+            localRideX = ClampPlayerXToSandbox(localRideX);
+            RebindToNearestHorizontalSection();
+
+            float surfaceY =
+                currentWave.GetGameplaySurfaceHeight(localRideX) + surfaceOffset;
+            externalFallVelocity.y = Mathf.Max(
+                -ExternalFallMaximumSpeed,
+                externalFallVelocity.y - ExternalFallGravity * dt);
+            externalFallVelocity.x = Mathf.MoveTowards(
+                externalFallVelocity.x,
+                0f,
+                0.55f * dt);
+
+            float nextY = transform.position.y + externalFallVelocity.y * dt;
+            bool touchedWater = externalFallVelocity.y <= 0f && nextY <= surfaceY;
+            transform.position = new Vector3(
+                localRideX,
+                touchedWater ? surfaceY : nextY,
+                renderDepth);
+            transform.rotation = Quaternion.Lerp(
+                transform.rotation,
+                Quaternion.Euler(0f, 0f, -externalFallVelocity.x * 7f),
+                1f - Mathf.Exp(-7f * dt));
+            ApplyFacing(spriteWorldScale, spriteWorldScale);
+            UpdateAnimation(true);
+
+            if (!touchedWater)
+                return;
+
+            externalFallActive = false;
+            externalFallVelocity = Vector2.zero;
+            state = RiderState.Riding;
+            stateTimer = 0f;
+            playerHorizontalVelocity = 0f;
+            verticalWaterVelocity = 0f;
+            smoothedRideY = surfaceY;
+            smoothedRideYInitialised = true;
+            transform.rotation = Quaternion.identity;
+            invulnerableUntil = Mathf.Max(
+                invulnerableUntil,
+                Time.time + externalFallLandingProtection);
+            externalFallLandingProtection = 0f;
+            UpdateAnimation(false, true);
         }
 
         /// <summary>
@@ -2289,6 +2358,12 @@ namespace PixelOcean
                 playerHorizontalVelocity = 0f;
                 verticalWaterVelocity = 0f;
                 UpdateAnimation(false);
+                return;
+            }
+
+            if (externalFallActive)
+            {
+                UpdateExternalFall(Time.deltaTime);
                 return;
             }
 

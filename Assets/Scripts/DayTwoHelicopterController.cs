@@ -41,6 +41,12 @@ namespace PixelOcean
         [SerializeField] private float missileSpawnOffsetX = 0.34f;
         [SerializeField] private float missileSpawnOffsetY = -0.16f;
 
+        [Header("Combat")]
+        // The helicopter appears before the Day 6 UFOs, so it is one hit lighter.
+        // Ordinary thrown items and slashes deal 1; a Flow Finisher deals 3.
+        [SerializeField, Min(1)] private int maximumHealth = 5;
+        [SerializeField, Min(0.03f)] private float hitFlashDuration = 0.12f;
+
         [Header("Crash and Respawn")]
         [SerializeField, Min(0.5f)] private float crashDuration = 3.4f;
         [SerializeField, Range(0.1f, 0.9f)] private float crashFadeBeginsAt = 0.52f;
@@ -65,6 +71,8 @@ namespace PixelOcean
         private int frameIndex;
         private float decisionTimer;
         private float nextAttackTime;
+        private int currentHealth;
+        private float hitFlashUntil;
         private float stateClock;
         private float moveSpeed;
         private bool missileFired;
@@ -98,6 +106,7 @@ namespace PixelOcean
             spriteRenderer.sortingOrder = sortingOrder;
             originalSortingLayerId = spriteRenderer.sortingLayerID;
             baseTint = spriteRenderer.color;
+            currentHealth = Mathf.Max(1, maximumHealth);
 
             transform.localScale = Vector3.one * helicopterScale;
             hitCollider.isTrigger = true;
@@ -148,6 +157,8 @@ namespace PixelOcean
             if (worldCamera == null) worldCamera = Camera.main;
             if (target == null || target.IsDead || !target.IsPlayerControlled) FindTarget();
             Animate();
+            if (state != State.Crashing && Time.time >= hitFlashUntil)
+                spriteRenderer.color = baseTint;
             if (worldCamera == null) return;
 
             switch (state)
@@ -292,7 +303,18 @@ namespace PixelOcean
 
         public void TakeThrownItemHit(Vector2 hitPosition)
         {
+            TakeThrownItemHit(1, hitPosition);
+        }
+
+        public void TakeThrownItemHit(int damage, Vector2 hitPosition)
+        {
             if (!CanBeHit) return;
+
+            currentHealth = Mathf.Max(0, currentHealth - Mathf.Max(1, damage));
+            hitFlashUntil = Time.time + Mathf.Max(0.03f, hitFlashDuration);
+            spriteRenderer.color = new Color(1f, 0.18f, 0.12f, baseTint.a);
+            if (currentHealth > 0)
+                return;
 
             foreach (DayTwoHelicopterMissile missile in FindObjectsByType<DayTwoHelicopterMissile>(FindObjectsSortMode.None))
                 if (missile != null && missile.Owner == this) missile.Intercept(hitPosition);
@@ -438,6 +460,8 @@ namespace PixelOcean
             spriteRenderer.sortingLayerID = originalSortingLayerId;
             spriteRenderer.sortingOrder = sortingOrder;
             spriteRenderer.color = baseTint;
+            currentHealth = Mathf.Max(1, maximumHealth);
+            hitFlashUntil = 0f;
             spriteRenderer.enabled = true;
             hitCollider.enabled = true;
             transform.rotation = Quaternion.identity;

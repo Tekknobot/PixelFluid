@@ -44,7 +44,9 @@ namespace PixelOcean
         [SerializeField, Min(0f)] private float bankAngle = 7f;
 
         [Header("Combat")]
-        [SerializeField, Min(1)] private int maximumHealth = 20;
+        // Six ordinary hits leaves enough of Day 6's shared item supply for the
+        // sea roster and the other simultaneous UFOs. A Flow Finisher deals 3.
+        [SerializeField, Min(1)] private int maximumHealth = 6;
         [SerializeField, Min(0.1f)] private float contactRadius = 0.58f;
         [SerializeField] private Vector2 firstAttackDelayRange = new(2.2f, 4.2f);
         [SerializeField] private Vector2 attackCooldownRange = new(4.2f, 7.2f);
