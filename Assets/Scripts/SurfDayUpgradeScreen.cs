@@ -1,32 +1,56 @@
 using System.Collections;
+using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 namespace PixelOcean
 {
     [DefaultExecutionOrder(-11850)]
     public sealed class SurfDayUpgradeScreen : MonoBehaviour
     {
+        private sealed class OptionView
+        {
+            public RectTransform Row;
+            public Image Rail;
+            public TextMeshProUGUI Number;
+            public TextMeshProUGUI Name;
+            public TextMeshProUGUI Detail;
+            public TextMeshProUGUI SelectedTag;
+        }
+
         public static SurfDayUpgradeScreen Instance { get; private set; }
 
         private bool visible;
         private bool chosen;
         private int selectedIndex;
-        private bool horizontalHeld;
+        private bool navigationHeld;
         private float previousTimeScale = 1f;
+        private float revealStartedAt;
+        private float selectionChangedAt;
+        private float lastClosedAt = -100f;
 
-        private GUIStyle titleStyle;
-        private GUIStyle subtitleStyle;
-        private GUIStyle buttonStyle;
-        private GUIStyle selectedButtonStyle;
-        private GUIStyle detailStyle;
-        private GUIStyle hintStyle;
+        private Canvas panelCanvas;
+        private RectTransform contentRoot;
+        private readonly List<EndDayPanelPresentation.MotionElement> motionElements = new();
+        private readonly List<OptionView> optionViews = new();
 
-        private Texture2D panelTexture;
-        private Texture2D buttonTexture;
-        private Texture2D buttonHoverTexture;
-        private Texture2D selectedTexture;
-        private Texture2D selectedPressedTexture;
+        public bool IsVisible => visible;
+
+        private static readonly string[] UpgradeNames =
+        {
+            "HIGHER LAUNCH",
+            "FASTER WATER SLASH",
+            "STRONGER SKID"
+        };
+
+        private static readonly string[] UpgradeDetails =
+        {
+            "Catch more air  /  Jump height +10%",
+            "Return to the flow sooner  /  Cooldown -15%",
+            "Drive through the wave  /  Charged speed +15%"
+        };
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Install()
@@ -51,10 +75,30 @@ namespace PixelOcean
 
         public IEnumerator ShowAndWait()
         {
+            if (visible)
+            {
+                // A duplicate day-completion coroutine shares the current panel
+                // instead of resetting its selection or creating another entry.
+                while (visible)
+                    yield return null;
+                yield break;
+            }
+
+            if (Time.unscaledTime - lastClosedAt < 0.50f)
+                yield break;
+
+            AirTrickScoreSystem.Instance?.DismissRecapImmediate();
+            EnsureUi();
             visible = true;
             chosen = false;
             selectedIndex = 0;
-            horizontalHeld = true; // Require the stick/d-pad to be released once.
+            navigationHeld = true;
+            revealStartedAt = Time.unscaledTime;
+            selectionChangedAt = revealStartedAt;
+            EndDayPanelPresentation.ResetMotion(motionElements);
+            UpdateSelectionVisuals();
+            panelCanvas.gameObject.SetActive(true);
+            EndDayUiFocusController.Begin(panelCanvas);
 
             previousTimeScale = Time.timeScale;
             Time.timeScale = 0f;
@@ -63,6 +107,12 @@ namespace PixelOcean
                 yield return null;
 
             visible = false;
+            if (panelCanvas != null)
+            {
+                panelCanvas.gameObject.SetActive(false);
+                EndDayUiFocusController.End(panelCanvas);
+            }
+            lastClosedAt = Time.unscaledTime;
             Time.timeScale = previousTimeScale;
         }
 
@@ -78,6 +128,12 @@ namespace PixelOcean
 
             chosen = true;
             visible = false;
+            if (panelCanvas != null)
+            {
+                panelCanvas.gameObject.SetActive(false);
+                EndDayUiFocusController.End(panelCanvas);
+            }
+            lastClosedAt = Time.unscaledTime;
             Time.timeScale = previousTimeScale;
         }
 
@@ -86,46 +142,125 @@ namespace PixelOcean
             if (!visible || chosen)
                 return;
 
+            EndDayPanelPresentation.Animate(motionElements, revealStartedAt);
+            UpdateSelectionVisuals();
+            ReadNavigationInput();
+            ReadMouseInput();
+        }
+
+        private void ReadNavigationInput()
+        {
             Keyboard keyboard = Keyboard.current;
             Gamepad gamepad = Gamepad.current;
 
-            bool leftPressed = keyboard != null &&
-                (keyboard.leftArrowKey.wasPressedThisFrame || keyboard.aKey.wasPressedThisFrame);
-            bool rightPressed = keyboard != null &&
-                (keyboard.rightArrowKey.wasPressedThisFrame || keyboard.dKey.wasPressedThisFrame);
+            bool previousPressed = keyboard != null &&
+                (keyboard.leftArrowKey.wasPressedThisFrame ||
+                 keyboard.upArrowKey.wasPressedThisFrame ||
+                 keyboard.aKey.wasPressedThisFrame ||
+                 keyboard.wKey.wasPressedThisFrame);
+            bool nextPressed = keyboard != null &&
+                (keyboard.rightArrowKey.wasPressedThisFrame ||
+                 keyboard.downArrowKey.wasPressedThisFrame ||
+                 keyboard.dKey.wasPressedThisFrame ||
+                 keyboard.sKey.wasPressedThisFrame);
 
-            float horizontal = 0f;
+            float navigation = 0f;
             if (gamepad != null)
             {
-                horizontal = gamepad.leftStick.x.ReadValue();
-                if (gamepad.dpad.left.isPressed) horizontal = -1f;
-                if (gamepad.dpad.right.isPressed) horizontal = 1f;
+                Vector2 stick = gamepad.leftStick.ReadValue();
+                navigation = Mathf.Abs(stick.y) > Mathf.Abs(stick.x) ? -stick.y : stick.x;
+                if (gamepad.dpad.left.isPressed || gamepad.dpad.up.isPressed) navigation = -1f;
+                if (gamepad.dpad.right.isPressed || gamepad.dpad.down.isPressed) navigation = 1f;
             }
 
-            bool controllerDirectionHeld = Mathf.Abs(horizontal) >= 0.55f;
+            bool controllerDirectionHeld = Mathf.Abs(navigation) >= 0.55f;
             if (!controllerDirectionHeld)
-                horizontalHeld = false;
+                navigationHeld = false;
 
-            if (leftPressed || (horizontal < -0.55f && !horizontalHeld))
+            if (previousPressed || (navigation < -0.55f && !navigationHeld))
             {
-                selectedIndex = (selectedIndex + 2) % 3;
-                horizontalHeld = controllerDirectionHeld;
+                ChangeSelection((selectedIndex + UpgradeNames.Length - 1) % UpgradeNames.Length);
+                navigationHeld = controllerDirectionHeld;
             }
-            else if (rightPressed || (horizontal > 0.55f && !horizontalHeld))
+            else if (nextPressed || (navigation > 0.55f && !navigationHeld))
             {
-                selectedIndex = (selectedIndex + 1) % 3;
-                horizontalHeld = controllerDirectionHeld;
+                ChangeSelection((selectedIndex + 1) % UpgradeNames.Length);
+                navigationHeld = controllerDirectionHeld;
             }
 
             bool confirm = keyboard != null &&
                 (keyboard.enterKey.wasPressedThisFrame ||
                  keyboard.numpadEnterKey.wasPressedThisFrame ||
                  keyboard.spaceKey.wasPressedThisFrame);
-
             confirm |= gamepad != null && gamepad.buttonSouth.wasPressedThisFrame;
 
-            if (confirm)
+            if (confirm && Time.unscaledTime - revealStartedAt >= 0.25f)
                 Apply(selectedIndex);
+        }
+
+        private void ReadMouseInput()
+        {
+            Mouse mouse = Mouse.current;
+            if (mouse == null || !mouse.leftButton.wasReleasedThisFrame)
+                return;
+
+            Vector2 pointer = mouse.position.ReadValue();
+            for (int i = 0; i < optionViews.Count; i++)
+            {
+                OptionView view = optionViews[i];
+                if (view?.Row == null ||
+                    !RectTransformUtility.RectangleContainsScreenPoint(view.Row, pointer, null))
+                    continue;
+
+                ChangeSelection(i);
+                Apply(i);
+                return;
+            }
+        }
+
+        private void ChangeSelection(int index)
+        {
+            if (selectedIndex == index)
+                return;
+
+            selectedIndex = Mathf.Clamp(index, 0, UpgradeNames.Length - 1);
+            selectionChangedAt = Time.unscaledTime;
+            UpdateSelectionVisuals();
+        }
+
+        private void UpdateSelectionVisuals()
+        {
+            for (int i = 0; i < optionViews.Count; i++)
+            {
+                OptionView view = optionViews[i];
+                if (view == null)
+                    continue;
+
+                bool selected = i == selectedIndex;
+                Color main = selected
+                    ? EndDayPanelPresentation.Gold
+                    : new Color(0.83f, 0.92f, 0.96f, 0.78f);
+                Color detail = selected
+                    ? EndDayPanelPresentation.White
+                    : new Color(0.76f, 0.86f, 0.91f, 0.66f);
+
+                view.Rail.color = selected
+                    ? EndDayPanelPresentation.Gold
+                    : new Color(0.02f, 0.40f, 0.78f, 0.72f);
+                view.Number.color = selected
+                    ? EndDayPanelPresentation.Gold
+                    : EndDayPanelPresentation.Cyan;
+                view.Name.color = main;
+                view.Detail.color = detail;
+                view.SelectedTag.gameObject.SetActive(selected);
+
+                float pulse = selected
+                    ? 1f + Mathf.Sin(Mathf.Clamp01(
+                        (Time.unscaledTime - selectionChangedAt) / 0.35f) * Mathf.PI) * 0.45f
+                    : 1f;
+                view.Rail.rectTransform.SetSizeWithCurrentAnchors(
+                    RectTransform.Axis.Horizontal, (selected ? 6f : 2f) * pulse);
+            }
         }
 
         private void Apply(int index)
@@ -151,165 +286,131 @@ namespace PixelOcean
             chosen = true;
         }
 
-        private static Texture2D MakeTexture(Color color)
+        private void EnsureUi()
         {
-            Texture2D texture = new(1, 1, TextureFormat.RGBA32, false)
-            {
-                filterMode = FilterMode.Point,
-                wrapMode = TextureWrapMode.Clamp,
-                hideFlags = HideFlags.HideAndDontSave
-            };
-            texture.SetPixel(0, 0, color);
-            texture.Apply();
-            return texture;
-        }
-
-        private void EnsureStyles()
-        {
-            if (titleStyle != null)
+            if (panelCanvas != null)
                 return;
 
-            panelTexture = MakeTexture(new Color(0.015f, 0.08f, 0.13f, 0.97f));
-            buttonTexture = MakeTexture(new Color(0.03f, 0.22f, 0.30f, 1f));
-            buttonHoverTexture = MakeTexture(new Color(0.04f, 0.31f, 0.40f, 1f));
-            selectedTexture = MakeTexture(new Color(0.05f, 0.48f, 0.58f, 1f));
-            selectedPressedTexture = MakeTexture(new Color(0.95f, 0.70f, 0.16f, 1f));
+            panelCanvas = EndDayPanelPresentation.CreateCanvas(
+                transform, "End Day Upgrade TMP Canvas", 32600);
+            GraphicRaycaster raycaster = panelCanvas.GetComponent<GraphicRaycaster>();
+            if (raycaster != null)
+                raycaster.enabled = false;
 
-            titleStyle = new GUIStyle(GUI.skin.label)
-            {
-                font = PixelFontLibrary.Bold,
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 48,
-                fontStyle = FontStyle.Normal,
-                normal = { textColor = Color.white }
-            };
+            GameObject content = new("Left Middle Upgrade Stack", typeof(RectTransform));
+            content.transform.SetParent(panelCanvas.transform, false);
+            contentRoot = content.GetComponent<RectTransform>();
+            contentRoot.anchorMin = contentRoot.anchorMax = new Vector2(0f, 0.5f);
+            contentRoot.pivot = new Vector2(0f, 0.5f);
+            contentRoot.anchoredPosition = new Vector2(106f, 0f);
+            contentRoot.sizeDelta = new Vector2(780f, 660f);
 
-            subtitleStyle = new GUIStyle(GUI.skin.label)
-            {
-                font = PixelFontLibrary.Medium,
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 24,
-                normal = { textColor = new Color(0.55f, 0.92f, 1f, 1f) }
-            };
+            CreateMotionText("Eyebrow", "END OF DAY  /  ONE CHOICE",
+                new Vector2(0f, 0f), new Vector2(780f, 28f),
+                PixelFontLibrary.TmpMedium, 19f, TextAlignmentOptions.MidlineLeft,
+                EndDayPanelPresentation.Cyan, 0);
+            CreateMotionText("Heading", "CHOOSE YOUR NEXT WAVE",
+                new Vector2(0f, 30f), new Vector2(780f, 68f),
+                PixelFontLibrary.TmpBold, 55f, TextAlignmentOptions.MidlineLeft,
+                EndDayPanelPresentation.White, 1);
+            CreateMotionText("Subheading", "Pick one permanent upgrade before the next day.",
+                new Vector2(0f, 99f), new Vector2(780f, 34f),
+                PixelFontLibrary.TmpRegular, 23f, TextAlignmentOptions.MidlineLeft,
+                EndDayPanelPresentation.SoftWhite, 2);
 
-            buttonStyle = new GUIStyle(GUI.skin.button)
-            {
-                font = PixelFontLibrary.Bold,
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 30,
-                fontStyle = FontStyle.Normal,
-                wordWrap = true,
-                padding = new RectOffset(18, 18, 20, 20),
-                normal = { background = buttonTexture, textColor = Color.white },
-                hover = { background = buttonHoverTexture, textColor = Color.white },
-                active = { background = selectedPressedTexture, textColor = new Color(0.03f, 0.08f, 0.10f, 1f) },
-                focused = { background = buttonHoverTexture, textColor = Color.white }
-            };
+            const float optionsTop = 160f;
+            const float optionHeight = 108f;
+            const float optionGap = 12f;
+            for (int i = 0; i < UpgradeNames.Length; i++)
+                CreateOption(i, optionsTop + i * (optionHeight + optionGap), 3 + i);
 
-            selectedButtonStyle = new GUIStyle(buttonStyle)
-            {
-                normal = { background = selectedTexture, textColor = Color.white },
-                hover = { background = selectedTexture, textColor = Color.white },
-                focused = { background = selectedTexture, textColor = Color.white },
-                active = { background = selectedPressedTexture, textColor = new Color(0.03f, 0.08f, 0.10f, 1f) }
-            };
+            float footerY = optionsTop + UpgradeNames.Length * (optionHeight + optionGap) + 6f;
+            RectTransform ruleGroup = EndDayPanelPresentation.CreateTopLeftRect(
+                contentRoot, "Footer Rule Motion", new Vector2(0f, footerY), new Vector2(530f, 2f));
+            Image rule = EndDayPanelPresentation.CreateRule(
+                ruleGroup, "Footer Rule", new Color(0.42f, 0.94f, 1f, 0.62f));
+            EndDayPanelPresentation.Stretch(rule.rectTransform);
+            EndDayPanelPresentation.AddMotion(ruleGroup, 7, motionElements);
 
-            detailStyle = new GUIStyle(GUI.skin.label)
-            {
-                font = PixelFontLibrary.Medium,
-                alignment = TextAnchor.UpperCenter,
-                fontSize = 23,
-                wordWrap = true,
-                normal = { textColor = new Color(0.88f, 0.96f, 1f, 1f) }
-            };
+            CreateMotionText("Input Hint", "D-PAD / STICK  CHOOSE     A / ENTER  CONFIRM",
+                new Vector2(0f, footerY + 13f), new Vector2(780f, 30f),
+                PixelFontLibrary.TmpMedium, 18f, TextAlignmentOptions.MidlineLeft,
+                EndDayPanelPresentation.White, 8);
 
-            hintStyle = new GUIStyle(GUI.skin.label)
-            {
-                font = PixelFontLibrary.Medium,
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 20,
-                normal = { textColor = new Color(1f, 0.78f, 0.24f, 1f) }
-            };
+            panelCanvas.gameObject.SetActive(false);
         }
 
-        private void DrawBorder(Rect rect, Color color, float thickness)
+        private TextMeshProUGUI CreateMotionText(string name, string text,
+            Vector2 position, Vector2 size, TMP_FontAsset font, float fontSize,
+            TextAlignmentOptions alignment, Color colour, int order)
         {
-            Color old = GUI.color;
-            GUI.color = color;
-            GUI.DrawTexture(new Rect(rect.x, rect.y, rect.width, thickness), Texture2D.whiteTexture);
-            GUI.DrawTexture(new Rect(rect.x, rect.yMax - thickness, rect.width, thickness), Texture2D.whiteTexture);
-            GUI.DrawTexture(new Rect(rect.x, rect.y, thickness, rect.height), Texture2D.whiteTexture);
-            GUI.DrawTexture(new Rect(rect.xMax - thickness, rect.y, thickness, rect.height), Texture2D.whiteTexture);
-            GUI.color = old;
+            RectTransform group = EndDayPanelPresentation.CreateTopLeftRect(
+                contentRoot, name + " Motion", position, size);
+            TextMeshProUGUI label = EndDayPanelPresentation.CreateText(
+                group, name, text, font, fontSize, alignment, colour);
+            EndDayPanelPresentation.Stretch(label.rectTransform);
+            EndDayPanelPresentation.AddMotion(group, order, motionElements);
+            return label;
         }
 
-        private void OnGUI()
+        private void CreateOption(int index, float y, int order)
         {
-            if (!visible)
-                return;
+            RectTransform row = EndDayPanelPresentation.CreateTopLeftRect(
+                contentRoot, "Upgrade " + (index + 1) + " Motion",
+                new Vector2(0f, y), new Vector2(780f, 108f));
+            EndDayPanelPresentation.AddMotion(row, order, motionElements);
 
-            EnsureStyles();
+            Image rail = CreatePlacedRule(row, "Selection Rail",
+                new Vector2(0f, 7f), new Vector2(6f, 74f),
+                EndDayPanelPresentation.Gold);
+            TextMeshProUGUI number = CreatePlacedText(row, "Number", "0" + (index + 1),
+                new Vector2(17f, 10f), new Vector2(42f, 31f),
+                PixelFontLibrary.TmpMedium, 18f, TextAlignmentOptions.TopLeft,
+                EndDayPanelPresentation.Cyan);
+            TextMeshProUGUI optionName = CreatePlacedText(row, "Name", UpgradeNames[index],
+                new Vector2(69f, 4f), new Vector2(702f, 47f),
+                PixelFontLibrary.TmpSemiBold, 31f, TextAlignmentOptions.TopLeft,
+                EndDayPanelPresentation.White);
+            TextMeshProUGUI detail = CreatePlacedText(row, "Detail", UpgradeDetails[index],
+                new Vector2(70f, 52f), new Vector2(698f, 35f),
+                PixelFontLibrary.TmpRegular, 20f, TextAlignmentOptions.TopLeft,
+                EndDayPanelPresentation.SoftWhite);
+            TextMeshProUGUI selectedTag = CreatePlacedText(row, "Selected", "SELECTED",
+                new Vector2(0f, 13f), new Vector2(772f, 26f),
+                PixelFontLibrary.TmpSemiBold, 15f, TextAlignmentOptions.TopRight,
+                EndDayPanelPresentation.Gold);
 
-            float width = Mathf.Min(1080f, Screen.width - 36f);
-            float height = Mathf.Min(620f, Screen.height - 36f);
-            Rect panel = new((Screen.width - width) * 0.5f, (Screen.height - height) * 0.5f, width, height);
-
-            GUI.DrawTexture(panel, panelTexture);
-            DrawBorder(panel, new Color(0.25f, 0.88f, 1f, 1f), 4f);
-            DrawBorder(new Rect(panel.x + 8f, panel.y + 8f, panel.width - 16f, panel.height - 16f),
-                new Color(1f, 0.72f, 0.18f, 0.9f), 2f);
-
-            GUI.Label(new Rect(panel.x + 24f, panel.y + 22f, panel.width - 48f, 58f),
-                "CHOOSE YOUR NEXT WAVE", titleStyle);
-            GUI.Label(new Rect(panel.x + 24f, panel.y + 77f, panel.width - 48f, 40f),
-                "PICK ONE UPGRADE BEFORE THE NEXT DAY", subtitleStyle);
-
-            string[] names = { "HIGHER LAUNCH", "FASTER WATER SLASH", "STRONGER SKID" };
-            string[] details =
+            optionViews.Add(new OptionView
             {
-                "Catch more air.\nJump height +10%",
-                "Get back in the flow sooner.\nWater Slash cooldown -15%",
-                "Hit the wave with more force.\nCharged skid speed +15%"
-            };
-
-            float gap = 20f;
-            float buttonWidth = (panel.width - 96f - gap * 2f) / 3f;
-            float buttonY = panel.y + 145f;
-            float buttonHeight = 250f;
-
-            for (int i = 0; i < 3; i++)
-            {
-                float x = panel.x + 48f + i * (buttonWidth + gap);
-                Rect buttonRect = new(x, buttonY, buttonWidth, buttonHeight);
-                bool selected = i == selectedIndex;
-
-                if (selected)
-                {
-                    Rect glow = new(buttonRect.x - 6f, buttonRect.y - 6f, buttonRect.width + 12f, buttonRect.height + 12f);
-                    DrawBorder(glow, new Color(1f, 0.76f, 0.20f, 1f), 5f);
-                    GUI.Label(new Rect(buttonRect.x, buttonRect.y - 36f, buttonRect.width, 30f), "≈  SELECTED  ≈", hintStyle);
-                }
-
-                if (GUI.Button(buttonRect, names[i], selected ? selectedButtonStyle : buttonStyle))
-                {
-                    selectedIndex = i;
-                    Apply(i);
-                }
-
-                GUI.Label(new Rect(x + 10f, panel.y + 414f, buttonWidth - 20f, 82f), details[i], detailStyle);
-            }
-
-            GUI.Label(new Rect(panel.x + 20f, panel.yMax - 74f, panel.width - 40f, 42f),
-                "LEFT STICK / D-PAD TO CHOOSE     A / ENTER TO CONFIRM", hintStyle);
+                Row = row,
+                Rail = rail,
+                Number = number,
+                Name = optionName,
+                Detail = detail,
+                SelectedTag = selectedTag
+            });
         }
 
-        private void OnDestroy()
+        private static TextMeshProUGUI CreatePlacedText(Transform parent, string name,
+            string text, Vector2 position, Vector2 size, TMP_FontAsset font,
+            float fontSize, TextAlignmentOptions alignment, Color colour)
         {
-            if (panelTexture != null) Destroy(panelTexture);
-            if (buttonTexture != null) Destroy(buttonTexture);
-            if (buttonHoverTexture != null) Destroy(buttonHoverTexture);
-            if (selectedTexture != null) Destroy(selectedTexture);
-            if (selectedPressedTexture != null) Destroy(selectedPressedTexture);
+            RectTransform holder = EndDayPanelPresentation.CreateTopLeftRect(
+                parent, name + " Holder", position, size);
+            TextMeshProUGUI label = EndDayPanelPresentation.CreateText(
+                holder, name, text, font, fontSize, alignment, colour);
+            EndDayPanelPresentation.Stretch(label.rectTransform);
+            return label;
+        }
+
+        private static Image CreatePlacedRule(Transform parent, string name,
+            Vector2 position, Vector2 size, Color colour)
+        {
+            RectTransform holder = EndDayPanelPresentation.CreateTopLeftRect(
+                parent, name + " Holder", position, size);
+            Image image = EndDayPanelPresentation.CreateRule(holder, name, colour);
+            EndDayPanelPresentation.Stretch(image.rectTransform);
+            return image;
         }
     }
 }

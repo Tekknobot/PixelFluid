@@ -24,15 +24,23 @@ namespace PixelOcean
         private static TMP_FontAsset tmpSemiBold;
         private static TMP_FontAsset tmpBold;
 
-        public static Font Regular => regular != null ? regular : regular = Load("PixelifySans-Regular");
-        public static Font Medium => medium != null ? medium : medium = Load("PixelifySans-Medium");
-        public static Font SemiBold => semiBold != null ? semiBold : semiBold = Load("PixelifySans-SemiBold");
-        public static Font Bold => bold != null ? bold : bold = Load("PixelifySans-Bold");
+        public static Font Regular => regular != null ? regular : regular = Load("PixeloidSans-Bold");
+        public static Font Medium => medium != null ? medium : medium = Load("PixeloidSans-Bold");
+        public static Font SemiBold => semiBold != null ? semiBold : semiBold = Load("PixeloidSans-Bold");
+        public static Font Bold => bold != null ? bold : bold = Load("PixeloidSans-Bold");
 
-        public static TMP_FontAsset TmpRegular => tmpRegular != null ? tmpRegular : tmpRegular = LoadTmp("PixeloidSans-Bold SDF");
-        public static TMP_FontAsset TmpMedium => tmpMedium != null ? tmpMedium : tmpMedium = LoadTmp("PixeloidSans-Bold SDF");
-        public static TMP_FontAsset TmpSemiBold => tmpSemiBold != null ? tmpSemiBold : tmpSemiBold = LoadTmp("PixeloidSans-Bold SDF");
-        public static TMP_FontAsset TmpBold => tmpBold != null ? tmpBold : tmpBold = LoadTmp("PixeloidSans-Bold SDF");
+        public static TMP_FontAsset TmpRegular => tmpRegular != null
+            ? tmpRegular
+            : tmpRegular = LoadTmpVariant("PixeloidSans-Bold SDF", "PixeloidSans-Bold SDF");
+        public static TMP_FontAsset TmpMedium => tmpMedium != null
+            ? tmpMedium
+            : tmpMedium = LoadTmpVariant("PixeloidSans-Bold SDF", "PixeloidSans-Bold SDF");
+        public static TMP_FontAsset TmpSemiBold => tmpSemiBold != null
+            ? tmpSemiBold
+            : tmpSemiBold = LoadTmpVariant("PixeloidSans-Bold SDF", "PixeloidSans-Bold SDF");
+        public static TMP_FontAsset TmpBold => tmpBold != null
+            ? tmpBold
+            : tmpBold = LoadTmpVariant("PixeloidSans-Bold SDF", "PixeloidSans-Bold SDF");
 
         private static Font Load(string name)
         {
@@ -48,6 +56,15 @@ namespace PixelOcean
             if (loaded == null)
                 Debug.LogWarning($"Surfer Slug could not load {FontFolder}{name}.asset. Make sure the generated TMP font asset is inside Assets/Resources/Fonts.");
             return loaded;
+        }
+
+        private static TMP_FontAsset LoadTmpVariant(string preferredName, string fallbackName)
+        {
+            TMP_FontAsset preferred = Resources.Load<TMP_FontAsset>(FontFolder + preferredName);
+            if (preferred != null)
+                return preferred;
+
+            return LoadTmp(fallbackName);
         }
 
         public static Font PickLegacy(bool heading, bool emphasized)

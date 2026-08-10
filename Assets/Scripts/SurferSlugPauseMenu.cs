@@ -209,6 +209,14 @@ namespace PixelOcean
 
         private void Update()
         {
+            // End-day recap/upgrade screens own the complete UI and input focus.
+            // Escape/Start must not open a hidden pause menu behind them.
+            if (EndDayUiFocusController.IsActive)
+            {
+                ResetDeveloperCheat();
+                return;
+            }
+
             // The developer overlay owns controller navigation while it is open.
             // Do not let the hidden title menu process the same button presses.
             if (SurferSlugDeveloperMenu.IsOpen)
@@ -401,12 +409,36 @@ namespace PixelOcean
 
         public void PauseGame()
         {
-            if (menuVisible)
+            if (menuVisible || EndDayUiFocusController.IsActive)
                 return;
 
             GameplayPaused = true;
             DisableGameplayBehaviours();
             ShowMenu(false);
+        }
+
+        /// <summary>
+        /// Immediately removes a gameplay pause menu if an end-day presentation
+        /// begins on the same frame. The title screen is never closed by this path.
+        /// </summary>
+        public void CloseForEndDayPanel()
+        {
+            if (!menuVisible || firstMenu)
+                return;
+
+            if (motionRoutine != null)
+            {
+                StopCoroutine(motionRoutine);
+                motionRoutine = null;
+            }
+
+            menuRoot.SetActive(false);
+            menuVisible = false;
+            showingTitleMenu = false;
+            GameplayPaused = false;
+            RestoreGameplayBehaviours();
+            EventSystem.current?.SetSelectedGameObject(null);
+            inputReadyTime = Time.unscaledTime + 0.20f;
         }
 
         public void ResumeGame()

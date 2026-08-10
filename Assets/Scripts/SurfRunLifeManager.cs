@@ -130,6 +130,9 @@ namespace PixelOcean
 
         private void OnGUI()
         {
+            if (EndDayUiFocusController.IsActive)
+                return;
+
             if (fadeAlpha > 0.001f && fadeTexture != null)
             {
                 Color oldColor = GUI.color;

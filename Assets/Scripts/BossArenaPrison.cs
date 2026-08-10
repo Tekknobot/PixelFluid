@@ -722,6 +722,9 @@ namespace PixelOcean
 
         private void OnGUI()
         {
+            if (EndDayUiFocusController.IsActive)
+                return;
+
             if (!encounterStarted || encounterFinished || boss == null)
                 return;
 

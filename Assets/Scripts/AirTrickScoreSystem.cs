@@ -94,12 +94,16 @@ namespace PixelOcean
         private readonly List<FloatingScore> floatingScores = new();
         private Canvas floatingStokeCanvas;
         private RectTransform floatingStokeCanvasRect;
-        private GUIStyle floatingStyle;
-        private GUIStyle recapTitleStyle;
-        private GUIStyle recapValueStyle;
-        private GUIStyle recapLabelStyle;
-        private GUIStyle recapSmallStyle;
-        private GUIStyle recapFooterStyle;
+        private Canvas recapCanvas;
+        private RectTransform recapContentRoot;
+        private readonly List<EndDayPanelPresentation.MotionElement> recapMotionElements = new();
+        private TextMeshProUGUI recapDayLabel;
+        private TextMeshProUGUI recapDayStokeValue;
+        private TextMeshProUGUI recapJumpsValue;
+        private TextMeshProUGUI recapBestValue;
+        private TextMeshProUGUI recapHighestAirValue;
+        private TextMeshProUGUI recapTrickMixValue;
+        private TextMeshProUGUI recapTotalValue;
 
         private int totalStoke;
         private int dayStoke;
@@ -113,7 +117,10 @@ namespace PixelOcean
 
         private bool recapVisible;
         private float recapUntil;
+        private float recapShownAt;
         private int recapDay;
+        private int lastClosedRecapDay = -1;
+        private float lastRecapClosedAt = -100f;
         private float currentFlow;
         private float lastFlowGainTime;
         private float onFireUntil;
@@ -192,8 +199,12 @@ namespace PixelOcean
             float now = Time.unscaledTime;
             UpdateFloatingStokeLabels(now);
 
-            if (recapVisible && now >= recapUntil)
-                recapVisible = false;
+            if (recapVisible)
+            {
+                EndDayPanelPresentation.Animate(recapMotionElements, recapShownAt);
+                if (now >= recapUntil)
+                    HideRecap();
+            }
 
             bool onFireNow = IsOnFire;
             if (onFireWasActive && !onFireNow)
@@ -342,6 +353,11 @@ namespace PixelOcean
             highestAir = 0f;
             bestTrick = "NONE";
             recapVisible = false;
+            if (recapCanvas != null)
+            {
+                recapCanvas.gameObject.SetActive(false);
+                EndDayUiFocusController.End(recapCanvas);
+            }
             currentFlow = 0f;
             onFireUntil = 0f;
             onFireWasActive = false;
@@ -529,9 +545,35 @@ namespace PixelOcean
 
         public void ShowDayRecap(int day, float duration)
         {
+            if (recapVisible)
+                return;
+
+            if (SurfDayUpgradeScreen.Instance != null &&
+                SurfDayUpgradeScreen.Instance.IsVisible)
+                return;
+
+            if (day == lastClosedRecapDay &&
+                Time.unscaledTime - lastRecapClosedAt < 1f)
+                return;
+
+            EnsureRecapUi();
             recapDay = day;
             recapVisible = true;
-            recapUntil = Time.unscaledTime + Mathf.Max(1f, duration);
+            recapShownAt = Time.unscaledTime;
+            recapUntil = recapShownAt + Mathf.Max(1f, duration);
+            UpdateRecapText();
+            EndDayPanelPresentation.ResetMotion(recapMotionElements);
+            recapCanvas.gameObject.SetActive(true);
+            EndDayUiFocusController.Begin(recapCanvas);
+        }
+
+        public void DismissRecapImmediate()
+        {
+            if (!recapVisible &&
+                (recapCanvas == null || !recapCanvas.gameObject.activeSelf))
+                return;
+
+            HideRecap();
         }
 
 
@@ -573,215 +615,149 @@ namespace PixelOcean
             return "FLIP";
         }
 
-        private void EnsureStyles()
+        private void HideRecap()
         {
-            if (recapTitleStyle != null) return;
+            if (!recapVisible &&
+                (recapCanvas == null || !recapCanvas.gameObject.activeSelf))
+                return;
 
-            recapTitleStyle = new GUIStyle(GUI.skin.label)
+            recapVisible = false;
+            lastClosedRecapDay = recapDay;
+            lastRecapClosedAt = Time.unscaledTime;
+            if (recapCanvas != null)
             {
-                font = PixelFontLibrary.Bold,
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 86,
-                fontStyle = FontStyle.Normal,
-                wordWrap = false,
-                normal = { textColor = new Color(0.49f, 0.94f, 1f, 1f) }
-            };
-
-            recapValueStyle = new GUIStyle(GUI.skin.label)
-            {
-                font = PixelFontLibrary.Bold,
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 62,
-                fontStyle = FontStyle.Normal,
-                wordWrap = false,
-                normal = { textColor = new Color(1f, 0.82f, 0.28f, 1f) }
-            };
-
-            recapLabelStyle = new GUIStyle(GUI.skin.label)
-            {
-                font = PixelFontLibrary.SemiBold,
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 30,
-                fontStyle = FontStyle.Normal,
-                wordWrap = false,
-                normal = { textColor = new Color(0.55f, 0.92f, 1f, 1f) }
-            };
-
-            recapSmallStyle = new GUIStyle(GUI.skin.label)
-            {
-                font = PixelFontLibrary.Medium,
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 38,
-                fontStyle = FontStyle.Normal,
-                wordWrap = true,
-                normal = { textColor = Color.white }
-            };
-
-            recapFooterStyle = new GUIStyle(GUI.skin.label)
-            {
-                font = PixelFontLibrary.Bold,
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 50,
-                fontStyle = FontStyle.Normal,
-                wordWrap = false,
-                normal = { textColor = new Color(1f, 0.82f, 0.28f, 1f) }
-            };
-        }
-
-        private static void DrawSolidRect(Rect rect, Color colour)
-        {
-            Color previous = GUI.color;
-            GUI.color = colour;
-            GUI.DrawTexture(rect, Texture2D.whiteTexture);
-            GUI.color = previous;
-        }
-
-        private static void DrawPixelFrame(Rect panel)
-        {
-            // Chunky, square pixel frame: shadow, white outer rail, cyan inner rail.
-            DrawSolidRect(new Rect(panel.x + 10f, panel.y + 12f, panel.width, panel.height),
-                new Color(0f, 0f, 0f, 0.42f));
-            DrawSolidRect(panel, new Color(0.96f, 0.99f, 1f, 1f));
-            DrawSolidRect(new Rect(panel.x + 5f, panel.y + 5f, panel.width - 10f, panel.height - 10f),
-                new Color(0.18f, 0.76f, 0.91f, 1f));
-            DrawSolidRect(new Rect(panel.x + 10f, panel.y + 10f, panel.width - 20f, panel.height - 20f),
-                new Color(0.015f, 0.09f, 0.15f, 0.98f));
-        }
-
-        private static void DrawWaveRail(Rect rect, float phase)
-        {
-            DrawSolidRect(rect, new Color(0.05f, 0.30f, 0.43f, 1f));
-
-            const float blockWidth = 28f;
-            const float crestWidth = 14f;
-            float offset = Mathf.Repeat(phase, blockWidth);
-            for (float x = rect.x - blockWidth + offset; x < rect.xMax; x += blockWidth)
-            {
-                DrawSolidRect(new Rect(x, rect.y, crestWidth, rect.height * 0.5f),
-                    new Color(0.38f, 0.91f, 1f, 1f));
-                DrawSolidRect(new Rect(x + crestWidth, rect.y + rect.height * 0.5f,
-                        blockWidth - crestWidth, rect.height * 0.5f),
-                    new Color(0.20f, 0.66f, 0.82f, 1f));
+                recapCanvas.gameObject.SetActive(false);
+                EndDayUiFocusController.End(recapCanvas);
             }
         }
 
-        private static void DrawShadowedLabel(Rect rect, string text, GUIStyle style,
-            float shadowOffset = 3f)
+        private void UpdateRecapText()
         {
-            Color original = style.normal.textColor;
-            style.normal.textColor = new Color(0f, 0f, 0f, 0.72f);
-            GUI.Label(new Rect(rect.x + shadowOffset, rect.y + shadowOffset, rect.width, rect.height),
-                text, style);
-            style.normal.textColor = original;
-            GUI.Label(rect, text, style);
+            if (recapDayLabel == null)
+                return;
+
+            recapDayLabel.text = "DAY " + recapDay + "  /  COMPLETE";
+            recapDayStokeValue.text = "+" + dayStoke.ToString("N0");
+            recapJumpsValue.text = jumpsLanded.ToString("N0");
+            recapBestValue.text = bestTrick + "  /  +" + bestJumpScore.ToString("N0");
+            recapHighestAirValue.text = highestAir.ToString("0.00") + " m";
+            recapTrickMixValue.text =
+                "H " + handstands + "  /  R " + rotations + "  /  F " + flips;
+            recapTotalValue.text = "TOTAL STOKE  " + totalStoke.ToString("N0");
         }
 
-        private void OnGUI()
+        private void EnsureRecapUi()
         {
-            EnsureStyles();
+            if (recapCanvas != null)
+                return;
 
-            if (!recapVisible) return;
+            recapCanvas = EndDayPanelPresentation.CreateCanvas(
+                transform, "End Day Recap TMP Canvas", 32550);
+            GraphicRaycaster raycaster = recapCanvas.GetComponent<GraphicRaycaster>();
+            if (raycaster != null)
+                raycaster.enabled = false;
 
-            float width = Mathf.Min(980f, Screen.width - 36f);
-            float height = Mathf.Min(700f, Screen.height - 36f);
-            float scale = Mathf.Clamp(Mathf.Min(width / 980f, height / 700f), 0.62f, 1f);
+            GameObject content = new("Left Middle Recap Stack", typeof(RectTransform));
+            content.transform.SetParent(recapCanvas.transform, false);
+            recapContentRoot = content.GetComponent<RectTransform>();
+            recapContentRoot.anchorMin = recapContentRoot.anchorMax = new Vector2(0f, 0.5f);
+            recapContentRoot.pivot = new Vector2(0f, 0.5f);
+            recapContentRoot.anchoredPosition = new Vector2(106f, 0f);
+            recapContentRoot.sizeDelta = new Vector2(720f, 610f);
 
-            recapTitleStyle.fontSize = Mathf.RoundToInt(86f * scale);
-            recapValueStyle.fontSize = Mathf.RoundToInt(62f * scale);
-            recapLabelStyle.fontSize = Mathf.RoundToInt(30f * scale);
-            recapSmallStyle.fontSize = Mathf.RoundToInt(38f * scale);
-            recapFooterStyle.fontSize = Mathf.RoundToInt(50f * scale);
+            recapDayLabel = CreateRecapMotionText("Day Complete", string.Empty,
+                new Vector2(0f, 0f), new Vector2(720f, 28f),
+                PixelFontLibrary.TmpMedium, 18f, TextAlignmentOptions.MidlineLeft,
+                EndDayPanelPresentation.Cyan, 0);
+            CreateRecapMotionText("Recap Heading", "SESSION RECAP",
+                new Vector2(0f, 29f), new Vector2(720f, 70f),
+                PixelFontLibrary.TmpBold, 58f, TextAlignmentOptions.MidlineLeft,
+                EndDayPanelPresentation.White, 1);
+            CreateRecapMotionText("Stoke Caption", "TODAY'S STOKE",
+                new Vector2(0f, 111f), new Vector2(720f, 26f),
+                PixelFontLibrary.TmpMedium, 18f, TextAlignmentOptions.MidlineLeft,
+                EndDayPanelPresentation.Cyan, 2);
+            recapDayStokeValue = CreateRecapMotionText("Day Stoke", string.Empty,
+                new Vector2(0f, 131f), new Vector2(720f, 82f),
+                PixelFontLibrary.TmpBold, 68f, TextAlignmentOptions.MidlineLeft,
+                EndDayPanelPresentation.Gold, 3);
 
-            Rect panel = new(
-                (Screen.width - width) * 0.5f,
-                (Screen.height - height) * 0.5f,
-                width,
-                height
-            );
+            CreateRecapMotionRule("Stats Divider", new Vector2(0f, 216f),
+                new Vector2(540f, 2f), new Color(0.42f, 0.94f, 1f, 0.68f), 4);
 
-            DrawPixelFrame(panel);
+            const float rowsTop = 237f;
+            const float rowHeight = 52f;
+            recapJumpsValue = CreateRecapStatRow(
+                "TRICK JUMPS", rowsTop, rowHeight, 5);
+            recapBestValue = CreateRecapStatRow(
+                "BEST TRICK", rowsTop + rowHeight, rowHeight, 6);
+            recapHighestAirValue = CreateRecapStatRow(
+                "HIGHEST AIR", rowsTop + rowHeight * 2f, rowHeight, 7);
+            recapTrickMixValue = CreateRecapStatRow(
+                "TRICK MIX", rowsTop + rowHeight * 3f, rowHeight, 8);
 
-            Rect interior = new(panel.x + 18f, panel.y + 18f,
-                panel.width - 36f, panel.height - 36f);
-            float wavePhase = Time.unscaledTime * 18f;
-            DrawWaveRail(new Rect(interior.x, interior.y, interior.width, 14f * scale), wavePhase);
-            DrawWaveRail(new Rect(interior.x, interior.yMax - 14f * scale,
-                interior.width, 14f * scale), -wavePhase);
+            float footerY = rowsTop + rowHeight * 4f + 20f;
+            CreateRecapMotionRule("Total Divider", new Vector2(0f, footerY),
+                new Vector2(540f, 4f), EndDayPanelPresentation.Gold, 9);
+            recapTotalValue = CreateRecapMotionText("Total Stoke", string.Empty,
+                new Vector2(0f, footerY + 13f), new Vector2(720f, 49f),
+                PixelFontLibrary.TmpSemiBold, 31f, TextAlignmentOptions.MidlineLeft,
+                EndDayPanelPresentation.White, 10);
 
-            float top = interior.y + 22f * scale;
-            DrawShadowedLabel(
-                new Rect(interior.x + 20f, top, interior.width - 40f, 82f * scale),
-                "DAY " + recapDay + " RECAP",
-                recapTitleStyle,
-                4f * scale);
+            recapCanvas.gameObject.SetActive(false);
+        }
 
-            float stokeLabelY = top + 82f * scale;
-            GUI.Label(
-                new Rect(interior.x + 30f, stokeLabelY, interior.width - 60f, 36f * scale),
-                "TODAY'S STOKE",
-                recapLabelStyle);
+        private TextMeshProUGUI CreateRecapMotionText(string name, string text,
+            Vector2 position, Vector2 size, TMP_FontAsset font, float fontSize,
+            TextAlignmentOptions alignment, Color colour, int order)
+        {
+            RectTransform group = EndDayPanelPresentation.CreateTopLeftRect(
+                recapContentRoot, name + " Motion", position, size);
+            TextMeshProUGUI label = EndDayPanelPresentation.CreateText(
+                group, name, text, font, fontSize, alignment, colour);
+            EndDayPanelPresentation.Stretch(label.rectTransform);
+            EndDayPanelPresentation.AddMotion(group, order, recapMotionElements);
+            return label;
+        }
 
-            DrawShadowedLabel(
-                new Rect(interior.x + 30f, stokeLabelY + 27f * scale,
-                    interior.width - 60f, 72f * scale),
-                "+" + dayStoke.ToString("N0"),
-                recapValueStyle,
-                3f * scale);
+        private void CreateRecapMotionRule(string name, Vector2 position,
+            Vector2 size, Color colour, int order)
+        {
+            RectTransform group = EndDayPanelPresentation.CreateTopLeftRect(
+                recapContentRoot, name + " Motion", position, size);
+            Image rule = EndDayPanelPresentation.CreateRule(group, name, colour);
+            EndDayPanelPresentation.Stretch(rule.rectTransform);
+            EndDayPanelPresentation.AddMotion(group, order, recapMotionElements);
+        }
 
-            float dividerY = stokeLabelY + 105f * scale;
-            DrawSolidRect(new Rect(interior.x + 52f * scale, dividerY,
-                    interior.width - 104f * scale, 3f * scale),
-                new Color(0.20f, 0.67f, 0.82f, 0.95f));
+        private TextMeshProUGUI CreateRecapStatRow(string labelText,
+            float y, float height, int order)
+        {
+            RectTransform row = EndDayPanelPresentation.CreateTopLeftRect(
+                recapContentRoot, labelText + " Motion",
+                new Vector2(0f, y), new Vector2(720f, height));
+            EndDayPanelPresentation.AddMotion(row, order, recapMotionElements);
 
-            float statsTop = dividerY + 16f * scale;
-            float rowHeight = 68f * scale;
-            float statsWidth = interior.width - 84f * scale;
-            float statsX = interior.x + 42f * scale;
+            RectTransform railHolder = EndDayPanelPresentation.CreateTopLeftRect(
+                row, "Rail Holder", new Vector2(0f, 7f), new Vector2(3f, height - 14f));
+            Image rail = EndDayPanelPresentation.CreateRule(
+                railHolder, "Rail", new Color(0.42f, 0.94f, 1f, 0.58f));
+            EndDayPanelPresentation.Stretch(rail.rectTransform);
 
-            DrawSolidRect(new Rect(statsX, statsTop, statsWidth, rowHeight),
-                new Color(0.02f, 0.17f, 0.24f, 0.92f));
-            GUI.Label(new Rect(statsX + 12f * scale, statsTop, statsWidth - 24f * scale, rowHeight),
-                "TRICK JUMPS    " + jumpsLanded,
-                recapSmallStyle);
+            RectTransform labelHolder = EndDayPanelPresentation.CreateTopLeftRect(
+                row, "Label Holder", new Vector2(17f, 0f), new Vector2(205f, height));
+            TextMeshProUGUI label = EndDayPanelPresentation.CreateText(
+                labelHolder, "Label", labelText, PixelFontLibrary.TmpMedium,
+                18f, TextAlignmentOptions.MidlineLeft, EndDayPanelPresentation.Cyan);
+            EndDayPanelPresentation.Stretch(label.rectTransform);
 
-            DrawSolidRect(new Rect(statsX, statsTop + rowHeight + 7f * scale, statsWidth, rowHeight * 1.18f),
-                new Color(0.025f, 0.21f, 0.29f, 0.92f));
-            GUI.Label(new Rect(statsX + 12f * scale, statsTop + rowHeight + 7f * scale,
-                    statsWidth - 24f * scale, rowHeight * 1.18f),
-                "BEST TRICK\n" + bestTrick + "    +" + bestJumpScore,
-                recapSmallStyle);
-
-            float lowerRowY = statsTop + rowHeight * 2.18f + 14f * scale;
-            float halfGap = 7f * scale;
-            float halfWidth = (statsWidth - halfGap) * 0.5f;
-
-            DrawSolidRect(new Rect(statsX, lowerRowY, halfWidth, rowHeight),
-                new Color(0.02f, 0.17f, 0.24f, 0.92f));
-            GUI.Label(new Rect(statsX + 8f * scale, lowerRowY, halfWidth - 16f * scale, rowHeight),
-                "HIGHEST AIR\n" + highestAir.ToString("0.00") + " m",
-                recapSmallStyle);
-
-            DrawSolidRect(new Rect(statsX + halfWidth + halfGap, lowerRowY, halfWidth, rowHeight),
-                new Color(0.02f, 0.17f, 0.24f, 0.92f));
-            GUI.Label(new Rect(statsX + halfWidth + halfGap + 8f * scale, lowerRowY,
-                    halfWidth - 16f * scale, rowHeight),
-                "H " + handstands + "    R " + rotations + "    F " + flips,
-                recapSmallStyle);
-
-            float footerY = interior.yMax - 105f * scale;
-            DrawSolidRect(new Rect(interior.x + 34f * scale, footerY,
-                    interior.width - 68f * scale, 78f * scale),
-                new Color(0.035f, 0.25f, 0.34f, 0.96f));
-            DrawSolidRect(new Rect(interior.x + 34f * scale, footerY,
-                    interior.width - 68f * scale, 3f * scale),
-                new Color(0.45f, 0.94f, 1f, 1f));
-
-            DrawShadowedLabel(
-                new Rect(interior.x + 45f * scale, footerY + 2f * scale,
-                    interior.width - 90f * scale, 72f * scale),
-                "TOTAL STOKE    " + totalStoke.ToString("N0"),
-                recapFooterStyle,
-                3f * scale);
+            RectTransform valueHolder = EndDayPanelPresentation.CreateTopLeftRect(
+                row, "Value Holder", new Vector2(225f, 0f), new Vector2(495f, height));
+            TextMeshProUGUI value = EndDayPanelPresentation.CreateText(
+                valueHolder, "Value", string.Empty, PixelFontLibrary.TmpRegular,
+                25f, TextAlignmentOptions.MidlineLeft, EndDayPanelPresentation.White);
+            EndDayPanelPresentation.Stretch(value.rectTransform);
+            return value;
         }
 
     }
