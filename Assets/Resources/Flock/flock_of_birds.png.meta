@@ -1,0 +1,3406 @@
+fileFormatVersion: 2
+guid: 07ade518398118640993b3b8324efe5e
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -8339503612687015150
+    second: flock_of_birds_0
+  - first:
+      213: -3753886411179033249
+    second: flock_of_birds_1
+  - first:
+      213: 7510509152455622011
+    second: flock_of_birds_2
+  - first:
+      213: 1805893417113929271
+    second: flock_of_birds_3
+  - first:
+      213: 7483165888367724638
+    second: flock_of_birds_4
+  - first:
+      213: 7008744758566608341
+    second: flock_of_birds_5
+  - first:
+      213: -5733361951434430152
+    second: flock_of_birds_6
+  - first:
+      213: 4883265634496594300
+    second: flock_of_birds_7
+  - first:
+      213: -1920093960667981593
+    second: flock_of_birds_8
+  - first:
+      213: 1600076414743092566
+    second: flock_of_birds_9
+  - first:
+      213: 8870773682987963043
+    second: flock_of_birds_10
+  - first:
+      213: -6439596430794636572
+    second: flock_of_birds_11
+  - first:
+      213: 3528212767068423209
+    second: flock_of_birds_12
+  - first:
+      213: 6873736672519787864
+    second: flock_of_birds_13
+  - first:
+      213: -4620129500547179171
+    second: flock_of_birds_14
+  - first:
+      213: -3297992123098841149
+    second: flock_of_birds_15
+  - first:
+      213: -1874318499892045289
+    second: flock_of_birds_16
+  - first:
+      213: -9069167335171434210
+    second: flock_of_birds_17
+  - first:
+      213: 6548711334463753234
+    second: flock_of_birds_18
+  - first:
+      213: 3287357894017649068
+    second: flock_of_birds_19
+  - first:
+      213: -295796427501429949
+    second: flock_of_birds_20
+  - first:
+      213: -948711712469202348
+    second: flock_of_birds_21
+  - first:
+      213: -1223217603520666264
+    second: flock_of_birds_22
+  - first:
+      213: -1448754523397391169
+    second: flock_of_birds_23
+  - first:
+      213: -2635950760617622972
+    second: flock_of_birds_24
+  - first:
+      213: -2822631964269230981
+    second: flock_of_birds_25
+  - first:
+      213: -5402968900510996840
+    second: flock_of_birds_26
+  - first:
+      213: -4896314435828437897
+    second: flock_of_birds_27
+  - first:
+      213: 112736906135670004
+    second: flock_of_birds_28
+  - first:
+      213: -7065695235473285351
+    second: flock_of_birds_29
+  - first:
+      213: 2825202132926079749
+    second: flock_of_birds_30
+  - first:
+      213: -8705608490053728788
+    second: flock_of_birds_31
+  - first:
+      213: -274635910124509802
+    second: flock_of_birds_32
+  - first:
+      213: 2288118494251237697
+    second: flock_of_birds_33
+  - first:
+      213: 7124782671304531351
+    second: flock_of_birds_34
+  - first:
+      213: 5475432468206505091
+    second: flock_of_birds_35
+  - first:
+      213: -3392395864925308476
+    second: flock_of_birds_36
+  - first:
+      213: -3021179500690359953
+    second: flock_of_birds_37
+  - first:
+      213: 6663742059839319713
+    second: flock_of_birds_38
+  - first:
+      213: -7261581764227091690
+    second: flock_of_birds_39
+  - first:
+      213: 6915633668499822512
+    second: flock_of_birds_40
+  - first:
+      213: 6419462005458662668
+    second: flock_of_birds_41
+  - first:
+      213: 4873661811001140261
+    second: flock_of_birds_42
+  - first:
+      213: -4874559154043778045
+    second: flock_of_birds_43
+  - first:
+      213: 7023667450906599385
+    second: flock_of_birds_44
+  - first:
+      213: 4939498803823642661
+    second: flock_of_birds_45
+  - first:
+      213: 4827735362373372915
+    second: flock_of_birds_46
+  - first:
+      213: 1476997491154216423
+    second: flock_of_birds_47
+  - first:
+      213: 2682216645416596585
+    second: flock_of_birds_48
+  - first:
+      213: 5163481083659755537
+    second: flock_of_birds_49
+  - first:
+      213: 7628859291332261031
+    second: flock_of_birds_50
+  - first:
+      213: -629554206538190595
+    second: flock_of_birds_51
+  - first:
+      213: 8310979975262173521
+    second: flock_of_birds_52
+  - first:
+      213: -6032514793099714325
+    second: flock_of_birds_53
+  - first:
+      213: 6023569263695926591
+    second: flock_of_birds_54
+  - first:
+      213: -6560156541571094972
+    second: flock_of_birds_55
+  - first:
+      213: 3987218432930988259
+    second: flock_of_birds_56
+  - first:
+      213: -8718736745872372320
+    second: flock_of_birds_57
+  - first:
+      213: -3179920624470896023
+    second: flock_of_birds_58
+  - first:
+      213: 8087551130305637787
+    second: flock_of_birds_59
+  - first:
+      213: 5191758612786078062
+    second: flock_of_birds_60
+  - first:
+      213: 2984990222080518588
+    second: flock_of_birds_61
+  - first:
+      213: -1124703805138888558
+    second: flock_of_birds_62
+  - first:
+      213: 173016099384775373
+    second: flock_of_birds_63
+  - first:
+      213: 4490745428606187761
+    second: flock_of_birds_64
+  - first:
+      213: 4318374125639102272
+    second: flock_of_birds_65
+  - first:
+      213: 571262557559951554
+    second: flock_of_birds_66
+  - first:
+      213: 3693206758514821147
+    second: flock_of_birds_67
+  - first:
+      213: -7298623255276283457
+    second: flock_of_birds_68
+  - first:
+      213: 2319741873195352941
+    second: flock_of_birds_69
+  - first:
+      213: -1620965769548021504
+    second: flock_of_birds_70
+  - first:
+      213: -164994683766846954
+    second: flock_of_birds_71
+  - first:
+      213: 4959218472111549331
+    second: flock_of_birds_72
+  - first:
+      213: -8743712940920544435
+    second: flock_of_birds_73
+  - first:
+      213: -1585685003949596515
+    second: flock_of_birds_74
+  - first:
+      213: 32700213836227551
+    second: flock_of_birds_75
+  - first:
+      213: 580358381639224566
+    second: flock_of_birds_76
+  - first:
+      213: -915696722075057505
+    second: flock_of_birds_77
+  - first:
+      213: -7313993950236282171
+    second: flock_of_birds_78
+  - first:
+      213: 1885281122081898170
+    second: flock_of_birds_79
+  - first:
+      213: 8995720225653258697
+    second: flock_of_birds_80
+  - first:
+      213: 8945773551745551214
+    second: flock_of_birds_81
+  - first:
+      213: 2910792687645016487
+    second: flock_of_birds_82
+  - first:
+      213: -2232251886854007338
+    second: flock_of_birds_83
+  - first:
+      213: -241308421832323595
+    second: flock_of_birds_84
+  - first:
+      213: 346482856455133194
+    second: flock_of_birds_85
+  - first:
+      213: -3454057333353717836
+    second: flock_of_birds_86
+  - first:
+      213: 650558788073504930
+    second: flock_of_birds_87
+  - first:
+      213: 529736960448725998
+    second: flock_of_birds_88
+  - first:
+      213: 8334114557526129086
+    second: flock_of_birds_89
+  - first:
+      213: -8451270445628380012
+    second: flock_of_birds_90
+  - first:
+      213: -5956378730261723064
+    second: flock_of_birds_91
+  - first:
+      213: 4276995257725889871
+    second: flock_of_birds_92
+  - first:
+      213: -2661845282314904695
+    second: flock_of_birds_93
+  - first:
+      213: 9204759325293983261
+    second: flock_of_birds_94
+  - first:
+      213: 4728304979472190060
+    second: flock_of_birds_95
+  - first:
+      213: -8093364010272194392
+    second: flock_of_birds_96
+  - first:
+      213: -1673196422054080879
+    second: flock_of_birds_97
+  - first:
+      213: 6876781204566552173
+    second: flock_of_birds_98
+  - first:
+      213: 1839529726846614501
+    second: flock_of_birds_99
+  - first:
+      213: -4780250837484535583
+    second: flock_of_birds_100
+  - first:
+      213: 3349338116775820323
+    second: flock_of_birds_101
+  - first:
+      213: -5083010581781175199
+    second: flock_of_birds_102
+  - first:
+      213: -5469906436117155189
+    second: flock_of_birds_103
+  - first:
+      213: 4164317308382094408
+    second: flock_of_birds_104
+  - first:
+      213: 6545388245115431301
+    second: flock_of_birds_105
+  - first:
+      213: -5662970010564423655
+    second: flock_of_birds_106
+  - first:
+      213: 1376676563132464506
+    second: flock_of_birds_107
+  - first:
+      213: 361482896302772777
+    second: flock_of_birds_108
+  - first:
+      213: 8470384873450750210
+    second: flock_of_birds_109
+  - first:
+      213: -1702778728538868949
+    second: flock_of_birds_110
+  - first:
+      213: -8058456653017323714
+    second: flock_of_birds_111
+  - first:
+      213: -8027404712363057396
+    second: flock_of_birds_112
+  - first:
+      213: 8726101714036160996
+    second: flock_of_birds_113
+  - first:
+      213: -1922530035630944729
+    second: flock_of_birds_114
+  - first:
+      213: -7251564232325110500
+    second: flock_of_birds_115
+  - first:
+      213: 8184442548359807513
+    second: flock_of_birds_116
+  - first:
+      213: -5701996642842067853
+    second: flock_of_birds_117
+  - first:
+      213: -6582181911681983467
+    second: flock_of_birds_118
+  - first:
+      213: -2040708969552585189
+    second: flock_of_birds_119
+  - first:
+      213: -6747492995513568629
+    second: flock_of_birds_120
+  - first:
+      213: 4967729716308571851
+    second: flock_of_birds_121
+  - first:
+      213: -7072649368110823642
+    second: flock_of_birds_122
+  - first:
+      213: -245346776187478250
+    second: flock_of_birds_123
+  - first:
+      213: -6856006527932182300
+    second: flock_of_birds_124
+  - first:
+      213: -5588028893366929330
+    second: flock_of_birds_125
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 1
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: flock_of_birds_0
+      rect:
+        serializedVersion: 2
+        x: 51
+        y: 146
+        width: 22
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 21324ba16a1244c80800000000000000
+      internalID: -8339503612687015150
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_1
+      rect:
+        serializedVersion: 2
+        x: 185
+        y: 148
+        width: 19
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f5df18ea23487ebc0800000000000000
+      internalID: -3753886411179033249
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_2
+      rect:
+        serializedVersion: 2
+        x: 310
+        y: 143
+        width: 16
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b7dff622840ba3860800000000000000
+      internalID: 7510509152455622011
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_3
+      rect:
+        serializedVersion: 2
+        x: 396
+        y: 136
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 736ca4dae72df0910800000000000000
+      internalID: 1805893417113929271
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_4
+      rect:
+        serializedVersion: 2
+        x: 424
+        y: 143
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e588a7b5abb89d760800000000000000
+      internalID: 7483165888367724638
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_5
+      rect:
+        serializedVersion: 2
+        x: 439
+        y: 150
+        width: 23
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5dd5eb75930144160800000000000000
+      internalID: 7008744758566608341
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_6
+      rect:
+        serializedVersion: 2
+        x: 568
+        y: 142
+        width: 11
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 839a20c8ea10f60b0800000000000000
+      internalID: -5733361951434430152
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_7
+      rect:
+        serializedVersion: 2
+        x: 652
+        y: 137
+        width: 14
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c71ca00d838d4c340800000000000000
+      internalID: 4883265634496594300
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_8
+      rect:
+        serializedVersion: 2
+        x: 680
+        y: 145
+        width: 9
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7e8130347b47a55e0800000000000000
+      internalID: -1920093960667981593
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_9
+      rect:
+        serializedVersion: 2
+        x: 697
+        y: 148
+        width: 22
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 65d1e3a850d943610800000000000000
+      internalID: 1600076414743092566
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_10
+      rect:
+        serializedVersion: 2
+        x: 824
+        y: 144
+        width: 11
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3a291615aa15b1b70800000000000000
+      internalID: 8870773682987963043
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_11
+      rect:
+        serializedVersion: 2
+        x: 858
+        y: 142
+        width: 11
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4e2cc952a25f1a6a0800000000000000
+      internalID: -6439596430794636572
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_12
+      rect:
+        serializedVersion: 2
+        x: 908
+        y: 140
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9248c1181dab6f030800000000000000
+      internalID: 3528212767068423209
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_13
+      rect:
+        serializedVersion: 2
+        x: 935
+        y: 145
+        width: 10
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8551e15c51b646f50800000000000000
+      internalID: 6873736672519787864
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_14
+      rect:
+        serializedVersion: 2
+        x: 942
+        y: 134
+        width: 31
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d5d159f92b002efb0800000000000000
+      internalID: -4620129500547179171
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_15
+      rect:
+        serializedVersion: 2
+        x: 1079
+        y: 148
+        width: 13
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3cf38a633ad2b32d0800000000000000
+      internalID: -3297992123098841149
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_16
+      rect:
+        serializedVersion: 2
+        x: 1114
+        y: 143
+        width: 11
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 71addf141451df5e0800000000000000
+      internalID: -1874318499892045289
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_17
+      rect:
+        serializedVersion: 2
+        x: 1164
+        y: 144
+        width: 15
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e19d782fb58d32280800000000000000
+      internalID: -9069167335171434210
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_18
+      rect:
+        serializedVersion: 2
+        x: 1191
+        y: 146
+        width: 11
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 21c494b1342b1ea50800000000000000
+      internalID: 6548711334463753234
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_19
+      rect:
+        serializedVersion: 2
+        x: 1211
+        y: 144
+        width: 16
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ca98f72669a0f9d20800000000000000
+      internalID: 3287357894017649068
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_20
+      rect:
+        serializedVersion: 2
+        x: 1334
+        y: 148
+        width: 14
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 34b92f467be15ebf0800000000000000
+      internalID: -295796427501429949
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_21
+      rect:
+        serializedVersion: 2
+        x: 1370
+        y: 143
+        width: 11
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 45a450859bf75d2f0800000000000000
+      internalID: -948711712469202348
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_22
+      rect:
+        serializedVersion: 2
+        x: 1420
+        y: 144
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 865652b0212460fe0800000000000000
+      internalID: -1223217603520666264
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_23
+      rect:
+        serializedVersion: 2
+        x: 1445
+        y: 147
+        width: 14
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fbc7822df6df4ebe0800000000000000
+      internalID: -1448754523397391169
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_24
+      rect:
+        serializedVersion: 2
+        x: 1467
+        y: 146
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 44247f3cfb83b6bd0800000000000000
+      internalID: -2635950760617622972
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_25
+      rect:
+        serializedVersion: 2
+        x: 1590
+        y: 149
+        width: 15
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b74c116fe2ff3d8d0800000000000000
+      internalID: -2822631964269230981
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_26
+      rect:
+        serializedVersion: 2
+        x: 1625
+        y: 144
+        width: 12
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8962f80496cc405b0800000000000000
+      internalID: -5402968900510996840
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_27
+      rect:
+        serializedVersion: 2
+        x: 1676
+        y: 144
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 77c24df56fbcc0cb0800000000000000
+      internalID: -4896314435828437897
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_28
+      rect:
+        serializedVersion: 2
+        x: 1700
+        y: 149
+        width: 17
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4fc0b4b6e95809100800000000000000
+      internalID: 112736906135670004
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_29
+      rect:
+        serializedVersion: 2
+        x: 1723
+        y: 150
+        width: 16
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 91fd1767e9b91fd90800000000000000
+      internalID: -7065695235473285351
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_30
+      rect:
+        serializedVersion: 2
+        x: 1843
+        y: 151
+        width: 19
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5032cbf0f52253720800000000000000
+      internalID: 2825202132926079749
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_31
+      rect:
+        serializedVersion: 2
+        x: 1880
+        y: 145
+        width: 13
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ce509bcd3377f2780800000000000000
+      internalID: -8705608490053728788
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_32
+      rect:
+        serializedVersion: 2
+        x: 1929
+        y: 146
+        width: 20
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6956676481c403cf0800000000000000
+      internalID: -274635910124509802
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_33
+      rect:
+        serializedVersion: 2
+        x: 1959
+        y: 149
+        width: 12
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 141c8d5c5a701cf10800000000000000
+      internalID: 2288118494251237697
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_34
+      rect:
+        serializedVersion: 2
+        x: 1979
+        y: 153
+        width: 16
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 79d17f0471050e260800000000000000
+      internalID: 7124782671304531351
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_35
+      rect:
+        serializedVersion: 2
+        x: 87
+        y: 141
+        width: 18
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 38cc61bd1d4acfb40800000000000000
+      internalID: 5475432468206505091
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_36
+      rect:
+        serializedVersion: 2
+        x: 140
+        y: 137
+        width: 18
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4c97f9d3fe9cbe0d0800000000000000
+      internalID: -3392395864925308476
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_37
+      rect:
+        serializedVersion: 2
+        x: 165
+        y: 145
+        width: 15
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f69b8a2404d9216d0800000000000000
+      internalID: -3021179500690359953
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_38
+      rect:
+        serializedVersion: 2
+        x: 346
+        y: 139
+        width: 12
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1ae6d8fe81e5a7c50800000000000000
+      internalID: 6663742059839319713
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_39
+      rect:
+        serializedVersion: 2
+        x: 374
+        y: 133
+        width: 11
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6133ac3ebdda93b90800000000000000
+      internalID: -7261581764227091690
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_40
+      rect:
+        serializedVersion: 2
+        x: 582
+        y: 128
+        width: 12
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0b7d9af4e2449ff50800000000000000
+      internalID: 6915633668499822512
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_41
+      rect:
+        serializedVersion: 2
+        x: 602
+        y: 141
+        width: 11
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c05fa74aea2861950800000000000000
+      internalID: 6419462005458662668
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_42
+      rect:
+        serializedVersion: 2
+        x: 630
+        y: 134
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5242c186899b2a340800000000000000
+      internalID: 4873661811001140261
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_43
+      rect:
+        serializedVersion: 2
+        x: 686
+        y: 134
+        width: 19
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 30c8792a6461a5cb0800000000000000
+      internalID: -4874559154043778045
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_44
+      rect:
+        serializedVersion: 2
+        x: 838
+        y: 131
+        width: 12
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9dfd2c76554197160800000000000000
+      internalID: 7023667450906599385
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_45
+      rect:
+        serializedVersion: 2
+        x: 885
+        y: 135
+        width: 14
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5280062ddff9c8440800000000000000
+      internalID: 4939498803823642661
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_46
+      rect:
+        serializedVersion: 2
+        x: 1093
+        y: 134
+        width: 13
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3fb4bdfcbbf8ff240800000000000000
+      internalID: 4827735362373372915
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_47
+      rect:
+        serializedVersion: 2
+        x: 1198
+        y: 134
+        width: 19
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7e5e36a84695f7410800000000000000
+      internalID: 1476997491154216423
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_48
+      rect:
+        serializedVersion: 2
+        x: 1349
+        y: 134
+        width: 13
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 96432b8f3d5293520800000000000000
+      internalID: 2682216645416596585
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_49
+      rect:
+        serializedVersion: 2
+        x: 1455
+        y: 136
+        width: 18
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1102df330be58a740800000000000000
+      internalID: 5163481083659755537
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_50
+      rect:
+        serializedVersion: 2
+        x: 1603
+        y: 135
+        width: 17
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a43c452b172fd960800000000000000
+      internalID: 7628859291332261031
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_51
+      rect:
+        serializedVersion: 2
+        x: 1708
+        y: 136
+        width: 21
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: df03070e8cf5347f0800000000000000
+      internalID: -629554206538190595
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_52
+      rect:
+        serializedVersion: 2
+        x: 1857
+        y: 136
+        width: 21
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 159f2e80148865370800000000000000
+      internalID: 8310979975262173521
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_53
+      rect:
+        serializedVersion: 2
+        x: 1911
+        y: 134
+        width: 10
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: be0a00fd1c3384ca0800000000000000
+      internalID: -6032514793099714325
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_54
+      rect:
+        serializedVersion: 2
+        x: 1964
+        y: 137
+        width: 22
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f359e82c454089350800000000000000
+      internalID: 6023569263695926591
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_55
+      rect:
+        serializedVersion: 2
+        x: 65
+        y: 132
+        width: 23
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 44623b4f164a5f4a0800000000000000
+      internalID: -6560156541571094972
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_56
+      rect:
+        serializedVersion: 2
+        x: 119
+        y: 133
+        width: 11
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e0cdb02a02755730800000000000000
+      internalID: 3987218432930988259
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_57
+      rect:
+        serializedVersion: 2
+        x: 174
+        y: 127
+        width: 19
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0adc12c9f13d00780800000000000000
+      internalID: -8718736745872372320
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_58
+      rect:
+        serializedVersion: 2
+        x: 324
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 962597c3a07aed3d0800000000000000
+      internalID: -3179920624470896023
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_59
+      rect:
+        serializedVersion: 2
+        x: 360
+        y: 127
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b9d2da047e0cc3070800000000000000
+      internalID: 8087551130305637787
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_60
+      rect:
+        serializedVersion: 2
+        x: 430
+        y: 130
+        width: 19
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e6160b283f4dc0840800000000000000
+      internalID: 5191758612786078062
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_61
+      rect:
+        serializedVersion: 2
+        x: 616
+        y: 128
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cb9af15bac0dc6920800000000000000
+      internalID: 2984990222080518588
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_62
+      rect:
+        serializedVersion: 2
+        x: 652
+        y: 124
+        width: 11
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2989a2129df3460f0800000000000000
+      internalID: -1124703805138888558
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_63
+      rect:
+        serializedVersion: 2
+        x: 871
+        y: 128
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dc2d048c93da66200800000000000000
+      internalID: 173016099384775373
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_64
+      rect:
+        serializedVersion: 2
+        x: 907
+        y: 125
+        width: 13
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1f8f7c0ac25525e30800000000000000
+      internalID: 4490745428606187761
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_65
+      rect:
+        serializedVersion: 2
+        x: 1127
+        y: 129
+        width: 11
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 04fe4f53362fdeb30800000000000000
+      internalID: 4318374125639102272
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_66
+      rect:
+        serializedVersion: 2
+        x: 1139
+        y: 136
+        width: 18
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2c097d8f4488de700800000000000000
+      internalID: 571262557559951554
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_67
+      rect:
+        serializedVersion: 2
+        x: 1162
+        y: 127
+        width: 15
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b18095bbaf7e04330800000000000000
+      internalID: 3693206758514821147
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_68
+      rect:
+        serializedVersion: 2
+        x: 1382
+        y: 130
+        width: 13
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fb91adfa1d416ba90800000000000000
+      internalID: -7298623255276283457
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_69
+      rect:
+        serializedVersion: 2
+        x: 1396
+        y: 136
+        width: 16
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d63886271f0613020800000000000000
+      internalID: 2319741873195352941
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_70
+      rect:
+        serializedVersion: 2
+        x: 1636
+        y: 132
+        width: 16
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 001c509883c2189e0800000000000000
+      internalID: -1620965769548021504
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_71
+      rect:
+        serializedVersion: 2
+        x: 1654
+        y: 133
+        width: 12
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 61acf349532d5bdf0800000000000000
+      internalID: -164994683766846954
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_72
+      rect:
+        serializedVersion: 2
+        x: 1893
+        y: 133
+        width: 15
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 39ba3c1eceea2d440800000000000000
+      internalID: 4959218472111549331
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_73
+      rect:
+        serializedVersion: 2
+        x: 1932
+        y: 127
+        width: 11
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d43e17a086718a680800000000000000
+      internalID: -8743712940920544435
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_74
+      rect:
+        serializedVersion: 2
+        x: 1947
+        y: 123
+        width: 16
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d90abe5e3e38ef9e0800000000000000
+      internalID: -1585685003949596515
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_75
+      rect:
+        serializedVersion: 2
+        x: 84
+        y: 117
+        width: 32
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fd3a9c5dbac247000800000000000000
+      internalID: 32700213836227551
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_76
+      rect:
+        serializedVersion: 2
+        x: 141
+        y: 123
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6fcc60c8fd8dd0800800000000000000
+      internalID: 580358381639224566
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_77
+      rect:
+        serializedVersion: 2
+        x: 153
+        y: 119
+        width: 20
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f920abeceaaca43f0800000000000000
+      internalID: -915696722075057505
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_78
+      rect:
+        serializedVersion: 2
+        x: 339
+        y: 118
+        width: 22
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5c27fc2e0497f7a90800000000000000
+      internalID: -7313993950236282171
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_79
+      rect:
+        serializedVersion: 2
+        x: 396
+        y: 124
+        width: 12
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: abef07f113dd92a10800000000000000
+      internalID: 1885281122081898170
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_80
+      rect:
+        serializedVersion: 2
+        x: 408
+        y: 120
+        width: 22
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9c9fbd442e737dc70800000000000000
+      internalID: 8995720225653258697
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_81
+      rect:
+        serializedVersion: 2
+        x: 596
+        y: 117
+        width: 23
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e6bc0e806a5c52c70800000000000000
+      internalID: 8945773551745551214
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_82
+      rect:
+        serializedVersion: 2
+        x: 665
+        y: 120
+        width: 23
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a1c2e10786356820800000000000000
+      internalID: 2910792687645016487
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_83
+      rect:
+        serializedVersion: 2
+        x: 855
+        y: 113
+        width: 18
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6d51fd26cb27501e0800000000000000
+      internalID: -2232251886854007338
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_84
+      rect:
+        serializedVersion: 2
+        x: 887
+        y: 116
+        width: 14
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5fdcf53d443b6acf0800000000000000
+      internalID: -241308421832323595
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_85
+      rect:
+        serializedVersion: 2
+        x: 923
+        y: 115
+        width: 18
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a0855cb7254fec400800000000000000
+      internalID: 346482856455133194
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_86
+      rect:
+        serializedVersion: 2
+        x: 1111
+        y: 112
+        width: 16
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4bf5e9bd729b010d0800000000000000
+      internalID: -3454057333353717836
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_87
+      rect:
+        serializedVersion: 2
+        x: 1143
+        y: 116
+        width: 13
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2a041ac55cf370900800000000000000
+      internalID: 650558788073504930
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_88
+      rect:
+        serializedVersion: 2
+        x: 1179
+        y: 115
+        width: 17
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ee301f775f00a5700800000000000000
+      internalID: 529736960448725998
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_89
+      rect:
+        serializedVersion: 2
+        x: 1367
+        y: 114
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eb9b1c6b809b8a370800000000000000
+      internalID: 8334114557526129086
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_90
+      rect:
+        serializedVersion: 2
+        x: 1399
+        y: 117
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 49c20937e4e07ba80800000000000000
+      internalID: -8451270445628380012
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_91
+      rect:
+        serializedVersion: 2
+        x: 1417
+        y: 127
+        width: 17
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 848ce036a11b65da0800000000000000
+      internalID: -5956378730261723064
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_92
+      rect:
+        serializedVersion: 2
+        x: 1435
+        y: 117
+        width: 17
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f4d28c2c680fa5b30800000000000000
+      internalID: 4276995257725889871
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_93
+      rect:
+        serializedVersion: 2
+        x: 1623
+        y: 117
+        width: 16
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 98b129c91d93f0bd0800000000000000
+      internalID: -2661845282314904695
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_94
+      rect:
+        serializedVersion: 2
+        x: 1652
+        y: 118
+        width: 18
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d16bc1366dfddbf70800000000000000
+      internalID: 9204759325293983261
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_95
+      rect:
+        serializedVersion: 2
+        x: 1674
+        y: 128
+        width: 15
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c6a8623c3505e9140800000000000000
+      internalID: 4728304979472190060
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_96
+      rect:
+        serializedVersion: 2
+        x: 1691
+        y: 121
+        width: 16
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8a08bc920589eaf80800000000000000
+      internalID: -8093364010272194392
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_97
+      rect:
+        serializedVersion: 2
+        x: 1879
+        y: 121
+        width: 15
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 19e030818bc97c8e0800000000000000
+      internalID: -1673196422054080879
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_98
+      rect:
+        serializedVersion: 2
+        x: 1907
+        y: 120
+        width: 20
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d6ea540221c3f6f50800000000000000
+      internalID: 6876781204566552173
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_99
+      rect:
+        serializedVersion: 2
+        x: 101
+        y: 104
+        width: 21
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5ebb6725a82578910800000000000000
+      internalID: 1839529726846614501
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_100
+      rect:
+        serializedVersion: 2
+        x: 117
+        y: 115
+        width: 18
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1e0887ea03329adb0800000000000000
+      internalID: -4780250837484535583
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_101
+      rect:
+        serializedVersion: 2
+        x: 136
+        y: 104
+        width: 22
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 32c391b854d3b7e20800000000000000
+      internalID: 3349338116775820323
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_102
+      rect:
+        serializedVersion: 2
+        x: 359
+        y: 101
+        width: 16
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 164a16b8ec48579b0800000000000000
+      internalID: -5083010581781175199
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_103
+      rect:
+        serializedVersion: 2
+        x: 375
+        y: 114
+        width: 13
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b823d90c31df614b0800000000000000
+      internalID: -5469906436117155189
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_104
+      rect:
+        serializedVersion: 2
+        x: 615
+        y: 100
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 844202a4780aac930800000000000000
+      internalID: 4164317308382094408
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_105
+      rect:
+        serializedVersion: 2
+        x: 632
+        y: 115
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5896f131ee3e5da50800000000000000
+      internalID: 6545388245115431301
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_106
+      rect:
+        serializedVersion: 2
+        x: 650
+        y: 101
+        width: 21
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9101e9277c61961b0800000000000000
+      internalID: -5662970010564423655
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_107
+      rect:
+        serializedVersion: 2
+        x: 871
+        y: 102
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a7dbd1c4a00fa1310800000000000000
+      internalID: 1376676563132464506
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_108
+      rect:
+        serializedVersion: 2
+        x: 907
+        y: 99
+        width: 17
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 922918a67ce340500800000000000000
+      internalID: 361482896302772777
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_109
+      rect:
+        serializedVersion: 2
+        x: 1127
+        y: 107
+        width: 15
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 201cfd41a2adc8570800000000000000
+      internalID: 8470384873450750210
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_110
+      rect:
+        serializedVersion: 2
+        x: 1163
+        y: 99
+        width: 16
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b237952a4c38e58e0800000000000000
+      internalID: -1702778728538868949
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_111
+      rect:
+        serializedVersion: 2
+        x: 1383
+        y: 107
+        width: 14
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e37e40f9e5c9a2090800000000000000
+      internalID: -8058456653017323714
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_112
+      rect:
+        serializedVersion: 2
+        x: 1419
+        y: 102
+        width: 16
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c0f9d43f1fde89090800000000000000
+      internalID: -8027404712363057396
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_113
+      rect:
+        serializedVersion: 2
+        x: 1639
+        y: 107
+        width: 15
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4e97d0ba647591970800000000000000
+      internalID: 8726101714036160996
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_114
+      rect:
+        serializedVersion: 2
+        x: 1675
+        y: 107
+        width: 16
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 72ec23c5e1dc155e0800000000000000
+      internalID: -1922530035630944729
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_115
+      rect:
+        serializedVersion: 2
+        x: 1892
+        y: 109
+        width: 20
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c15655a40c44d5b90800000000000000
+      internalID: -7251564232325110500
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_116
+      rect:
+        serializedVersion: 2
+        x: 1931
+        y: 107
+        width: 16
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 912449b722bf49170800000000000000
+      internalID: 8184442548359807513
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_117
+      rect:
+        serializedVersion: 2
+        x: 392
+        y: 105
+        width: 23
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 37cbde883407ed0b0800000000000000
+      internalID: -5701996642842067853
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_118
+      rect:
+        serializedVersion: 2
+        x: 1147
+        y: 88
+        width: 16
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 51c913bdc6467a4a0800000000000000
+      internalID: -6582181911681983467
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_119
+      rect:
+        serializedVersion: 2
+        x: 1403
+        y: 92
+        width: 16
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b1e5ddb1102fda3e0800000000000000
+      internalID: -2040708969552585189
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_120
+      rect:
+        serializedVersion: 2
+        x: 1659
+        y: 94
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b823afdced61c52a0800000000000000
+      internalID: -6747492995513568629
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_121
+      rect:
+        serializedVersion: 2
+        x: 1915
+        y: 95
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bc679b85bdbe0f440800000000000000
+      internalID: 4967729716308571851
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_122
+      rect:
+        serializedVersion: 2
+        x: 120
+        y: 91
+        width: 20
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6270dd84fd6e8dd90800000000000000
+      internalID: -7072649368110823642
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_123
+      rect:
+        serializedVersion: 2
+        x: 375
+        y: 93
+        width: 23
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 61fde8e286a589cf0800000000000000
+      internalID: -245346776187478250
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_124
+      rect:
+        serializedVersion: 2
+        x: 634
+        y: 90
+        width: 21
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4e0d7d433629ad0a0800000000000000
+      internalID: -6856006527932182300
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flock_of_birds_125
+      rect:
+        serializedVersion: 2
+        x: 891
+        y: 87
+        width: 16
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e48be3004555372b0800000000000000
+      internalID: -5588028893366929330
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      flock_of_birds_0: -8339503612687015150
+      flock_of_birds_1: -3753886411179033249
+      flock_of_birds_10: 8870773682987963043
+      flock_of_birds_100: -4780250837484535583
+      flock_of_birds_101: 3349338116775820323
+      flock_of_birds_102: -5083010581781175199
+      flock_of_birds_103: -5469906436117155189
+      flock_of_birds_104: 4164317308382094408
+      flock_of_birds_105: 6545388245115431301
+      flock_of_birds_106: -5662970010564423655
+      flock_of_birds_107: 1376676563132464506
+      flock_of_birds_108: 361482896302772777
+      flock_of_birds_109: 8470384873450750210
+      flock_of_birds_11: -6439596430794636572
+      flock_of_birds_110: -1702778728538868949
+      flock_of_birds_111: -8058456653017323714
+      flock_of_birds_112: -8027404712363057396
+      flock_of_birds_113: 8726101714036160996
+      flock_of_birds_114: -1922530035630944729
+      flock_of_birds_115: -7251564232325110500
+      flock_of_birds_116: 8184442548359807513
+      flock_of_birds_117: -5701996642842067853
+      flock_of_birds_118: -6582181911681983467
+      flock_of_birds_119: -2040708969552585189
+      flock_of_birds_12: 3528212767068423209
+      flock_of_birds_120: -6747492995513568629
+      flock_of_birds_121: 4967729716308571851
+      flock_of_birds_122: -7072649368110823642
+      flock_of_birds_123: -245346776187478250
+      flock_of_birds_124: -6856006527932182300
+      flock_of_birds_125: -5588028893366929330
+      flock_of_birds_13: 6873736672519787864
+      flock_of_birds_14: -4620129500547179171
+      flock_of_birds_15: -3297992123098841149
+      flock_of_birds_16: -1874318499892045289
+      flock_of_birds_17: -9069167335171434210
+      flock_of_birds_18: 6548711334463753234
+      flock_of_birds_19: 3287357894017649068
+      flock_of_birds_2: 7510509152455622011
+      flock_of_birds_20: -295796427501429949
+      flock_of_birds_21: -948711712469202348
+      flock_of_birds_22: -1223217603520666264
+      flock_of_birds_23: -1448754523397391169
+      flock_of_birds_24: -2635950760617622972
+      flock_of_birds_25: -2822631964269230981
+      flock_of_birds_26: -5402968900510996840
+      flock_of_birds_27: -4896314435828437897
+      flock_of_birds_28: 112736906135670004
+      flock_of_birds_29: -7065695235473285351
+      flock_of_birds_3: 1805893417113929271
+      flock_of_birds_30: 2825202132926079749
+      flock_of_birds_31: -8705608490053728788
+      flock_of_birds_32: -274635910124509802
+      flock_of_birds_33: 2288118494251237697
+      flock_of_birds_34: 7124782671304531351
+      flock_of_birds_35: 5475432468206505091
+      flock_of_birds_36: -3392395864925308476
+      flock_of_birds_37: -3021179500690359953
+      flock_of_birds_38: 6663742059839319713
+      flock_of_birds_39: -7261581764227091690
+      flock_of_birds_4: 7483165888367724638
+      flock_of_birds_40: 6915633668499822512
+      flock_of_birds_41: 6419462005458662668
+      flock_of_birds_42: 4873661811001140261
+      flock_of_birds_43: -4874559154043778045
+      flock_of_birds_44: 7023667450906599385
+      flock_of_birds_45: 4939498803823642661
+      flock_of_birds_46: 4827735362373372915
+      flock_of_birds_47: 1476997491154216423
+      flock_of_birds_48: 2682216645416596585
+      flock_of_birds_49: 5163481083659755537
+      flock_of_birds_5: 7008744758566608341
+      flock_of_birds_50: 7628859291332261031
+      flock_of_birds_51: -629554206538190595
+      flock_of_birds_52: 8310979975262173521
+      flock_of_birds_53: -6032514793099714325
+      flock_of_birds_54: 6023569263695926591
+      flock_of_birds_55: -6560156541571094972
+      flock_of_birds_56: 3987218432930988259
+      flock_of_birds_57: -8718736745872372320
+      flock_of_birds_58: -3179920624470896023
+      flock_of_birds_59: 8087551130305637787
+      flock_of_birds_6: -5733361951434430152
+      flock_of_birds_60: 5191758612786078062
+      flock_of_birds_61: 2984990222080518588
+      flock_of_birds_62: -1124703805138888558
+      flock_of_birds_63: 173016099384775373
+      flock_of_birds_64: 4490745428606187761
+      flock_of_birds_65: 4318374125639102272
+      flock_of_birds_66: 571262557559951554
+      flock_of_birds_67: 3693206758514821147
+      flock_of_birds_68: -7298623255276283457
+      flock_of_birds_69: 2319741873195352941
+      flock_of_birds_7: 4883265634496594300
+      flock_of_birds_70: -1620965769548021504
+      flock_of_birds_71: -164994683766846954
+      flock_of_birds_72: 4959218472111549331
+      flock_of_birds_73: -8743712940920544435
+      flock_of_birds_74: -1585685003949596515
+      flock_of_birds_75: 32700213836227551
+      flock_of_birds_76: 580358381639224566
+      flock_of_birds_77: -915696722075057505
+      flock_of_birds_78: -7313993950236282171
+      flock_of_birds_79: 1885281122081898170
+      flock_of_birds_8: -1920093960667981593
+      flock_of_birds_80: 8995720225653258697
+      flock_of_birds_81: 8945773551745551214
+      flock_of_birds_82: 2910792687645016487
+      flock_of_birds_83: -2232251886854007338
+      flock_of_birds_84: -241308421832323595
+      flock_of_birds_85: 346482856455133194
+      flock_of_birds_86: -3454057333353717836
+      flock_of_birds_87: 650558788073504930
+      flock_of_birds_88: 529736960448725998
+      flock_of_birds_89: 8334114557526129086
+      flock_of_birds_9: 1600076414743092566
+      flock_of_birds_90: -8451270445628380012
+      flock_of_birds_91: -5956378730261723064
+      flock_of_birds_92: 4276995257725889871
+      flock_of_birds_93: -2661845282314904695
+      flock_of_birds_94: 9204759325293983261
+      flock_of_birds_95: 4728304979472190060
+      flock_of_birds_96: -8093364010272194392
+      flock_of_birds_97: -1673196422054080879
+      flock_of_birds_98: 6876781204566552173
+      flock_of_birds_99: 1839529726846614501
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
