@@ -17,6 +17,7 @@ namespace PixelOcean
         private RubberDuckBossSwimmer lockedDuckBoss;
         private DayFiveCombatant lockedSecurity;
         private DaySixCreature lockedDaySixCreature;
+        private DaySixSkyHostile lockedDaySixSkyHostile;
 
         public void Launch(
             Vector2 start,
@@ -38,6 +39,9 @@ namespace PixelOcean
                 : null;
             lockedDaySixCreature = target != null
                 ? target.GetComponentInParent<DaySixCreature>()
+                : null;
+            lockedDaySixSkyHostile = target != null
+                ? target.GetComponentInParent<DaySixSkyHostile>()
                 : null;
             SpriteRenderer renderer = GetComponent<SpriteRenderer>();
             renderer.sprite = sprite;
@@ -157,6 +161,12 @@ namespace PixelOcean
                 if (hitCreature != lockedDaySixCreature)
                     return;
             }
+            if (lockedDaySixSkyHostile != null && lockedDaySixSkyHostile.CanBeHit)
+            {
+                DaySixSkyHostile hitHostile = other.GetComponentInParent<DaySixSkyHostile>();
+                if (hitHostile != lockedDaySixSkyHostile)
+                    return;
+            }
 
             HitTarget(other.transform);
         }
@@ -243,6 +253,18 @@ namespace PixelOcean
                 PlaySfx(sharkHitClip, 0.9f);
                 daySixCreature.TakeThrownItemHit(1, transform.position);
                 Bounce(daySixCreature.transform.position);
+                return;
+            }
+
+            DaySixSkyHostile daySixSkyHostile =
+                hitTransform.GetComponentInParent<DaySixSkyHostile>();
+
+            if (daySixSkyHostile != null && daySixSkyHostile.CanBeHit)
+            {
+                LoadSfx();
+                PlaySfx(sharkHitClip, 1f);
+                daySixSkyHostile.TakeThrownItemHit(1, transform.position);
+                Bounce(daySixSkyHostile.transform.position);
                 return;
             }
 

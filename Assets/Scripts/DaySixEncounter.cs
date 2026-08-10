@@ -23,12 +23,16 @@ namespace PixelOcean
         };
 
         private readonly List<DaySixCreature> activeCreatures = new();
+        private readonly List<DaySixSkyHostile> activeSkyHostiles = new();
         private SurfDayProgressionDirector director;
         private SurfDayProgressionDirector.Chapter observedChapter =
             (SurfDayProgressionDirector.Chapter)(-1);
         private float nextSpawnAt;
+        private float nextSkySpawnAt;
         private int nextEntrySide = -1;
+        private int nextSkyEntrySide = -1;
         private int finalRosterIndex;
+        private int finalSkyRosterIndex;
         private bool initialised;
 
         public static DaySixEncounter Begin(SurfDayProgressionDirector progression)
@@ -59,23 +63,33 @@ namespace PixelOcean
                 return;
 
             activeCreatures.RemoveAll(creature => creature == null);
+            activeSkyHostiles.RemoveAll(hostile => hostile == null);
             if (director.CurrentChapter != observedChapter)
             {
                 observedChapter = director.CurrentChapter;
                 BeginChapterPopulation(observedChapter);
             }
 
-            if (Time.time < nextSpawnAt || activeCreatures.Count >= PopulationCap(observedChapter))
-                return;
+            if (Time.time >= nextSpawnAt && activeCreatures.Count < PopulationCap(observedChapter))
+            {
+                Spawn(ChooseReinforcement(observedChapter));
+                nextSpawnAt = Time.time + SpawnInterval(observedChapter);
+            }
 
-            Spawn(ChooseReinforcement(observedChapter));
-            nextSpawnAt = Time.time + SpawnInterval(observedChapter);
+            if (Time.time >= nextSkySpawnAt &&
+                activeSkyHostiles.Count < SkyPopulationCap(observedChapter))
+            {
+                SpawnSkyHostile(ChooseSkyReinforcement(observedChapter));
+                nextSkySpawnAt = Time.time + SkySpawnInterval(observedChapter);
+            }
         }
 
         private void BeginChapterPopulation(SurfDayProgressionDirector.Chapter chapter)
         {
             RetreatActiveCreatures();
             activeCreatures.Clear();
+            RetreatActiveSkyHostiles();
+            activeSkyHostiles.Clear();
 
             switch (chapter)
             {
@@ -92,18 +106,22 @@ namespace PixelOcean
                 case SurfDayProgressionDirector.Chapter.DangerousWater:
                     Spawn(DaySixCreatureKind.MustacheShark);
                     Spawn(DaySixCreatureKind.Toaster);
+                    SpawnSkyHostile(DaySixSkyHostileKind.ClawUfo);
                     break;
 
                 case SurfDayProgressionDirector.Chapter.StrangeTide:
                     Spawn(DaySixCreatureKind.MushroomSquid);
                     Spawn(DaySixCreatureKind.Resort);
                     Spawn(DaySixCreatureKind.Starfish);
+                    SpawnSkyHostile(DaySixSkyHostileKind.RacerUfo);
                     break;
 
                 case SurfDayProgressionDirector.Chapter.Storm:
                     Spawn(DaySixCreatureKind.Toilet);
                     Spawn(DaySixCreatureKind.Resort);
                     Spawn(DaySixCreatureKind.MushroomSquid);
+                    SpawnSkyHostile(DaySixSkyHostileKind.RetroUfo);
+                    SpawnSkyHostile(DaySixSkyHostileKind.RacerUfo);
                     break;
 
                 case SurfDayProgressionDirector.Chapter.FinalWave:
@@ -112,10 +130,46 @@ namespace PixelOcean
                     Spawn(DaySixCreatureKind.Toaster);
                     Spawn(DaySixCreatureKind.Toilet);
                     Spawn(DaySixCreatureKind.Fishbowl);
+                    finalSkyRosterIndex = 0;
+                    SpawnSkyHostile(DaySixSkyHostileKind.ClawUfo);
+                    SpawnSkyHostile(DaySixSkyHostileKind.RacerUfo);
+                    SpawnSkyHostile(DaySixSkyHostileKind.RetroUfo);
                     break;
             }
 
             nextSpawnAt = Time.time + SpawnInterval(chapter);
+            nextSkySpawnAt = Time.time + SkySpawnInterval(chapter);
+        }
+
+        private DaySixSkyHostileKind ChooseSkyReinforcement(
+            SurfDayProgressionDirector.Chapter chapter)
+        {
+            if (chapter == SurfDayProgressionDirector.Chapter.FinalWave)
+            {
+                DaySixSkyHostileKind[] finalSkyRoster =
+                {
+                    DaySixSkyHostileKind.ClawUfo,
+                    DaySixSkyHostileKind.RacerUfo,
+                    DaySixSkyHostileKind.RetroUfo
+                };
+                DaySixSkyHostileKind result =
+                    finalSkyRoster[finalSkyRosterIndex % finalSkyRoster.Length];
+                finalSkyRosterIndex++;
+                return result;
+            }
+
+            return chapter switch
+            {
+                SurfDayProgressionDirector.Chapter.DangerousWater =>
+                    DaySixSkyHostileKind.ClawUfo,
+                SurfDayProgressionDirector.Chapter.StrangeTide =>
+                    DaySixSkyHostileKind.RacerUfo,
+                SurfDayProgressionDirector.Chapter.Storm =>
+                    Random.value < 0.55f
+                        ? DaySixSkyHostileKind.RetroUfo
+                        : DaySixSkyHostileKind.RacerUfo,
+                _ => DaySixSkyHostileKind.ClawUfo
+            };
         }
 
         private DaySixCreatureKind ChooseReinforcement(SurfDayProgressionDirector.Chapter chapter)
@@ -174,6 +228,27 @@ namespace PixelOcean
             activeCreatures.Add(creature);
         }
 
+        private void SpawnSkyHostile(DaySixSkyHostileKind kind)
+        {
+            TinyWaveSurfer player = FindPlayer();
+            float sampleX = player != null ? player.transform.position.x : transform.position.x;
+
+            GameObject hostileObject = new($"Day 6 {ReadableSkyName(kind)}");
+            hostileObject.transform.SetParent(transform, false);
+            hostileObject.transform.position = new Vector3(
+                sampleX,
+                player != null ? player.transform.position.y + 2f : 2f,
+                0f);
+            hostileObject.AddComponent<SpriteRenderer>();
+            hostileObject.AddComponent<BoxCollider2D>();
+            hostileObject.AddComponent<Rigidbody2D>();
+            hostileObject.AddComponent<InterWaveRenderItem>();
+            DaySixSkyHostile hostile = hostileObject.AddComponent<DaySixSkyHostile>();
+            hostile.Initialise(kind, nextSkyEntrySide, this);
+            nextSkyEntrySide *= -1;
+            activeSkyHostiles.Add(hostile);
+        }
+
         public void NotifyCreatureRemoved(DaySixCreature creature, bool defeated)
         {
             activeCreatures.Remove(creature);
@@ -181,11 +256,23 @@ namespace PixelOcean
                 nextSpawnAt = Mathf.Min(nextSpawnAt, Time.time + 0.75f);
         }
 
+        public void NotifySkyHostileRemoved(DaySixSkyHostile hostile, bool defeated)
+        {
+            activeSkyHostiles.Remove(hostile);
+            if (defeated && director != null &&
+                director.CurrentChapter == SurfDayProgressionDirector.Chapter.FinalWave)
+            {
+                nextSkySpawnAt = Mathf.Min(nextSkySpawnAt, Time.time + 1.25f);
+            }
+        }
+
         public void EndEncounter()
         {
             initialised = false;
             RetreatActiveCreatures();
             activeCreatures.Clear();
+            RetreatActiveSkyHostiles();
+            activeSkyHostiles.Clear();
             Destroy(gameObject);
         }
 
@@ -203,6 +290,14 @@ namespace PixelOcean
                 if (hazard != null)
                     Destroy(hazard.gameObject);
             }
+        }
+
+        private void RetreatActiveSkyHostiles()
+        {
+            DaySixSkyHostile[] hostiles = activeSkyHostiles.ToArray();
+            foreach (DaySixSkyHostile hostile in hostiles)
+                if (hostile != null)
+                    hostile.BeginRetreat();
         }
 
         private static int PopulationCap(SurfDayProgressionDirector.Chapter chapter) => chapter switch
@@ -227,6 +322,24 @@ namespace PixelOcean
             _ => 7f
         };
 
+        private static int SkyPopulationCap(SurfDayProgressionDirector.Chapter chapter) => chapter switch
+        {
+            SurfDayProgressionDirector.Chapter.DangerousWater => 1,
+            SurfDayProgressionDirector.Chapter.StrangeTide => 1,
+            SurfDayProgressionDirector.Chapter.Storm => 2,
+            SurfDayProgressionDirector.Chapter.FinalWave => 3,
+            _ => 0
+        };
+
+        private static float SkySpawnInterval(SurfDayProgressionDirector.Chapter chapter) => chapter switch
+        {
+            SurfDayProgressionDirector.Chapter.DangerousWater => 12f,
+            SurfDayProgressionDirector.Chapter.StrangeTide => 10.5f,
+            SurfDayProgressionDirector.Chapter.Storm => 9f,
+            SurfDayProgressionDirector.Chapter.FinalWave => 7.5f,
+            _ => 99f
+        };
+
         private static TinyWaveSurfer FindPlayer()
         {
             foreach (TinyWaveSurfer surfer in GameplayTargetCache.Surfers)
@@ -244,6 +357,14 @@ namespace PixelOcean
             DaySixCreatureKind.Starfish => "Pinball Starfish",
             DaySixCreatureKind.Toaster => "Waterproof Toaster",
             DaySixCreatureKind.Toilet => "Royal Flush Toilet",
+            _ => kind.ToString()
+        };
+
+        private static string ReadableSkyName(DaySixSkyHostileKind kind) => kind switch
+        {
+            DaySixSkyHostileKind.ClawUfo => "Claw UFO",
+            DaySixSkyHostileKind.RacerUfo => "Racer UFO",
+            DaySixSkyHostileKind.RetroUfo => "Retro UFO",
             _ => kind.ToString()
         };
     }

@@ -596,6 +596,7 @@ namespace PixelOcean
         public bool IsAirborneDoingTricks =>
             state == RiderState.TurningTrick &&
             (obstacleJumpActive || airTrickActive);
+        public bool IsExternallyCarried => externalCarrier != null;
         public bool HasObstacleClearance => IsObstacleJumping &&
             obstacleJumpProgress >= obstacleClearanceStart &&
             obstacleJumpProgress <= obstacleClearanceEnd;
@@ -603,6 +604,48 @@ namespace PixelOcean
         // It now represents every collected throwable ocean item.
         public int SodaCanCount => throwableItems.Count;
         public int ThrowableItemCount => throwableItems.Count;
+
+        private Transform externalCarrier;
+        private Vector3 externalCarryOffset;
+
+        /// <summary>
+        /// Gives a short-lived hostile exclusive movement control without
+        /// parenting the surfer or letting two movement loops fight each other.
+        /// Airborne tricks and wave changes remain clean escape windows.
+        /// </summary>
+        public bool TryBeginExternalCarry(Transform carrier, Vector3 offset)
+        {
+            if (carrier == null || externalCarrier != null || IsDead ||
+                !IsPlayerControlled || IsSwitchingWave || IsAirborneDoingTricks)
+                return false;
+
+            externalCarrier = carrier;
+            externalCarryOffset = offset;
+            playerHorizontalVelocity = 0f;
+            verticalWaterVelocity = 0f;
+            obstacleAirHorizontalVelocity = 0f;
+            obstacleAirVerticalVelocity = 0f;
+            specialAttackActive = false;
+            specialCharging = false;
+            specialSkidding = false;
+            previousAttackHeld = false;
+            previousSpecialHeld = false;
+            return true;
+        }
+
+        public void EndExternalCarry(Vector3 releasePosition, float protectionSeconds = 0.35f)
+        {
+            if (externalCarrier == null)
+                return;
+
+            externalCarrier = null;
+            transform.position = releasePosition;
+            localRideX = releasePosition.x;
+            playerHorizontalVelocity = 0f;
+            verticalWaterVelocity = 0f;
+            smoothedRideYInitialised = false;
+            invulnerableUntil = Mathf.Max(invulnerableUntil, Time.time + Mathf.Max(0f, protectionSeconds));
+        }
 
         /// <summary>
         /// Returns the collected throwable sprites in pickup order for lightweight HUDs.
@@ -1056,12 +1099,28 @@ namespace PixelOcean
                 DayTwoHelicopterMissile missile = FindFirstObjectByType<DayTwoHelicopterMissile>();
                 DayTwoHelicopterController helicopter = FindFirstObjectByType<DayTwoHelicopterController>();
                 AlienUfoController ufo = FindFirstObjectByType<AlienUfoController>();
+                DaySixSkyHostile daySixSkyTarget = null;
+
+                foreach (DaySixSkyHostile skyHostile in
+                    FindObjectsByType<DaySixSkyHostile>(FindObjectsSortMode.None))
+                {
+                    if (skyHostile == null || !skyHostile.CanBeHit)
+                        continue;
+                    float distance = Vector2.Distance(transform.position, skyHostile.transform.position);
+                    if (distance < best)
+                    {
+                        best = distance;
+                        daySixSkyTarget = skyHostile;
+                    }
+                }
 
                 // Incoming missiles have priority, then the helicopter before it
                 // fires, then the Day 1 UFO. This keeps Up + Action as the dedicated
                 // sky-defense throw without allowing sea creatures to steal it.
                 if (missile != null && missile.CanBeHit)
                     nearest = missile.transform;
+                else if (daySixSkyTarget != null)
+                    nearest = daySixSkyTarget.transform;
                 else if (helicopter != null && helicopter.CanBeHit)
                     nearest = helicopter.transform;
                 else if (ufo != null && ufo.CanBeHit)
@@ -2220,6 +2279,16 @@ namespace PixelOcean
             {
                 if (speechBubble != null) speechBubble.HideImmediate();
                 UpdateDeathResponse(Time.deltaTime);
+                return;
+            }
+
+            if (externalCarrier != null)
+            {
+                transform.position = externalCarrier.position + externalCarryOffset;
+                localRideX = transform.position.x;
+                playerHorizontalVelocity = 0f;
+                verticalWaterVelocity = 0f;
+                UpdateAnimation(false);
                 return;
             }
 
