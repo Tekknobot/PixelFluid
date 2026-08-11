@@ -1226,6 +1226,19 @@ namespace PixelOcean
                     if (d < best) { best = d; nearest = duckling.transform; }
                 }
 
+                // Day 7 is one continuous boss battle. Once immediate interceptable
+                // hazards are clear, every ordinary throw locks to AION.
+                if (nearest == null)
+                {
+                    foreach (AionFinalBoss aion in FindObjectsByType<AionFinalBoss>(FindObjectsSortMode.None))
+                    {
+                        if (aion == null || !aion.isActiveAndEnabled || !aion.CanBeHit)
+                            continue;
+                        float d = Vector2.Distance(transform.position, aion.transform.position);
+                        if (d < best) { best = d; nearest = aion.transform; }
+                    }
+                }
+
                 // Day 5 bosses own the combat target before ordinary patrol units.
                 if (nearest == null)
                 {

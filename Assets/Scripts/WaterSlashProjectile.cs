@@ -196,6 +196,10 @@ namespace PixelOcean
             {
                 hitSomething = daySixSkyHostile.TakeThrownItemHit(finisher ? 3 : 1, hit);
             }
+            else if (other.GetComponentInParent<AionFinalBoss>() is { CanBeHit: true } aion)
+            {
+                hitSomething = aion.TakeThrownItemHit(finisher ? 3 : 1, hit);
+            }
             else if (other.GetComponent<DayTwoHelicopterMissile>() is { } missile) { missile.Intercept(hit); hitSomething = true; }
             else if (other.GetComponent<DayTwoHelicopterController>() is { } helicopter)
             {

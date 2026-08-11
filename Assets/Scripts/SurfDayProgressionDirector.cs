@@ -345,6 +345,10 @@ namespace PixelOcean
             {
                 DaySixEncounter.Begin(this);
             }
+            else if (currentDay == 7 && chapter != Chapter.Complete)
+            {
+                DaySevenEncounter.Begin(this);
+            }
 
             if (chapter == Chapter.FinalWave)
             {
@@ -366,6 +370,8 @@ namespace PixelOcean
                     StartCoroutine(BeginDayFive());
                 else if (currentDay == 5)
                     StartCoroutine(BeginDaySixSandbox());
+                else if (currentDay == 6)
+                    StartCoroutine(BeginDaySevenBoss());
             }
         }
 
@@ -477,10 +483,20 @@ namespace PixelOcean
                 return;
             }
 
-            if (currentDay >= 7)
+            if (currentDay == 7)
             {
-                objective = $"DAY {currentDay} DEVELOPMENT SANDBOX";
-                learningObjective = string.Empty;
+                if (chapter == Chapter.Complete)
+                {
+                    objective = "THE OTHER SHORE REMEMBERS YOU";
+                    learningObjective = string.Empty;
+                    return;
+                }
+
+                chapter = Chapter.FinalWave;
+                finalWaveStarted = true;
+                objective = "BREAK AION'S MANIFESTATION";
+                learningObjective = "Read the charge animation: switch lanes for lasers and destroy the opening between realities.";
+                DaySevenEncounter.Begin(this);
                 return;
             }
 
@@ -837,6 +853,9 @@ namespace PixelOcean
             DestroyAll<DaySixCreature>();
             DestroyAll<DaySixHazardProjectile>();
             DestroyAll<DaySixEncounter>();
+            DestroyAll<AionLaneLaser>();
+            DestroyAll<AionFinalBoss>();
+            DestroyAll<DaySevenEncounter>();
             ambientThreatDay = -1;
             nextAmbientThreatAt = 0f;
         }
@@ -1071,6 +1090,68 @@ namespace PixelOcean
             AirTrickScoreSystem.Instance?.ShowDayRecap(6, 10f);
             rain?.ClearRain();
             QueueCheckpoint();
+
+            if (!changingDay)
+            {
+                changingDay = true;
+                StartCoroutine(BeginDaySevenBoss());
+            }
+        }
+
+        private IEnumerator BeginDaySevenBoss()
+        {
+            yield return new WaitForSecondsRealtime(10f);
+            if (SurfDayUpgradeScreen.Instance != null)
+                yield return SurfDayUpgradeScreen.Instance.ShowAndWait();
+
+            ShowBanner("THE SEVENTH CURRENT OPENS", "DAY 7 — THE OTHER SHORE", 4f);
+            rain?.ClearRain();
+            yield return new WaitForSecondsRealtime(3f);
+
+            ClearRunObjects();
+            yield return null;
+
+            currentDay = 7;
+            AirTrickScoreSystem.Instance?.BeginDay(7);
+            SurfAbilityProgression.Instance?.DebugUnlockAll();
+            runTime = 0f;
+            distanceTravelled = 0f;
+            hasPreviousPlayerX = false;
+            rescues = 0;
+            finalWaveStarted = true;
+            bossDefeatedSunset = false;
+            chapter = Chapter.FinalWave;
+            changingDay = false;
+            facilityEncounterStarted = false;
+            objective = "BREAK AION'S MANIFESTATION";
+            learningObjective = "Read the charge animation: switch lanes for lasers and destroy the opening between realities.";
+            SyncDayNightToRunTime();
+            PrepareBossArenaSeaLife();
+            SpawnPickupSet();
+            SpawnOceanItems(18);
+            DaySevenEncounter.Begin(this);
+            ShowBanner(
+                "AION — THE TIDE BEYOND",
+                "THE OCEAN IS INTERSECTING ANOTHER REALITY.",
+                4.5f);
+            SurfStageSaveSystem.Save(this);
+        }
+
+        public void CompleteDaySeven()
+        {
+            if (currentDay != 7 || chapter == Chapter.Complete)
+                return;
+
+            bossDefeatedSunset = true;
+            BeginChapter(
+                Chapter.Complete,
+                "THE OTHER SHORE",
+                "AION WITHDRAWS. THE FINAL WAVE CARRIES YOU HOME.");
+            objective = "THE OTHER SHORE REMEMBERS YOU";
+            learningObjective = string.Empty;
+            AirTrickScoreSystem.Instance?.ShowDayRecap(7, 10f);
+            rain?.ClearRain();
+            QueueCheckpoint();
         }
 
         private void UpdateProgressiveAtmosphere()
@@ -1257,6 +1338,13 @@ namespace PixelOcean
             UpdateProgressiveAtmosphere();
             UpdateProgressiveHostileSpawns();
             UpdateDayOneMechanicUnlocks();
+
+            if (currentDay == 7)
+            {
+                DaySevenEncounter.Begin(this);
+                objective = "BREAK AION'S MANIFESTATION";
+                return;
+            }
 
             if (currentDay == 5 && chapter == Chapter.FinalWave &&
                 runTime >= dayEndsAt)
@@ -1582,6 +1670,9 @@ namespace PixelOcean
                 DestroyAll<DayFiveWardenMissile>();
                 DestroyAll<DayFiveSecurityPulse>();
                 DestroyAll<DayFiveSecurityImpact>();
+                DestroyAll<AionLaneLaser>();
+                DestroyAll<AionFinalBoss>();
+                DestroyAll<DaySevenEncounter>();
 
                 yield return null;
                 yield return new WaitForEndOfFrame();
@@ -1592,6 +1683,13 @@ namespace PixelOcean
             {
                 DayFiveEncounter encounter = DayFiveEncounter.Begin(this);
                 encounter?.SpawnFinalPair();
+                FinishBossEncounterBuild(showReadyBanner, saveWhenReady);
+                yield break;
+            }
+
+            if (currentDay == 7)
+            {
+                DaySevenEncounter.Begin(this);
                 FinishBossEncounterBuild(showReadyBanner, saveWhenReady);
                 yield break;
             }
@@ -1818,6 +1916,8 @@ namespace PixelOcean
 
             if (currentDay == 5)
                 DayFiveEncounter.Begin(this)?.SpawnFinalPair();
+            else if (currentDay == 7)
+                DaySevenEncounter.Begin(this);
         }
 
         private void EnsureDayThreeFacility(TinyWaveSurfer player)
@@ -1976,6 +2076,7 @@ namespace PixelOcean
 
             FindFirstObjectByType<DayFiveEncounter>()?.EndEncounter();
             FindFirstObjectByType<DaySixEncounter>()?.EndEncounter();
+            FindFirstObjectByType<DaySevenEncounter>()?.EndEncounter();
             rain?.ClearRain();
             SurfRunLifeManager.Instance?.ResetLivesForNewRun();
 
@@ -2138,6 +2239,14 @@ namespace PixelOcean
         private void RefreshLearningObjectiveForStage()
         {
             SurfAbilityProgression abilities = SurfAbilityProgression.Instance;
+
+            if (currentDay == 7)
+            {
+                learningObjective = chapter == Chapter.Complete
+                    ? string.Empty
+                    : "Read AION's charge animation, find the safe current, and strike between patterns.";
+                return;
+            }
 
             if (currentDay == 6)
             {

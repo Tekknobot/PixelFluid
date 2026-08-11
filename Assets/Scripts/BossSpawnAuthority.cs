@@ -116,6 +116,20 @@ namespace PixelOcean
             }
 
             if (survivor == null)
+            {
+                foreach (AionFinalBoss boss in Object.FindObjectsByType<AionFinalBoss>(
+                             FindObjectsInactive.Include,
+                             FindObjectsSortMode.None))
+                {
+                    if (boss == null || boss == ignoredCandidate)
+                        continue;
+
+                    survivor = boss;
+                    break;
+                }
+            }
+
+            if (survivor == null)
                 return;
 
             registeredBoss = survivor;
@@ -140,6 +154,14 @@ namespace PixelOcean
             }
 
             foreach (RubberDuckBossSwimmer boss in Object.FindObjectsByType<RubberDuckBossSwimmer>(
+                         FindObjectsInactive.Include,
+                         FindObjectsSortMode.None))
+            {
+                if (boss != null && boss != keeper)
+                    Object.Destroy(boss.gameObject);
+            }
+
+            foreach (AionFinalBoss boss in Object.FindObjectsByType<AionFinalBoss>(
                          FindObjectsInactive.Include,
                          FindObjectsSortMode.None))
             {

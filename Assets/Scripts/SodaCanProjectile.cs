@@ -18,6 +18,7 @@ namespace PixelOcean
         private DayFiveCombatant lockedSecurity;
         private DaySixCreature lockedDaySixCreature;
         private DaySixSkyHostile lockedDaySixSkyHostile;
+        private AionFinalBoss lockedAion;
 
         public void Launch(
             Vector2 start,
@@ -42,6 +43,9 @@ namespace PixelOcean
                 : null;
             lockedDaySixSkyHostile = target != null
                 ? target.GetComponentInParent<DaySixSkyHostile>()
+                : null;
+            lockedAion = target != null
+                ? target.GetComponentInParent<AionFinalBoss>()
                 : null;
             SpriteRenderer renderer = GetComponent<SpriteRenderer>();
             renderer.sprite = sprite;
@@ -167,6 +171,12 @@ namespace PixelOcean
                 if (hitHostile != lockedDaySixSkyHostile)
                     return;
             }
+            if (lockedAion != null && lockedAion.CanBeHit)
+            {
+                AionFinalBoss hitAion = other.GetComponentInParent<AionFinalBoss>();
+                if (hitAion != lockedAion)
+                    return;
+            }
 
             HitTarget(other.transform);
         }
@@ -265,6 +275,16 @@ namespace PixelOcean
                 PlaySfx(sharkHitClip, 1f);
                 daySixSkyHostile.TakeThrownItemHit(1, transform.position);
                 Bounce(daySixSkyHostile.transform.position);
+                return;
+            }
+
+            AionFinalBoss aion = hitTransform.GetComponentInParent<AionFinalBoss>();
+            if (aion != null && aion.CanBeHit)
+            {
+                LoadSfx();
+                PlaySfx(sharkHitClip, 1f);
+                aion.TakeThrownItemHit(1, transform.position);
+                Bounce(aion.transform.position);
                 return;
             }
 
