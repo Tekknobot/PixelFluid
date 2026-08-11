@@ -1,0 +1,472 @@
+fileFormatVersion: 2
+guid: e1e1b704970153a4b9ccde5eeaa9760b
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 3095625363899548915
+    second: aion_move_0
+  - first:
+      213: -234379548686666070
+    second: aion_move_1
+  - first:
+      213: -4654490056545955157
+    second: aion_move_2
+  - first:
+      213: 6634728972998822105
+    second: aion_move_3
+  - first:
+      213: -7140792026913278340
+    second: aion_move_4
+  - first:
+      213: -6518253262264705365
+    second: aion_move_5
+  - first:
+      213: -3850206215207623249
+    second: aion_move_6
+  - first:
+      213: 5710932936993598370
+    second: aion_move_7
+  - first:
+      213: -3880818961590596264
+    second: aion_move_8
+  - first:
+      213: -6273669858288225316
+    second: aion_move_9
+  - first:
+      213: 3779147420693758743
+    second: aion_move_10
+  - first:
+      213: 8279236162943495592
+    second: aion_move_11
+  - first:
+      213: 7451429140652828871
+    second: aion_move_12
+  - first:
+      213: -5966616356499647037
+    second: aion_move_13
+  - first:
+      213: 6555143219486082612
+    second: aion_move_14
+  - first:
+      213: 4162669313724356453
+    second: aion_move_15
+  - first:
+      213: -4084467988554084100
+    second: aion_move_16
+  - first:
+      213: 8458716732100063392
+    second: aion_move_17
+  - first:
+      213: 5952058984532953855
+    second: aion_move_18
+  - first:
+      213: 6134256940095567713
+    second: aion_move_19
+  - first:
+      213: -3512073299180109564
+    second: aion_move_20
+  - first:
+      213: 2572215237580911433
+    second: aion_move_21
+  - first:
+      213: -3815107825883997315
+    second: aion_move_22
+  - first:
+      213: -8113876156298007884
+    second: aion_move_23
+  - first:
+      213: -6578286983333912499
+    second: aion_move_24
+  - first:
+      213: 8743715718789091657
+    second: aion_move_25
+  - first:
+      213: 8666353281375789385
+    second: aion_move_26
+  - first:
+      213: -1747039880823174973
+    second: aion_move_27
+  - first:
+      213: 1632203659414200041
+    second: aion_move_28
+  - first:
+      213: 4426285093205265629
+    second: aion_move_29
+  - first:
+      213: -5976981044688242880
+    second: aion_move_30
+  - first:
+      213: -440687521203926062
+    second: aion_move_31
+  - first:
+      213: 4774510665186624197
+    second: aion_move_32
+  - first:
+      213: 7251276973432629117
+    second: aion_move_33
+  - first:
+      213: -5123845033281992231
+    second: aion_move_34
+  - first:
+      213: -8437942536461698648
+    second: aion_move_35
+  - first:
+      213: 7499631808436813743
+    second: aion_move_36
+  - first:
+      213: -8637280784586088951
+    second: aion_move_37
+  - first:
+      213: -5433181408468975234
+    second: aion_move_38
+  - first:
+      213: -7373661049571738641
+    second: aion_move_39
+  - first:
+      213: 7257248661297993955
+    second: aion_move_40
+  - first:
+      213: -6467710216599839881
+    second: aion_move_41
+  - first:
+      213: -6624715456313626397
+    second: aion_move_42
+  - first:
+      213: 1238364267980986753
+    second: aion_move_43
+  - first:
+      213: -2769568521274703423
+    second: aion_move_44
+  - first:
+      213: 8996271726584027675
+    second: aion_move_45
+  - first:
+      213: 3885254677430382126
+    second: aion_move_46
+  - first:
+      213: -9009349172305687542
+    second: aion_move_47
+  - first:
+      213: -4182575784573800772
+    second: aion_move_48
+  - first:
+      213: -8590124981162135440
+    second: aion_move_49
+  - first:
+      213: -817748013641176550
+    second: aion_move_50
+  - first:
+      213: 5983737736246242435
+    second: aion_move_51
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 1
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: aion_move_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 256
+        height: 256
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3f40cecfdded5fa20800000000000000
+      internalID: 3095625363899548915
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: aion_move_1
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 0
+        width: 256
+        height: 256
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aa63ae1da015fbcf0800000000000000
+      internalID: -234379548686666070
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: aion_move_2
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 0
+        width: 256
+        height: 256
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ba29df044fde76fb0800000000000000
+      internalID: -4654490056545955157
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: aion_move_3
+      rect:
+        serializedVersion: 2
+        x: 768
+        y: 0
+        width: 256
+        height: 256
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9d8469049da431c50800000000000000
+      internalID: 6634728972998822105
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: aion_move_4
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 0
+        width: 256
+        height: 256
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c7674ec2c7fc6ec90800000000000000
+      internalID: -7140792026913278340
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: aion_move_5
+      rect:
+        serializedVersion: 2
+        x: 1280
+        y: 0
+        width: 256
+        height: 256
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bae5ea271338a85a0800000000000000
+      internalID: -6518253262264705365
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: aion_move_6
+      rect:
+        serializedVersion: 2
+        x: 1536
+        y: 0
+        width: 256
+        height: 256
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fa56c86b8d1519ac0800000000000000
+      internalID: -3850206215207623249
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: aion_move_7
+      rect:
+        serializedVersion: 2
+        x: 1792
+        y: 0
+        width: 256
+        height: 256
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2abe4959f3f414f40800000000000000
+      internalID: 5710932936993598370
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 757b4c3f8c190cf45a67ee03e85d8e39
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":8.0,"y":1.0},"gridSpriteSize":{"x":256.0,"y":256.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      aion_move_0: 3095625363899548915
+      aion_move_1: -234379548686666070
+      aion_move_2: -4654490056545955157
+      aion_move_3: 6634728972998822105
+      aion_move_4: -7140792026913278340
+      aion_move_5: -6518253262264705365
+      aion_move_6: -3850206215207623249
+      aion_move_7: 5710932936993598370
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
