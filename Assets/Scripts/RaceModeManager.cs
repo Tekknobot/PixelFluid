@@ -116,35 +116,109 @@ namespace PixelOcean
         private SurferSlugPauseMenu selectionMenu;
         private GameObject ecosystemRoot;
         private float nextEcosystemSpawnTime;
+        private float nextRaceBossSweepTime;
 
-        [Header("Race Bosses — No Arenas")]
-        [SerializeField, Min(0f)] private float reaperSpawnAfterSeconds = 55f;
-        [SerializeField, Min(0f)] private float rubberDuckSpawnAfterSeconds = 115f;
-        [SerializeField, Min(0.5f)] private float raceBossFollowDistance = 3.25f;
-        [SerializeField, Min(0.5f)] private float raceBossMaximumSpeed = 8.5f;
-        [SerializeField, Min(0.1f)] private float raceBossAcceleration = 12f;
-        [SerializeField, Min(0.5f)] private float raceBossVisibleSpawnOffset = 4.5f;
-        [SerializeField, Min(1f)] private float raceBossChildRecycleDistance = 14f;
-        private bool raceReaperSpawned;
-        private bool raceRubberDuckSpawned;
         private bool raceTeardownInProgress;
 
+        private enum RaceHostileKind
+        {
+            Shark,
+            GiantSquid,
+            JellyfishSchool,
+            AlienUfo,
+            BloodShark,
+            TransparentSquid,
+            Stingray,
+            BloodfishSchool,
+            Helicopter,
+            Searchlight,
+            SurveillanceBuoy,
+            Drone,
+            Fishbowl,
+            Starfish,
+            MustacheShark,
+            Toaster,
+            MushroomSquid,
+            Resort,
+            Toilet,
+            ClawUfo,
+            RacerUfo,
+            RetroUfo
+        }
+
         [Header("Race Ecosystem Difficulty")]
-        [SerializeField, Range(1, 12)] private int openingEnemyCap = 6;
-        [SerializeField, Range(1, 16)] private int earlyEnemyCap = 9;
-        [SerializeField, Range(1, 20)] private int midEnemyCap = 12;
-        [SerializeField, Range(1, 24)] private int finalEnemyCap = 15;
-        [SerializeField, Min(0.5f)] private float openingSpawnInterval = 4.5f;
-        [SerializeField, Min(0.5f)] private float earlySpawnInterval = 3.5f;
-        [SerializeField, Min(0.5f)] private float midSpawnInterval = 2.6f;
-        [SerializeField, Min(0.5f)] private float finalSpawnInterval = 1.8f;
-        [SerializeField, Range(0f, 1f)] private float openingPhaseEnd = 0.10f;
-        [SerializeField, Range(0f, 1f)] private float earlyPhaseEnd = 0.27f;
-        [SerializeField, Range(0f, 1f)] private float midPhaseEnd = 0.55f;
-        [SerializeField, Range(1, 6)] private int maximumSpawnsPerPulse = 3;
+        [SerializeField, Range(1, 12)] private int openingEnemyCap = 3;
+        [SerializeField, Range(1, 16)] private int earlyEnemyCap = 6;
+        [SerializeField, Range(1, 20)] private int midEnemyCap = 9;
+        [SerializeField, Range(1, 24)] private int finalEnemyCap = 12;
+        [SerializeField, Min(0.5f)] private float openingSpawnInterval = 6f;
+        [SerializeField, Min(0.5f)] private float earlySpawnInterval = 4.8f;
+        [SerializeField, Min(0.5f)] private float midSpawnInterval = 3.6f;
+        [SerializeField, Min(0.5f)] private float finalSpawnInterval = 2.5f;
+        [SerializeField, Range(0f, 1f)] private float openingPhaseEnd = 0.18f;
+        [SerializeField, Range(0f, 1f)] private float earlyPhaseEnd = 0.42f;
+        [SerializeField, Range(0f, 1f)] private float midPhaseEnd = 0.70f;
+        [SerializeField, Range(1, 6)] private int maximumSpawnsPerPulse = 1;
         [SerializeField, Min(0.05f)] private float raceCreatureFadeInDuration = 0.85f;
-        [SerializeField, Range(2, 8)] private int raceTurtleSchoolMinimum = 3;
-        [SerializeField, Range(3, 12)] private int raceTurtleSchoolMaximum = 6;
+        private int nextRaceWaterEntrySide = -1;
+        private int nextRaceSkyEntrySide = -1;
+        private static readonly RaceHostileKind[] OpeningHostiles =
+        {
+            RaceHostileKind.Shark,
+            RaceHostileKind.GiantSquid,
+            RaceHostileKind.JellyfishSchool,
+            RaceHostileKind.AlienUfo
+        };
+        private static readonly RaceHostileKind[] EarlyHostiles =
+        {
+            RaceHostileKind.Shark,
+            RaceHostileKind.GiantSquid,
+            RaceHostileKind.JellyfishSchool,
+            RaceHostileKind.AlienUfo,
+            RaceHostileKind.BloodShark,
+            RaceHostileKind.TransparentSquid,
+            RaceHostileKind.Stingray,
+            RaceHostileKind.BloodfishSchool,
+            RaceHostileKind.Helicopter
+        };
+        private static readonly RaceHostileKind[] MidHostiles =
+        {
+            RaceHostileKind.Shark,
+            RaceHostileKind.GiantSquid,
+            RaceHostileKind.JellyfishSchool,
+            RaceHostileKind.AlienUfo,
+            RaceHostileKind.BloodShark,
+            RaceHostileKind.TransparentSquid,
+            RaceHostileKind.Stingray,
+            RaceHostileKind.BloodfishSchool,
+            RaceHostileKind.Helicopter,
+            RaceHostileKind.Searchlight,
+            RaceHostileKind.SurveillanceBuoy,
+            RaceHostileKind.Drone
+        };
+        private static readonly RaceHostileKind[] FinalHostiles =
+        {
+            RaceHostileKind.Shark,
+            RaceHostileKind.GiantSquid,
+            RaceHostileKind.JellyfishSchool,
+            RaceHostileKind.BloodShark,
+            RaceHostileKind.TransparentSquid,
+            RaceHostileKind.Stingray,
+            RaceHostileKind.BloodfishSchool,
+            RaceHostileKind.Searchlight,
+            RaceHostileKind.SurveillanceBuoy,
+            RaceHostileKind.Drone,
+            RaceHostileKind.Fishbowl,
+            RaceHostileKind.Starfish,
+            RaceHostileKind.MustacheShark,
+            RaceHostileKind.Toaster,
+            RaceHostileKind.MushroomSquid,
+            RaceHostileKind.Resort,
+            RaceHostileKind.Toilet,
+            RaceHostileKind.ClawUfo,
+            RaceHostileKind.RacerUfo,
+            RaceHostileKind.RetroUfo
+        };
         private bool hasStoryProgressionSnapshot;
         private SurfAbility storyUnlockedSnapshot;
         private int storyJumpUpgradeSnapshot;
@@ -432,7 +506,7 @@ namespace PixelOcean
             }
             RefreshHud();
             UpdateRaceEcosystem();
-            UpdateRaceBosses();
+            RemoveBossesFromRace();
             UpdateRaceWeatherPattern();
             UpdateSharedRaceCamera();
             UpdateControllerStatus();
@@ -1054,24 +1128,14 @@ namespace PixelOcean
 
             ecosystemRoot = new GameObject("Race Mode Random Ecosystem");
             DontDestroyOnLoad(ecosystemRoot);
-            nextEcosystemSpawnTime = Time.time + 0.75f;
-            raceReaperSpawned = false;
-            raceRubberDuckSpawned = false;
-            SuppressRaceBossArenas();
+            nextEcosystemSpawnTime = Time.time + 2f;
+            nextRaceWaterEntrySide = -1;
+            nextRaceSkyEntrySide = -1;
+            RemoveBossesFromRace();
 
-            // Guarantee the signature Race Mode ecosystem appears immediately.
-            // These used to be hidden behind a ten-way random roll, so an entire
-            // race could pass without showing one of them.
-            SpawnSpecificRaceCreature(3); // Jellyfish school
-            SpawnSpecificRaceCreature(4); // Blood shark
-            SpawnSpecificRaceCreature(7); // Bloodfish school
-            SpawnSpecificRaceCreature(8); // Baby sea turtle school
-            SpawnSpecificRaceCreature(9); // Giant turtle
-
-
-            // Add two random creatures so the opening still changes each race.
-            SpawnRandomWaterEnemy();
-            SpawnRandomWaterEnemy();
+            // Begin with one readable baseline threat. The normal spawn pulses
+            // introduce the rest of the roster as race progress unlocks each tier.
+            SpawnRaceHostile(RaceHostileKind.Shark);
         }
 
         private void UpdateRaceEcosystem()
@@ -1085,7 +1149,7 @@ namespace PixelOcean
             int spawnCount = Mathf.Min(missing, Mathf.Max(1, maximumSpawnsPerPulse));
 
             for (int i = 0; i < spawnCount; i++)
-                SpawnRandomWaterEnemy();
+                SpawnRandomRaceHostile();
 
             float jitter = UnityEngine.Random.Range(0.82f, 1.18f);
             nextEcosystemSpawnTime = Time.time + spawnInterval * jitter;
@@ -1093,8 +1157,7 @@ namespace PixelOcean
 
         private void GetRaceEcosystemDifficulty(out int enemyCap, out float spawnInterval)
         {
-            float progress = 1f - raceTimeRemaining / Mathf.Max(1f, PrototypeRaceSeconds);
-            progress = Mathf.Clamp01(progress);
+            float progress = GetRaceProgress();
 
             float openingEnd = Mathf.Clamp01(openingPhaseEnd);
             float earlyEnd = Mathf.Max(openingEnd, Mathf.Clamp01(earlyPhaseEnd));
@@ -1130,22 +1193,71 @@ namespace PixelOcean
             return
                 FindObjectsByType<SharkLaneSwimmer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length +
                 FindObjectsByType<GiantSquidLaneSwimmer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length +
-                FindObjectsByType<WhaleLaneSwimmer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length +
                 FindObjectsByType<JellyfishSchoolController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length +
                 FindObjectsByType<BloodSharkLaneSwimmer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length +
                 FindObjectsByType<TransparentSquidLaneSwimmer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length +
                 FindObjectsByType<StingrayLaneSwimmer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length +
                 FindObjectsByType<BloodfishSchoolController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length +
-                FindObjectsByType<SeaTurtleSwimmer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length +
-                FindObjectsByType<GiantTurtleSwimmer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length;
+                FindObjectsByType<AlienUfoController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length +
+                FindObjectsByType<DayTwoHelicopterController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length +
+                FindObjectsByType<DayFiveCombatant>(FindObjectsInactive.Exclude, FindObjectsSortMode.None)
+                    .Count(combatant => combatant != null && !combatant.IsBoss) +
+                FindObjectsByType<DaySixCreature>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length +
+                FindObjectsByType<DaySixSkyHostile>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length;
         }
 
-        private void SpawnRandomWaterEnemy()
+        private void SpawnRandomRaceHostile()
         {
-            SpawnSpecificRaceCreature(UnityEngine.Random.Range(0, 10));
+            float progress = GetRaceProgress();
+            float openingEnd = Mathf.Clamp01(openingPhaseEnd);
+            float earlyEnd = Mathf.Max(openingEnd, Mathf.Clamp01(earlyPhaseEnd));
+            float midEnd = Mathf.Max(earlyEnd, Mathf.Clamp01(midPhaseEnd));
+
+            RaceHostileKind[] available = progress < openingEnd
+                ? OpeningHostiles
+                : progress < earlyEnd
+                    ? EarlyHostiles
+                    : progress < midEnd
+                        ? MidHostiles
+                        : FinalHostiles;
+
+            int start = UnityEngine.Random.Range(0, available.Length);
+            for (int i = 0; i < available.Length; i++)
+            {
+                RaceHostileKind candidate = available[(start + i) % available.Length];
+                if (!CanSpawnRaceHostile(candidate))
+                    continue;
+
+                SpawnRaceHostile(candidate);
+                return;
+            }
         }
 
-        private void SpawnSpecificRaceCreature(int creatureIndex)
+        private static bool CanSpawnRaceHostile(RaceHostileKind kind)
+        {
+            if (kind == RaceHostileKind.AlienUfo)
+                return FindFirstObjectByType<AlienUfoController>() == null;
+            if (kind == RaceHostileKind.Helicopter)
+                return FindFirstObjectByType<DayTwoHelicopterController>() == null;
+            if (kind == RaceHostileKind.ClawUfo ||
+                kind == RaceHostileKind.RacerUfo ||
+                kind == RaceHostileKind.RetroUfo)
+            {
+                return FindObjectsByType<DaySixSkyHostile>(
+                    FindObjectsInactive.Exclude,
+                    FindObjectsSortMode.None).Length < 2;
+            }
+
+            return true;
+        }
+
+        private float GetRaceProgress()
+        {
+            return Mathf.Clamp01(
+                1f - raceTimeRemaining / Mathf.Max(1f, PrototypeRaceSeconds));
+        }
+
+        private void SpawnRaceHostile(RaceHostileKind kind)
         {
             if (ecosystemRoot == null)
                 return;
@@ -1161,91 +1273,153 @@ namespace PixelOcean
                     holder.position = new Vector3(centres[UnityEngine.Random.Range(0, centres.Count)], 0f, 0f);
             }
 
-            // Every ordinary sea creature is eligible. Bosses, boss minions,
-            // aircraft, UFOs and boombox surfers are intentionally excluded.
-            switch (Mathf.Clamp(creatureIndex, 0, 9))
+            // This catalog contains every normal hostile from Days 1-6. Neutral
+            // wildlife, helpers, bosses and boss-only minions are intentionally absent.
+            switch (kind)
             {
-                case 0:
+                case RaceHostileKind.Shark:
                     holder.gameObject.AddComponent<SharkLaneSpawner>().SpawnShark(true);
                     break;
-                case 1:
+                case RaceHostileKind.GiantSquid:
                     holder.gameObject.AddComponent<GiantSquidLaneSpawner>().SpawnSquid(true);
                     break;
-                case 2:
-                    holder.gameObject.AddComponent<WhaleLaneSpawner>().SpawnWhale(true);
-                    break;
-                case 3:
+                case RaceHostileKind.JellyfishSchool:
                     holder.gameObject.AddComponent<JellyfishSchoolSpawner>().SpawnSchool();
                     break;
-                case 4:
+                case RaceHostileKind.AlienUfo:
+                    holder.gameObject.name = "Race Alien UFO";
+                    holder.gameObject.AddComponent<SpriteRenderer>();
+                    holder.gameObject.AddComponent<AlienUfoController>();
+                    break;
+                case RaceHostileKind.BloodShark:
                     holder.gameObject.AddComponent<BloodSharkLaneSpawner>().SpawnBloodShark(true);
                     break;
-                case 5:
+                case RaceHostileKind.TransparentSquid:
                     holder.gameObject.AddComponent<TransparentSquidLaneSpawner>().SpawnTransparentSquid(true);
                     break;
-                case 6:
+                case RaceHostileKind.Stingray:
                     holder.gameObject.AddComponent<StingrayLaneSpawner>().SpawnStingray(true);
                     break;
-                case 7:
+                case RaceHostileKind.BloodfishSchool:
                     holder.gameObject.AddComponent<BloodfishSchoolSpawner>().SpawnSchool();
                     break;
-                case 8:
-                    SpawnRaceSeaTurtleSchool(holder);
+                case RaceHostileKind.Helicopter:
+                    holder.gameObject.name = "Race Missile Helicopter";
+                    holder.gameObject.AddComponent<SpriteRenderer>();
+                    holder.gameObject.AddComponent<BoxCollider2D>();
+                    holder.gameObject.AddComponent<Rigidbody2D>();
+                    holder.gameObject.AddComponent<DayTwoHelicopterController>();
                     break;
-                default:
-                    SpawnRaceGiantTurtle(holder);
+                case RaceHostileKind.Searchlight:
+                    SpawnRaceDayFiveHostile(holder, DayFiveEnemyKind.Searchlight);
+                    break;
+                case RaceHostileKind.SurveillanceBuoy:
+                    SpawnRaceDayFiveHostile(holder, DayFiveEnemyKind.SurveillanceBuoy);
+                    break;
+                case RaceHostileKind.Drone:
+                    SpawnRaceDayFiveHostile(holder, DayFiveEnemyKind.Drone);
+                    break;
+                case RaceHostileKind.Fishbowl:
+                    SpawnRaceDaySixCreature(holder, DaySixCreatureKind.Fishbowl);
+                    break;
+                case RaceHostileKind.Starfish:
+                    SpawnRaceDaySixCreature(holder, DaySixCreatureKind.Starfish);
+                    break;
+                case RaceHostileKind.MustacheShark:
+                    SpawnRaceDaySixCreature(holder, DaySixCreatureKind.MustacheShark);
+                    break;
+                case RaceHostileKind.Toaster:
+                    SpawnRaceDaySixCreature(holder, DaySixCreatureKind.Toaster);
+                    break;
+                case RaceHostileKind.MushroomSquid:
+                    SpawnRaceDaySixCreature(holder, DaySixCreatureKind.MushroomSquid);
+                    break;
+                case RaceHostileKind.Resort:
+                    SpawnRaceDaySixCreature(holder, DaySixCreatureKind.Resort);
+                    break;
+                case RaceHostileKind.Toilet:
+                    SpawnRaceDaySixCreature(holder, DaySixCreatureKind.Toilet);
+                    break;
+                case RaceHostileKind.ClawUfo:
+                    SpawnRaceDaySixSkyHostile(holder, DaySixSkyHostileKind.ClawUfo);
+                    break;
+                case RaceHostileKind.RacerUfo:
+                    SpawnRaceDaySixSkyHostile(holder, DaySixSkyHostileKind.RacerUfo);
+                    break;
+                case RaceHostileKind.RetroUfo:
+                    SpawnRaceDaySixSkyHostile(holder, DaySixSkyHostileKind.RetroUfo);
                     break;
             }
 
             EnsureRaceCreatureFade(holder.gameObject);
         }
 
-        private void SpawnRaceSeaTurtleSchool(Transform holder)
+        private void SpawnRaceDayFiveHostile(Transform holder, DayFiveEnemyKind kind)
         {
-            int laneCount = Mathf.Max(1, EndlessWaveSections.LayersNearest(holder.position.x).Count - 1);
+            TinyWaveSurfer player = FindRacePlayer();
+            float sampleX = player != null ? player.transform.position.x : holder.position.x;
+            List<PixelWaterGPU> waterLayers = EndlessWaveSections.LayersNearest(sampleX);
+            waterLayers.RemoveAll(layer => layer == null || !layer.isActiveAndEnabled);
+            int laneCount = Mathf.Max(1, waterLayers.Count - 1);
             int lane = UnityEngine.Random.Range(0, laneCount);
-            int low = Mathf.Max(2, Mathf.Min(raceTurtleSchoolMinimum, raceTurtleSchoolMaximum));
-            int high = Mathf.Max(low, Mathf.Max(raceTurtleSchoolMinimum, raceTurtleSchoolMaximum));
-            int count = UnityEngine.Random.Range(low, high + 1);
-            float direction = UnityEngine.Random.value < 0.5f ? -1f : 1f;
-            Transform leader = null;
+            PixelWaterGPU sortingSource = waterLayers.Count > 0
+                ? waterLayers[Mathf.Clamp(lane, 0, waterLayers.Count - 1)]
+                : null;
 
-            for (int i = 0; i < count; i++)
-            {
-                GameObject turtle = new GameObject($"Race Sea Turtle {i + 1}");
-                turtle.transform.SetParent(holder, false);
-                turtle.AddComponent<SpriteRenderer>();
-                turtle.AddComponent<InterWaveRenderItem>();
-                turtle.AddComponent<Rigidbody2D>();
-                turtle.AddComponent<CircleCollider2D>();
-
-                Vector2 offset = new(
-                    -direction * i * 0.38f,
-                    (i % 2 == 0 ? 1f : -1f) * 0.12f * Mathf.Ceil(i * 0.5f));
-
-                SeaTurtleSwimmer swimmer = turtle.AddComponent<SeaTurtleSwimmer>();
-                swimmer.Initialise(
-                    Mathf.Clamp(lane + (i == count - 1 && count > 3 ? 1 : 0), 0, laneCount - 1),
-                    leader,
-                    offset,
-                    direction);
-
-                if (i == 0)
-                    leader = turtle.transform;
-            }
+            holder.gameObject.name = $"Race Day 5 {kind}";
+            holder.gameObject.AddComponent<SpriteRenderer>();
+            holder.gameObject.AddComponent<BoxCollider2D>();
+            holder.gameObject.AddComponent<Rigidbody2D>();
+            DayFiveCombatant combatant = holder.gameObject.AddComponent<DayFiveCombatant>();
+            combatant.Initialise(kind, nextRaceWaterEntrySide, null, sortingSource, lane);
+            nextRaceWaterEntrySide *= -1;
         }
 
-        private static void SpawnRaceGiantTurtle(Transform holder)
+        private void SpawnRaceDaySixCreature(Transform holder, DaySixCreatureKind kind)
         {
-            int laneCount = Mathf.Max(1, EndlessWaveSections.LayersNearest(holder.position.x).Count - 1);
-            GameObject turtle = new GameObject("Race Giant Turtle");
-            turtle.transform.SetParent(holder, false);
-            turtle.AddComponent<SpriteRenderer>();
-            turtle.AddComponent<InterWaveRenderItem>();
-            turtle.AddComponent<Rigidbody2D>();
-            turtle.AddComponent<BoxCollider2D>();
-            turtle.AddComponent<GiantTurtleSwimmer>().Initialise(
-                UnityEngine.Random.Range(0, laneCount));
+            TinyWaveSurfer player = FindRacePlayer();
+            float sampleX = player != null ? player.transform.position.x : holder.position.x;
+            List<PixelWaterGPU> waterLayers = EndlessWaveSections.LayersNearest(sampleX);
+            waterLayers.RemoveAll(layer => layer == null || !layer.isActiveAndEnabled);
+            int lane = UnityEngine.Random.Range(0, Mathf.Max(1, waterLayers.Count - 1));
+
+            holder.gameObject.name = $"Race Day 6 {kind}";
+            holder.position = new Vector3(sampleX, player != null ? player.transform.position.y : 0f, 0f);
+            holder.gameObject.AddComponent<SpriteRenderer>();
+            holder.gameObject.AddComponent<BoxCollider2D>();
+            holder.gameObject.AddComponent<Rigidbody2D>();
+            holder.gameObject.AddComponent<InterWaveRenderItem>();
+            DaySixCreature creature = holder.gameObject.AddComponent<DaySixCreature>();
+            creature.Initialise(kind, lane, nextRaceWaterEntrySide, null);
+            nextRaceWaterEntrySide *= -1;
+        }
+
+        private void SpawnRaceDaySixSkyHostile(Transform holder, DaySixSkyHostileKind kind)
+        {
+            TinyWaveSurfer player = FindRacePlayer();
+            float sampleX = player != null ? player.transform.position.x : holder.position.x;
+
+            holder.gameObject.name = $"Race Day 6 {kind}";
+            holder.position = new Vector3(
+                sampleX,
+                player != null ? player.transform.position.y + 2f : 2f,
+                0f);
+            holder.gameObject.AddComponent<SpriteRenderer>();
+            holder.gameObject.AddComponent<BoxCollider2D>();
+            holder.gameObject.AddComponent<Rigidbody2D>();
+            holder.gameObject.AddComponent<InterWaveRenderItem>();
+            DaySixSkyHostile hostile = holder.gameObject.AddComponent<DaySixSkyHostile>();
+            hostile.Initialise(kind, nextRaceSkyEntrySide, null);
+            nextRaceSkyEntrySide *= -1;
+        }
+
+        private static TinyWaveSurfer FindRacePlayer()
+        {
+            foreach (TinyWaveSurfer surfer in GameplayTargetCache.Surfers)
+                if (surfer != null && surfer.IsPlayerControlled && !surfer.IsDead)
+                    return surfer;
+
+            return null;
         }
 
         private void EnsureRaceCreatureFade(GameObject root)
@@ -1260,273 +1434,42 @@ namespace PixelOcean
             fade.Configure(raceCreatureFadeInDuration);
         }
 
-        private void UpdateRaceBosses()
-        {
-            if (!RaceActive)
-                return;
-
-            // Story-mode boss encounters build BossArenaPrison objects. Race mode
-            // never uses those arenas; bosses remain free-moving hazards.
-            SuppressRaceBossArenas();
-            RemoveDuplicateRaceBosses();
-
-            float elapsed = PrototypeRaceSeconds - raceTimeRemaining;
-
-            if (!raceReaperSpawned &&
-                elapsed >= Mathf.Max(0f, reaperSpawnAfterSeconds))
-            {
-                raceReaperSpawned = true;
-                SpawnRaceBoss<GodzillaLaneSwimmer>(
-                    "Race Reaper",
-                    raceBossVisibleSpawnOffset);
-            }
-
-            if (!raceRubberDuckSpawned &&
-                elapsed >= Mathf.Max(0f, rubberDuckSpawnAfterSeconds))
-            {
-                raceRubberDuckSpawned = true;
-                SpawnRaceBoss<RubberDuckBossSwimmer>(
-                    "Race Rubber Duck",
-                    -raceBossVisibleSpawnOffset);
-            }
-
-            AttachRaceFollowToExistingBosses();
-        }
-
-        private void SpawnRaceBoss<TBoss>(
-            string objectName,
-            float horizontalOffset)
-            where TBoss : MonoBehaviour
-        {
-            if (ecosystemRoot == null)
-                return;
-
-            // A story spawner, developer command, or a second race pulse may have
-            // created this boss already. Adopt the existing instance rather than
-            // creating another one.
-            TBoss existingBoss = FindObjectsByType<TBoss>(
-                    FindObjectsInactive.Exclude,
-                    FindObjectsSortMode.None)
-                .FirstOrDefault();
-
-            if (existingBoss != null)
-            {
-                // A boss may have been produced by a scene/developer spawner on
-                // the same frame Race Mode adopts it.  Those bosses previously
-                // skipped the Race-only fade because this early return bypassed
-                // the normal creation path.
-                EnsureRaceBossFade(existingBoss.gameObject);
-                EnsureRaceBossFollower(existingBoss);
-                return;
-            }
-
-            Racer targetRacer = racers.FirstOrDefault(
-                racer =>
-                    racer.Player &&
-                    racer.Surfer != null &&
-                    !racer.Surfer.IsDead);
-
-            if (targetRacer == null)
-            {
-                targetRacer = racers.FirstOrDefault(
-                    racer =>
-                        racer.Surfer != null &&
-                        !racer.Surfer.IsDead);
-            }
-
-            Vector3 spawnPosition =
-                targetRacer != null && targetRacer.Surfer != null
-                    ? targetRacer.Surfer.transform.position
-                    : Vector3.zero;
-
-            spawnPosition = FindSafeRaceBossSpawn(
-                spawnPosition,
-                horizontalOffset);
-
-            GameObject bossObject = new GameObject(objectName);
-            bossObject.transform.SetParent(ecosystemRoot.transform, false);
-            bossObject.transform.position = spawnPosition;
-
-            // RequireComponent attributes on each boss add their normal renderer,
-            // rigidbody and collider dependencies. Their ordinary attack logic stays
-            // active; only arena confinement is omitted.
-            bossObject.AddComponent<TBoss>();
-
-            RaceBossHasteFollower follower =
-                bossObject.AddComponent<RaceBossHasteFollower>();
-
-            follower.Configure(
-                targetRacer != null ? targetRacer.Surfer : null,
-                raceBossFollowDistance,
-                raceBossMaximumSpeed,
-                raceBossAcceleration);
-
-            RaceBossChildRecycler recycler =
-                bossObject.AddComponent<RaceBossChildRecycler>();
-
-            recycler.Configure(
-                targetRacer != null ? targetRacer.Surfer : null,
-                raceBossChildRecycleDistance);
-
-            EnsureRaceBossFade(bossObject);
-        }
-
-        private void EnsureRaceBossFade(GameObject bossObject)
-        {
-            if (bossObject == null)
-                return;
-
-            // This is deliberately applied to the boss root, after its own
-            // components have made their renderer.  OceanSpawnFadeIn therefore
-            // captures the intended opaque colour, immediately sets alpha to
-            // zero, and then fades the whole boss in.
-            OceanSpawnFadeIn fade =
-                bossObject.GetComponent<OceanSpawnFadeIn>();
-
-            if (fade == null)
-                fade = bossObject.AddComponent<OceanSpawnFadeIn>();
-
-            fade.Configure(raceCreatureFadeInDuration);
-        }
-
-        private static Vector3 FindSafeRaceBossSpawn(
-            Vector3 racerPosition,
-            float requestedOffset)
-        {
-            float side = Mathf.Approximately(requestedOffset, 0f)
-                ? 1f
-                : Mathf.Sign(requestedOffset);
-
-            float safeOffset = Mathf.Max(3.5f, Mathf.Abs(requestedOffset));
-            Vector3 result = racerPosition;
-            result.x += side * safeOffset;
-
-            Camera camera = Camera.main;
-            if (camera != null && camera.orthographic)
-            {
-                float halfWidth = camera.orthographicSize * camera.aspect;
-                float cameraLeft = camera.transform.position.x - halfWidth + 0.75f;
-                float cameraRight = camera.transform.position.x + halfWidth - 0.75f;
-                result.x = Mathf.Clamp(result.x, cameraLeft, cameraRight);
-
-                // If clamping made the boss too close, use the opposite safe side.
-                if (Mathf.Abs(result.x - racerPosition.x) < 2.75f)
-                {
-                    float opposite = racerPosition.x - side * safeOffset;
-                    result.x = Mathf.Clamp(opposite, cameraLeft, cameraRight);
-                }
-            }
-
-            // Keep the boss in the active racer water band instead of allowing its
-            // own Initialise/Start path to leave it above or below the visible lane.
-            result.y = racerPosition.y;
-            return result;
-        }
-
-        private void AttachRaceFollowToExistingBosses()
-        {
-            foreach (GodzillaLaneSwimmer boss in
-                     FindObjectsByType<GodzillaLaneSwimmer>(
-                         FindObjectsInactive.Exclude,
-                         FindObjectsSortMode.None))
-            {
-                EnsureRaceBossFollower(boss);
-            }
-
-            foreach (RubberDuckBossSwimmer boss in
-                     FindObjectsByType<RubberDuckBossSwimmer>(
-                         FindObjectsInactive.Exclude,
-                         FindObjectsSortMode.None))
-            {
-                EnsureRaceBossFollower(boss);
-            }
-        }
-
-        private void EnsureRaceBossFollower(MonoBehaviour boss)
-        {
-            if (boss == null)
-                return;
-
-            RaceBossHasteFollower follower =
-                boss.GetComponent<RaceBossHasteFollower>();
-
-            if (follower == null)
-                follower = boss.gameObject.AddComponent<RaceBossHasteFollower>();
-
-            EnsureRaceBossFade(boss.gameObject);
-
-            Racer targetRacer = racers.FirstOrDefault(
-                racer =>
-                    racer.Player &&
-                    racer.Surfer != null &&
-                    !racer.Surfer.IsDead);
-
-            follower.Configure(
-                targetRacer != null ? targetRacer.Surfer : null,
-                raceBossFollowDistance,
-                raceBossMaximumSpeed,
-                raceBossAcceleration);
-
-            RaceBossChildRecycler recycler =
-                boss.GetComponent<RaceBossChildRecycler>();
-
-            if (recycler == null)
-                recycler = boss.gameObject.AddComponent<RaceBossChildRecycler>();
-
-            recycler.Configure(
-                targetRacer != null ? targetRacer.Surfer : null,
-                raceBossChildRecycleDistance);
-        }
-
-        private static void RemoveDuplicateRaceBosses()
-        {
-            KeepSingleBoss(
-                FindObjectsByType<GodzillaLaneSwimmer>(
-                    FindObjectsInactive.Exclude,
-                    FindObjectsSortMode.None));
-
-            KeepSingleBoss(
-                FindObjectsByType<RubberDuckBossSwimmer>(
-                    FindObjectsInactive.Exclude,
-                    FindObjectsSortMode.None));
-        }
-
-        private static void KeepSingleBoss<TBoss>(TBoss[] bosses)
-            where TBoss : MonoBehaviour
-        {
-            if (bosses == null || bosses.Length <= 1)
-                return;
-
-            // Prefer the boss owned by the race ecosystem.
-            // Otherwise keep the first valid boss Unity returned.
-            TBoss keeper = bosses
-                .OrderByDescending(boss =>
-                    boss != null &&
-                    boss.transform.parent != null &&
-                    boss.transform.parent.name.Contains(
-                        "Race Mode Random Ecosystem",
-                        StringComparison.OrdinalIgnoreCase))
-                .FirstOrDefault(boss => boss != null);
-
-            foreach (TBoss boss in bosses)
-            {
-                if (boss != null && boss != keeper)
-                    Destroy(boss.gameObject);
-            }
-        }
-
-        private static void SuppressRaceBossArenas()
+        private void RemoveBossesFromRace()
         {
             if (!RaceActive && !GameModeSession.IsRace)
                 return;
 
-            foreach (BossArenaPrison arena in
-                     FindObjectsByType<BossArenaPrison>(
+            // BossSpawnAuthority blocks normal creation. This slower safety sweep
+            // catches scene/developer objects that bypassed the central spawners.
+            if (Time.unscaledTime < nextRaceBossSweepTime)
+                return;
+            nextRaceBossSweepTime = Time.unscaledTime + 0.5f;
+
+            DestroyRaceBosses<GodzillaLaneSwimmer>();
+            DestroyRaceBosses<RubberDuckBossSwimmer>();
+            DestroyRaceBosses<RubberDucklingSwimmer>();
+            DestroyRaceBosses<AionFinalBoss>();
+            DestroyRaceBosses<AionLaneLaser>();
+            DestroyRaceBosses<GodzillaSkullSwimmer>();
+            foreach (DayFiveCombatant combatant in FindObjectsByType<DayFiveCombatant>(
                          FindObjectsInactive.Include,
                          FindObjectsSortMode.None))
             {
-                if (arena != null)
-                    Destroy(arena.gameObject);
+                if (combatant != null && combatant.IsBoss)
+                    Destroy(combatant.gameObject);
+            }
+            DestroyRaceBosses<DayFiveEncounter>();
+            DestroyRaceBosses<BossArenaPrison>();
+        }
+
+        private static void DestroyRaceBosses<TBoss>() where TBoss : Component
+        {
+            foreach (TBoss boss in FindObjectsByType<TBoss>(
+                         FindObjectsInactive.Include,
+                         FindObjectsSortMode.None))
+            {
+                if (boss != null)
+                    Destroy(boss.gameObject);
             }
         }
 
@@ -1542,10 +1485,7 @@ namespace PixelOcean
             foreach (BoomboxSurferSwimmer box in FindObjectsByType<BoomboxSurferSwimmer>(FindObjectsInactive.Include, FindObjectsSortMode.None))
                 Destroy(box.gameObject);
 
-            foreach (GodzillaLaneSwimmer boss in FindObjectsByType<GodzillaLaneSwimmer>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-                Destroy(boss.gameObject);
-            foreach (RubberDuckBossSwimmer boss in FindObjectsByType<RubberDuckBossSwimmer>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-                Destroy(boss.gameObject);
+            RemoveBossesFromRace();
         }
 
         private void DestroyExistingSurfers(bool raceOwnedOnly)

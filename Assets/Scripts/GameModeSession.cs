@@ -83,14 +83,28 @@ namespace PixelOcean
             DestroyAll<WhaleLaneSwimmer>();
             DestroyAll<JellyfishSchoolController>();
             DestroyAll<BloodSharkLaneSwimmer>();
+            DestroyAll<TransparentSquidLaneSwimmer>();
             DestroyAll<StingrayLaneSwimmer>();
             DestroyAll<BloodfishSchoolController>();
+            DestroyAll<DaySixCreature>();
+            DestroyAll<DaySixSkyHostile>();
+            DestroyAll<DaySixHazardProjectile>();
+            DestroyAll<SeaTurtleSwimmer>();
+            DestroyAll<GiantTurtleSwimmer>();
             DestroyAll<StrugglingSwimmerDrifter>();
             DestroyAll<BoomboxSurferSwimmer>();
             DestroyAll<GodzillaLaneSwimmer>();
+            DestroyAll<GodzillaSkullSwimmer>();
             DestroyAll<RubberDuckBossSwimmer>();
+            DestroyAll<RubberDucklingSwimmer>();
+            DestroyAll<AionFinalBoss>();
+            DestroyAll<AionLaneLaser>();
+            DestroyAll<DayFiveCombatant>();
+            DestroyAll<DayFiveEncounter>();
+            DestroyAll<BossArenaPrison>();
             DestroyAll<AlienUfoController>();
             DestroyAll<DayTwoHelicopterController>();
+            DestroyAll<DayTwoHelicopterMissile>();
         }
 
         private static void DestroyAll<T>() where T : Component

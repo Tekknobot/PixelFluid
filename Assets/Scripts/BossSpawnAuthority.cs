@@ -32,6 +32,13 @@ namespace PixelOcean
 
         public static bool TryReserveSpawn()
         {
+            if (BossesBlockedForCurrentMode())
+            {
+                spawnReserved = false;
+                DestroyOtherBosses(null);
+                return false;
+            }
+
             RefreshRegisteredBoss();
 
             if (registeredBoss != null || spawnReserved)
@@ -51,6 +58,13 @@ namespace PixelOcean
             if (candidate == null)
             {
                 spawnReserved = false;
+                return false;
+            }
+
+            if (BossesBlockedForCurrentMode())
+            {
+                spawnReserved = false;
+                Object.Destroy(candidate.gameObject);
                 return false;
             }
 
@@ -85,6 +99,14 @@ namespace PixelOcean
 
         private static void RefreshRegisteredBoss(MonoBehaviour ignoredCandidate = null)
         {
+            if (BossesBlockedForCurrentMode())
+            {
+                registeredBoss = null;
+                spawnReserved = false;
+                DestroyOtherBosses(null);
+                return;
+            }
+
             if (registeredBoss != null)
                 return;
 
@@ -138,6 +160,14 @@ namespace PixelOcean
 
         public static void EnforceSingleBoss()
         {
+            if (BossesBlockedForCurrentMode())
+            {
+                registeredBoss = null;
+                spawnReserved = false;
+                DestroyOtherBosses(null);
+                return;
+            }
+
             RefreshRegisteredBoss();
             if (registeredBoss != null)
                 DestroyOtherBosses(registeredBoss);
@@ -168,6 +198,11 @@ namespace PixelOcean
                 if (boss != null && boss != keeper)
                     Object.Destroy(boss.gameObject);
             }
+        }
+
+        private static bool BossesBlockedForCurrentMode()
+        {
+            return GameModeSession.IsRace || RaceModeManager.RaceActive;
         }
     }
 }
