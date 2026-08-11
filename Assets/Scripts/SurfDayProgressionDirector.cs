@@ -714,6 +714,20 @@ namespace PixelOcean
         }
 
 
+        private IEnumerator CoverDayBoundary()
+        {
+            SurferSlugPauseMenu transition = SurferSlugPauseMenu.Instance;
+            if (transition != null)
+                yield return transition.CoverForDayTransition();
+        }
+
+        private IEnumerator RevealDayBoundary()
+        {
+            SurferSlugPauseMenu transition = SurferSlugPauseMenu.Instance;
+            if (transition != null)
+                yield return transition.RevealAfterDayTransition();
+        }
+
         private IEnumerator BeginDayTwo()
         {
             AirTrickScoreSystem.Instance?.ShowDayRecap(1, 5f);
@@ -721,9 +735,8 @@ namespace PixelOcean
             if (SurfDayUpgradeScreen.Instance != null)
                 yield return SurfDayUpgradeScreen.Instance.ShowAndWait();
 
-            ShowBanner("NIGHT PASSES", "DAY 2 — DEEP CURRENT", 4f);
+            yield return CoverDayBoundary();
             rain?.ClearRain();
-            yield return new WaitForSeconds(4f);
 
             foreach (GameObject holder in progressionSpawners)
                 if (holder != null) Destroy(holder);
@@ -742,10 +755,6 @@ namespace PixelOcean
             DestroyAll<RubberDucklingSwimmer>();
             yield return null;
 
-            // The world stays paused behind the cutscene system's full black fade.
-            // Day 2 enemies are not spawned until all six boards have finished.
-            yield return StoryboardCutsceneSystem.PlayDayTwoOpening();
-
             currentDay = 2;
             AirTrickScoreSystem.Instance?.BeginDay(2);
             SurfAbilityProgression.Instance?.DebugUnlockAll();
@@ -757,7 +766,6 @@ namespace PixelOcean
             finalWaveStarted = false;
             bossDefeatedSunset = false;
             chapter = Chapter.Dawn;
-            changingDay = false;
             BeginChapter(Chapter.Dawn, "DAY 2 — DEEP CURRENT", "NEW PREDATORS HAVE ENTERED THE WATER.");
             learningObjective = "Use the full moveset to build flow and survive.";
             SpawnPickupSet();
@@ -765,6 +773,8 @@ namespace PixelOcean
             SpawnMajor<BloodSharkLaneSpawner>("Dawn Blood Shark", spawner => spawner.SpawnBloodShark(true));
             SpawnBloodfishEncounter("Dawn Bloodfish", 1);
             SurfStageSaveSystem.Save(this);
+            yield return RevealDayBoundary();
+            changingDay = false;
         }
 
         private IEnumerator BeginDayThree()
@@ -774,17 +784,11 @@ namespace PixelOcean
             if (SurfDayUpgradeScreen.Instance != null)
                 yield return SurfDayUpgradeScreen.Instance.ShowAndWait();
 
-            ShowBanner("THE NIGHT DOES NOT PASS", "DAY 3 — THE OCEAN REMEMBERS", 4f);
+            yield return CoverDayBoundary();
             rain?.ClearRain();
-            yield return new WaitForSecondsRealtime(3f);
 
             ClearRunObjects();
             yield return null;
-
-            // Keep the cleared ocean frozen behind the storyboard. Day 3 state,
-            // the Shadow Surfer, enemies and pickups begin only after all three
-            // boards and their dialogue have finished.
-            yield return StoryboardCutsceneSystem.PlayDayThreeOpening();
 
             currentDay = 3;
             AirTrickScoreSystem.Instance?.BeginDay(3);
@@ -796,13 +800,14 @@ namespace PixelOcean
             finalWaveStarted = false;
             bossDefeatedSunset = false;
             chapter = Chapter.Dawn;
-            changingDay = false;
             SyncDayNightToRunTime();
             BeginChapter(Chapter.Dawn, "DAY 3 — THE OCEAN REMEMBERS", "RIDE INTO THE RETURNING CURRENT.");
             learningObjective = "Notice what the ocean brings back.";
             SpawnPickupSet();
             SpawnOceanItems(12);
             SurfStageSaveSystem.Save(this);
+            yield return RevealDayBoundary();
+            changingDay = false;
         }
 
         private void ClearRunObjects()
@@ -896,19 +901,14 @@ namespace PixelOcean
             if (SurfDayUpgradeScreen.Instance != null)
                 yield return SurfDayUpgradeScreen.Instance.ShowAndWait();
 
-            ShowBanner("THE SIGNAL CONTINUES", "DAY 4 — PROJECT HORIZON", 4f);
+            yield return CoverDayBoundary();
             rain?.ClearRain();
-            yield return new WaitForSecondsRealtime(3f);
 
             ClearRunObjects();
             DestroyAll<SecretFacilityEncounter>();
             DestroyAll<DayThreeOceanRemembers>();
             DestroyAll<DayFourConspiracyEncounter>();
             yield return null;
-
-            // Keep the cleared ocean frozen behind the five-board Day 4 opening.
-            // Day 4 world objects and encounters are created only after it finishes.
-            yield return StoryboardCutsceneSystem.PlayDayFourOpening();
 
             currentDay = 4;
             AirTrickScoreSystem.Instance?.BeginDay(4);
@@ -920,7 +920,6 @@ namespace PixelOcean
             finalWaveStarted = false;
             bossDefeatedSunset = false;
             chapter = Chapter.Dawn;
-            changingDay = false;
             facilityEncounterStarted = false;
             SyncDayNightToRunTime();
             BeginChapter(Chapter.Dawn,
@@ -940,6 +939,8 @@ namespace PixelOcean
             }
 
             SurfStageSaveSystem.Save(this);
+            yield return RevealDayBoundary();
+            changingDay = false;
         }
 
         public void AnnounceDayFourIsland()
@@ -980,9 +981,8 @@ namespace PixelOcean
             if (SurfDayUpgradeScreen.Instance != null)
                 yield return SurfDayUpgradeScreen.Instance.ShowAndWait();
 
-            ShowBanner("ACCESS DENIED", "DAY 5 — RED HORIZON", 4f);
+            yield return CoverDayBoundary();
             rain?.ClearRain();
-            yield return new WaitForSecondsRealtime(3f);
 
             ClearRunObjects();
             DestroyAll<DayFourConspiracyEncounter>();
@@ -999,7 +999,6 @@ namespace PixelOcean
             finalWaveStarted = false;
             bossDefeatedSunset = false;
             chapter = Chapter.Dawn;
-            changingDay = false;
             facilityEncounterStarted = false;
             SyncDayNightToRunTime();
             BeginChapter(
@@ -1011,6 +1010,8 @@ namespace PixelOcean
             SpawnOceanItems(12);
             DayFiveEncounter.Begin(this);
             SurfStageSaveSystem.Save(this);
+            yield return RevealDayBoundary();
+            changingDay = false;
         }
 
         public void CompleteDayFive()
@@ -1043,9 +1044,8 @@ namespace PixelOcean
             if (SurfDayUpgradeScreen.Instance != null)
                 yield return SurfDayUpgradeScreen.Instance.ShowAndWait();
 
-            ShowBanner("SECURITY GRID CLEARED", "DAY 6 — BEYOND THE HORIZON", 4f);
+            yield return CoverDayBoundary();
             rain?.ClearRain();
-            yield return new WaitForSecondsRealtime(3f);
 
             ClearRunObjects();
             yield return null;
@@ -1060,7 +1060,6 @@ namespace PixelOcean
             finalWaveStarted = false;
             bossDefeatedSunset = false;
             chapter = Chapter.Dawn;
-            changingDay = false;
             facilityEncounterStarted = false;
             SyncDayNightToRunTime();
             BeginChapter(
@@ -1072,6 +1071,8 @@ namespace PixelOcean
             SpawnOceanItems(12);
             DaySixEncounter.Begin(this);
             SurfStageSaveSystem.Save(this);
+            yield return RevealDayBoundary();
+            changingDay = false;
         }
 
         public void CompleteDaySix()
@@ -1104,9 +1105,8 @@ namespace PixelOcean
             if (SurfDayUpgradeScreen.Instance != null)
                 yield return SurfDayUpgradeScreen.Instance.ShowAndWait();
 
-            ShowBanner("THE SEVENTH CURRENT OPENS", "DAY 7 — THE OTHER SHORE", 4f);
+            yield return CoverDayBoundary();
             rain?.ClearRain();
-            yield return new WaitForSecondsRealtime(3f);
 
             ClearRunObjects();
             yield return null;
@@ -1121,7 +1121,6 @@ namespace PixelOcean
             finalWaveStarted = true;
             bossDefeatedSunset = false;
             chapter = Chapter.FinalWave;
-            changingDay = false;
             facilityEncounterStarted = false;
             objective = "BREAK AION'S MANIFESTATION";
             learningObjective = "Read the charge animation: switch lanes for lasers and destroy the opening between realities.";
@@ -1135,6 +1134,8 @@ namespace PixelOcean
                 "THE OCEAN IS INTERSECTING ANOTHER REALITY.",
                 4.5f);
             SurfStageSaveSystem.Save(this);
+            yield return RevealDayBoundary();
+            changingDay = false;
         }
 
         public void CompleteDaySeven()

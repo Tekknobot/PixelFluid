@@ -28,6 +28,11 @@ namespace PixelOcean
         [SerializeField, Min(0.25f)] private float startupLoadingDuration = 1.35f;
         [SerializeField, Min(0f)] private float startupLoadingHold = 0.18f;
 
+        [Header("In-Game Day Transition")]
+        [SerializeField, Min(0.1f)] private float dayTransitionCoverDuration = 0.62f;
+        [SerializeField, Min(0f)] private float dayTransitionBlackHold = 0.16f;
+        [SerializeField, Min(0.1f)] private float dayTransitionRevealDuration = 0.78f;
+
         private readonly List<MonoBehaviour> disabledGameplayBehaviours = new();
         private Canvas canvas;
         private GameObject menuRoot;
@@ -67,6 +72,9 @@ namespace PixelOcean
         private bool showingTitleMenu;
         private float inputReadyTime;
         private bool modeBuildInProgress;
+        private bool dayTransitionActive;
+        private bool dayTransitionWasGameplayPaused;
+        private float dayTransitionPreviousTimeScale = 1f;
 
         // Secret controller code: UP, UP, LEFT, RIGHT, LEFT, RIGHT, LB, RB.
         private const float DeveloperCheatStepTimeout = 1.0f;
@@ -209,6 +217,13 @@ namespace PixelOcean
 
         private void Update()
         {
+            // The day-change curtain owns input until the rebuilt ocean is visible.
+            if (dayTransitionActive)
+            {
+                ResetDeveloperCheat();
+                return;
+            }
+
             // End-day recap/upgrade screens own the complete UI and input focus.
             // Escape/Start must not open a hidden pause menu behind them.
             if (EndDayUiFocusController.IsActive)
@@ -394,9 +409,59 @@ namespace PixelOcean
             if (Instance != this)
                 return;
 
+            if (dayTransitionActive)
+                Time.timeScale = dayTransitionPreviousTimeScale;
             RestoreGameplayBehaviours();
             GameplayPaused = false;
             Instance = null;
+        }
+
+        /// <summary>
+        /// Covers the running game with the pause menu's rigid abyss-wave transition.
+        /// Uses unscaled time so the old day can be frozen before any world state is
+        /// removed or rebuilt.
+        /// </summary>
+        public IEnumerator CoverForDayTransition()
+        {
+            if (dayTransitionActive)
+            {
+                while (dayTransitionActive)
+                    yield return null;
+                yield break;
+            }
+
+            dayTransitionActive = true;
+            dayTransitionWasGameplayPaused = GameplayPaused;
+            dayTransitionPreviousTimeScale = Time.timeScale;
+            GameplayPaused = true;
+            Time.timeScale = 0f;
+
+            if (startupLoadingRoot != null)
+                startupLoadingRoot.SetActive(false);
+            if (menuRoot != null && !menuVisible)
+                menuRoot.SetActive(false);
+
+            yield return FadeStartupBlack(0f, 1f, dayTransitionCoverDuration);
+        }
+
+        /// <summary>
+        /// Reveals the completely rebuilt day and restores the exact pause/time state
+        /// that existed before CoverForDayTransition was called.
+        /// </summary>
+        public IEnumerator RevealAfterDayTransition()
+        {
+            if (!dayTransitionActive)
+                yield break;
+
+            if (dayTransitionBlackHold > 0f)
+                yield return new WaitForSecondsRealtime(dayTransitionBlackHold);
+
+            yield return FadeStartupBlack(1f, 0f, dayTransitionRevealDuration);
+
+            Time.timeScale = dayTransitionPreviousTimeScale;
+            GameplayPaused = dayTransitionWasGameplayPaused;
+            dayTransitionActive = false;
+            inputReadyTime = Time.unscaledTime + 0.18f;
         }
 
         public void ShowGameOver()
