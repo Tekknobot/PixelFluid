@@ -944,7 +944,24 @@ namespace PixelOcean
         {
             if (renderItem == null)
                 return;
-            renderItem.SetWaterAndLane(GetSortingWater(lane), Mathf.Max(0, lane));
+
+            int clampedLane = Mathf.Max(0, lane);
+            PixelWaterGPU correspondingWater = GetSortingWater(clampedLane);
+            renderItem.SetWaterAndLane(correspondingWater, clampedLane);
+
+            // Keep AION on the ocean's own sorting layer as well as between its
+            // procedural render queues. Without this, the sprite can still be
+            // composited like a foreground object even though its material is
+            // correctly assigned to an inter-wave lane.
+            Renderer waterRenderer = correspondingWater != null
+                ? correspondingWater.GetComponent<Renderer>()
+                : null;
+            if (waterRenderer == null && correspondingWater != null)
+                waterRenderer = correspondingWater.GetComponentInChildren<Renderer>();
+
+            spriteRenderer.sortingOrder = 0;
+            if (waterRenderer != null)
+                spriteRenderer.sortingLayerID = waterRenderer.sortingLayerID;
         }
 
         private void RefreshWater(float worldX)
@@ -1047,7 +1064,9 @@ namespace PixelOcean
             RectTransform panel = CreateRect("AION Health", transform, new Vector2(820f, 94f));
             panel.anchorMin = panel.anchorMax = new Vector2(0.5f, 1f);
             panel.pivot = new Vector2(0.5f, 1f);
-            panel.anchoredPosition = new Vector2(0f, -38f);
+            // The regular HUD occupies roughly the first 188 reference pixels.
+            // Leave a small gap so the boss title and health never cover it.
+            panel.anchoredPosition = new Vector2(0f, -204f);
             group = panel.gameObject.AddComponent<CanvasGroup>();
 
             title = CreateText(panel, "AION — THE TIDE BEYOND", 24f, TextAlignmentOptions.Center);

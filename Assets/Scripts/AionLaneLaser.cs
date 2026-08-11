@@ -105,10 +105,26 @@ namespace PixelOcean
 
             int renderLane = Mathf.Max(0, Mathf.RoundToInt((startLane + endLane) * 0.5f));
             PixelWaterGPU sortingWater = GetSortingWater(renderLane);
+            ApplyWaterSortingLayer(sortingWater);
             // Add the inter-wave component only after the LineRenderers own their
             // materials; its OnEnable snapshot must not capture empty materials.
             renderItem = gameObject.AddComponent<InterWaveRenderItem>();
             renderItem.SetWaterAndLane(sortingWater, renderLane);
+        }
+
+        private void ApplyWaterSortingLayer(PixelWaterGPU water)
+        {
+            if (water == null)
+                return;
+
+            Renderer waterRenderer = water.GetComponent<Renderer>();
+            if (waterRenderer == null)
+                waterRenderer = water.GetComponentInChildren<Renderer>();
+            if (waterRenderer == null)
+                return;
+
+            glow.sortingLayerID = waterRenderer.sortingLayerID;
+            core.sortingLayerID = waterRenderer.sortingLayerID;
         }
 
         private static void ConfigureLine(
