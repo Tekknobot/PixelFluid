@@ -20,7 +20,13 @@ namespace PixelOcean
         {
             get
             {
-                EndDayCanvases.RemoveWhere(canvas => canvas == null);
+                // A panel can be disabled or destroyed without its closing coroutine
+                // reaching End (for example when changing modes). Do not let that
+                // abandoned registration permanently suppress gameplay UI/input.
+                EndDayCanvases.RemoveWhere(canvas =>
+                    canvas == null ||
+                    !canvas.gameObject.activeInHierarchy ||
+                    !canvas.enabled);
                 return EndDayCanvases.Count > 0 || Time.unscaledTime < focusHoldUntil;
             }
         }
@@ -50,6 +56,20 @@ namespace PixelOcean
             // Prevent the ordinary HUD flashing during the recap-to-upgrade handoff.
             focusHoldUntil = Mathf.Max(focusHoldUntil, Time.unscaledTime + 0.20f);
             EnsureInstance().RefreshState();
+        }
+
+        /// <summary>
+        /// Releases recap/upgrade focus before entering another game mode. This
+        /// restores every canvas to its captured state and clears the short focus
+        /// handoff delay so race HUD and pause input are available immediately.
+        /// </summary>
+        public static void ReleaseForModeTransition()
+        {
+            EndDayCanvases.Clear();
+            focusHoldUntil = 0f;
+
+            if (instance != null)
+                instance.RestoreOtherCanvases();
         }
 
         private static EndDayUiFocusController EnsureInstance()

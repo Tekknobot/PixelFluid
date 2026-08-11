@@ -77,6 +77,7 @@ namespace PixelOcean
         private Canvas canvas;
         private GameObject selectionRoot;
         private GameObject raceHud;
+        private bool raceHudRequestedVisible;
         private TextMeshProUGUI timerLabel;
         private readonly List<StandingRow> standingRows = new();
         private readonly Dictionary<string, Sprite> racePortraitCache = new();
@@ -330,6 +331,7 @@ namespace PixelOcean
 
         public void BeginRace(string selectedSurfer, bool showHudImmediately = true)
         {
+            EndDayUiFocusController.ReleaseForModeTransition();
             if (canvas != null)
                 canvas.sortingOrder = RaceHudCanvasOrder;
             twoPlayerRace = twoPlayerRace && !string.IsNullOrEmpty(secondPlayerSurfer);
@@ -354,10 +356,36 @@ namespace PixelOcean
 
         public void SetRaceHudVisible(bool visible)
         {
-            if (canvas != null)
-                canvas.sortingOrder = RaceHudCanvasOrder;
-            if (raceHud != null)
-                raceHud.SetActive(visible);
+            raceHudRequestedVisible = visible;
+
+            if (!visible)
+            {
+                if (raceHud != null)
+                    raceHud.SetActive(false);
+                return;
+            }
+
+            EnsureRaceHudVisible();
+        }
+
+        private void EnsureRaceHudVisible()
+        {
+            EnsureCanvas();
+            canvas.gameObject.SetActive(true);
+            canvas.enabled = true;
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = RaceHudCanvasOrder;
+
+            // Rebuild if another UI transition destroyed the old hierarchy. The
+            // rebuilt HUD includes the timer and complete pole-position panel.
+            if (raceHud == null && RaceActive)
+                BuildRaceHud();
+
+            if (raceHud == null)
+                return;
+
+            raceHud.SetActive(true);
+            RefreshHud();
         }
 
         private void Update()
@@ -378,6 +406,16 @@ namespace PixelOcean
                 return;
 
             if (!RaceActive) return;
+
+            // End-day focus may have disabled this canvas on a previous frame.
+            // Once race gameplay owns the screen, repair the HUD automatically.
+            if (raceHudRequestedVisible &&
+                !EndDayUiFocusController.IsActive &&
+                (canvas == null || !canvas.enabled || raceHud == null || !raceHud.activeSelf))
+            {
+                EnsureRaceHudVisible();
+            }
+
             raceTimeRemaining = Mathf.Max(0f, raceTimeRemaining - Time.deltaTime);
             foreach (Racer racer in racers)
             {
@@ -791,6 +829,7 @@ namespace PixelOcean
         public void ExitRaceMode(bool destroyRacers)
         {
             RaceActive = false;
+            raceHudRequestedVisible = false;
             raceTeardownInProgress = destroyRacers;
 
             DisableAndDestroy(ref selectionRoot);

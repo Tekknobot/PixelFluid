@@ -2203,7 +2203,10 @@ namespace PixelOcean
 
         private void FinishOpeningTransition()
         {
+            enabled = true;
             firstMenu = false;
+            menuVisible = false;
+            showingTitleMenu = false;
             GameplayPaused = false;
             RestoreGameplayBehaviours();
             Cursor.visible = false;
@@ -2262,13 +2265,18 @@ namespace PixelOcean
             bool keyboardPause = Keyboard.current != null &&
                                  Keyboard.current.escapeKey.wasPressedThisFrame;
 
-            // During local two-player races only the first paired controller is
-            // allowed to open/close pause. P2 Start remains gameplay-safe.
-            if (RaceModeManager.IsTwoPlayerRace)
+            if (RaceModeManager.RaceActive)
             {
-                Gamepad playerOne = Gamepad.all.Count > 0 ? Gamepad.all[0] : null;
-                return keyboardPause ||
-                       (playerOne != null && playerOne.startButton.wasPressedThisFrame);
+                // Race input can make a different controller become Gamepad.current.
+                // Accept Start from either racer (or any connected pad in solo mode)
+                // so pause never depends on Unity's current-device state.
+                for (int i = 0; i < Gamepad.all.Count; i++)
+                {
+                    if (Gamepad.all[i].startButton.wasPressedThisFrame)
+                        return true;
+                }
+
+                return keyboardPause;
             }
 
             return keyboardPause ||
