@@ -268,6 +268,7 @@ namespace PixelOcean
                 return;
 
             surfer.TakeSharkHit(transform.position);
+            ExplosionBasicEffect.Spawn(surfer.transform.position);
         }
 
         private void OnDestroy()
