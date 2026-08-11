@@ -69,6 +69,7 @@ namespace PixelOcean
         private ProceduralStarryNight starryNight;
         private GameObject eyeObject;
         private SpriteRenderer eyeRenderer;
+        private Color authoredEyeColour = Color.white;
         private Sprite[] frames = Array.Empty<Sprite>();
         private Sprite[] idleFrames = Array.Empty<Sprite>();
         private float visibility;
@@ -204,8 +205,14 @@ namespace PixelOcean
                 new Vector3(approachOffset + playerParallax, 0f, 0f);
             eyeObject.transform.localScale = Vector3.one * eyeScale;
 
-            Color colour = eyeRenderer.color;
-            colour.a = Mathf.Clamp01(visibility);
+            Color lightingTint = starryNight != null
+                ? starryNight.HorizonLandmarkTint
+                : Color.white;
+            Color colour = new(
+                authoredEyeColour.r * lightingTint.r,
+                authoredEyeColour.g * lightingTint.g,
+                authoredEyeColour.b * lightingTint.b,
+                authoredEyeColour.a * Mathf.Clamp01(visibility));
             eyeRenderer.color = colour;
             eyeRenderer.enabled = visibility > 0.001f;
         }
@@ -447,9 +454,16 @@ namespace PixelOcean
 
             if (eyeRenderer == null)
                 eyeRenderer = eyeObject.AddComponent<SpriteRenderer>();
+            authoredEyeColour = eyeRenderer.color;
+            if (authoredEyeColour.a <= 0.001f)
+                authoredEyeColour.a = 1f;
             eyeRenderer.sprite = frames[0];
             eyeRenderer.sortingOrder = sortingOrder;
-            eyeRenderer.color = new Color(1f, 1f, 1f, 0f);
+            eyeRenderer.color = new Color(
+                authoredEyeColour.r,
+                authoredEyeColour.g,
+                authoredEyeColour.b,
+                0f);
             eyeRenderer.enabled = false;
 
             CopyIslandPresentationIfAvailable();

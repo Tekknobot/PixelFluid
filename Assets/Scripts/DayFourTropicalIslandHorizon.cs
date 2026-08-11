@@ -31,6 +31,7 @@ namespace PixelOcean
         [SerializeField, Min(0.1f)] private float movementSmoothTime = 1.8f;
 
         private SurfDayProgressionDirector director;
+        private ProceduralStarryNight starryNight;
         private TinyWaveSurfer surfer;
         private Transform island;
         private SpriteRenderer[] islandRenderers;
@@ -46,6 +47,7 @@ namespace PixelOcean
         private void Awake()
         {
             director = FindFirstObjectByType<SurfDayProgressionDirector>();
+            starryNight = FindFirstObjectByType<ProceduralStarryNight>();
             surfer = FindFirstObjectByType<TinyWaveSurfer>();
             TryFindIsland();
         }
@@ -54,6 +56,9 @@ namespace PixelOcean
         {
             if (director == null)
                 director = FindFirstObjectByType<SurfDayProgressionDirector>();
+
+            if (starryNight == null)
+                starryNight = FindFirstObjectByType<ProceduralStarryNight>();
 
             if (surfer == null)
                 surfer = FindFirstObjectByType<TinyWaveSurfer>();
@@ -162,14 +167,21 @@ namespace PixelOcean
                 return;
 
             alpha = Mathf.Clamp01(alpha);
+            Color lightingTint = starryNight != null
+                ? starryNight.HorizonLandmarkTint
+                : Color.white;
             for (int i = 0; i < islandRenderers.Length; i++)
             {
                 SpriteRenderer renderer = islandRenderers[i];
                 if (renderer == null)
                     continue;
 
-                Color colour = authoredColours[i];
-                colour.a *= alpha;
+                Color authored = authoredColours[i];
+                Color colour = new(
+                    authored.r * lightingTint.r,
+                    authored.g * lightingTint.g,
+                    authored.b * lightingTint.b,
+                    authored.a * alpha);
                 renderer.color = colour;
                 renderer.enabled = alpha > 0.001f;
             }

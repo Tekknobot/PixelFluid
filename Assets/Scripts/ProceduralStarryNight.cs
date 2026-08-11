@@ -46,6 +46,16 @@ namespace PixelOcean
         [SerializeField] private Color sunsetTopSky = new(0.12f, 0.08f, 0.30f, 1f);
         [SerializeField] private Color sunsetHorizonSky = new(1f, 0.28f, 0.16f, 1f);
 
+        [Header("Horizon Landmark Lighting")]
+        [Tooltip("Multiplier applied to distant authored landmarks at night.")]
+        [SerializeField] private Color nightLandmarkTint = new(0.26f, 0.34f, 0.58f, 1f);
+        [Tooltip("Warm multiplier used while the sky passes through dawn.")]
+        [SerializeField] private Color dawnLandmarkTint = new(0.94f, 0.68f, 0.72f, 1f);
+        [Tooltip("Neutral daylight multiplier for distant authored landmarks.")]
+        [SerializeField] private Color dayLandmarkTint = Color.white;
+        [Tooltip("Warm-violet multiplier used while the sky passes through sunset.")]
+        [SerializeField] private Color sunsetLandmarkTint = new(0.80f, 0.52f, 0.66f, 1f);
+
         [Header("Stars")]
         [SerializeField] private Color dimStar = new(0.62f, 0.72f, 1f, 1f);
         [SerializeField] private Color brightStar = new(1f, 0.96f, 0.78f, 1f);
@@ -98,6 +108,49 @@ namespace PixelOcean
         public float TimeOfDay => timeOfDay;
         public bool IsNight => timeOfDay < 0.225f || timeOfDay > 0.775f;
         public bool IsDay => timeOfDay > 0.30f && timeOfDay < 0.70f;
+
+        /// <summary>
+        /// Continuous lighting multiplier for authored horizon sprites. It uses
+        /// the same broad transition windows as the generated sky, so landmarks
+        /// follow smoothed story clock corrections without chapter-boundary snaps.
+        /// </summary>
+        public Color HorizonLandmarkTint
+        {
+            get
+            {
+                float t = timeOfDay;
+                if (t < 0.20f)
+                    return nightLandmarkTint;
+                if (t < 0.28f)
+                    return Color.Lerp(
+                        nightLandmarkTint,
+                        dawnLandmarkTint,
+                        SmoothClockBlend(0.20f, 0.28f, t));
+                if (t < 0.38f)
+                    return Color.Lerp(
+                        dawnLandmarkTint,
+                        dayLandmarkTint,
+                        SmoothClockBlend(0.28f, 0.38f, t));
+                if (t < 0.68f)
+                    return dayLandmarkTint;
+                if (t < 0.77f)
+                    return Color.Lerp(
+                        dayLandmarkTint,
+                        sunsetLandmarkTint,
+                        SmoothClockBlend(0.68f, 0.77f, t));
+                if (t < 0.86f)
+                    return Color.Lerp(
+                        sunsetLandmarkTint,
+                        nightLandmarkTint,
+                        SmoothClockBlend(0.77f, 0.86f, t));
+                return nightLandmarkTint;
+            }
+        }
+
+        private static float SmoothClockBlend(float from, float to, float value)
+        {
+            return Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(from, to, value));
+        }
 
         /// <summary>
         /// Keeps scene-authored skies on the same shortened schedule as the
