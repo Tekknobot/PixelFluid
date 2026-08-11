@@ -773,6 +773,7 @@ namespace PixelOcean
             SpawnMajor<BloodSharkLaneSpawner>("Dawn Blood Shark", spawner => spawner.SpawnBloodShark(true));
             SpawnBloodfishEncounter("Dawn Bloodfish", 1);
             SurfStageSaveSystem.Save(this);
+            yield return StoryboardCutsceneSystem.PlayDayTwoOpening();
             yield return RevealDayBoundary();
             changingDay = false;
         }
@@ -806,6 +807,7 @@ namespace PixelOcean
             SpawnPickupSet();
             SpawnOceanItems(12);
             SurfStageSaveSystem.Save(this);
+            yield return StoryboardCutsceneSystem.PlayDayThreeOpening();
             yield return RevealDayBoundary();
             changingDay = false;
         }
@@ -939,6 +941,7 @@ namespace PixelOcean
             }
 
             SurfStageSaveSystem.Save(this);
+            yield return StoryboardCutsceneSystem.PlayDayFourOpening();
             yield return RevealDayBoundary();
             changingDay = false;
         }
@@ -1010,6 +1013,7 @@ namespace PixelOcean
             SpawnOceanItems(12);
             DayFiveEncounter.Begin(this);
             SurfStageSaveSystem.Save(this);
+            yield return StoryboardCutsceneSystem.PlayDayFiveOpening();
             yield return RevealDayBoundary();
             changingDay = false;
         }
@@ -1071,6 +1075,7 @@ namespace PixelOcean
             SpawnOceanItems(12);
             DaySixEncounter.Begin(this);
             SurfStageSaveSystem.Save(this);
+            yield return StoryboardCutsceneSystem.PlayDaySixOpening();
             yield return RevealDayBoundary();
             changingDay = false;
         }
@@ -1134,6 +1139,7 @@ namespace PixelOcean
                 "THE OCEAN IS INTERSECTING ANOTHER REALITY.",
                 4.5f);
             SurfStageSaveSystem.Save(this);
+            yield return StoryboardCutsceneSystem.PlayDaySevenOpening();
             yield return RevealDayBoundary();
             changingDay = false;
         }

@@ -17,6 +17,7 @@ namespace PixelOcean
     public sealed class StoryboardCutsceneSystem : MonoBehaviour
     {
         private static StoryboardCutsceneSystem instance;
+        private const int StoryboardCanvasOrder = 32766;
 
         [Header("Presentation")]
         [SerializeField, Range(0f, 1f)] private float dimOpacity = 1f;
@@ -193,6 +194,66 @@ namespace PixelOcean
                     "I'M GETTING CLOSER.",
                     "WHAT IS IT TRANSMITTING?",
                     "I HAVE TO REACH THAT ISLAND."
+                });
+        }
+
+        /// <summary>
+        /// Introduces the restricted security zone, its tracking network and the
+        /// sleeping eye that opens a path beyond the known horizon.
+        /// </summary>
+        public static IEnumerator PlayDayFiveOpening()
+        {
+            StoryboardCutsceneSystem system = EnsureInstance();
+            yield return system.PlaySequence(
+                new[]
+                {
+                    "Storyboards/Day5/board_1",
+                    "Storyboards/Day5/board_2",
+                    "Storyboards/Day5/board_3"
+                },
+                new[]
+                {
+                    "THE RESTRICTED ZONE IS STILL ACTIVE.",
+                    "EVERY LIGHT IS TRACKING ME.",
+                    "THAT EYE...\n\nIT'S SHOWING ME THE WAY."
+                });
+        }
+
+        /// <summary>
+        /// Presents the single Day 6 board as the eye's impossible current and
+        /// its aerial visitors replace the mapped ocean.
+        /// </summary>
+        public static IEnumerator PlayDaySixOpening()
+        {
+            StoryboardCutsceneSystem system = EnsureInstance();
+            yield return system.PlaySequence(
+                new[]
+                {
+                    "Storyboards/Day6/board_1"
+                },
+                new[]
+                {
+                    "THE EYE IS OPEN.\n\nNOTHING HERE BELONGS TO MY OCEAN."
+                });
+        }
+
+        /// <summary>
+        /// Introduces AION before the uninterrupted Day 7 boss encounter begins.
+        /// The second board previews the projectile language used in the fight.
+        /// </summary>
+        public static IEnumerator PlayDaySevenOpening()
+        {
+            StoryboardCutsceneSystem system = EnsureInstance();
+            yield return system.PlaySequence(
+                new[]
+                {
+                    "Storyboards/Day7/board_1",
+                    "Storyboards/Day7/board_2"
+                },
+                new[]
+                {
+                    "SOMETHING IS RISING BETWEEN THE WAVES.",
+                    "AION...\n\nIT'S TURNING EVERY CURRENT AGAINST ME."
                 });
         }
 
@@ -559,7 +620,10 @@ namespace PixelOcean
 
             canvas = canvasObject.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 32760;
+            // Render above the pause menu's black day-boundary cover. When the
+            // storyboard fades away, that cover is still present underneath and
+            // can reveal the rebuilt day without exposing a setup frame.
+            canvas.sortingOrder = StoryboardCanvasOrder;
             canvas.pixelPerfect = true;
 
             CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
