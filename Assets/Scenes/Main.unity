@@ -590,6 +590,8 @@ MonoBehaviour:
   startingTimeOfDay: 0.25
   editorFastForwardMultiplier: 1
   useUnscaledTime: 0
+  storyTimeSmoothSeconds: 1.25
+  storyTimeMaximumDegreesPerSecond: 120
   textureWidth: 1024
   textureHeight: 1024
   starCount: 600
@@ -603,6 +605,10 @@ MonoBehaviour:
   dawnHorizonSky: {r: 1, g: 0.46, b: 0.25, a: 1}
   sunsetTopSky: {r: 0.12, g: 0.08, b: 0.3, a: 1}
   sunsetHorizonSky: {r: 1, g: 0.28, b: 0.16, a: 1}
+  nightLandmarkTint: {r: 0.26, g: 0.34, b: 0.58, a: 1}
+  dawnLandmarkTint: {r: 0.94, g: 0.68, b: 0.72, a: 1}
+  dayLandmarkTint: {r: 1, g: 1, b: 1, a: 1}
+  sunsetLandmarkTint: {r: 0.8, g: 0.52, b: 0.66, a: 1}
   dimStar: {r: 0.62, g: 0.72, b: 1, a: 1}
   brightStar: {r: 1, g: 0.96, b: 0.78, a: 1}
   largeStarChance: 0.09
