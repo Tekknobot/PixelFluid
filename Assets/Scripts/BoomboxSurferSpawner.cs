@@ -26,6 +26,7 @@ namespace PixelOcean
         private static bool summoningUnlocked;
         private BoomboxSurferSwimmer activeBoard;
         private float nextInputTime;
+        private int nextStartingTrackIndex;
 
         public static bool IsSummoningUnlocked => summoningUnlocked;
         public static bool IsBoardActive =>
@@ -142,8 +143,8 @@ namespace PixelOcean
             {
                 SurferSlugMinimalHud.ShowNotice(
                     newlyUnlocked
-                        ? "MUSIC BOARD UNLOCKED\nLB / M TO TOGGLE SUMMON"
-                        : "MUSIC BOARD AVAILABLE\nLB / M TO TOGGLE SUMMON",
+                        ? "MUSIC BOARD UNLOCKED\nLB / M: SUMMON  •  TOUCH + DOUBLE-TAP UP/DOWN: TRACK"
+                        : "MUSIC BOARD AVAILABLE\nLB / M: SUMMON  •  TOUCH + DOUBLE-TAP UP/DOWN: TRACK",
                     4.5f);
             }
 
@@ -205,20 +206,23 @@ namespace PixelOcean
                         FrameNumber(sprite.name))
                     .ToArray();
 
-            AudioClip music =
-                Resources.Load<AudioClip>(
-                    "Audio/Music/Death Surfer");
+            AudioClip[] availableMusic =
+                BoomboxSurferSwimmer.LoadAvailableMusicTracks();
+            AudioClip music = availableMusic.Length > 0
+                ? availableMusic[Mathf.Abs(nextStartingTrackIndex) % availableMusic.Length]
+                : null;
 
             if (frames.Length == 0 || music == null)
             {
                 Debug.LogError(
-                    "Boombox surfer could not load its sprite frames or Death Surfer music.",
+                    "Boombox surfer could not load its sprite frames or any clip from Resources/Audio/Music.",
                     this);
                 return;
             }
 
+            string trackName = music.name;
             GameObject swimmer =
-                new("Summoned Boombox Surfboard - Death Surfer");
+                new($"Summoned Boombox Surfboard - {trackName}");
 
             swimmer.transform.SetParent(null, true);
             swimmer.transform.localScale =
@@ -261,6 +265,15 @@ namespace PixelOcean
                 music,
                 player.transform,
                 summonPosition);
+
+            SurferSlugMinimalHud.ShowNotice(
+                $"NOW PLAYING\n{trackName}",
+                2.25f);
+
+            // Releasing and summoning the board again starts the next available
+            // song. With two clips installed, each summon alternates tracks.
+            nextStartingTrackIndex =
+                (nextStartingTrackIndex + 1) % availableMusic.Length;
 
             activeBoard.Released += HandleBoardReleased;
         }

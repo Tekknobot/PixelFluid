@@ -48,7 +48,7 @@ namespace PixelOcean
         [SerializeField, Min(0f)] private float interactionStopDistance = 0.45f;
         [SerializeField, Min(0f)] private float followResumeDistance = 0.75f;        
 
-        [Header("Death Surfer Spatial Music")]
+        [Header("Dynamic Boombox Spatial Music")]
         [SerializeField, Range(0f, 1f)] private float maximumVolume = 0.9f;
         [SerializeField, Min(0f)] private float fullVolumeDistance = 1.25f;
         [SerializeField, Min(0.1f)] private float silentDistance = 10f;
@@ -146,7 +146,7 @@ namespace PixelOcean
             musicSource.maxDistance = Mathf.Max(musicSource.minDistance + 0.1f, silentDistance);
             musicSource.dopplerLevel = 0.15f;
             musicSource.volume = 0f;
-            if (musicClip != null)
+            if (musicSource.clip != null)
                 musicSource.Play();
 
             ScheduleLaneChange();
@@ -291,7 +291,14 @@ namespace PixelOcean
             nextTrackSwitchTime = Time.unscaledTime + trackSwitchCooldown;
             SwitchCassette(direction);
         }
-        private void Start() { if (!initialised) Initialise(1, Resources.Load<AudioClip>("Audio/Music/Death Surfer")); }
+        private void Start()
+        {
+            if (initialised)
+                return;
+
+            AudioClip[] availableMusic = LoadAvailableMusicTracks();
+            Initialise(1, availableMusic.FirstOrDefault());
+        }
 
         private void ResolveReferences()
         {
@@ -658,11 +665,12 @@ namespace PixelOcean
         {
             cassetteInsertClip = Resources.Load<AudioClip>("Audio/SFX/cassette_insert");
 
-            AudioClip deathSurfer = Resources.Load<AudioClip>("Audio/Music/Death Surfer");
-            AudioClip highLife = Resources.Load<AudioClip>("Audio/Music/Daft Punk - 8 - High Life");
-            AudioClip windItUp = Resources.Load<AudioClip>("Audio/Music/The Prodigy - 3 - Wind It Up");
+            List<AudioClip> discoveredTracks =
+                LoadAvailableMusicTracks().ToList();
+            if (initialClip != null && !discoveredTracks.Contains(initialClip))
+                discoveredTracks.Insert(0, initialClip);
 
-            musicTracks = new[] { deathSurfer ?? initialClip, highLife, windItUp }
+            musicTracks = discoveredTracks
                 .Where(clip => clip != null)
                 .Distinct()
                 .ToArray();
@@ -674,6 +682,20 @@ namespace PixelOcean
                 if (match >= 0)
                     currentTrackIndex = match;
             }
+        }
+
+        /// <summary>
+        /// Discovers the current music library instead of relying on filenames.
+        /// Adding or deleting clips in Resources/Audio/Music therefore updates the
+        /// boombox automatically without requiring another script change.
+        /// </summary>
+        public static AudioClip[] LoadAvailableMusicTracks()
+        {
+            return Resources.LoadAll<AudioClip>("Audio/Music")
+                .Where(clip => clip != null)
+                .Distinct()
+                .OrderBy(clip => clip.name, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
         }
 
         private void SwitchCassette(int step)
@@ -703,6 +725,9 @@ namespace PixelOcean
                 musicSource.clip = nextTrack;
                 musicSource.time = 0f;
                 musicSource.Play();
+                SurferSlugMinimalHud.ShowNotice(
+                    $"NOW PLAYING\n{nextTrack.name}",
+                    2.25f);
             }
 
             cassetteRoutine = null;
@@ -711,61 +736,74 @@ namespace PixelOcean
         private int ReadCassetteDirection()
         {
 #if ENABLE_INPUT_SYSTEM
+            bool upPressed = false;
+            bool downPressed = false;
             Gamepad gamepad = Gamepad.current;
-            if (gamepad == null)
-                return 0;
+            if (gamepad != null)
+            {
+                bool noHorizontal =
+                    !gamepad.dpad.left.isPressed &&
+                    !gamepad.dpad.right.isPressed;
+                bool noButtons =
+                    !gamepad.buttonSouth.isPressed &&
+                    !gamepad.buttonNorth.isPressed &&
+                    !gamepad.buttonEast.isPressed &&
+                    !gamepad.buttonWest.isPressed &&
+                    !gamepad.leftShoulder.isPressed &&
+                    !gamepad.rightShoulder.isPressed;
 
-            bool noHorizontal =
-                !gamepad.dpad.left.isPressed &&
-                !gamepad.dpad.right.isPressed;
+                if (noHorizontal && noButtons)
+                {
+                    upPressed = gamepad.dpad.up.wasPressedThisFrame &&
+                        !gamepad.dpad.down.isPressed;
+                    downPressed = gamepad.dpad.down.wasPressedThisFrame &&
+                        !gamepad.dpad.up.isPressed;
+                }
+            }
 
-            bool noButtons =
-                !gamepad.buttonSouth.isPressed &&
-                !gamepad.buttonNorth.isPressed &&
-                !gamepad.buttonEast.isPressed &&
-                !gamepad.buttonWest.isPressed &&
-                !gamepad.leftShoulder.isPressed &&
-                !gamepad.rightShoulder.isPressed;
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard != null)
+            {
+                upPressed |= keyboard.upArrowKey.wasPressedThisFrame &&
+                    !keyboard.downArrowKey.isPressed;
+                downPressed |= keyboard.downArrowKey.wasPressedThisFrame &&
+                    !keyboard.upArrowKey.isPressed;
+            }
 
-            if (!noHorizontal || !noButtons)
+            return RegisterCassetteTap(upPressed, downPressed);
+#elif ENABLE_LEGACY_INPUT_MANAGER
+            return RegisterCassetteTap(
+                Input.GetKeyDown(KeyCode.UpArrow),
+                Input.GetKeyDown(KeyCode.DownArrow));
+#else
+            return 0;
+#endif
+        }
+
+        private int RegisterCassetteTap(bool upPressed, bool downPressed)
+        {
+            if (upPressed == downPressed)
                 return 0;
 
             float now = Time.unscaledTime;
             float window = Mathf.Max(0.12f, cassetteDoubleTapWindow);
 
-            if (gamepad.dpad.up.wasPressedThisFrame &&
-                !gamepad.dpad.down.isPressed)
+            if (upPressed)
             {
-                bool isDoubleTap =
-                    now - lastCassetteUpTapTime <= window;
-
+                bool isDoubleTap = now - lastCassetteUpTapTime <= window;
                 lastCassetteUpTapTime = isDoubleTap
                     ? float.NegativeInfinity
                     : now;
-
-                // An UP tap cancels any pending DOWN sequence.
                 lastCassetteDownTapTime = float.NegativeInfinity;
-
                 return isDoubleTap ? 1 : 0;
             }
 
-            if (gamepad.dpad.down.wasPressedThisFrame &&
-                !gamepad.dpad.up.isPressed)
-            {
-                bool isDoubleTap =
-                    now - lastCassetteDownTapTime <= window;
-
-                lastCassetteDownTapTime = isDoubleTap
-                    ? float.NegativeInfinity
-                    : now;
-
-                // A DOWN tap cancels any pending UP sequence.
-                lastCassetteUpTapTime = float.NegativeInfinity;
-
-                return isDoubleTap ? -1 : 0;
-            }
-#endif
-            return 0;
+            bool downIsDoubleTap = now - lastCassetteDownTapTime <= window;
+            lastCassetteDownTapTime = downIsDoubleTap
+                ? float.NegativeInfinity
+                : now;
+            lastCassetteUpTapTime = float.NegativeInfinity;
+            return downIsDoubleTap ? -1 : 0;
         }
 
         private void OnTriggerEnter2D(Collider2D other)
